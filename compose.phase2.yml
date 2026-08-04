@@ -1,0 +1,21 @@
+name: aep-phase2
+
+services:
+  redis-phase2:
+    image: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+    container_name: aep-phase2-redis72
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - ./redis/phase2.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-n", "15", "PING"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  redis-data:
