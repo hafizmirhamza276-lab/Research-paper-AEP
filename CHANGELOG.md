@@ -8,6 +8,62 @@ Every test count in this file is a figure that was actually observed, with the
 raw output recorded in the phase report named alongside it. Unverified numbers
 do not belong in a changelog for an artifact-evaluation package.
 
+## [Unreleased]
+
+Phase 2B Session 1: MockLegacyAPI and the ground-truth ledger. Full report:
+`reports/phase-report-2b-session1-2026-08-05.md`.
+
+### Added
+
+- **`experiments/mock_api/`** — a standalone FastAPI service simulating a
+  non-idempotent legacy endpoint, with a durable ground-truth ledger the
+  caller cannot read (`PAPER_ROADMAP.md` §3.1(1)).
+- **The oracle's identity function**, stated precisely enough to be quoted in
+  the paper: Definition 1 (mutation fingerprint), Definition 2 (payload
+  digest) in `experiments/mock_api/fingerprint.py`, Definition 3 (duplicate
+  classes) in `experiments/mock_api/ledger.py`. Computed by the service from
+  the request as received on the wire, with its own canonicaliser: an oracle
+  that reused the canonicaliser of the protocol it measures would inherit any
+  collision that canonicaliser has.
+- Ground-truth ledger in SQLite with `journal_mode=WAL` and
+  `synchronous=FULL`. Each applied mutation writes the simulated state change
+  and its ledger row in one `BEGIN IMMEDIATE … COMMIT`, so no interleaving
+  exists in which the external world changed and the oracle does not know.
+- Configurable fault surface via YAML — delay distribution, timeout
+  probability, 5xx probability, duplicate-response probability, and
+  per-endpoint response class — with the whole loaded configuration and a
+  digest over it echoed into `GET /v1/config` and into the first record of
+  every run log.
+- `experiments/mock_api/Dockerfile` and `compose.mock-api.yml`, built and
+  exercised end-to-end (build → mutation → read-back → oracle → teardown).
+
+### Changed
+
+- **Both CI jobs now provision Redis from `compose.phase2.yml`**, and the
+  workflow deselects nothing. The `test` job previously took Redis from a
+  GitHub `services:` container, which starts before checkout and so can
+  neither mount `redis/phase2.conf` nor survive `docker restart` with AOF
+  intact — forcing the crash-recovery test to be deselected by name. That
+  deselection was the only construct in the workflow able to turn a gate
+  green without the work being done (`docs/23-ci-hardening-report.md` G1).
+  Five new gates in `tests/test_artifact_reproducibility.py` fail the suite
+  if it returns.
+- `pytest` `testpaths` now covers `experiments/` as well as `tests/`, so the
+  zero-skip and zero-xpass gates apply to the harness suite too.
+- `MINIMUM_TESTS` raised 1100 → 1350.
+
+### Verified
+
+- 1387 tests passing, 0 skipped, 0 xpassed, against Redis 7.2.5 with AOF on
+  CPython 3.13.0. Suite grew 1223 → 1387.
+- Coverage 90.31% on `aep_core` — unchanged, because no `aep_core` logic was
+  changed in this session.
+- EVALUATION mode dispatches a real mutation over a real socket to a real
+  MockLegacyAPI process, with no `allow_test_dispatch` and no
+  `allow_test_barrier`, and the ground-truth ledger records it. This retires
+  the "admissible, not functional" finding (`phase-report-1b` §F4) at the
+  scope of one dispatch; the crash-boundary matrix remains Session 2/3 work.
+
 ## [0.2.0] — 2026-08-05
 
 Phase 2A: the artifact becomes evaluation-grade. Full report:

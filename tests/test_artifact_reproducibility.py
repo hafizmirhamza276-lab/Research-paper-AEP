@@ -273,6 +273,25 @@ def test_every_redis_job_verifies_semantics_without_applying_them(job_name):
     )
 
 
+def test_the_full_suite_job_installs_every_extra_the_suite_imports():
+    """A collected test whose imports were never installed is not a test.
+
+    pytest collects ``experiments/`` as well as ``tests/``, and those modules
+    import fastapi/httpx/pyyaml from the ``experiments`` extra. Syncing only
+    ``dev`` would turn the harness suite into a collection error.
+    """
+    metadata = tomllib.loads(read(PYPROJECT))
+    declared = set(metadata["project"]["optional-dependencies"])
+    testpaths = metadata["tool"]["pytest"]["ini_options"]["testpaths"]
+    script = job_script(workflow_jobs()["test"])
+
+    assert "experiments" in testpaths
+    for extra in sorted(declared):
+        assert f"--extra {extra}" in script, (
+            f"the full-suite job does not install the {extra!r} extra"
+        )
+
+
 def test_the_restart_test_is_collected_by_the_full_suite():
     """The test the old deselection removed is now run by the `test` job."""
     restart_test = "test_intent_and_resolution_survive_controlled_redis_restart"

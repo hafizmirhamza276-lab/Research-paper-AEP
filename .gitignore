@@ -71,6 +71,15 @@ Thumbs.db
 # --- Agent tooling session logs (activity trace, not repository content) ------
 .ai/
 
+# --- Experiment output --------------------------------------------------------
+# Ground-truth ledgers and run logs are results, not source. They are published
+# with a paper release, not committed on every run.
+experiments/results/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.run.jsonl
+
 # --- Logs / runtime junk ------------------------------------------------------
 *.log
 pip-log.txt

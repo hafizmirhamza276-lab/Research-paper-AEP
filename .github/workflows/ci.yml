@@ -49,7 +49,8 @@ env:
   REDIS_IMAGE: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
   # Guards against a collapsed collection reading as success. Raise this when
   # the suite grows; never lower it without saying why.
-  MINIMUM_TESTS: "1100"
+  # 1223 (Phase 2A) -> 1379 with the Phase 2B Session 1 harness tests.
+  MINIMUM_TESTS: "1350"
 
 jobs:
   # =========================================================================
@@ -102,7 +103,11 @@ jobs:
           enable-cache: true
 
       - name: Sync locked environment
-        run: uv sync --frozen --extra dev --extra cov
+        # `experiments` is required: pytest collects experiments/ (testpaths in
+        # pyproject.toml), and those tests import fastapi/httpx/pyyaml. Without
+        # it the harness tests fail to import -- which is a collection error,
+        # not a skip, but the suite would still stop describing what it claims.
+        run: uv sync --frozen --extra dev --extra cov --extra experiments
 
       - name: Start Redis 7.2 from compose.phase2.yml
         run: |
