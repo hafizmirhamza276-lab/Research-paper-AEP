@@ -14,9 +14,22 @@ name: CI
 #   (iii) coverage >= 90% on aep_core   -- pytest-cov --cov-fail-under
 #   (iv)  docs/22 citations in range    -- scripts/validate_citations.py
 #
-# Redis is never faked here. Both test jobs assert, before running anything,
-# that the live server really provides redis/phase2.conf semantics and really
-# implements WAITAOF (scripts/verify_redis_semantics.py).
+# Redis is never faked here. Both test jobs start Redis from
+# compose.phase2.yml -- the same definition developers run locally -- and then
+# assert, before running anything, that the live server really provides
+# redis/phase2.conf semantics and really implements WAITAOF
+# (scripts/verify_redis_semantics.py, deliberately without --apply: a server
+# that needs settings applied at runtime is a broken compose file, not a
+# fixable one).
+#
+# Nothing is deselected. An earlier revision took Redis for the main job from
+# a GitHub `services:` container, which starts before checkout and so can
+# neither mount redis/phase2.conf nor survive `docker restart` with AOF
+# intact; that forced the crash-recovery test to be deselected by name.
+# Deselection was the only construct here capable of turning a gate green
+# without the work being done (docs/23-ci-hardening-report.md G1), so it is
+# gone, and tests/test_artifact_reproducibility.py fails the suite if it
+# returns.
 
 on:
   push:
@@ -60,35 +73,25 @@ jobs:
         run: uv run --frozen python scripts/validate_citations.py
 
   # =========================================================================
-  # Main suite. Redis 7.2 as a GitHub Actions service container.
+  # Main suite. Redis 7.2 from compose.phase2.yml, so redis/phase2.conf is
+  # mounted rather than re-applied, and so `docker restart` brings the server
+  # back with AOF on and the appendonly data intact -- which is what lets the
+  # crash-recovery test run here instead of being deselected.
   # =========================================================================
   test:
-    name: Suite (py${{ matrix.python-version }}, Redis service container)
+    name: Suite (py${{ matrix.python-version }}, Redis from compose)
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.13"]
 
-    services:
-      redis:
-        # A service container cannot be given a command line and cannot mount
-        # redis/phase2.conf: services start before the repository is checked
-        # out. AOF is therefore applied at runtime by the step below, which
-        # derives every value from phase2.conf and then asserts the live
-        # server reports it. The suite never runs against a default Redis.
-        image: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 1s
-          --health-timeout 2s
-          --health-retries 30
-
     env:
-      REDIS_URL: redis://127.0.0.1:6379/15
+      REDIS_URL: redis://127.0.0.1:6381/15
       AEP_PHASE2_REDIS_INTEGRATION: "1"
+      # tests/test_phase2_waitaof_integration.py restarts this container by
+      # name. It must be the container_name in compose.phase2.yml.
+      AEP_PHASE2_REDIS_CONTAINER: aep-phase2-redis72
 
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +104,11 @@ jobs:
       - name: Sync locked environment
         run: uv sync --frozen --extra dev --extra cov
 
+      - name: Start Redis 7.2 from compose.phase2.yml
+        run: |
+          docker compose -f compose.phase2.yml up -d --wait
+          docker compose -f compose.phase2.yml ps
+
       - name: Record the exact environment under test
         run: |
           echo "--- interpreter ---"
@@ -110,29 +118,19 @@ jobs:
           echo "--- redis image ---"
           docker image inspect "${REDIS_IMAGE}" --format '{{index .RepoDigests 0}}' || true
 
-      - name: Apply and verify redis/phase2.conf semantics
-        # Fails the job if the live server is not Redis >= 7.2 with AOF
-        # actually active and WAITAOF actually present. Values are read from
-        # redis/phase2.conf, so CI cannot drift from the compose environment.
+      - name: Verify redis/phase2.conf semantics
+        # No --apply. This server was started from the config file, so if the
+        # settings are not already correct that is a defect in the compose
+        # definition and the job must fail rather than repair it in place.
         run: |
           uv run --frozen python scripts/verify_redis_semantics.py \
-            --url "${REDIS_URL}" --apply
+            --url "${REDIS_URL}"
 
       - name: Run the suite
-        # `docker restart` does not preserve CONFIG SET, so the one test that
-        # restarts Redis cannot run against a service container: the server
-        # would come back with AOF off and the persisted data gone. It is
-        # deselected here by name -- loudly, not silently -- and is executed
-        # in full by the waitaof-durability job below, which owns a Redis
-        # started from redis/phase2.conf. Coverage of that test is therefore
-        # not lost, only moved.
         run: |
           set -o pipefail
-          echo "NOTE: deselecting the Redis-restart test in this job; the"
-          echo "      waitaof-durability job runs it against compose."
           uv run --frozen pytest \
             -q -ra --strict-markers \
-            --deselect "tests/test_phase2_waitaof_integration.py::test_intent_and_resolution_survive_controlled_redis_restart" \
             --junitxml=junit.xml \
             --cov=aep_core \
             --cov-report=term-missing \
@@ -148,6 +146,18 @@ jobs:
             --output pytest-output.txt \
             --minimum-tests "${MINIMUM_TESTS}"
 
+      - name: Confirm AOF survived the restart test
+        # The suite restarted this container. If it came back without AOF the
+        # durability evidence collected after that point would be worthless.
+        if: always()
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.phase2.yml down -v
+
       - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -160,8 +170,14 @@ jobs:
           if-no-files-found: warn
 
   # =========================================================================
-  # WAITAOF durability suite against a Redis started FROM redis/phase2.conf,
-  # so AOF survives a restart and the crash-recovery test can actually run.
+  # The durability suite in isolation, on its own fresh Redis.
+  #
+  # This job no longer exists to hold a test the main job cannot run -- the
+  # main job runs the whole suite now. It exists because running the WAITAOF
+  # file alone, against a server nothing else has touched, is a different
+  # experiment: it proves the durability tests do not depend on state left
+  # behind by the 1200 tests that precede them in the full run, and it fails
+  # loudly if they do.
   # =========================================================================
   waitaof-durability:
     name: WAITAOF durability (compose, phase2.conf)

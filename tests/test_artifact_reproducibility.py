@@ -202,18 +202,95 @@ def test_the_workflow_runs_the_suite_with_ra():
     assert "-q -ra --strict-markers" in read(workflow_path())
 
 
-def test_the_deselected_restart_test_is_run_by_the_durability_job():
-    """Deselecting must move coverage, not drop it."""
-    workflow = read(workflow_path())
-    deselected = "test_intent_and_resolution_survive_controlled_redis_restart"
+# ===========================================================================
+# Redis provisioning: compose everywhere, and nothing deselected
+#
+# docs/23-ci-hardening-report.md G1. The `test` job used to take Redis from a
+# GitHub `services:` block. A service container starts before checkout, so it
+# cannot mount redis/phase2.conf and cannot survive `docker restart` with AOF
+# intact -- which forced one test to be deselected by name. A deselection is
+# the one construct in this workflow that lets a gate go green without the
+# work being done, so it is now forbidden outright and both jobs take Redis
+# from compose.phase2.yml, the same definition developers run locally.
+# ===========================================================================
 
-    assert "--deselect" in workflow and deselected in workflow
-    # The durability job runs the whole file, which contains that test.
-    assert "tests/test_phase2_waitaof_integration.py \\" in workflow
-    assert (
-        deselected
-        in read(REPO_ROOT / "tests" / "test_phase2_waitaof_integration.py")
+#: Jobs that must provision Redis themselves. The citations job runs no test
+#: that touches Redis, so requiring compose of it would be theatre.
+REDIS_DEPENDENT_JOBS = ("test", "waitaof-durability")
+
+
+def workflow_jobs() -> dict:
+    import yaml
+
+    return yaml.safe_load(read(workflow_path()))["jobs"]
+
+
+def job_script(job: dict) -> str:
+    """Every `run:` line of one job, concatenated."""
+    return "\n".join(step.get("run", "") for step in job["steps"])
+
+
+def test_the_workflow_deselects_nothing_anywhere():
+    """The only construct that can satisfy a gate without doing the work."""
+    workflow = read(workflow_path())
+
+    assert "--deselect" not in workflow, (
+        "ci.yml deselects a test by name. A deselected test is invisible to "
+        "the zero-skip gate: the job reports green and the summary shows no "
+        "skip, yet the test never ran. Run it, or delete it."
     )
+
+
+@pytest.mark.parametrize("job_name", REDIS_DEPENDENT_JOBS)
+def test_every_redis_job_provisions_redis_from_compose(job_name):
+    job = workflow_jobs()[job_name]
+
+    assert "services" not in job, (
+        f"job {job_name!r} declares a GitHub services: block. A service "
+        "container starts before checkout, so it cannot mount "
+        "redis/phase2.conf and does not survive docker restart with AOF."
+    )
+    assert "docker compose -f compose.phase2.yml up" in job_script(job), (
+        f"job {job_name!r} does not start Redis from compose.phase2.yml"
+    )
+
+
+@pytest.mark.parametrize("job_name", REDIS_DEPENDENT_JOBS)
+def test_every_redis_job_verifies_semantics_without_applying_them(job_name):
+    """`--apply` would let CI paper over a compose file that lost AOF.
+
+    A Redis started from redis/phase2.conf must already report the durability
+    settings. Applying them at runtime turns a broken compose definition into
+    a passing job, which is exactly the failure this report class exists to
+    prevent.
+    """
+    script = job_script(workflow_jobs()[job_name])
+
+    assert "scripts/verify_redis_semantics.py" in script
+    assert "--apply" not in script, (
+        f"job {job_name!r} applies Redis settings at runtime instead of "
+        "asserting that compose.phase2.yml already provides them"
+    )
+
+
+def test_the_restart_test_is_collected_by_the_full_suite():
+    """The test the old deselection removed is now run by the `test` job."""
+    restart_test = "test_intent_and_resolution_survive_controlled_redis_restart"
+    integration_file = REPO_ROOT / "tests" / "test_phase2_waitaof_integration.py"
+
+    assert restart_test in read(integration_file)
+    # `testpaths` includes the directory holding it, and nothing excludes it.
+    metadata = tomllib.loads(read(PYPROJECT))
+    assert "tests" in metadata["tool"]["pytest"]["ini_options"]["testpaths"]
+
+
+@pytest.mark.parametrize("job_name", REDIS_DEPENDENT_JOBS)
+def test_every_redis_job_names_the_container_the_restart_test_restarts(job_name):
+    """`docker restart` needs the compose container name, not a service alias."""
+    job = workflow_jobs()[job_name]
+    container = read(COMPOSE).split("container_name:")[1].split("\n")[0].strip()
+
+    assert job["env"]["AEP_PHASE2_REDIS_CONTAINER"] == container
 
 
 # ===========================================================================

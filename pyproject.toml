@@ -24,6 +24,11 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "fakeredis[lua]>=2.20",
+    # tests/test_artifact_reproducibility.py parses .github/workflows/ci.yml
+    # structurally (per job) rather than by substring, so a gate can assert
+    # "every job that runs the suite provisions Redis from compose" instead of
+    # "the file contains the word compose somewhere".
+    "pyyaml>=6.0",
 ]
 cov = [
     "pytest-cov>=7.0",
