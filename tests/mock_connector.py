@@ -21,11 +21,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Deque, Iterable
 
-from src.core.connector_contract import (
+from aep_core.core.connector_contract import (
     ReadbackResult,
     ReconciliationCapability,
 )
-from src.core.request_binding import (
+from aep_core.core.request_binding import (
     ReconciliationContext,
     VerifiedDispatch,
     consume_verified_dispatch,

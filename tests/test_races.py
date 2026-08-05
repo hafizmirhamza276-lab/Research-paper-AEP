@@ -10,8 +10,8 @@ import uuid
 
 import pytest
 
-from src.core.exceptions import LockAcquisitionError, StaleWriteError
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.exceptions import LockAcquisitionError, StaleWriteError
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 
 
 class TestRaceLockAcquire:

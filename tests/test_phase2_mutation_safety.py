@@ -15,14 +15,14 @@ import uuid
 
 import pytest
 
-from src.core.durability import FakeDurabilityBarrier
-from src.core.exceptions import (
+from aep_core.core.durability import FakeDurabilityBarrier
+from aep_core.core.exceptions import (
     LockAcquisitionError,
     Phase2StateProtectionError,
     StaleWriteError,
 )
-from src.core.intent_workflow import ConnectorPolicy, WriteAheadRunner
-from src.core.intents import (
+from aep_core.core.intent_workflow import ConnectorPolicy, WriteAheadRunner
+from aep_core.core.intents import (
     ExecutionIntentFenceError,
     IntentCreationEligibilityError,
     IntentInvariantError,
@@ -30,7 +30,7 @@ from src.core.intents import (
     IntentStatus,
     Phase2ExecutionState,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.mock_connector import MockConnectorHarness, ResponseMode
 from tests.request_binding_helpers import (
     prepared_binding,

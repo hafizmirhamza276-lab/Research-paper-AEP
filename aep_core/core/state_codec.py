@@ -6,7 +6,7 @@ import json
 import math
 from typing import Any
 
-from src.core.exceptions import (
+from aep_core.core.exceptions import (
     AmbiguousStateError,
     StateCorruptionError,
     StateSerializationError,

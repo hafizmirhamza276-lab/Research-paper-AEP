@@ -23,8 +23,8 @@ from typing import AsyncIterator, Optional
 
 from redis.asyncio import Redis
 
-from src.core.exceptions import LockAcquisitionError
-from src.core.validation import validate_execution_id
+from aep_core.core.exceptions import LockAcquisitionError
+from aep_core.core.validation import validate_execution_id
 
 logger = logging.getLogger("aep.locks")
 

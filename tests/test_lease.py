@@ -10,7 +10,7 @@ import uuid
 
 import pytest
 
-from src.core.exceptions import LockAcquisitionError
+from aep_core.core.exceptions import LockAcquisitionError
 
 
 def _lease_with_timeout_contract(

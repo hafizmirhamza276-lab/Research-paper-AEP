@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from src.core.request_binding import (
+from aep_core.core.request_binding import (
     CommitmentKeyring,
     EndpointProfile,
     ExactMutationRequest,
@@ -14,7 +14,7 @@ from src.core.request_binding import (
     SafeValueKind,
     SafeValueRule,
 )
-from src.core.request_vault import TestOnlyInMemoryRequestVault
+from aep_core.core.request_vault import TestOnlyInMemoryRequestVault
 
 
 DEFAULT_CONNECTOR = "mock.non-idempotent.v1/mutate"

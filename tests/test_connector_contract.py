@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.core.connector_contract import (
+from aep_core.core.connector_contract import (
     PERMITTED_READBACK_RESULTS,
     ConnectorContractError,
     ReadbackResult,
@@ -23,7 +23,7 @@ from src.core.connector_contract import (
     declared_capability,
     parse_readback_result,
 )
-from src.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
 from tests.test_phase2_recovery import (
     CONNECTOR_NAME,
     _policy,
@@ -44,8 +44,8 @@ def test_contract_types_are_defined_in_src_core_not_tests():
 
     assert mock_connector.ReconciliationCapability is ReconciliationCapability
     assert mock_connector.ReadbackResult is ReadbackResult
-    assert ReconciliationCapability.__module__ == "src.core.connector_contract"
-    assert ReadbackResult.__module__ == "src.core.connector_contract"
+    assert ReconciliationCapability.__module__ == "aep_core.core.connector_contract"
+    assert ReadbackResult.__module__ == "aep_core.core.connector_contract"
 
 
 def test_permitted_results_table_matches_design_section_8_3():
@@ -225,8 +225,8 @@ class _Harnessish:
 
 
 def _service_for(redis_client, lock_manager, connector, *, policy=None):
-    from src.core.durability import FakeDurabilityBarrier
-    from src.core.intent_recovery import (
+    from aep_core.core.durability import FakeDurabilityBarrier
+    from aep_core.core.intent_recovery import (
         IntentRecoveryService,
         RecoveryConnectorConfig,
     )
@@ -318,7 +318,7 @@ async def test_string_declared_capability_behaves_as_the_typed_member(
 def test_recovery_module_contains_no_capability_or_result_string_literals():
     """PAPER_ROADMAP.md Phase 1B item 1: replace every string-literal comparison."""
 
-    source = pathlib.Path("src/core/intent_recovery.py").read_text(encoding="utf-8")
+    source = pathlib.Path("aep_core/core/intent_recovery.py").read_text(encoding="utf-8")
     forbidden = []
     for member in list(ReconciliationCapability) + list(ReadbackResult):
         for quoted in (f'"{member.value}"', f"'{member.value}'"):

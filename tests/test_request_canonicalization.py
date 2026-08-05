@@ -9,7 +9,7 @@ import uuid
 
 import pytest
 
-from src.core.request_binding import (
+from aep_core.core.request_binding import (
     CanonicalizationError,
     CommitmentKeyError,
     CommitmentKeyring,
@@ -187,7 +187,7 @@ def test_fingerprint_is_stable_in_a_fresh_process():
     expected = semantic_request_fingerprint(_descriptor())
     script = """
 from tests.test_request_canonicalization import _descriptor
-from src.core.request_binding import semantic_request_fingerprint
+from aep_core.core.request_binding import semantic_request_fingerprint
 print(semantic_request_fingerprint(_descriptor()))
 """
     result = subprocess.run(

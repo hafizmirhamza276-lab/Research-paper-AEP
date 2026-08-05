@@ -8,11 +8,11 @@ import time
 
 import pytest
 
-from src.core.durability import FakeDurabilityBarrier
-from src.core.exceptions import AmbiguousStateError
-from src.core.intents import IntentLedgerStore, IntentStatus
-from src.core.state_codec import encode_state
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.durability import FakeDurabilityBarrier
+from aep_core.core.exceptions import AmbiguousStateError
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.state_codec import encode_state
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.mock_connector import MockConnectorHarness, ResponseMode
 from tests.request_binding_helpers import test_request as _request
 from tests.test_phase2_mutation_safety import (

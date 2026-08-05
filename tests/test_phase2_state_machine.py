@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from src.core.intents import (
+from aep_core.core.intents import (
     NONE_STATE,
     IllegalIntentTransitionError,
     IntentInvariantError,
@@ -17,9 +17,9 @@ from src.core.intents import (
     ReconciliationProgress,
     require_legal_intent_transition,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.request_binding_helpers import prepared_binding
-from src.core.request_binding import canonical_request_binding_bytes
+from aep_core.core.request_binding import canonical_request_binding_bytes
 
 
 FINGERPRINT = "a" * 64

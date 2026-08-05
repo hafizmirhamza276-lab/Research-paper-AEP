@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from redis.asyncio import Redis  # noqa: E402
 
-from src.core.locks import DistributedLockManager  # noqa: E402
-from src.core.storage import (  # noqa: E402
+from aep_core.core.locks import DistributedLockManager  # noqa: E402
+from aep_core.core.storage import (  # noqa: E402
     AEPExecutionState,
     AEPStatus,
     RedisStorageAdapter,

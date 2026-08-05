@@ -27,7 +27,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.core.request_vault import (
+from aep_core.core.request_vault import (
     RequestVault,
     VaultAuthenticationError,
     VaultObjectMetadata,

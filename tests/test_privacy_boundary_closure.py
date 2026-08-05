@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.core.intents import IntentInvariantError, evidence_hash
-from src.core.request_binding import (
+from aep_core.core.intents import IntentInvariantError, evidence_hash
+from aep_core.core.request_binding import (
     ExactMutationRequest,
     RequestBindingError,
     SafeField,

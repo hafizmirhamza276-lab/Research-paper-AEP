@@ -10,13 +10,13 @@ import uuid
 
 import pytest
 
-from src.core.exceptions import (
+from aep_core.core.exceptions import (
     LockAcquisitionError,
     StateCorruptionError,
     StaleWriteError,
     StorageOperationError,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 
 
 async def _save_with_fencing_contract(

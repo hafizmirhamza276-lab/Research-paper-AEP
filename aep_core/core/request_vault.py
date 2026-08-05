@@ -154,7 +154,7 @@ class VaultObjectMetadata(BaseModel):
     def authenticated_bytes(self) -> bytes:
         # The lazy import avoids a module cycle while guaranteeing that vault
         # AAD uses the exact request-binding canonicalizer and its limits.
-        from src.core.request_binding import canonical_json_bytes
+        from aep_core.core.request_binding import canonical_json_bytes
 
         return canonical_json_bytes(self.model_dump(mode="json"))
 

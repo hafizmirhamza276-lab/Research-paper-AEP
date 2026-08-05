@@ -10,14 +10,14 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol
 
-from src.core.durability import (
+from aep_core.core.durability import (
     DurabilityAck,
     DurabilityBarrier,
     confirm_durable_ack,
     dispatch_scope,
 )
-from src.core.exceptions import LockAcquisitionError
-from src.core.intents import (
+from aep_core.core.exceptions import LockAcquisitionError
+from aep_core.core.intents import (
     IntentBindingError,
     IntentLedgerStore,
     IntentPreflightError,
@@ -25,15 +25,15 @@ from src.core.intents import (
     IntentStateError,
     IntentStatus,
 )
-from src.core.locks import DistributedLockManager
-from src.core.request_binding import (
+from aep_core.core.locks import DistributedLockManager
+from aep_core.core.request_binding import (
     ExactMutationRequest,
     RequestBindingError,
     RequestBindingService,
     VerifiedDispatch,
     canonical_request_binding_bytes,
 )
-from src.core.request_vault import RequestVaultError
+from aep_core.core.request_vault import RequestVaultError
 
 
 class DispatchMode(str, Enum):

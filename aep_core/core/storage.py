@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, field_validator
 from redis.client import NEVER_DECODE
 from redis.asyncio import Redis
 
-from src.core.exceptions import (
+from aep_core.core.exceptions import (
     AmbiguousStateError,
     LockAcquisitionError,
     Phase2StateProtectionError,
@@ -32,13 +32,13 @@ from src.core.exceptions import (
     StaleWriteError,
     StorageOperationError,
 )
-from src.core.state_codec import (
+from aep_core.core.state_codec import (
     build_lua_state_validation_script,
     decode_state,
     encode_state,
     lua_state_validation_failure,
 )
-from src.core.validation import validate_execution_id
+from aep_core.core.validation import validate_execution_id
 
 # Module-level logger used by RedisStorageAdapter._quarantine to emit a
 # WARNING when the best-effort quarantine write itself fails. The warning

@@ -5,8 +5,8 @@ import uuid
 import pytest
 from pydantic import ValidationError
 
-from src.core.exceptions import LockAcquisitionError, StorageOperationError
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.exceptions import LockAcquisitionError, StorageOperationError
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 
 
 @pytest.mark.parametrize(

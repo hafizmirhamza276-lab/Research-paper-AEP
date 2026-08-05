@@ -7,7 +7,7 @@ import uuid
 
 import pytest
 
-from src.core.request_vault import (
+from aep_core.core.request_vault import (
     TestOnlyInMemoryRequestVault,
     VaultAuthenticationError,
     VaultCollisionError,

@@ -7,8 +7,8 @@ import uuid
 
 import pytest
 
-from src.core.request_binding import canonical_json_bytes
-from src.core.request_vault import (
+from aep_core.core.request_binding import canonical_json_bytes
+from aep_core.core.request_vault import (
     RequestVaultError,
     TestOnlyInMemoryRequestVault,
     VaultObjectMetadata,

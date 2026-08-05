@@ -10,16 +10,16 @@ import hashlib
 import json
 import uuid
 
-from src.core.durability import FakeDurabilityBarrier
-from src.core.intent_recovery import IntentRecoveryService, RecoveryConnectorConfig
-from src.core.intent_workflow import ConnectorPolicy
-from src.core.intents import (
+from aep_core.core.durability import FakeDurabilityBarrier
+from aep_core.core.intent_recovery import IntentRecoveryService, RecoveryConnectorConfig
+from aep_core.core.intent_workflow import ConnectorPolicy
+from aep_core.core.intents import (
     IntentAuditEntry,
     IntentLedgerStore,
     IntentStatus,
     MINIMUM_UNRESOLVED_TTL_SECONDS,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 
 CONNECTOR_NAME = "mock.non-idempotent.v1/mutate"
 

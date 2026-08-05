@@ -6,12 +6,12 @@ import math
 
 import pytest
 
-from src.core.exceptions import (
+from aep_core.core.exceptions import (
     AmbiguousStateError,
     StateCorruptionError,
     StateSerializationError,
 )
-from src.core.state_codec import (
+from aep_core.core.state_codec import (
     LUA_JSON_AMBIGUOUS,
     LUA_JSON_INVALID,
     LUA_JSON_VALID,

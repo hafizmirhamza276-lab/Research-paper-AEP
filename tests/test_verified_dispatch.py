@@ -11,20 +11,20 @@ from enum import Enum
 
 import pytest
 
-from src.core.intent_workflow import ConnectorPolicy, WriteAheadRunner, WriteAheadWorkflowError
-from src.core.intents import IntentBindingError, IntentLedgerStore, IntentStatus
-from src.core.request_binding import (
+from aep_core.core.intent_workflow import ConnectorPolicy, WriteAheadRunner, WriteAheadWorkflowError
+from aep_core.core.intents import IntentBindingError, IntentLedgerStore, IntentStatus
+from aep_core.core.request_binding import (
     ExactMutationRequest,
     VerifiedDispatch,
     consume_verified_dispatch,
 )
-from src.core.request_vault import (
+from aep_core.core.request_vault import (
     VaultAuthenticationError,
     VaultExpiredError,
     VaultMissingError,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
-from src.core.exceptions import StateCorruptionError
+from aep_core.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.exceptions import StateCorruptionError
 from tests.request_binding_helpers import (
     test_binding_service as _binding_service,
     test_profile as _profile,

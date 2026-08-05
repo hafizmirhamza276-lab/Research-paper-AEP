@@ -6,8 +6,8 @@ import uuid
 import pytest
 from pydantic import ValidationError
 
-from src.core.exceptions import StorageOperationError
-from src.core.storage import AEPExecutionState, AEPStatus, CURRENT_SCHEMA_VERSION
+from aep_core.core.exceptions import StorageOperationError
+from aep_core.core.storage import AEPExecutionState, AEPStatus, CURRENT_SCHEMA_VERSION
 
 
 MAX_SAFE_VERSION = (1 << 53) - 1

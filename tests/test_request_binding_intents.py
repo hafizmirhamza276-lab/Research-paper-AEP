@@ -8,15 +8,15 @@ import uuid
 
 import pytest
 
-from src.core.intents import (
+from aep_core.core.intents import (
     IntentBindingError,
     IntentInvariantError,
     IntentLedgerStore,
     IntentStatus,
     Phase2ExecutionState,
 )
-from src.core.storage import AEPExecutionState, AEPStatus
-from src.core.request_binding import canonical_request_binding_bytes
+from aep_core.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.request_binding import canonical_request_binding_bytes
 from tests.request_binding_helpers import prepared_binding
 
 

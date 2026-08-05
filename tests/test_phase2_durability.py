@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from src.core.durability import (
+from aep_core.core.durability import (
     DurabilityBarrier,
     DurabilityBarrierError,
     DurabilityCapabilityError,

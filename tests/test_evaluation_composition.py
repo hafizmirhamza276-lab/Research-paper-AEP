@@ -17,18 +17,18 @@ import uuid
 
 import pytest
 
-from src.core.durability import (
+from aep_core.core.durability import (
     FakeDurabilityBarrier,
     RealWaitAofDurabilityBarrier,
 )
-from src.core.intent_workflow import (
+from aep_core.core.intent_workflow import (
     ConnectorPolicy,
     DispatchMode,
     WriteAheadRunner,
     WriteAheadWorkflowError,
 )
-from src.core.intents import IntentLedgerStore
-from src.core.request_vault import (
+from aep_core.core.intents import IntentLedgerStore
+from aep_core.core.request_vault import (
     EvaluationRedisRequestVault,
     VaultAuthenticationError,
     VaultCollisionError,
@@ -129,7 +129,7 @@ def test_dispatch_mode_default_is_production(redis_client, lock_manager):
 async def test_production_mode_rejects_a_test_only_vault(
     redis_client, lock_manager
 ):
-    from src.core.request_vault import TestOnlyInMemoryRequestVault
+    from aep_core.core.request_vault import TestOnlyInMemoryRequestVault
 
     vault = TestOnlyInMemoryRequestVault(
         encryption_keys={"k": b"v" * 32},
@@ -168,7 +168,7 @@ async def test_production_mode_rejects_an_evaluation_connector(
 async def test_evaluation_mode_rejects_a_test_only_vault(
     redis_client, lock_manager
 ):
-    from src.core.request_vault import TestOnlyInMemoryRequestVault
+    from aep_core.core.request_vault import TestOnlyInMemoryRequestVault
 
     vault = TestOnlyInMemoryRequestVault(
         encryption_keys={"k": b"v" * 32},
@@ -344,7 +344,7 @@ async def test_evaluation_vault_is_create_once(redis_client):
 
 @pytest.mark.asyncio
 async def test_evaluation_vault_has_no_update_path(redis_client):
-    from src.core.request_vault import VaultUpdateForbiddenError
+    from aep_core.core.request_vault import VaultUpdateForbiddenError
 
     vault = _evaluation_vault(redis_client)
     with pytest.raises(VaultUpdateForbiddenError):

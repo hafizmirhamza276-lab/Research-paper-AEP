@@ -6,14 +6,14 @@ import uuid
 
 import pytest
 
-from src.core.durability import DurabilityCapabilityError, FakeDurabilityBarrier
-from src.core.intent_workflow import (
+from aep_core.core.durability import DurabilityCapabilityError, FakeDurabilityBarrier
+from aep_core.core.intent_workflow import (
     ConnectorPolicy,
     WriteAheadRunner,
     WriteAheadWorkflowError,
 )
-from src.core.intents import IntentLedgerStore, IntentStatus
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.mock_connector import (
     CallerEvidence,
     CrashPoint,

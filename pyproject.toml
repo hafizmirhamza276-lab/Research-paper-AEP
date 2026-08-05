@@ -22,7 +22,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["aep_core*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

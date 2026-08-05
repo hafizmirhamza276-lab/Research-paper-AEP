@@ -18,8 +18,8 @@ import uuid
 
 import pytest
 
-from src.core.exceptions import LockAcquisitionError, StaleWriteError
-from src.core.intents import (
+from aep_core.core.exceptions import LockAcquisitionError, StaleWriteError
+from aep_core.core.intents import (
     MINIMUM_UNRESOLVED_TTL_SECONDS,
     IntentAuditEntry,
     IntentInvariantError,
@@ -29,7 +29,7 @@ from src.core.intents import (
     Phase2ExecutionState,
     evidence_hash,
 )
-from src.core.storage import (
+from aep_core.core.storage import (
     PHASE2_MANAGED_MARKER,
     AEPExecutionState,
     AEPStatus,
@@ -129,7 +129,7 @@ async def test_probe_lock_keys_are_not_covered_by_the_durability_barrier(
 
     import pathlib
 
-    source = pathlib.Path("src/core/locks.py").read_text(encoding="utf-8")
+    source = pathlib.Path("aep_core/core/locks.py").read_text(encoding="utf-8")
     assert "WAITAOF" not in source
     assert "confirm_durable" not in source
 

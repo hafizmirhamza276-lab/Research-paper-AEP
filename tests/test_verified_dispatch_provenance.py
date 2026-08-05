@@ -7,8 +7,8 @@ import uuid
 
 import pytest
 
-import src.core.request_binding as request_binding_module
-from src.core.request_binding import RequestBindingMismatchError, VerifiedDispatch
+import aep_core.core.request_binding as request_binding_module
+from aep_core.core.request_binding import RequestBindingMismatchError, VerifiedDispatch
 from tests.request_binding_helpers import verified_dispatch
 
 

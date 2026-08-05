@@ -8,15 +8,15 @@ import time
 import pytest
 from redis.client import NEVER_DECODE
 
-from src.core.durability import FakeDurabilityBarrier
-from src.core.exceptions import (
+from aep_core.core.durability import FakeDurabilityBarrier
+from aep_core.core.exceptions import (
     AmbiguousStateError,
     StateCorruptionError,
     StateSerializationError,
 )
-from src.core.intent_recovery import RecoveryConnectorConfig
-from src.core.intents import IntentLedgerStore, IntentStatus
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.intent_recovery import RecoveryConnectorConfig
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.mock_connector import (
     MockConnectorHarness,
     ReadbackResult,
@@ -198,7 +198,7 @@ async def test_phase1_candidate_invalid_utf8_is_serialization_error(
     candidate = current.model_copy(update={"version": 2})
     key = f"aep:state:{execution_id}"
     monkeypatch.setattr(
-        "src.core.storage.encode_state",
+        "aep_core.core.storage.encode_state",
         lambda value: b'{"version":2,"invalid":"\xff"}',
     )
 
@@ -234,7 +234,7 @@ async def test_phase2_candidate_serialization_failure_is_typed_and_nonmutating(
     store = IntentLedgerStore(redis_client)
     intent = await _create(store, execution_id, token, expected_version=1)
     key = f"aep:state:{execution_id}"
-    monkeypatch.setattr("src.core.intents.encode_state", lambda value: candidate_raw)
+    monkeypatch.setattr("aep_core.core.intents.encode_state", lambda value: candidate_raw)
 
     await _assert_rejection_preserves_raw_state(
         redis_client,

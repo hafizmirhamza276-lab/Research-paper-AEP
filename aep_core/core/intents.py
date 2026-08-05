@@ -20,25 +20,25 @@ from typing import Any, AsyncIterator, Mapping
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from redis.asyncio import Redis
 
-from src.core.durability import (
+from aep_core.core.durability import (
     DurabilityAck,
     consume_durability_ack,
     dispatch_scope as durability_dispatch_scope,
 )
-from src.core.exceptions import (
+from aep_core.core.exceptions import (
     AEPException,
     LockAcquisitionError,
     StaleWriteError,
     StateCorruptionError,
 )
-from src.core.state_codec import build_lua_state_validation_script, encode_state
-from src.core.request_binding import (
+from aep_core.core.state_codec import build_lua_state_validation_script, encode_state
+from aep_core.core.request_binding import (
     CanonicalizationError,
     PersistedRequestBinding,
     canonical_request_binding_bytes,
     parse_canonical_request_binding,
 )
-from src.core.storage import (
+from aep_core.core.storage import (
     PHASE2_MANAGED_MARKER,
     AEPExecutionState,
     AEPStatus,

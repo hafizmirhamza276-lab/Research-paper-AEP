@@ -80,7 +80,7 @@ Tasks:
 2. **Lockfile + pinned environment:** `uv lock` or `pip-tools`; record exact Redis image digest.
 3. **Safe test fixture:** replace `FLUSHALL` with namespaced key cleanup (`SCAN aep:* + UNLINK`) or a hard guard that refuses to run unless the Redis instance advertises a test marker key. (Check whether this was already fixed post-audit; if not, fix it.)
 4. **Packaging hygiene:** rename top-level package from `src` to `aep_core`; remove committed `__pycache__`/egg-info; add LICENSE (Apache-2.0 or MIT), CITATION.cff, CHANGELOG, release tag `v0.2.0`.
-5. **Coverage report** wired into CI (target ≥ 90% on src/core).
+5. **Coverage report** wired into CI (target ≥ 90% on `aep_core` — the package was named `src/core` when this line was written; renamed in Phase 2A).
 
 ### Claude Code prompt — Phase 2A
 ```
@@ -161,7 +161,7 @@ Structure (TSE/TOSEM style, ~14–18 pages double column):
 
 ### Claude Code prompt — Phase 4
 ```
-Create paper/ with a LaTeX project using the IEEEtran (TSE) template. Draft sections 1–5 and 7–9 per PAPER_ROADMAP.md §5, drawing every technical statement from docs/22-formal-model.md and src/core with file:line grounding, and leaving \todo markers where experiment numbers from experiments/results will be inserted. Generate the protocol state-machine figure with TikZ from the transition table in src/core/intents.py. Write related work with real citations in refs.bib (verify each BibTeX entry exists; do not fabricate).
+Create paper/ with a LaTeX project using the IEEEtran (TSE) template. Draft sections 1–5 and 7–9 per PAPER_ROADMAP.md §5, drawing every technical statement from docs/22-formal-model.md and aep_core/core with file:line grounding, and leaving \todo markers where experiment numbers from experiments/results will be inserted. Generate the protocol state-machine figure with TikZ from the transition table in aep_core/core/intents.py. Write related work with real citations in refs.bib (verify each BibTeX entry exists; do not fabricate).
 ```
 
 ---

@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from src.core.request_binding import (
+from aep_core.core.request_binding import (
     CommitmentKeyring,
     EndpointProfile,
     ExactMutationRequest,

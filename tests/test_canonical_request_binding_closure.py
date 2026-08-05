@@ -8,16 +8,16 @@ import uuid
 
 import pytest
 
-import src.core.request_binding as request_binding_module
-from src.core.intents import (
+import aep_core.core.request_binding as request_binding_module
+from aep_core.core.intents import (
     IntentBindingError,
     IntentInvariantError,
     IntentLedgerStore,
     IntentStatus,
     Phase2ExecutionState,
 )
-from src.core.request_binding import CanonicalizationError
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.request_binding import CanonicalizationError
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.request_binding_helpers import prepared_binding
 
 

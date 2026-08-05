@@ -46,8 +46,8 @@ from typing import AsyncIterator
 import pytest
 import pytest_asyncio
 
-from src.core.locks import DistributedLockManager
-from src.core.storage import RedisStorageAdapter
+from aep_core.core.locks import DistributedLockManager
+from aep_core.core.storage import RedisStorageAdapter
 
 # ---------------------------------------------------------------------------
 # Backend selection

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
-from src.core.connector_contract import (
+from aep_core.core.connector_contract import (
     UNDECLARED_CAPABILITY_EVIDENCE_CLASS,
     UNDECLARED_CAPABILITY_REASON,
     ConnectorContractError,
@@ -23,20 +23,20 @@ from src.core.connector_contract import (
     declared_capability,
     parse_readback_result,
 )
-from src.core.durability import DurabilityBarrier
-from src.core.intent_workflow import (
+from aep_core.core.durability import DurabilityBarrier
+from aep_core.core.intent_workflow import (
     ConnectorPolicy,
     CrashInjectorProtocol,
     WriteAheadWorkflowError,
 )
-from src.core.intents import (
+from aep_core.core.intents import (
     IntentLedgerStore,
     IntentRecord,
     IntentStatus,
     ReconciliationProgress,
 )
-from src.core.locks import DistributedLockManager
-from src.core.request_binding import ReconciliationContext
+from aep_core.core.locks import DistributedLockManager
+from aep_core.core.request_binding import ReconciliationContext
 
 
 #: The protocol outcome vocabulary mapped onto persisted intent statuses.

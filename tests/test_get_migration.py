@@ -9,8 +9,8 @@ import uuid
 
 import pytest
 
-from src.core.exceptions import StateCorruptionError, StorageOperationError
-from src.core.storage import (
+from aep_core.core.exceptions import StateCorruptionError, StorageOperationError
+from aep_core.core.storage import (
     AEPExecutionState,
     AEPStatus,
     CURRENT_SCHEMA_VERSION,

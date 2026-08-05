@@ -13,10 +13,10 @@ import asyncio
 
 import pytest
 
-from src.core.intent_recovery import RecoveryScanPhase
-from src.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.intent_recovery import RecoveryScanPhase
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
 from tests.mock_connector import MockConnectorHarness, ReadbackResult
-from src.core.connector_contract import ReconciliationCapability
+from aep_core.core.connector_contract import ReconciliationCapability
 from tests.recovery_helpers import (
     CONNECTOR_NAME,
     connector_config,
@@ -212,5 +212,5 @@ async def test_scan_once_source_uses_return_exceptions(
 
     import pathlib
 
-    source = pathlib.Path("src/core/intent_recovery.py").read_text(encoding="utf-8")
+    source = pathlib.Path("aep_core/core/intent_recovery.py").read_text(encoding="utf-8")
     assert "return_exceptions=True" in source

@@ -10,10 +10,10 @@ import uuid
 import pytest
 from redis.asyncio import Redis
 
-from src.core.durability import RealWaitAofDurabilityBarrier
-from src.core.intent_workflow import ConnectorPolicy, WriteAheadRunner
-from src.core.intents import IntentLedgerStore, IntentStatus
-from src.core.storage import AEPExecutionState, AEPStatus
+from aep_core.core.durability import RealWaitAofDurabilityBarrier
+from aep_core.core.intent_workflow import ConnectorPolicy, WriteAheadRunner
+from aep_core.core.intents import IntentLedgerStore, IntentStatus
+from aep_core.core.storage import AEPExecutionState, AEPStatus
 from tests.mock_connector import MockConnectorHarness, ResponseMode
 from tests.request_binding_helpers import (
     test_binding_service as _binding_service,

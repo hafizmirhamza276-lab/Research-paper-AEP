@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from src.core.durability import (
+from aep_core.core.durability import (
     DurabilityAck,
     DurabilityBarrierError,
     FakeDurabilityBarrier,
@@ -21,7 +21,7 @@ from src.core.durability import (
     consume_durability_ack,
     dispatch_scope,
 )
-from src.core.intents import (
+from aep_core.core.intents import (
     DispatchAuthorizationError,
     IntentLedgerStore,
 )
@@ -293,7 +293,7 @@ async def test_a_forged_authorization_value_is_rejected(
 
 
 def test_preflight_lua_consults_the_dispatch_authorization_key():
-    source = pathlib.Path("src/core/intents.py").read_text(encoding="utf-8")
+    source = pathlib.Path("aep_core/core/intents.py").read_text(encoding="utf-8")
     assert "aep:dispatch-auth:" in source
     preflight_body = source.split("_PREFLIGHT_SCRIPT_BODY")[1].split(
         "_PREFLIGHT_SCRIPT ="

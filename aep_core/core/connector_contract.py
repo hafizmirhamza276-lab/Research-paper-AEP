@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
 
-from src.core.exceptions import AEPException
+from aep_core.core.exceptions import AEPException
 
 
 class ConnectorContractError(AEPException):
