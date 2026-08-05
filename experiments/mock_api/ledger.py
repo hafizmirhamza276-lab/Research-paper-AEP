@@ -20,6 +20,19 @@ The crash model actually injected -- SIGKILL of the service -- would be
 covered by ``NORMAL``; FULL costs one fsync per applied mutation and removes
 the qualification from the claim.
 
+**Isolation.** One connection *per thread*, not one connection shared between
+them. The service answers read-backs and oracle queries from a thread pool
+while mutations are being applied, and a ``SELECT`` issued on the same
+connection as an open ``BEGIN IMMEDIATE`` interleaves with that transaction.
+Phase 2B Session 2's self-validation run observed all three consequences: a
+committed row reported absent, one application reported as a ``CONFLICT``, and
+raw ``sqlite3`` errors. Each of those corrupts a number the paper reports and
+none is a property of the system under test. WAL exists precisely so that
+readers on their own connections take a consistent snapshot while a writer
+holds the write lock, so that is what this does; writes remain serialised by
+:attr:`GroundTruthLedger._write_lock` because the effect count is a
+read-modify-write. Pinned by ``tests/test_ledger_concurrency.py``.
+
 **Classification, not counting.** :meth:`duplicate_groups` distinguishes two
 things a naive ``GROUP BY`` would merge (Definition 3 below).
 
@@ -201,15 +214,50 @@ class GroundTruthLedger:
 
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
-        self._connection: sqlite3.Connection | None = None
-        # One connection is shared across the server's worker threads, and a
-        # multi-statement transaction on a shared connection is not safe to
-        # interleave. Writes are serialised here rather than relying on
-        # SQLite's busy handling, which would surface as a retry rather than
-        # as the ordering the oracle needs.
+        self._initialised = False
+        # One connection per thread (see "Isolation" in the module docstring).
+        self._local = threading.local()
+        # Every live connection, so close() can release them all rather than
+        # leaking one file handle per service worker thread.
+        self._connections: list[sqlite3.Connection] = []
+        self._connections_lock = threading.Lock()
+        # Writes are serialised here rather than relying on SQLite's busy
+        # handling, which would surface as a retry rather than as the ordering
+        # the oracle needs. Still required with per-thread connections: the
+        # effect count is a read-modify-write.
         self._write_lock = threading.Lock()
 
     # -- lifecycle ---------------------------------------------------------
+
+    def _connect(self) -> sqlite3.Connection:
+        """Open and configure one connection for the calling thread.
+
+        ``synchronous`` and ``busy_timeout`` are per-connection settings, so a
+        connection that skipped them would quietly weaken the durability claim
+        for every write made on it. ``journal_mode`` is a property of the
+        database file, but is asserted on each connection because a database
+        that is not in WAL cannot support this access pattern at all.
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        # isolation_level=None disables the driver's implicit transaction
+        # handling so that BEGIN IMMEDIATE / COMMIT below are exactly the
+        # transaction boundaries, with nothing inserted around them.
+        connection = sqlite3.connect(
+            self.path, isolation_level=None, check_same_thread=False
+        )
+        connection.row_factory = sqlite3.Row
+        mode = connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+        if str(mode).lower() != "wal":
+            connection.close()
+            raise LedgerError(
+                f"ledger requires WAL journal mode, the database reports {mode!r}"
+            )
+        connection.execute("PRAGMA synchronous=FULL")
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.execute("PRAGMA busy_timeout=5000")
+        with self._connections_lock:
+            self._connections.append(connection)
+        return connection
 
     def initialise(self) -> None:
         """Open (creating if needed) and assert the durability settings.
@@ -217,41 +265,39 @@ class GroundTruthLedger:
         Safe to call repeatedly: every statement is ``IF NOT EXISTS`` and the
         meta row is written with ``INSERT OR IGNORE``.
         """
-        if self._connection is None:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            # isolation_level=None disables the driver's implicit transaction
-            # handling so that BEGIN IMMEDIATE / COMMIT below are exactly the
-            # transaction boundaries, with nothing inserted around them.
-            self._connection = sqlite3.connect(
-                self.path, isolation_level=None, check_same_thread=False
-            )
-            self._connection.row_factory = sqlite3.Row
-
-        connection = self._connection
-        mode = connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]
-        if str(mode).lower() != "wal":
-            raise LedgerError(
-                f"ledger requires WAL journal mode, the database reports {mode!r}"
-            )
-        connection.execute("PRAGMA synchronous=FULL")
-        connection.execute("PRAGMA foreign_keys=ON")
-        connection.execute("PRAGMA busy_timeout=5000")
+        connection = self._thread_connection(create=True)
         for statement in _SCHEMA:
             connection.execute(statement)
         connection.execute(
             "INSERT OR IGNORE INTO ledger_meta (key, value) VALUES (?, ?)",
             ("schema_version", LEDGER_SCHEMA_VERSION),
         )
+        self._initialised = True
 
     def close(self) -> None:
-        if self._connection is not None:
-            self._connection.close()
-            self._connection = None
+        with self._connections_lock:
+            connections, self._connections = self._connections, []
+        for connection in connections:
+            connection.close()
+        self._local = threading.local()
+        self._initialised = False
+
+    def open_connection_count(self) -> int:
+        """How many connections are currently open. Asserted by test."""
+        with self._connections_lock:
+            return len(self._connections)
+
+    def _thread_connection(self, *, create: bool = False) -> sqlite3.Connection:
+        connection = getattr(self._local, "connection", None)
+        if connection is None:
+            if not create and not self._initialised:
+                raise LedgerError("ledger is not initialised")
+            connection = self._connect()
+            self._local.connection = connection
+        return connection
 
     def _require_connection(self) -> sqlite3.Connection:
-        if self._connection is None:
-            raise LedgerError("ledger is not initialised")
-        return self._connection
+        return self._thread_connection()
 
     # -- declared settings, asserted by test -------------------------------
 
@@ -523,6 +569,22 @@ class GroundTruthLedger:
         rather than assumed.
         """
         connection = self._require_connection()
+        # Three queries that must describe one instant. Without an explicit
+        # read transaction a mutation committing between them makes the
+        # ledger report itself inconsistent when it is not -- a false alarm
+        # on the one invariant the SIGKILL recovery test asserts. WAL gives a
+        # deferred transaction a stable snapshot without blocking the writer.
+        connection.execute("BEGIN DEFERRED")
+        try:
+            report = self._consistency_within_snapshot(connection)
+        finally:
+            connection.execute("COMMIT")
+        return report
+
+    @staticmethod
+    def _consistency_within_snapshot(
+        connection: sqlite3.Connection,
+    ) -> ConsistencyReport:
         applied_rows = int(
             connection.execute("SELECT COUNT(*) FROM applied_mutations").fetchone()[0]
         )

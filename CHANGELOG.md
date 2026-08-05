@@ -10,6 +10,57 @@ do not belong in a changelog for an artifact-evaluation package.
 
 ## [Unreleased]
 
+Phase 2B Session 2: the crash injector and the multi-process runner. Full
+report: `reports/phase-report-2b-session2-2026-08-05.md`. 1387 → 1565 tests;
+`aep_core` coverage 90.31% → 91.18%.
+
+### Added
+
+- **`experiments/harness/`** — named crash points wired into
+  `aep_core` through a hook that is absent when disabled, a runner that
+  launches worker processes and kills them with a real `SIGKILL`, a recovery
+  process, Redis restart with *verified* AOF replay, a toxiproxy worker↔Redis
+  partition, and `results/<run_id>/events.jsonl` (`PAPER_ROADMAP.md`
+  §3.1(2–3)).
+- **Read-back keying** as an explicit per-run measurement decision with two
+  values, `CALLER_REFERENCE` (primary) and `ORACLE_FINGERPRINT` (sensitivity),
+  both implemented and both contributing to the mock API's configuration
+  digest. Rationale: `docs/24-readback-keying.md`. This closes open question
+  G1 of `reports/phase-report-2b-session1-2026-08-05.md`.
+- **`toxiproxy`** in `compose.phase2.yml`, pinned by digest, with the proxy
+  declared in `redis/toxiproxy.json` so a run cannot proceed against a proxy
+  that was never created.
+- **The `scan_failure_alert` stream is consumed and measured** — poisoned
+  executions are injected at recorded instants and the detection latency is
+  reported. This retires `reports/phase-report-1b-2026-08-05.md` §F7, which
+  recorded that nothing in the repository consumed it.
+
+### Fixed
+
+- **`IntentRecoveryService` never satisfied its durability barrier's startup
+  contract.** With the production `RealWaitAofDurabilityBarrier` every
+  recovery resolution wrote its transition CAS and then failed to confirm it,
+  leaving the state advanced but unacknowledged and reporting the resolution
+  as an isolated failure. Invisible to the unit suite because every recovery
+  test used the fake barrier. Regression:
+  `tests/test_recovery_durability_barrier.py`.
+- **The ground-truth ledger's read path was not thread-safe.** One SQLite
+  connection was shared across the service's worker threads with only writes
+  guarded, so a read-back issued during an open write transaction could report
+  a committed row absent, report one application as a `CONFLICT`, or raise.
+  Each corrupts a number the paper reports. Reads now use one connection per
+  thread and the consistency report takes a snapshot. Regression:
+  `experiments/mock_api/tests/test_ledger_concurrency.py`.
+
+### Changed
+
+- `aep_core/core/intent_workflow.py` gained one checkpoint,
+  `AFTER_PREFLIGHT_BEFORE_REQUEST_TRANSMISSION`, immediately before the
+  connector call — the last instruction at which a process is provably
+  pre-dispatch, and the point a deferred `mid_dispatch` kill is armed from.
+
+---
+
 Phase 2B Session 1: MockLegacyAPI and the ground-truth ledger. Full report:
 `reports/phase-report-2b-session1-2026-08-05.md`.
 

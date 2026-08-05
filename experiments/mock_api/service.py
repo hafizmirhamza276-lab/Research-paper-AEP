@@ -68,6 +68,7 @@ from aep_core.core.connector_contract import (
 from experiments.mock_api.config import (
     EndpointConfig,
     MockApiConfig,
+    ReadbackKeying,
     load_config,
 )
 from experiments.mock_api.fingerprint import (
@@ -240,11 +241,64 @@ class MockLegacyAPI:
         )
 
 
+class ReadbackInputError(Exception):
+    """The caller did not supply what this run's keying needs to answer."""
+
+
+def _readback_applications(
+    api: MockLegacyAPI,
+    endpoint: EndpointConfig,
+    *,
+    client_reference: str | None,
+    identity: dict[str, Any] | None,
+):
+    """Find the past applications this run's keying says the caller may find.
+
+    The keying is read from the *configuration*, never from the request: which
+    input is authoritative is a property of the run (amendment C1), so the
+    input the keying does not name is ignored even when it is present and
+    correct. ``tests/test_readback_keying.py`` asserts both directions of that.
+    """
+    keying = api.config.readback_keying
+
+    if keying is ReadbackKeying.CALLER_REFERENCE:
+        if not client_reference:
+            raise ReadbackInputError(
+                "this run is keyed on CALLER_REFERENCE; supply client_reference"
+            )
+        rows = api.ledger.applications_for_client_reference(client_reference)
+    else:
+        if not identity:
+            raise ReadbackInputError(
+                "this run is keyed on ORACLE_FINGERPRINT; supply identity, an "
+                "object carrying connector_operation, operation_version, "
+                "target and public_fields for the mutation being asked about"
+            )
+        try:
+            # The same method the mutation was made with: F(r) binds it, so a
+            # read-back claiming a different method is asking about a
+            # different mutation.
+            fingerprint = mutation_fingerprint(
+                method="POST",
+                endpoint=endpoint.name,
+                envelope=identity,
+                identity_fields=endpoint.identity_fields,
+            )
+        except FingerprintError as error:
+            raise ReadbackInputError(
+                f"identity descriptor cannot be fingerprinted: {error}"
+            ) from None
+        rows = api.ledger.applications_for_fingerprint(fingerprint)
+
+    return [row for row in rows if row.endpoint == endpoint.name]
+
+
 def _readback_result(
     api: MockLegacyAPI,
     endpoint: EndpointConfig,
     *,
-    client_reference: str,
+    client_reference: str | None = None,
+    identity: dict[str, Any] | None = None,
 ) -> ReadbackResult:
     """Decide what this endpoint's capability permits it to say.
 
@@ -254,11 +308,9 @@ def _readback_result(
     described in prose.
     """
     permitted = PERMITTED_READBACK_RESULTS[endpoint.response_class]
-    applications = [
-        row
-        for row in api.ledger.applications_for_client_reference(client_reference)
-        if row.endpoint == endpoint.name
-    ]
+    applications = _readback_applications(
+        api, endpoint, client_reference=client_reference, identity=identity
+    )
 
     if len(applications) > 1:
         return ReadbackResult.CONFLICT
@@ -379,8 +431,13 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
             }
         )
 
-    @app.get("/v1/endpoints/{endpoint_name}/readback")
-    async def readback(endpoint_name: str, client_reference: str) -> Response:
+    async def _answer_readback(
+        endpoint_name: str,
+        *,
+        client_reference: str | None,
+        identity: dict[str, Any] | None,
+    ) -> Response:
+        """The one read-back implementation both routes share."""
         try:
             endpoint = api.config.endpoint(endpoint_name)
         except Exception:
@@ -390,7 +447,9 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
 
         if not PERMITTED_READBACK_RESULTS[endpoint.response_class]:
             # The capability permits no evidence at all, so the endpoint has
-            # no read-back to offer and must not invent one.
+            # no read-back to offer and must not invent one. Checked before
+            # the keying: what a capability may assert outranks how a run
+            # chose to index it.
             return JSONResponse(
                 {
                     "detail": "this endpoint's capability permits no read-back "
@@ -399,12 +458,17 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
                 status_code=409,
             )
 
-        result = await asyncio.to_thread(
-            _readback_result,
-            api,
-            endpoint,
-            client_reference=client_reference,
-        )
+        try:
+            result = await asyncio.to_thread(
+                _readback_result,
+                api,
+                endpoint,
+                client_reference=client_reference,
+                identity=identity,
+            )
+        except ReadbackInputError as error:
+            return JSONResponse({"detail": str(error)}, status_code=422)
+
         if not result_is_permitted(endpoint.response_class, result):
             # Unreachable by construction; asserted because a service that
             # asserts evidence its capability may not produce would silently
@@ -416,7 +480,61 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
             {
                 "result": result.value,
                 "response_class": endpoint.response_class.value,
+                "readback_keying": api.config.readback_keying.value,
             }
+        )
+
+    @app.get("/v1/endpoints/{endpoint_name}/readback")
+    async def readback(endpoint_name: str, client_reference: str) -> Response:
+        """Read-back by caller reference. Cannot serve ORACLE_FINGERPRINT.
+
+        A GET carries no room for a mutation description, so under
+        ORACLE_FINGERPRINT keying this route refuses rather than quietly
+        falling back to the caller reference -- which would answer a question
+        the run is not asking, under a keying it is not configured for.
+        """
+        if api.config.readback_keying is not ReadbackKeying.CALLER_REFERENCE:
+            return JSONResponse(
+                {
+                    "detail": "this run is keyed on "
+                    f"{api.config.readback_keying.value}; the GET route can "
+                    "only answer CALLER_REFERENCE read-backs. POST an identity "
+                    "descriptor instead."
+                },
+                status_code=409,
+            )
+        return await _answer_readback(
+            endpoint_name, client_reference=client_reference, identity=None
+        )
+
+    @app.post("/v1/endpoints/{endpoint_name}/readback")
+    async def readback_described(endpoint_name: str, request: Request) -> Response:
+        """Read-back under either keying.
+
+        The caller sends both what it knows: the reference it used, and a
+        description of the mutation. The *service* decides which one is
+        authoritative, from its own configuration.
+        """
+        try:
+            body = json.loads(await request.body() or b"{}")
+        except (ValueError, UnicodeDecodeError):
+            return JSONResponse({"detail": "body is not JSON"}, status_code=400)
+        if not isinstance(body, dict):
+            return JSONResponse({"detail": "body must be an object"}, status_code=400)
+
+        identity = body.get("identity")
+        if identity is not None and not isinstance(identity, dict):
+            return JSONResponse(
+                {"detail": "identity must be an object"}, status_code=400
+            )
+        client_reference = body.get("client_reference")
+        if client_reference is not None and not isinstance(client_reference, str):
+            return JSONResponse(
+                {"detail": "client_reference must be a string"}, status_code=400
+            )
+
+        return await _answer_readback(
+            endpoint_name, client_reference=client_reference, identity=identity
         )
 
     # -- the oracle. Never reachable by the protocol under evaluation. -----

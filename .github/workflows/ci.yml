@@ -49,8 +49,9 @@ env:
   REDIS_IMAGE: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
   # Guards against a collapsed collection reading as success. Raise this when
   # the suite grows; never lower it without saying why.
-  # 1223 (Phase 2A) -> 1379 with the Phase 2B Session 1 harness tests.
-  MINIMUM_TESTS: "1350"
+  # 1223 (Phase 2A) -> 1387 with the Phase 2B Session 1 harness tests
+  #                 -> 1565 with the Session 2 crash injector and runner.
+  MINIMUM_TESTS: "1500"
 
 jobs:
   # =========================================================================

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Callable, Mapping
 
 import httpx
 
@@ -104,6 +104,9 @@ class MockLegacyApiConnector:
         endpoint_profile_id: str,
         endpoint_profile_version: str,
         client: httpx.AsyncClient | None = None,
+        readback_identity_resolver: (
+            Callable[[ReconciliationContext], Mapping[str, Any]] | None
+        ) = None,
     ) -> None:
         if not isinstance(reconciliation_capability, ReconciliationCapability):
             raise TypeError(
@@ -118,6 +121,12 @@ class MockLegacyApiConnector:
         self.endpoint_profile_version = endpoint_profile_version
         self._client = client
         self._owns_client = client is None
+        # Optional, and deliberately not a decision about *keying*: it is a
+        # statement about whether this caller retained enough of its own
+        # request to describe it later. A real caller that stored what it sent
+        # can; one that did not, cannot. The provider decides what it will
+        # index by; see the module docstring and docs/24-readback-keying.md.
+        self._readback_identity_resolver = readback_identity_resolver
 
     async def _http(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -190,11 +199,25 @@ class MockLegacyApiConnector:
             raise TypeError("a safe reconciliation context is required")
 
         http = await self._http()
-        response = await http.get(
-            f"{self.base_url}/v1/endpoints/{self.endpoint}/readback",
-            params={"client_reference": context.request_fingerprint},
-            timeout=readback_timeout,
-        )
+        if self._readback_identity_resolver is None:
+            response = await http.get(
+                f"{self.base_url}/v1/endpoints/{self.endpoint}/readback",
+                params={"client_reference": context.request_fingerprint},
+                timeout=readback_timeout,
+            )
+        else:
+            # Send both things this caller legitimately knows. Which one the
+            # provider consults is the provider's configuration, not ours: a
+            # connector that branched on it would make the system under test
+            # behave differently depending on how it was being measured.
+            response = await http.post(
+                f"{self.base_url}/v1/endpoints/{self.endpoint}/readback",
+                json={
+                    "client_reference": context.request_fingerprint,
+                    "identity": dict(self._readback_identity_resolver(context)),
+                },
+                timeout=readback_timeout,
+            )
         if response.status_code != 200:
             # Including 409 from an endpoint whose class permits no read-back:
             # an uninformative answer is not evidence, and UNKNOWN keeps the

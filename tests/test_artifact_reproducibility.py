@@ -303,13 +303,68 @@ def test_the_restart_test_is_collected_by_the_full_suite():
     assert "tests" in metadata["tool"]["pytest"]["ini_options"]["testpaths"]
 
 
+def compose_services() -> dict:
+    import yaml
+
+    return yaml.safe_load(read(COMPOSE))["services"]
+
+
 @pytest.mark.parametrize("job_name", REDIS_DEPENDENT_JOBS)
 def test_every_redis_job_names_the_container_the_restart_test_restarts(job_name):
-    """`docker restart` needs the compose container name, not a service alias."""
+    """`docker restart` needs the compose container name, not a service alias.
+
+    Parsed per service rather than by taking the first ``container_name:`` in
+    the file: compose.phase2.yml gained a second container in Phase 2B
+    Session 2 (toxiproxy), and a positional read would have kept passing while
+    silently checking whichever service happened to be declared first.
+    """
     job = workflow_jobs()[job_name]
-    container = read(COMPOSE).split("container_name:")[1].split("\n")[0].strip()
+    container = compose_services()["redis-phase2"]["container_name"]
 
     assert job["env"]["AEP_PHASE2_REDIS_CONTAINER"] == container
+
+
+# ===========================================================================
+# The worker-to-Redis fault surface is declared, not improvised
+#
+# PAPER_ROADMAP.md 3.1(2) requires a proxy-based partition between worker and
+# Redis. A harness that created its proxy over the API at run time could run
+# green against a proxy that was never made; declaring it here means a run
+# either has the fault surface or fails to start.
+# ===========================================================================
+
+
+def test_compose_declares_the_toxiproxy_fault_surface():
+    services = compose_services()
+
+    assert "toxiproxy" in services, (
+        "compose.phase2.yml declares no toxiproxy service, so no run can "
+        "partition a worker from Redis"
+    )
+
+
+def test_the_toxiproxy_image_is_pinned_by_digest():
+    """Same reasoning as the Redis pin: a tag can be re-pointed."""
+    image = compose_services()["toxiproxy"]["image"]
+
+    assert re.search(r"@sha256:[0-9a-f]{64}$", image), (
+        f"toxiproxy image {image!r} is not pinned by digest"
+    )
+
+
+def test_the_declared_proxy_points_at_the_redis_this_repository_runs():
+    """A partition against some other Redis would prove nothing."""
+    import json
+
+    proxies = json.loads(read(REPO_ROOT / "redis" / "toxiproxy.json"))
+    services = compose_services()
+    (proxy,) = proxies
+
+    assert proxy["upstream"].split(":")[0] in services
+    assert proxy["upstream"] == "redis-phase2:6379"
+    # The listener the proxy binds must be the one compose publishes.
+    published = [str(entry) for entry in services["toxiproxy"]["ports"]]
+    assert any(proxy["listen"].split(":")[1] in entry for entry in published)
 
 
 # ===========================================================================

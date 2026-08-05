@@ -218,10 +218,10 @@ def test_consistency_holds_over_many_applications(ledger):
 def test_consistency_detects_a_state_row_the_ledger_cannot_explain(ledger):
     """Proves the invariant can fail, so passing it elsewhere means something."""
     apply_mutation(ledger, call_id="call-1")
-    ledger._connection.execute(  # noqa: SLF001 -- deliberate corruption
+    ledger._require_connection().execute(  # noqa: SLF001 -- deliberate corruption
         "UPDATE simulated_state SET effect_count = effect_count + 1"
     )
-    ledger._connection.commit()  # noqa: SLF001
+    ledger._require_connection().commit()  # noqa: SLF001
 
     report = ledger.consistency_report()
     assert not report.is_consistent

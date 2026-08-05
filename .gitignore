@@ -38,6 +38,10 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+# JUnit XML and the tee'd pytest output the gate script reads. Both are
+# produced by every local run of the CI sequence; neither is source.
+junit*.xml
+pytest-*.txt
 
 # --- Type checkers / linters --------------------------------------------------
 .mypy_cache/

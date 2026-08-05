@@ -53,7 +53,14 @@ from aep_core.core.connector_contract import ReconciliationCapability
 CONFIG_VERSION = "aep.mock-legacy-api.config/1"
 
 _TOP_LEVEL_KEYS = frozenset(
-    {"config_version", "seed", "ledger_path", "defaults", "endpoints"}
+    {
+        "config_version",
+        "seed",
+        "ledger_path",
+        "defaults",
+        "endpoints",
+        "readback_keying",
+    }
 )
 _ENDPOINT_KEYS = frozenset(
     {"response_class", "identity_fields", "faults", "crash_simulation"}
@@ -86,6 +93,38 @@ class DelayDistribution(str, Enum):
     CONSTANT = "constant"
     UNIFORM = "uniform"
     EXPONENTIAL = "exponential"
+
+
+class ReadbackKeying(str, Enum):
+    """What a provider is able to look a past mutation up *by*.
+
+    This is a modelling decision inside the measurement apparatus, not a
+    feature of the protocol, and amendment C1 makes it an explicit per-run
+    configuration with exactly two values so that no result can be quoted
+    without saying which one produced it. The rationale is in
+    ``docs/24-readback-keying.md``; the short form:
+
+    ``CALLER_REFERENCE``
+        The provider indexes past mutations by the opaque reference the caller
+        supplied. Finding your own past effect requires having minted a stable
+        identifier for it *before* the ambiguity arose -- which is precisely
+        the discipline the protocol under test has and the naive baselines do
+        not. This is the primary model; every headline number is collected
+        under it.
+
+    ``ORACLE_FINGERPRINT``
+        The provider indexes past mutations by their content, using the
+        oracle's own identity function (Definition 1 in ``fingerprint.py``).
+        Any caller that can describe the mutation can find it, so a baseline
+        with no idempotency discipline still gets a working read-back. This is
+        the sensitivity variant: it is *more* generous than a real legacy
+        endpoint, and it deliberately cannot distinguish two intended
+        mutations with identical content -- a hazard asserted by test in
+        ``tests/test_readback_keying.py``.
+    """
+
+    CALLER_REFERENCE = "CALLER_REFERENCE"
+    ORACLE_FINGERPRINT = "ORACLE_FINGERPRINT"
 
 
 def _reject_unknown(document: Mapping[str, Any], allowed: frozenset[str], where: str) -> None:
@@ -380,6 +419,9 @@ class MockApiConfig:
     ledger_path: str
     endpoints: Mapping[str, EndpointConfig]
     source_path: str
+    #: Amendment C1. Part of the digest: a result collected under one keying
+    #: must not be attributable to a run under the other.
+    readback_keying: ReadbackKeying = ReadbackKeying.CALLER_REFERENCE
 
     def echo(self) -> dict[str, Any]:
         """The whole configuration, JSON-ready, with its own digest.
@@ -397,6 +439,7 @@ class MockApiConfig:
             "seed": self.seed,
             "ledger_path": self.ledger_path,
             "source_path": self.source_path,
+            "readback_keying": self.readback_keying.value,
             "endpoints": {
                 name: endpoint.echo()
                 for name, endpoint in sorted(self.endpoints.items())
@@ -483,10 +526,22 @@ def load_config(path: str | Path) -> MockApiConfig:
     if not isinstance(ledger_path, str) or not ledger_path:
         raise ConfigError("ledger_path must be a non-empty string")
 
+    raw_keying = document.get(
+        "readback_keying", ReadbackKeying.CALLER_REFERENCE.value
+    )
+    try:
+        keying = ReadbackKeying(raw_keying)
+    except ValueError:
+        raise ConfigError(
+            f"readback_keying {raw_keying!r} is not a declared keying; "
+            f"permitted: {[member.value for member in ReadbackKeying]}"
+        ) from None
+
     return MockApiConfig(
         config_version=version,
         seed=seed,
         ledger_path=ledger_path,
         endpoints=endpoints,
         source_path=str(source),
+        readback_keying=keying,
     )

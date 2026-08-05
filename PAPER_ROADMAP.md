@@ -116,6 +116,26 @@ Run the full suite against real Redis 7.2 in Docker and paste the raw output int
 > unchanged. Read §F5 and §G1 of the Session 1 report before writing the
 > baselines: the read-back key is a modelling decision that will affect B0's
 > numbers.
+>
+> **Session 2 is COMPLETE** — report:
+> `reports/phase-report-2b-session2-2026-08-05.md`. `experiments/harness/`
+> ships the six named crash points (mapped onto `aep_core`'s checkpoints by a
+> test, not a comment), the environment-selected process crash injector with
+> real `SIGKILL`, the multi-process runner and recovery process, Redis restart
+> with *verified* AOF replay, a toxiproxy worker↔Redis partition declared in
+> `compose.phase2.yml`, and `results/<run_id>/events.jsonl` cross-checked
+> against the ground-truth ledger. Session 1's open question G1 is settled by
+> `docs/24-readback-keying.md`: read-back keying is a per-run configuration
+> with `CALLER_REFERENCE` primary and `ORACLE_FINGERPRINT` as the sensitivity
+> variant, both implemented. Every harness path runs in EVALUATION mode with
+> no test flags. 1387 → 1565 tests; coverage 90.31% → 91.18%.
+>
+> The self-validation run found **two defects that the unit suite had missed**
+> — `IntentRecoveryService` never satisfied its durability barrier's startup
+> contract, and the ground-truth ledger's read path was not thread-safe. Both
+> are fixed with regressions. Read §F1, §F2, §F6 and §F7 of the Session 2
+> report before Session 3: only one of the six crash points has actually been
+> run, and only once.
 
 Build a **crash-point fault-injection harness** + **mock legacy API** + **multi-process workload driver**. Everything runs on one machine with Docker.
 

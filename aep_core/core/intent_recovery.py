@@ -123,6 +123,11 @@ class IntentRecoveryService:
         self.recovery_lag_alert = recovery_lag_alert
         self.scan_failure_alert = scan_failure_alert
         self.last_scan_failures: tuple[RecoveryScanFailure, ...] = ()
+        #: Barriers whose startup contract this service has already satisfied.
+        #: Keyed by identity: two connectors may share one barrier object, and
+        #: validation is four Redis round trips, not something to repeat per
+        #: recovered intent.
+        self._validated_barriers: set[int] = set()
         for name, config in self.connectors.items():
             required_retention = math.ceil(
                 config.policy.max_reconciliation_duration_seconds
@@ -332,8 +337,36 @@ class IntentRecoveryService:
                 await asyncio.sleep(self.random.uniform(0, ceiling))
         return None
 
+    async def _validate_barrier(self, barrier) -> None:
+        """Satisfy the barrier's startup contract once, before first use.
+
+        The production barrier refuses to issue ``WAITAOF`` until its
+        capability check has succeeded (``RealWaitAofDurabilityBarrier``).
+        The write-ahead workflow calls that check before every dispatch;
+        recovery did not, so with the production barrier every recovery
+        resolution wrote its transition and then failed to confirm it --
+        leaving the state advanced but unacknowledged, and reporting the
+        resolution as an isolated failure. Regression:
+        ``tests/test_recovery_durability_barrier.py``.
+
+        A barrier with no ``validate_startup`` is left alone: this service has
+        no dispatch-mode concept and so cannot tell a test barrier from a
+        production one. Deciding which barriers are admissible is the
+        composition's job (``WriteAheadRunner.validate_startup``); deciding
+        that a barrier's own precondition is met before calling it is this
+        one's.
+        """
+
+        if id(barrier) in self._validated_barriers:
+            return
+        validator = getattr(barrier, "validate_startup", None)
+        if callable(validator):
+            await validator(self.store.redis)
+        self._validated_barriers.add(id(barrier))
+
     async def _durable(self, barrier, connection, timeout_ms: int) -> None:
         try:
+            await self._validate_barrier(barrier)
             durable = await barrier.confirm_durable(connection, timeout_ms)
         except Exception as exc:
             raise WriteAheadWorkflowError(

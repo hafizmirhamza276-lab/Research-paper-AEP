@@ -1,0 +1,204 @@
+"""One worker process: ``python -m experiments.harness.worker``.
+
+A worker is an ordinary OS process that executes a slice of the workload
+through the EVALUATION composition and, if the run selected it, stops existing
+partway through. It is spawned by ``experiments/harness/runner.py`` and is not
+meant to be run by hand except when debugging.
+
+**Progress is recorded, not returned.** A SIGKILLed process returns nothing.
+The runner therefore reads a dead worker's shard of ``events.jsonl`` to learn
+which execution it had reached, and respawns from the next one -- which is what
+a supervisor does with a crashed worker, and which is what makes the crashed
+execution's fate a matter for the recovery service rather than for a retry
+loop. Nothing here ever re-executes an execution it may already have
+dispatched: that is the behaviour under test, not a behaviour to work around.
+
+**One crash per process.** The injector fires once. A run that wants ten
+crashed executions gets ten worker lifetimes, which is also what makes the
+lease-expiry timing realistic: the lease of a crashed execution is held by a
+process that no longer exists until Redis expires it.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import os
+import sys
+import time
+from pathlib import Path
+
+from redis.asyncio import Redis
+
+from aep_core.core.locks import DistributedLockManager
+from aep_core.core.storage import RedisStorageAdapter
+
+from experiments.harness.composition import (
+    build_connector,
+    build_runner,
+    seed_execution_state,
+)
+from experiments.harness.config import RunConfig, load_run_config
+from experiments.harness.events import EventLog
+from experiments.harness.injector import ProcessCrashInjector
+from experiments.harness.workload import (
+    index_by_execution_id,
+    plan_workload,
+    request_for,
+    worker_items,
+)
+
+#: Exit status a worker uses when it failed for a reason the run did not
+#: schedule. Distinguished from an injected crash, which leaves no exit status
+#: of its own choosing at all.
+UNEXPECTED_FAILURE_EXIT = 70
+
+
+def shard_path(config: RunConfig, worker_index: int, attempt: int) -> Path:
+    return config.results_dir / f"events-worker-{worker_index}-attempt-{attempt}.jsonl"
+
+
+def source_name(worker_index: int, attempt: int) -> str:
+    return f"worker-{worker_index}#{attempt}"
+
+
+async def run_worker(
+    config: RunConfig, *, worker_index: int, attempt: int, from_index: int
+) -> int:
+    log = EventLog(
+        shard_path(config, worker_index, attempt),
+        run_id=config.run_id,
+        source=source_name(worker_index, attempt),
+    )
+    injector = ProcessCrashInjector.from_environment(emit=log.emit)
+
+    items = [
+        item
+        for item in worker_items(plan_workload(config), worker_index)
+        if item.execution_index >= from_index
+    ]
+    log.emit(
+        "worker_started",
+        worker_index=worker_index,
+        attempt=attempt,
+        from_index=from_index,
+        assigned=len(items),
+        crash_plan=injector.plan.echo() if injector is not None else None,
+        redis_url=config.effective_worker_redis_url,
+    )
+
+    redis_client = Redis.from_url(
+        config.effective_worker_redis_url, decode_responses=True
+    )
+    connector = build_connector(
+        config, items=index_by_execution_id(plan_workload(config))
+    )
+    exit_status = 0
+    try:
+        lock_manager = DistributedLockManager(redis_client)
+        storage_adapter = RedisStorageAdapter(redis_client)
+        runner = build_runner(
+            config,
+            redis_client=redis_client,
+            lock_manager=lock_manager,
+            connector=connector,
+            crash_injector=injector,
+        )
+
+        await runner.validate_startup()
+        log.emit(
+            "composition_validated",
+            dispatch_mode=runner.mode.value,
+            barrier=type(runner.barrier).__name__,
+            vault=type(runner.binding_service.vault).__name__,
+            connector=type(connector).__name__,
+            # Discovered from the object, not spelled out: any truthy
+            # ``allow_*`` attribute the runner carries is named here, so the
+            # run log is the evidence that no test affordance was granted --
+            # and a future affordance would appear without this line changing.
+            # (Naming them as literals would also trip the source gate in
+            # ``tests/test_composition.py``, which is the point of that gate.)
+            test_authorisations=sorted(
+                name
+                for name in vars(runner)
+                if name.startswith("allow_") and getattr(runner, name)
+            ),
+        )
+
+        for item in items:
+            if injector is not None:
+                injector.enter_execution(item.execution_id)
+            log.emit(
+                "execution_started",
+                worker_index=worker_index,
+                execution_index=item.execution_index,
+                execution_id=item.execution_id,
+                target=item.target,
+                amount_minor=item.amount_minor,
+                crash_selected=item.crash_selected,
+            )
+            started = time.monotonic_ns()
+            try:
+                await seed_execution_state(
+                    storage_adapter=storage_adapter,
+                    lock_manager=lock_manager,
+                    execution_id=item.execution_id,
+                )
+                resolved = await runner.execute(
+                    execution_id=item.execution_id,
+                    step_id=item.step_id,
+                    request=request_for(item),
+                )
+            except BaseException as error:  # noqa: BLE001 -- recorded, then re-raised
+                log.emit(
+                    "execution_failed",
+                    execution_id=item.execution_id,
+                    execution_index=item.execution_index,
+                    failure_class=type(error).__name__,
+                    duration_ns=time.monotonic_ns() - started,
+                )
+                if isinstance(error, (KeyboardInterrupt, SystemExit)):
+                    raise
+                exit_status = UNEXPECTED_FAILURE_EXIT
+                continue
+
+            log.emit(
+                "execution_resolved",
+                execution_id=item.execution_id,
+                execution_index=item.execution_index,
+                intent_id=resolved.intent_id,
+                status=resolved.status.value,
+                request_fingerprint=resolved.request_fingerprint,
+                duration_ns=time.monotonic_ns() - started,
+            )
+    finally:
+        log.emit("worker_finished", worker_index=worker_index, attempt=attempt)
+        try:
+            await connector.aclose()
+        finally:
+            await redis_client.aclose()
+            log.close()
+    return exit_status
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run one AEP harness worker.")
+    parser.add_argument("--run-config", required=True, type=Path)
+    parser.add_argument("--worker-index", required=True, type=int)
+    parser.add_argument("--attempt", required=True, type=int)
+    parser.add_argument("--from-index", default=0, type=int)
+    arguments = parser.parse_args(argv)
+
+    config = load_run_config(arguments.run_config)
+    return asyncio.run(
+        run_worker(
+            config,
+            worker_index=arguments.worker_index,
+            attempt=arguments.attempt,
+            from_index=arguments.from_index,
+        )
+    )
+
+
+if __name__ == "__main__":  # pragma: no cover - process entry point
+    sys.exit(main())

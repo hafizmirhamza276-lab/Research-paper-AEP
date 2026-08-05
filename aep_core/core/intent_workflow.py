@@ -570,6 +570,14 @@ class WriteAheadRunner:
                     f"verified-dispatch-rejected:{exc}"
                 ) from None
 
+            # The last instruction before any provider bytes can exist. A
+            # process cut here has a durable, authorised ABOUT_TO_FIRE intent
+            # and has provably not dispatched; a process cut *after* this line
+            # may have. It is also the point an out-of-process injector arms a
+            # deferred kill from, to land inside the socket wait
+            # (experiments/harness/crash_points.py, ``mid_dispatch``).
+            await self._checkpoint("AFTER_PREFLIGHT_BEFORE_REQUEST_TRANSMISSION")
+
             try:
                 response = await self.connector.mutate(
                     dispatch=verified_dispatch,
