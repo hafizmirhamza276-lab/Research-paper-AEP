@@ -71,7 +71,14 @@ Environment prerequisite (do this first): install/pin Python 3.13 and project de
 Update docs/22-formal-model.md wherever these fixes change an enforcement table, residual window, or gap section. Every fix must appear in the report with its before-failing and after-passing raw test output.
 
 
-## 2. CURRENT PHASE: Phase 2A — Make the artifact evaluation-grade (1–2 weeks of Claude Code work)
+## 2. Phase 2A — COMPLETE. Make the artifact evaluation-grade
+
+> Report: `docs/23-ci-hardening-report.md`. Its open question **G1**
+> (deselection vs. compose-everywhere) was resolved in favour of
+> compose-everywhere at the start of Phase 2B; both CI jobs now provision Redis
+> from `compose.phase2.yml` and the workflow deselects nothing. Its finding
+> **F3** ("no CI run has ever been observed") is retired: the first green run is
+> [30998269749](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/30998269749).
 
 Before experiments, harden reproducibility. All local, no GPU.
 
@@ -96,7 +103,19 @@ Run the full suite against real Redis 7.2 in Docker and paste the raw output int
 
 ---
 
-## 3. Phase 2B — The evaluation harness (this is the heart of the paper)
+## 3. CURRENT PHASE: Phase 2B — The evaluation harness (this is the heart of the paper)
+
+> **Session 1 is COMPLETE** — report:
+> `reports/phase-report-2b-session1-2026-08-05.md`. `experiments/mock_api/`
+> ships the standalone service, the SQLite ground-truth ledger (WAL,
+> `synchronous=FULL`, one transaction per applied mutation), the YAML fault
+> surface with a config echo in every run log, a docker-compose entry, and one
+> end-to-end EVALUATION-mode dispatch that retires the "admissible, not
+> functional" finding of `reports/phase-report-1b-2026-08-05.md` §F4 at the
+> scope of a single dispatch. 1223 → 1387 tests. Sessions 2 and 3 below are
+> unchanged. Read §F5 and §G1 of the Session 1 report before writing the
+> baselines: the read-back key is a modelling decision that will affect B0's
+> numbers.
 
 Build a **crash-point fault-injection harness** + **mock legacy API** + **multi-process workload driver**. Everything runs on one machine with Docker.
 
