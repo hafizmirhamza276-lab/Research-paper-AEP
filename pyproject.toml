@@ -4,9 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aep-core"
-version = "0.1.0"
-description = "Agent Execution Protocol — Phase 1 core persistence and concurrency primitives"
-requires-python = ">=3.13"
+version = "0.2.0"
+description = "Agent Execution Protocol — fail-closed execution for agents calling non-idempotent legacy APIs"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+# Upper-bounded on purpose: the artifact is evidenced on CPython 3.13 only
+# (see .python-version and docs/23-ci-hardening-report.md). Widening this is a
+# claim that must be re-evidenced, not a convenience.
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "redis>=5.0",
     "pydantic>=2.0",
@@ -19,6 +25,9 @@ dev = [
     "pytest-asyncio>=0.23",
     "fakeredis[lua]>=2.20",
 ]
+cov = [
+    "pytest-cov>=7.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -28,6 +37,20 @@ include = ["aep_core*"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+# An xfail that starts passing is a result change nobody reviewed. Making it
+# a hard failure means it cannot reach the CI gate as a mere summary note.
+# scripts/check_pytest_gates.py checks it independently, because a per-test
+# strict=False can override this global setting.
+xfail_strict = true
 markers = [
     "redis72_integration: requires the dedicated Redis 7.2+ AOF DB 15 environment",
 ]
+
+[tool.coverage.run]
+source = ["aep_core"]
+branch = false
+
+[tool.coverage.report]
+# The roadmap's artifact-evaluation gate (PAPER_ROADMAP.md:83).
+fail_under = 90
+show_missing = true

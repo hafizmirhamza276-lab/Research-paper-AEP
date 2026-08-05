@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software or its artifact, please cite it as below."
+title: "AEP: A Fail-Closed Execution Protocol for Autonomous Agents Calling Non-Idempotent Legacy APIs"
+abstract: >-
+  AEP is a fail-closed execution protocol for autonomous agents that call
+  non-idempotent legacy APIs. Rather than claiming exactly-once semantics,
+  it makes ambiguity a first-class, durable, detectable state: every external
+  side effect is preceded by a durably-acknowledged write-ahead intent, every
+  state write is fenced by lock ownership and exact expected-version CAS, and
+  every unresolvable outcome halts and escalates rather than guessing. The
+  honest guarantee on a single Redis instance is that corruption and
+  contention are detectable and the system fails closed -- not absolute
+  atomicity, not split-brain immunity, and not exactly-once delivery.
+type: software
+version: 0.2.0
+date-released: "2026-08-05"
+license: MIT
+repository-code: "https://github.com/hafizmirhamza276-lab/Research-paper-AEP"
+authors:
+  - family-names: Khan
+    given-names: Hamza
+keywords:
+  - agent reliability
+  - durable execution
+  - write-ahead intent
+  - fail-closed protocol
+  - non-idempotent APIs
+  - distributed coordination
+  - Redis
+  - fault injection

@@ -1,0 +1,234 @@
+name: CI
+
+# Artifact-evaluation CI for AEP (PAPER_ROADMAP.md section 2, Phase 2A).
+#
+# The design constraint driving this file: **a green build must mean the suite
+# ran**. The repository's audit history contains a green build whose green came
+# from tests that never executed ("36 skipped = green"). Every gate below
+# exists to make that specific outcome impossible, and each gate is itself
+# tested in tests/test_ci_gates.py and tests/test_citation_validator.py.
+#
+# Gates:
+#   (i)   zero skipped tests            -- scripts/check_pytest_gates.py
+#   (ii)  zero xpassed tests            -- scripts/check_pytest_gates.py + xfail_strict
+#   (iii) coverage >= 90% on aep_core   -- pytest-cov --cov-fail-under
+#   (iv)  docs/22 citations in range    -- scripts/validate_citations.py
+#
+# Redis is never faked here. Both test jobs assert, before running anything,
+# that the live server really provides redis/phase2.conf semantics and really
+# implements WAITAOF (scripts/verify_redis_semantics.py).
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The exact image the verified runs used. Pinned by digest, not tag: a tag
+  # can be re-pointed, and "Redis 7.2 with AOF" is load-bearing for every
+  # durability claim in docs/22-formal-model.md.
+  REDIS_IMAGE: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+  # Guards against a collapsed collection reading as success. Raise this when
+  # the suite grows; never lower it without saying why.
+  MINIMUM_TESTS: "1100"
+
+jobs:
+  # =========================================================================
+  # Gate (iv). No services, so it reports fast and independently of Redis.
+  # =========================================================================
+  citations:
+    name: Citation ranges (docs/22)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Validate docs/22-formal-model.md citations
+        run: uv run --frozen python scripts/validate_citations.py
+
+  # =========================================================================
+  # Main suite. Redis 7.2 as a GitHub Actions service container.
+  # =========================================================================
+  test:
+    name: Suite (py${{ matrix.python-version }}, Redis service container)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+
+    services:
+      redis:
+        # A service container cannot be given a command line and cannot mount
+        # redis/phase2.conf: services start before the repository is checked
+        # out. AOF is therefore applied at runtime by the step below, which
+        # derives every value from phase2.conf and then asserts the live
+        # server reports it. The suite never runs against a default Redis.
+        image: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 1s
+          --health-timeout 2s
+          --health-retries 30
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379/15
+      AEP_PHASE2_REDIS_INTEGRATION: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Record the exact environment under test
+        run: |
+          echo "--- interpreter ---"
+          uv run --frozen python -VV
+          echo "--- resolved dependency set ---"
+          uv pip freeze
+          echo "--- redis image ---"
+          docker image inspect "${REDIS_IMAGE}" --format '{{index .RepoDigests 0}}' || true
+
+      - name: Apply and verify redis/phase2.conf semantics
+        # Fails the job if the live server is not Redis >= 7.2 with AOF
+        # actually active and WAITAOF actually present. Values are read from
+        # redis/phase2.conf, so CI cannot drift from the compose environment.
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}" --apply
+
+      - name: Run the suite
+        # `docker restart` does not preserve CONFIG SET, so the one test that
+        # restarts Redis cannot run against a service container: the server
+        # would come back with AOF off and the persisted data gone. It is
+        # deselected here by name -- loudly, not silently -- and is executed
+        # in full by the waitaof-durability job below, which owns a Redis
+        # started from redis/phase2.conf. Coverage of that test is therefore
+        # not lost, only moved.
+        run: |
+          set -o pipefail
+          echo "NOTE: deselecting the Redis-restart test in this job; the"
+          echo "      waitaof-durability job runs it against compose."
+          uv run --frozen pytest \
+            -q -ra --strict-markers \
+            --deselect "tests/test_phase2_waitaof_integration.py::test_intent_and_resolution_survive_controlled_redis_restart" \
+            --junitxml=junit.xml \
+            --cov=aep_core \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=90 \
+            2>&1 | tee pytest-output.txt
+
+      - name: Gate -- zero skipped, zero xpassed, suite actually ran
+        if: always()
+        run: |
+          uv run --frozen python scripts/check_pytest_gates.py \
+            --junit junit.xml \
+            --output pytest-output.txt \
+            --minimum-tests "${MINIMUM_TESTS}"
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-py${{ matrix.python-version }}
+          path: |
+            junit.xml
+            coverage.xml
+            pytest-output.txt
+          if-no-files-found: warn
+
+  # =========================================================================
+  # WAITAOF durability suite against a Redis started FROM redis/phase2.conf,
+  # so AOF survives a restart and the crash-recovery test can actually run.
+  # =========================================================================
+  waitaof-durability:
+    name: WAITAOF durability (compose, phase2.conf)
+    runs-on: ubuntu-24.04
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6381/15
+      AEP_PHASE2_REDIS_INTEGRATION: "1"
+      AEP_PHASE2_REDIS_CONTAINER: aep-phase2-redis72
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Start Redis 7.2 from compose.phase2.yml
+        run: |
+          docker compose -f compose.phase2.yml up -d --wait
+          docker compose -f compose.phase2.yml ps
+
+      - name: Verify redis/phase2.conf semantics
+        # No --apply: this Redis was started from the config file, so if the
+        # settings are not already correct that is a real defect in the
+        # compose definition and the job should fail.
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Run the WAITAOF integration suite
+        run: |
+          set -o pipefail
+          uv run --frozen pytest \
+            -q -ra --strict-markers \
+            tests/test_phase2_waitaof_integration.py \
+            --junitxml=junit-waitaof.xml \
+            2>&1 | tee pytest-waitaof.txt
+
+      - name: Gate -- zero skipped, zero xpassed
+        if: always()
+        run: |
+          uv run --frozen python scripts/check_pytest_gates.py \
+            --junit junit-waitaof.xml \
+            --output pytest-waitaof.txt \
+            --minimum-tests 1
+
+      - name: Confirm AOF survived the restart test
+        if: always()
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.phase2.yml down -v
+
+      - name: Upload WAITAOF reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-waitaof
+          path: |
+            junit-waitaof.xml
+            pytest-waitaof.txt
+          if-no-files-found: warn
