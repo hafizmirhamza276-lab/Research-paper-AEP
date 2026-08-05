@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -19,6 +20,11 @@ from typing import Any, AsyncIterator, Mapping
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from redis.asyncio import Redis
 
+from src.core.durability import (
+    DurabilityAck,
+    consume_durability_ack,
+    dispatch_scope as durability_dispatch_scope,
+)
 from src.core.exceptions import (
     AEPException,
     LockAcquisitionError,
@@ -125,6 +131,10 @@ class IntentPreflightError(IntentStateError):
 
 class IntentBindingError(IntentInvariantError):
     """A mandatory immutable request binding is absent or inconsistent."""
+
+
+class DispatchAuthorizationError(IntentStateError):
+    """No durable-write acknowledgement authorises this dispatch attempt."""
 
 
 _SAFE_PERSISTED_VALUE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
@@ -562,6 +572,7 @@ if type(audit) ~= 'table' or audit.old_state ~= old_status or
 
 local unresolved_by_step = {}
 local attempts_by_step = {}
+local retention_required = false
 for key, record in pairs(candidate.intent_ledger) do
     if type(record) ~= 'table' or record.intent_id ~= key or
        type(record.step_id) ~= 'string' or type(record.attempt) ~= 'number' then
@@ -575,8 +586,17 @@ for key, record in pairs(candidate.intent_ledger) do
         if unresolved_by_step[record.step_id] then return -5 end
         unresolved_by_step[record.step_id] = true
     end
+    -- Phase 1B: an escalated record is the operator's only evidence of a
+    -- possibly-applied external effect, so it carries the same retention
+    -- floor as an unresolved one.  Kept separate from unresolved_by_step so
+    -- the per-step uniqueness rule is unchanged.
+    if record.status == 'ABOUT_TO_FIRE' or
+       record.status == 'FIRED_UNCONFIRMED' or
+       record.status == 'PERMANENTLY_AMBIGUOUS' then
+        retention_required = true
+    end
 end
-if next(unresolved_by_step) ~= nil and ttl < tonumber(ARGV[9]) then return -5 end
+if retention_required and ttl < tonumber(ARGV[9]) then return -5 end
 
 redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[8])
 return 1
@@ -611,10 +631,52 @@ local ok_binding, binding = pcall(
 )
 if not ok_binding or type(binding) ~= 'table' then return -8 end
 if binding.request_binding_digest ~= ARGV[5] then return -7 end
+
+-- Phase 1B: the durability acknowledgement is a CHECKED precondition of
+-- dispatch, not an ordering convention.  KEYS[3] is written only by
+-- _DISPATCH_AUTHORIZATION_SCRIPT, which the runner may invoke only after a
+-- barrier acknowledged the write-ahead intent on the pinned connection.
+if redis.call('GET', KEYS[3]) ~= ARGV[7] then return -9 end
 return ttl
 """
 
 _PREFLIGHT_SCRIPT = build_lua_state_validation_script(_PREFLIGHT_SCRIPT_BODY)
+
+
+# Records the post-barrier dispatch authorization.  Every precondition the
+# preflight will later re-check is verified here too, so an authorization can
+# never be minted for a stale lease, version, status, or binding.
+_DISPATCH_AUTHORIZATION_SCRIPT_BODY = r"""
+local raw = redis.call('GET', KEYS[1])
+if not raw then return -3 end
+local state_check = aep_json_member_check(raw)
+if state_check == 1 then return -11 end
+if state_check ~= 0 then return -10 end
+
+if redis.call('GET', KEYS[2]) ~= ARGV[1] then return -1 end
+local ok, state = pcall(cjson.decode, raw)
+if not ok or type(state) ~= 'table' or type(state.intent_ledger) ~= 'table' then
+    return -3
+end
+if state.version ~= tonumber(ARGV[2]) then return -4 end
+local intent = state.intent_ledger[ARGV[3]]
+if type(intent) ~= 'table' or intent.status ~= 'ABOUT_TO_FIRE' then return -5 end
+if type(intent.canonical_request_binding) ~= 'string' then return -6 end
+local ok_binding, binding = pcall(
+    cjson.decode, intent.canonical_request_binding
+)
+if not ok_binding or type(binding) ~= 'table' then return -6 end
+if binding.request_binding_digest ~= ARGV[4] then return -7 end
+local ttl = tonumber(ARGV[6])
+if not ttl or ttl < 1 then return -8 end
+if type(ARGV[5]) ~= 'string' or string.len(ARGV[5]) < 16 then return -8 end
+redis.call('SET', KEYS[3], ARGV[5], 'PX', ttl)
+return 1
+"""
+
+_DISPATCH_AUTHORIZATION_SCRIPT = build_lua_state_validation_script(
+    _DISPATCH_AUTHORIZATION_SCRIPT_BODY
+)
 
 
 def evidence_hash(evidence: Mapping[str, Any] | str | None) -> str:
@@ -659,6 +721,9 @@ class IntentLedgerStore:
         self.unresolved_ttl_seconds = unresolved_ttl_seconds
         self._intent_cas = redis_client.register_script(_INTENT_CAS_SCRIPT)
         self._preflight = redis_client.register_script(_PREFLIGHT_SCRIPT)
+        self._authorize_dispatch = redis_client.register_script(
+            _DISPATCH_AUTHORIZATION_SCRIPT
+        )
 
     @asynccontextmanager
     async def pinned_connection(self) -> AsyncIterator[Redis]:
@@ -1007,6 +1072,95 @@ class IntentLedgerStore:
             )
         raise IntentStateError("intent state CAS returned an unrecognized result")
 
+    @staticmethod
+    def dispatch_authorization_key(execution_id: str, intent_id: str) -> str:
+        """The Redis key recording that a barrier authorised this dispatch."""
+
+        return f"aep:dispatch-auth:{execution_id}:{intent_id}"
+
+    async def authorize_dispatch(
+        self,
+        *,
+        execution_id: str,
+        intent_id: str,
+        prepared_state_version: int,
+        lock_token: str,
+        request_binding: PersistedRequestBinding,
+        ack: DurabilityAck,
+        authorization_ttl_ms: int,
+        connection: Redis | None = None,
+    ) -> str:
+        """Record a dispatch authorization backed by a durability ack.
+
+        Consumes ``ack`` first, so a caller that never ran the barrier cannot
+        reach the Lua write.  The script then re-checks every precondition the
+        preflight will check, and stores an opaque single-attempt
+        authorization value that the preflight must be given.
+
+        Returns the authorization value to pass to :meth:`preflight`.
+        """
+
+        client = connection or self.redis
+        if not isinstance(request_binding, PersistedRequestBinding):
+            raise IntentBindingError(
+                "pre-dispatch request binding is absent or invalid"
+            )
+        # Raises DurabilityBarrierError when the acknowledgement is forged,
+        # reused, or issued for a different attempt.
+        consume_durability_ack(
+            ack,
+            scope=durability_dispatch_scope(
+                execution_id, intent_id, prepared_state_version
+            ),
+        )
+        authorization = secrets.token_urlsafe(32)
+        if authorization_ttl_ms < 1:
+            raise DispatchAuthorizationError(
+                "dispatch authorization TTL must be positive"
+            )
+        try:
+            result = int(
+                await self._authorize_dispatch(
+                    keys=[
+                        f"aep:state:{execution_id}",
+                        f"aep:lock:{execution_id}",
+                        self.dispatch_authorization_key(execution_id, intent_id),
+                    ],
+                    args=[
+                        lock_token,
+                        str(prepared_state_version),
+                        intent_id,
+                        request_binding.request_binding_digest,
+                        authorization,
+                        str(int(authorization_ttl_ms)),
+                    ],
+                    client=client,
+                )
+            )
+        except Exception:
+            raise DispatchAuthorizationError(
+                "dispatch authorization could not complete"
+            ) from None
+        if result == 1:
+            return authorization
+        await RedisStorageAdapter(client)._raise_lua_state_validation(
+            execution_id, result
+        )
+        if result in {-6, -7}:
+            raise IntentBindingError(
+                "dispatch authorization request binding is absent or does not match"
+            )
+        reasons = {
+            -1: "lease token is no longer owned",
+            -3: "execution state is missing or corrupt",
+            -4: "execution version no longer matches prepared_state_version",
+            -5: "intent is no longer ABOUT_TO_FIRE",
+            -8: "dispatch authorization parameters are invalid",
+        }
+        raise DispatchAuthorizationError(
+            reasons.get(result, "dispatch authorization was rejected")
+        )
+
     async def preflight(
         self,
         *,
@@ -1016,6 +1170,7 @@ class IntentLedgerStore:
         lock_token: str,
         required_ttl_ms: int,
         request_binding: PersistedRequestBinding,
+        authorization: str | None = None,
         connection: Redis | None = None,
     ) -> int:
         client = connection or self.redis
@@ -1026,12 +1181,16 @@ class IntentLedgerStore:
         binding_payload = canonical_request_binding_bytes(request_binding).decode(
             "utf-8"
         )
+        # An absent authorization can never equal a stored value, so the
+        # default fails closed rather than skipping the check.
+        supplied_authorization = authorization if type(authorization) is str else ""
         try:
             result = int(
                 await self._preflight(
                     keys=[
                         f"aep:state:{execution_id}",
                         f"aep:lock:{execution_id}",
+                        self.dispatch_authorization_key(execution_id, intent_id),
                     ],
                     args=[
                         lock_token,
@@ -1040,6 +1199,7 @@ class IntentLedgerStore:
                         str(required_ttl_ms),
                         request_binding.request_binding_digest,
                         binding_payload,
+                        supplied_authorization,
                     ],
                     client=client,
                 )
@@ -1063,6 +1223,10 @@ class IntentLedgerStore:
         if result in {-6, -7, -8}:
             raise IntentBindingError(
                 "pre-dispatch request binding is absent or does not match"
+            )
+        if result == -9:
+            raise DispatchAuthorizationError(
+                "no durable-write acknowledgement authorises this dispatch"
             )
         raise IntentPreflightError(
             reasons.get(result, "pre-dispatch state validation was rejected")

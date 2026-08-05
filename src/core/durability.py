@@ -6,7 +6,11 @@ local AOF fsync for preceding writes on the exact same pinned connection.
 
 from __future__ import annotations
 
+import hmac
 import re
+import secrets
+import threading
+import weakref
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
@@ -48,6 +52,128 @@ class DurabilityBarrier(Protocol):
         self, connection: Any, timeout_ms: int
     ) -> bool:
         """Return True only when the preceding same-connection write is durable."""
+
+
+# ---------------------------------------------------------------------------
+# Durability acknowledgement capability
+# ---------------------------------------------------------------------------
+
+
+def dispatch_scope(
+    execution_id: str, intent_id: str, prepared_state_version: int
+) -> str:
+    """The exact attempt an acknowledgement may authorise.
+
+    Binding the scope to the prepared state version means an acknowledgement
+    for one attempt can never authorise a later one.
+    """
+
+    return f"{execution_id}:{intent_id}:{prepared_state_version}"
+
+
+@dataclass(frozen=True, repr=False, init=False, eq=False)
+class DurabilityAck:
+    """Proof that a barrier reported the preceding write durable.
+
+    Cannot be constructed, subclassed, or copied by callers: the only way to
+    obtain one is :func:`confirm_durable_ack`, which mints it solely when the
+    barrier returned ``True``.  It is single-use and bound to one
+    :func:`dispatch_scope`.
+    """
+
+    scope: str
+    _provenance: bytes
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        raise DurabilityBarrierError(
+            "a durability acknowledgement can only be minted by a barrier"
+        )
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        raise TypeError("DurabilityAck is final")
+
+    def __copy__(self) -> "DurabilityAck":
+        raise DurabilityBarrierError("a durability acknowledgement is not copyable")
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "DurabilityAck":
+        raise DurabilityBarrierError("a durability acknowledgement is not copyable")
+
+    def __repr__(self) -> str:
+        return f"DurabilityAck(scope={self.scope!r})"
+
+
+def _build_ack_boundary():
+    secret = secrets.token_bytes(32)
+    records: dict[int, tuple[weakref.ReferenceType, bytes, str]] = {}
+    record_lock = threading.Lock()
+
+    def issue(scope: str) -> DurabilityAck:
+        if type(scope) is not str or not scope:
+            raise DurabilityBarrierError("durability scope must be a non-empty string")
+        nonce = secrets.token_bytes(32)
+        provenance = hmac.new(
+            secret,
+            b"AEP_DURABILITY_ACK_V1" + nonce + scope.encode("utf-8"),
+            "sha256",
+        ).digest()
+        ack = object.__new__(DurabilityAck)
+        object.__setattr__(ack, "scope", scope)
+        object.__setattr__(ack, "_provenance", provenance)
+        identity = id(ack)
+
+        def discard(reference: weakref.ReferenceType) -> None:
+            with record_lock:
+                current = records.get(identity)
+                if current is not None and current[0] is reference:
+                    records.pop(identity, None)
+
+        reference = weakref.ref(ack, discard)
+        with record_lock:
+            records[identity] = (reference, provenance, scope)
+        return ack
+
+    def consume(ack: Any, *, scope: str) -> None:
+        if type(ack) is not DurabilityAck:
+            raise DurabilityBarrierError(
+                "dispatch authorization requires a real durability acknowledgement"
+            )
+        with record_lock:
+            record = records.pop(id(ack), None)
+        if record is None or record[0]() is not ack:
+            raise DurabilityBarrierError(
+                "durability acknowledgement is unknown or already consumed"
+            )
+        _reference, provenance, issued_scope = record
+        if issued_scope != scope or not hmac.compare_digest(
+            provenance, ack._provenance
+        ):
+            raise DurabilityBarrierError(
+                "durability acknowledgement does not authorise this dispatch"
+            )
+
+    return issue, consume
+
+
+_issue_durability_ack, consume_durability_ack = _build_ack_boundary()
+del _build_ack_boundary
+
+
+async def confirm_durable_ack(
+    barrier: Any, connection: Any, timeout_ms: int, *, scope: str
+) -> DurabilityAck:
+    """Run the barrier and mint an acknowledgement only if it reported durable.
+
+    This is the sole mint point.  ``authorize_dispatch`` consumes the returned
+    object, so a dispatch authorization cannot be recorded in Redis without a
+    barrier having returned ``True`` first in this process.
+    """
+
+    durable = await barrier.confirm_durable(connection, timeout_ms)
+    if not durable:
+        raise DurabilityBarrierError(
+            "durability barrier did not acknowledge the preceding write"
+        )
+    return _issue_durability_ack(scope)
 
 
 class FakeDurabilityBarrier:

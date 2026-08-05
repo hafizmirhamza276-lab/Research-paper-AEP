@@ -21,11 +21,20 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Deque, Iterable
 
+from src.core.connector_contract import (
+    ReadbackResult,
+    ReconciliationCapability,
+)
 from src.core.request_binding import (
     ReconciliationContext,
     VerifiedDispatch,
     consume_verified_dispatch,
 )
+
+# ``ReconciliationCapability`` and ``ReadbackResult`` are the production
+# connector contract (src/core/connector_contract.py).  They are re-exported
+# here so existing test imports keep working, but this module no longer owns
+# them.
 
 
 class ResponseMode(str, Enum):
@@ -36,23 +45,6 @@ class ResponseMode(str, Enum):
     TIMEOUT_NO_RESPONSE = "TIMEOUT_NO_RESPONSE"
     CONNECTION_DROP_MID_TRANSMISSION = "CONNECTION_DROP_MID_TRANSMISSION"
     CONFLICTING_EVIDENCE = "CONFLICTING_EVIDENCE"
-
-
-class ReconciliationCapability(str, Enum):
-    """The three connector capability classes from design section 8.3."""
-
-    AUTHORITATIVE_READBACK = "AUTHORITATIVE_READBACK"
-    POSITIVE_ONLY_READBACK = "POSITIVE_ONLY_READBACK"
-    NO_READBACK = "NO_READBACK"
-
-
-class ReadbackResult(str, Enum):
-    """Evidence returned by a read-only reconciliation query."""
-
-    APPLIED = "APPLIED"
-    NOT_APPLIED = "NOT_APPLIED"
-    UNKNOWN = "UNKNOWN"
-    CONFLICT = "CONFLICT"
 
 
 class CallerEvidence(str, Enum):

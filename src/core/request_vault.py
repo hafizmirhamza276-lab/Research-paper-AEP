@@ -8,6 +8,8 @@ reviewed durable vault/KMS backend; this module never falls back to plaintext.
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 import os
 import re
 from dataclasses import dataclass
@@ -314,3 +316,136 @@ class TestOnlyInMemoryRequestVault:
                 ]
             )
         return b"".join(chunks)
+
+
+class EvaluationRedisRequestVault:
+    """Durable AES-GCM create-once vault for the EVALUATION composition.
+
+    Semantics are identical to the production contract: create-once, no update
+    path, authenticated metadata as AAD, exact-length verification, and
+    dispatch-window expiry.  Two properties are deliberately weaker than the
+    production vault/KMS design in ``docs/15-production-vault-kms-design.md``
+    and are declared, not hidden:
+
+    1. **Shared trust domain.** Ciphertext lives in the same Redis instance as
+       execution state, so it inherits that instance's access boundary rather
+       than a separate KMS boundary.
+    2. **Locally supplied keys.** Encryption keys are passed in by the operator
+       instead of being wrapped by a KMS, so there is no key rotation,
+       attestation, or hardware protection.
+
+    It is therefore ``evaluation_only``.  It is *not* ``test_only``: it is
+    durable and is the composition an evaluation harness measures.
+    """
+
+    test_only = False
+    evaluation_only = True
+
+    KEY_PREFIX = "aep:vault:"
+
+    def __init__(
+        self,
+        *,
+        redis_client,
+        encryption_keys: Mapping[str, bytes],
+        active_key_id: str,
+    ) -> None:
+        copied: dict[str, bytes] = {}
+        for key_id, key in encryption_keys.items():
+            if _SAFE_ID.fullmatch(key_id) is None or not isinstance(key, bytes):
+                raise VaultConfigurationError()
+            if len(key) not in {16, 24, 32}:
+                raise VaultConfigurationError()
+            copied[key_id] = bytes(key)
+        if active_key_id not in copied:
+            raise VaultConfigurationError()
+        self.redis = redis_client
+        self._keys = copied
+        self.active_key_id = active_key_id
+
+    def __repr__(self) -> str:
+        return "EvaluationRedisRequestVault(objects=<protected>, keys=<redacted>)"
+
+    def object_key(self, locator: str) -> str:
+        return f"{self.KEY_PREFIX}{locator}"
+
+    async def create_once(
+        self, material: bytes, metadata: VaultObjectMetadata
+    ) -> VaultObjectMetadata:
+        if not isinstance(material, bytes) or len(material) != metadata.material_length:
+            raise VaultConfigurationError()
+        if metadata.object_version != 1:
+            raise VaultVersionError()
+        if metadata.encryption_key_id != self.active_key_id:
+            raise VaultKeyError()
+        key = self._keys.get(metadata.encryption_key_id)
+        if key is None:
+            raise VaultKeyError()
+        nonce = os.urandom(12)
+        ciphertext = AESGCM(key).encrypt(
+            nonce, material, metadata.authenticated_bytes()
+        )
+        record = json.dumps(
+            {
+                "nonce": base64.urlsafe_b64encode(nonce).decode("ascii"),
+                "ciphertext": base64.urlsafe_b64encode(ciphertext).decode("ascii"),
+                "metadata": metadata.model_dump(mode="json"),
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        # Retention is bounded by the authenticated retention deadline; a
+        # 1-second floor keeps Redis from rejecting a non-positive TTL.
+        ttl_ms = max(
+            1_000, metadata.retention_not_after_ms - metadata.created_at_ms
+        )
+        created = await self.redis.set(
+            self.object_key(metadata.locator),
+            record,
+            nx=True,
+            px=ttl_ms,
+        )
+        if not created:
+            raise VaultCollisionError()
+        return metadata
+
+    async def read_exact(self, locator: str, *, now_ms: int) -> VaultReadResult:
+        if type(now_ms) is not int or now_ms < 0 or _LOCATOR.fullmatch(locator) is None:
+            raise VaultConfigurationError()
+        raw = await self.redis.get(self.object_key(locator))
+        if raw is None:
+            raise VaultMissingError()
+        try:
+            record = json.loads(
+                raw.decode("utf-8") if isinstance(raw, bytes) else raw
+            )
+            metadata = VaultObjectMetadata.model_validate(record["metadata"])
+            nonce = base64.urlsafe_b64decode(record["nonce"])
+            ciphertext = base64.urlsafe_b64decode(record["ciphertext"])
+        except (ValueError, TypeError, KeyError, UnicodeError):
+            raise VaultAuthenticationError() from None
+        # A record moved to another locator is not authentic for that locator.
+        if metadata.locator != locator:
+            raise VaultAuthenticationError()
+        if metadata.object_version != 1:
+            raise VaultVersionError()
+        if now_ms >= metadata.dispatch_material_not_after_ms:
+            raise VaultExpiredError()
+        key = self._keys.get(metadata.encryption_key_id)
+        if key is None:
+            raise VaultKeyError()
+        try:
+            material = AESGCM(key).decrypt(
+                nonce, ciphertext, metadata.authenticated_bytes()
+            )
+        except InvalidTag:
+            raise VaultAuthenticationError() from None
+        if len(material) != metadata.material_length:
+            raise VaultAuthenticationError()
+        return VaultReadResult(material=material, metadata=metadata)
+
+    async def update(self, locator: str, material: bytes) -> None:
+        """There is intentionally no update path in any composition."""
+
+        raise VaultUpdateForbiddenError()

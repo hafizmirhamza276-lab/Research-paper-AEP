@@ -7,9 +7,15 @@ import math
 import random
 import uuid
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Protocol
 
-from src.core.durability import DurabilityBarrier
+from src.core.durability import (
+    DurabilityAck,
+    DurabilityBarrier,
+    confirm_durable_ack,
+    dispatch_scope,
+)
 from src.core.exceptions import LockAcquisitionError
 from src.core.intents import (
     IntentBindingError,
@@ -28,6 +34,21 @@ from src.core.request_binding import (
     canonical_request_binding_bytes,
 )
 from src.core.request_vault import RequestVaultError
+
+
+class DispatchMode(str, Enum):
+    """Which composition a runner is permitted to dispatch under.
+
+    The default is ``PRODUCTION``: a runner never silently degrades to a test
+    composition.  ``EVALUATION`` exists so an experiment states plainly what it
+    measured; it differs from ``PRODUCTION`` in exactly one respect — the
+    connector is a declared evaluation endpoint — and every other component
+    must still be production-grade (see :meth:`WriteAheadRunner.validate_startup`).
+    """
+
+    PRODUCTION = "PRODUCTION"
+    EVALUATION = "EVALUATION"
+    TEST = "TEST"
 
 
 class ExternalMutationConnector(Protocol):
@@ -131,9 +152,18 @@ class WriteAheadRunner:
         crash_injector: CrashInjectorProtocol | None = None,
         crash_point_enum: type[Any] | None = None,
         random_source: random.Random | None = None,
+        mode: DispatchMode | None = None,
         allow_test_barrier: bool = False,
         allow_test_dispatch: bool = False,
     ) -> None:
+        # An unspecified mode is PRODUCTION.  A caller that opted into
+        # test dispatch without naming a mode is in TEST mode by that act;
+        # no composition ever silently degrades.
+        if mode is None:
+            mode = (
+                DispatchMode.TEST if allow_test_dispatch else DispatchMode.PRODUCTION
+            )
+        self.mode = DispatchMode(mode)
         self.store = store
         self.lock_manager = lock_manager
         self.connector = connector
@@ -179,30 +209,7 @@ class WriteAheadRunner:
                 )
             await self.crash_injector.checkpoint(self.crash_point_enum[name])
 
-    async def validate_startup(self) -> None:
-        """Validate production durability before any non-idempotent work."""
-
-        # This repository has no production vault/KMS backend or production
-        # connector composition. Only an explicit test-only composition may
-        # exercise dispatch; there is no feature flag that bypasses validation.
-        if not self.allow_test_dispatch:
-            raise WriteAheadWorkflowError(
-                "production non-idempotent dispatch is disabled"
-            )
-        if not getattr(self.binding_service.vault, "test_only", False):
-            raise WriteAheadWorkflowError(
-                "test dispatch requires the explicit test-only request vault"
-            )
-        if not getattr(self.connector, "test_only", False):
-            raise WriteAheadWorkflowError(
-                "test dispatch requires an explicit test-only connector"
-            )
-        if getattr(self.barrier, "test_only", False):
-            if not self.allow_test_barrier:
-                raise WriteAheadWorkflowError(
-                    "test-only durability barrier requires explicit test authorization"
-                )
-            return
+    async def _validate_real_barrier(self) -> None:
         validator = getattr(self.barrier, "validate_startup", None)
         if not callable(validator):
             raise WriteAheadWorkflowError(
@@ -215,6 +222,91 @@ class WriteAheadRunner:
                 "durability startup validation failed: "
                 f"{type(exc).__name__}"
             ) from None
+
+    async def validate_startup(self) -> None:
+        """Validate the composition and durability before non-idempotent work.
+
+        The three modes are mutually exclusive and each is checked explicitly:
+
+        * ``TEST`` — the historical composition.  Requires the explicit
+          ``allow_test_dispatch`` opt-in plus a test-only vault and connector.
+        * ``EVALUATION`` — production-grade durability barrier and a durable,
+          non-test request vault; the *only* permitted difference from
+          production is that the connector declares itself an evaluation
+          endpoint.
+        * ``PRODUCTION`` — as EVALUATION, but the connector must not be an
+          evaluation endpoint and the vault must not be the evaluation vault.
+          This repository ships no production vault or connector, so this mode
+          fails closed until one exists.
+        """
+
+        vault = self.binding_service.vault
+        vault_is_test = bool(getattr(vault, "test_only", False))
+        vault_is_evaluation = bool(getattr(vault, "evaluation_only", False))
+        connector_is_test = bool(getattr(self.connector, "test_only", False))
+        connector_is_evaluation = bool(
+            getattr(self.connector, "evaluation_endpoint", False)
+        )
+        barrier_is_test = bool(getattr(self.barrier, "test_only", False))
+        mode_name = self.mode.value.lower()
+
+        if self.mode is DispatchMode.TEST:
+            if not self.allow_test_dispatch:
+                raise WriteAheadWorkflowError(
+                    "test dispatch requires the explicit test authorization"
+                )
+            if not vault_is_test:
+                raise WriteAheadWorkflowError(
+                    "test dispatch requires the explicit test-only request vault"
+                )
+            if not connector_is_test:
+                raise WriteAheadWorkflowError(
+                    "test dispatch requires an explicit test-only connector"
+                )
+            if barrier_is_test:
+                if not self.allow_test_barrier:
+                    raise WriteAheadWorkflowError(
+                        "test-only durability barrier requires explicit test "
+                        "authorization"
+                    )
+                return
+            await self._validate_real_barrier()
+            return
+
+        # PRODUCTION and EVALUATION share every requirement below.  Keeping
+        # them in one block is what makes "differs only in the connector
+        # endpoint" a property of the code rather than a claim in prose.
+        if vault_is_test:
+            raise WriteAheadWorkflowError(
+                f"{mode_name} dispatch requires a non-test request vault"
+            )
+        if barrier_is_test:
+            raise WriteAheadWorkflowError(
+                f"{mode_name} dispatch requires the production durability barrier"
+            )
+        if connector_is_test:
+            raise WriteAheadWorkflowError(
+                f"{mode_name} dispatch refuses a test-only connector"
+            )
+
+        if self.mode is DispatchMode.PRODUCTION:
+            if connector_is_evaluation:
+                raise WriteAheadWorkflowError(
+                    "production dispatch refuses an evaluation-endpoint connector"
+                )
+            if vault_is_evaluation:
+                raise WriteAheadWorkflowError(
+                    "production dispatch requires a production request vault, "
+                    "not the evaluation vault"
+                )
+        else:
+            if not connector_is_evaluation:
+                raise WriteAheadWorkflowError(
+                    "evaluation dispatch requires a connector that declares an "
+                    "evaluation endpoint"
+                )
+
+        await self._validate_real_barrier()
 
     async def _acquire_with_jitter(self, execution_id: str) -> str:
         for attempt in range(1, self.policy.lease_acquire_attempts + 1):
@@ -248,6 +340,25 @@ class WriteAheadRunner:
             raise WriteAheadWorkflowError(
                 "durability barrier did not acknowledge the preceding write"
             )
+
+    async def _confirm_dispatch_barrier(
+        self, connection: Any, *, scope: str
+    ) -> DurabilityAck:
+        """Barrier the write-ahead intent and mint the dispatch-authorising ack."""
+
+        try:
+            return await confirm_durable_ack(
+                self.barrier,
+                connection,
+                self.policy.durability_timeout_ms,
+                scope=scope,
+            )
+        except NotImplementedError:
+            raise
+        except Exception as exc:
+            raise WriteAheadWorkflowError(
+                f"durability barrier failed: {type(exc).__name__}"
+            ) from None
 
     async def execute(
         self,
@@ -283,6 +394,9 @@ class WriteAheadRunner:
                 )
                 * 1000
             )
+            # The lease TTL floor the preflight enforces, and the lifetime of
+            # the dispatch authorization: both are exactly one dispatch window.
+            required_ttl_ms = dispatch_window_ms
             try:
                 prepared = await self.binding_service.prepare(
                     execution_id=execution_id,
@@ -329,7 +443,14 @@ class WriteAheadRunner:
                     "AFTER_INTENT_CAS_BEFORE_DURABILITY_BARRIER"
                 )
                 try:
-                    await self._confirm_barrier(connection)
+                    ack = await self._confirm_dispatch_barrier(
+                        connection,
+                        scope=dispatch_scope(
+                            execution_id,
+                            intent.intent_id,
+                            intent.prepared_state_version,
+                        ),
+                    )
                 except WriteAheadWorkflowError as barrier_error:
                     # No provider bytes have been sent.  If ownership remains,
                     # make one fenced attempt to persist the definitive local
@@ -355,6 +476,19 @@ class WriteAheadRunner:
                             pass
                     raise barrier_error
 
+                # The acknowledgement is spent here, converting it into a
+                # Redis-visible authorization the preflight must re-check.
+                dispatch_authorization = await self.store.authorize_dispatch(
+                    execution_id=execution_id,
+                    intent_id=intent.intent_id,
+                    prepared_state_version=intent.prepared_state_version,
+                    lock_token=token,
+                    request_binding=prepared.binding,
+                    ack=ack,
+                    authorization_ttl_ms=required_ttl_ms,
+                    connection=connection,
+                )
+
             await self._checkpoint(
                 "AFTER_DURABLE_ABOUT_TO_FIRE_BEFORE_PREFLIGHT"
             )
@@ -364,14 +498,9 @@ class WriteAheadRunner:
                     intent_id=intent.intent_id,
                     prepared_state_version=intent.prepared_state_version,
                     lock_token=token,
-                    required_ttl_ms=int(
-                        (
-                            self.policy.client_timeout_seconds
-                            + self.policy.buffer_margin_seconds
-                        )
-                        * 1000
-                    ),
+                    required_ttl_ms=required_ttl_ms,
                     request_binding=prepared.binding,
+                    authorization=dispatch_authorization,
                 )
             except IntentPreflightError:
                 # A failed preflight is definitive only if this worker still
