@@ -14,9 +14,28 @@ Selection policy:
        skip if the probe fails.
 
 Safety policy:
-    A real Redis must use the dedicated test database 15 unless the developer
-    explicitly opts in with AEP_TEST_ALLOW_FLUSHALL=1. Cleanup never calls
-    FLUSHALL; it incrementally deletes only keys in the ``aep:*`` namespace.
+    Cleanup never calls FLUSHALL; it incrementally UNLINKs only keys in the
+    ``aep:*`` namespace. On a real Redis two independent preconditions must
+    both hold before any destructive operation:
+
+    1. The selected database must be the dedicated test database 15, unless
+       the developer explicitly opts in with AEP_TEST_ALLOW_NONSTANDARD_DB=1
+       (the legacy name AEP_TEST_ALLOW_FLUSHALL=1 is still accepted).
+    2. The instance must advertise the test marker key
+       ``aep:test-instance-marker``. Namespace-scoped cleanup alone is NOT a
+       sufficient guard, because ``aep:*`` is precisely the namespace AEP
+       uses in production — a mis-pointed REDIS_URL would delete exactly the
+       production keys the scoping was meant to protect. The marker is the
+       instance's own assertion that it is disposable.
+
+    The marker is auto-provisioned only when the instance is demonstrably not
+    production: real Redis, DB in the allowed set, and DBSIZE == 0. In every
+    other case (override in use, non-empty database) it must be set
+    out-of-band, e.g.::
+
+        redis-cli -n 15 SET aep:test-instance-marker 1
+
+    The marker key is never deleted by cleanup.
 """
 
 from __future__ import annotations
@@ -37,6 +56,11 @@ from src.core.storage import RedisStorageAdapter
 REDIS_URL = os.environ.get("REDIS_URL")  # e.g. "redis://localhost:6379/15"
 USING_REAL_REDIS = bool(REDIS_URL)
 _ALLOWED_REAL_REDIS_DATABASES = frozenset({15})
+
+#: The instance's own assertion that it is a disposable test instance.
+#: Required on real Redis before any destructive operation. Never deleted
+#: by cleanup (see ``_delete_aep_test_keys``).
+TEST_INSTANCE_MARKER_KEY = "aep:test-instance-marker"
 
 # Try to import a fakeredis async client only if we are not using real Redis.
 _FAKEREDIS_AVAILABLE = False
@@ -102,8 +126,53 @@ async def _real_redis_db_index(client) -> int:
         return int(configured_db)
 
 
+def _nonstandard_db_override_enabled() -> bool:
+    """True iff the developer opted into a real Redis DB outside the allowed set.
+
+    ``AEP_TEST_ALLOW_FLUSHALL`` is the legacy spelling, kept working so that
+    existing developer environments and CI definitions do not silently change
+    meaning. Nothing has called FLUSHALL since the cleanup rewrite; the
+    accurate name is ``AEP_TEST_ALLOW_NONSTANDARD_DB``.
+    """
+    return (
+        os.environ.get("AEP_TEST_ALLOW_NONSTANDARD_DB") == "1"
+        or os.environ.get("AEP_TEST_ALLOW_FLUSHALL") == "1"
+    )
+
+
+async def _assert_test_instance_marker(client, db_index: int) -> None:
+    """Require the instance to advertise that it is disposable.
+
+    Namespace scoping is not self-sufficient: ``aep:*`` is the namespace AEP
+    uses in production, so a mis-pointed REDIS_URL would delete exactly the
+    keys the scoping was meant to protect. The marker closes that hole.
+
+    Auto-provisioned only when the instance is demonstrably not production:
+    an allowed DB that is completely empty. A non-empty database — or one
+    reached through the override — must be marked out-of-band, which forces a
+    human to look at the instance before it can be written to.
+    """
+    if await client.exists(TEST_INSTANCE_MARKER_KEY):
+        return
+
+    db_is_allowed = db_index in _ALLOWED_REAL_REDIS_DATABASES
+    if db_is_allowed and await client.dbsize() == 0:
+        await client.set(TEST_INSTANCE_MARKER_KEY, "1")
+        return
+
+    raise RuntimeError(
+        f"Refusing Redis test cleanup: DB {db_index} at {REDIS_URL!r} does not "
+        f"advertise the test marker key {TEST_INSTANCE_MARKER_KEY!r}. The "
+        "marker is auto-created only on an allowed, completely empty database; "
+        "this one is non-empty or outside the allowed set, so it cannot be "
+        "assumed disposable. If this instance really is a throwaway test "
+        f"instance, mark it explicitly:\n"
+        f"    redis-cli -n {db_index} SET {TEST_INSTANCE_MARKER_KEY} 1"
+    )
+
+
 async def _assert_safe_cleanup_target(client) -> None:
-    """Refuse destructive test setup on a non-dedicated real Redis DB."""
+    """Refuse destructive test setup unless BOTH safety preconditions hold."""
     if not USING_REAL_REDIS:
         return
 
@@ -115,27 +184,51 @@ async def _assert_safe_cleanup_target(client) -> None:
             f"{exc}"
         ) from exc
 
-    explicitly_allowed = os.environ.get("AEP_TEST_ALLOW_FLUSHALL") == "1"
-    if db_index not in _ALLOWED_REAL_REDIS_DATABASES and not explicitly_allowed:
+    # Precondition 1 — dedicated database.
+    if (
+        db_index not in _ALLOWED_REAL_REDIS_DATABASES
+        and not _nonstandard_db_override_enabled()
+    ):
         allowed = ", ".join(map(str, sorted(_ALLOWED_REAL_REDIS_DATABASES)))
         raise RuntimeError(
             f"Refusing Redis test cleanup on DB {db_index}. Allowed dedicated "
             f"test DB(s): {allowed}. Point REDIS_URL at DB 15, or explicitly "
-            "set AEP_TEST_ALLOW_FLUSHALL=1 to override. Even with the override, "
-            "cleanup remains limited to aep:* keys."
+            "set AEP_TEST_ALLOW_NONSTANDARD_DB=1 to override. Even with the "
+            "override, cleanup remains limited to aep:* keys AND the instance "
+            f"must still advertise {TEST_INSTANCE_MARKER_KEY!r}."
         )
+
+    # Precondition 2 — the instance asserts it is disposable. Not weakened by
+    # the override above: that override widens which DB is acceptable, it does
+    # not license writing to an unmarked instance.
+    await _assert_test_instance_marker(client, db_index)
+
+
+def _is_test_instance_marker(key) -> bool:
+    """True for the marker key, whether the client decodes responses or not."""
+    if isinstance(key, bytes):
+        key = key.decode("utf-8", errors="replace")
+    return key == TEST_INSTANCE_MARKER_KEY
 
 
 async def _delete_aep_test_keys(client) -> None:
-    """Delete only AEP-owned keys without blocking Redis with KEYS/FLUSHALL."""
+    """UNLINK only AEP-owned keys without blocking Redis with KEYS/FLUSHALL.
+
+    UNLINK reclaims memory on a background thread, so a large test keyspace
+    cannot stall the server the way DEL would. The marker key is preserved:
+    deleting it would make the very next fixture re-derive the instance's
+    disposability from DBSIZE instead of from the operator's assertion.
+    """
     batch = []
     async for key in client.scan_iter(match="aep:*", count=500):
+        if _is_test_instance_marker(key):
+            continue
         batch.append(key)
         if len(batch) == 500:
-            await client.delete(*batch)
+            await client.unlink(*batch)
             batch.clear()
     if batch:
-        await client.delete(*batch)
+        await client.unlink(*batch)
 
 
 @pytest_asyncio.fixture

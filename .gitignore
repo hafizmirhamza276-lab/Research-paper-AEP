@@ -68,6 +68,9 @@ Thumbs.db
 # --- Claude Code user-local settings (do NOT push) ----------------------------
 .claude/settings.local.json
 
+# --- Agent tooling session logs (activity trace, not repository content) ------
+.ai/
+
 # --- Logs / runtime junk ------------------------------------------------------
 *.log
 pip-log.txt
