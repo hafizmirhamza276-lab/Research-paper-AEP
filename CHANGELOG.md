@@ -10,9 +10,87 @@ do not belong in a changelog for an artifact-evaluation package.
 
 ## [Unreleased]
 
-Phase 2B Session 2: the crash injector and the multi-process runner. Full
-report: `reports/phase-report-2b-session2-2026-08-05.md`. 1387 → 1565 tests;
-`aep_core` coverage 90.31% → 91.18%.
+### Phase 2B Session 3 — baselines, the matrix, and the analysis
+
+Full report: `reports/phase-report-2b-session3-2026-08-06.md`. 1565 → 1624
+tests.
+
+#### Added
+
+- **`experiments/baselines/`** — the six systems of `PAPER_ROADMAP.md` §3.3 as
+  thin variants sharing one connector, one workload driver and one ground-truth
+  oracle: **B0** naive retry, **B1** lease-only, **B2** CAS-only (fenced state,
+  no write-ahead intent), **B3** the full protocol with `WAITAOF` ablated and
+  nothing else ablated, **B4** a minimal event-sourced durable-workflow engine,
+  and AEP-full. Each has failing-then-passing tests proving what its label
+  claims, and a `SystemDescriptor` table whose every row is checked against the
+  implementation by running it.
+  - B4 is a **real implementation** rather than the qualitative comparison the
+    roadmap permits as a fallback. It has a durable, `WAITAOF`-acknowledged
+    write-ahead record and still duplicates, because its semantics for a
+    scheduled-but-uncompleted activity are at-least-once. The write-ahead
+    record is necessary and is not sufficient; the policy applied to it is what
+    matters.
+- **`experiments/run_matrix.py`** — the `{system × crash-point ×
+  response-class × read-back-keying}` matrix as code. 216 cells, 198
+  applicable, 594 runs. Emits its full plan, seeds and estimated wall time
+  before running anything; resumable; refuses to execute on a platform without
+  a real `SIGKILL`; halts if AEP-full ever records an undetected duplicate.
+- **`experiments/analyze.py`** and **`experiments/statistics.py`** — every §3.2
+  metric with run-clustered percentile bootstrap intervals and exact two-tailed
+  Fisher tests, emitting a CSV per metric, Table 1 and PDF figures. The
+  analysis opens exactly two files per run — `events.jsonl` and the run's
+  read-only `ground_truth.sqlite3` — and a source gate fails the suite if an
+  import of `redis` or `aep_core` ever appears in it.
+- **`experiments/bench_mock_api.py`** — the provider's sustained throughput,
+  compared against the busiest planned configuration's rate computed from
+  `run_matrix.py`'s own constants. **468.8 req/s against a 2.5 req/s planned
+  peak: 187×.** This retires Session 1 §F8 and Session 2 §F9/§G3, which had
+  carried the question unmeasured through two sessions.
+- **`experiments/smoke_matrix.py`** — all six crash points, one run each, as a
+  precondition of any matrix launch. It cost six short runs and caught two
+  defects the unit suite had missed.
+- **Inapplicable cells are recorded, never filled.**
+  `after_intent_before_barrier` does not exist in B0, B1 or B2; those 18 cells
+  carry `applicable: false` and a machine-readable reason rather than being
+  aliased onto a neighbouring crash point.
+
+#### Fixed
+
+- **Runs shared one provider, one ground-truth ledger and one seeded fault
+  generator.** Reconciliation failed at two of six crash points because each
+  run was being asked to account for its predecessors' effects. The second
+  consequence was worse and silent: `MockLegacyAPI` seeds one
+  `random.Random(seed)` per *process*, so a shared provider made run *N*'s
+  fault stream a function of how many requests runs *1..N−1* had made — the
+  seed in a run's own log did not determine that run's faults. Every run now
+  gets its own provider, ledger and freshly seeded generator
+  (`experiments/mock_api/supervisor.py`, `experiments/harness/orchestrate.py`).
+- **A re-executing supervisor abandoned the lease instead of waiting for it.**
+  A worker killed mid-dispatch leaves its lease held until the TTL expires, so
+  the respawned execution's `acquire_lock` returned `None` and the baseline
+  raised — crediting the lease with *preventing* a duplicate it only delays.
+  The lease-taking systems now wait, bounded by the lock TTL plus a margin, and
+  record what they waited.
+- **`seed_execution_state` was not idempotent**, so B2 — the only system that
+  both uses the fenced write path and re-executes — failed every re-execution
+  with `StaleWriteError` before transmitting anything.
+
+#### Changed
+
+- `experiments/harness/reconcile.py` works in a system-agnostic outcome
+  vocabulary and gates each rule on what the system under test promised: an
+  effect with no durable record is a P2 violation for AEP-full and B3, and a
+  measured lost effect for B0, B1 and B2.
+- `MockLegacyApiConnector.transmit()` split out of `mutate()` so the baselines
+  share the connector without inheriting the request-binding machinery that is
+  the thing under ablation.
+- CI installs the new `analysis` extra; `MINIMUM_TESTS` 1500 → 1590.
+
+### Phase 2B Session 2 — the crash injector and the multi-process runner
+
+Full report: `reports/phase-report-2b-session2-2026-08-05.md`. 1387 → 1565
+tests; `aep_core` coverage 90.31% → 91.18%.
 
 ### Added
 

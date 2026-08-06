@@ -46,9 +46,18 @@ whole reason any of these numbers mean anything.
 
 ``recovery_success_rate`` / ``recovery_latency``
     Of the executions that crashed, the fraction that reached a terminal
-    classification, and how long crash-to-classified took. Only meaningful for
-    the systems that have a recovery service; reported as not-applicable for
-    the others rather than as zero.
+    classification, and how long crash-to-classified took.
+
+    **Reported only for runs in which a recovery service was actually
+    running**, which the log says directly (``recovery_spawned`` versus
+    ``recovery_not_started``). In a run without one, a crashed execution
+    reaches a terminal classification because the supervisor ran the step
+    again; calling that "recovery success" would credit a baseline with a
+    capability it does not have, and would score it *well* on a metric whose
+    whole subject is the thing it cannot do. Those rows carry
+    ``recovery_service = 0`` and are excluded from the recovery aggregates;
+    the same executions are still counted, under their real name, by the
+    duplicate and lost-effect rates.
 
 ``step_latency`` / ``throughput``
     End-to-end wall time per resolved execution, and executions per second of
@@ -106,6 +115,17 @@ KNOWN_CLASSES = frozenset(
         UNREADABLE,
     }
 )
+
+#: How much wall-versus-monotonic divergence a run may show before its
+#: *timing* is discarded. Found the hard way: a matrix run recorded 40 s of
+#: ``time.monotonic()`` and a 792 s span of ``time.time()``, with a 774-second
+#: gap between two settling polls two seconds apart -- the host had suspended
+#: the VM. Counts are unaffected by that (an execution either duplicated or it
+#: did not), so the rate metrics keep every run; the latency and throughput
+#: aggregates keep only the runs whose clocks agree, and report how many they
+#: dropped. Two seconds is generous for scheduling noise and far below any
+#: real suspension.
+TIMING_SUSPENSION_TOLERANCE_SECONDS = 2.0
 
 #: The rate metrics, in the order the paper's tables use them.
 RATE_METRICS: tuple[str, ...] = (
@@ -244,8 +264,30 @@ class RunRecord:
     config_digest: str
     has_sigkill: bool
     wall_seconds: float
+    #: Whether a recovery service was actually running during this run. Read
+    #: from the log (``recovery_spawned`` versus ``recovery_not_started``)
+    #: rather than from the system's name, so it describes what happened.
+    #:
+    #: It matters because "recovery success rate" means two different things
+    #: either side of it. Where a recovery service ran, a crashed execution
+    #: reaching a terminal classification was *recovered*. Where none ran, the
+    #: same execution reached its classification because the supervisor ran the
+    #: step again -- which is not recovery, it is the thing recovery exists to
+    #: avoid, and reporting the two under one name would credit a baseline with
+    #: a capability it does not have.
+    had_recovery_service: bool = False
+    #: Wall-clock span minus monotonic span, over the runner's own records.
+    #: On a host that never suspends this is ~0. Where the host *did* suspend,
+    #: CLOCK_MONOTONIC stopped and CLOCK_REALTIME was resynchronised on
+    #: resume, so every wall-clock duration in the run silently includes the
+    #: suspension. See ``TIMING_SUSPENSION_TOLERANCE_SECONDS``.
+    suspension_seconds: float = 0.0
     executions: list[ExecutionRecord] = field(default_factory=list)
     crash_injections: int = 0
+
+    @property
+    def timing_is_usable(self) -> bool:
+        return self.suspension_seconds <= TIMING_SUSPENSION_TOLERANCE_SECONDS
 
     @property
     def cell_key(self) -> str:
@@ -321,6 +363,27 @@ def load_run(directory: Path) -> RunRecord | None:
     finished = events_of(records, "run_finished")
     run_finished_ms = int(finished[-1]["wall_ms"]) if finished else run_started_ms
 
+    # The runner is one process, so max-minus-min over its own records is a
+    # valid monotonic span, and comparing it with the wall span detects a host
+    # suspension that both clocks would otherwise hide.
+    runner_records = [
+        record
+        for record in records
+        if record.get("source") == "runner" and "monotonic_ns" in record
+    ]
+    if len(runner_records) >= 2:
+        wall_span = (
+            max(int(r["wall_ms"]) for r in runner_records)
+            - min(int(r["wall_ms"]) for r in runner_records)
+        ) / 1000.0
+        monotonic_span = (
+            max(int(r["monotonic_ns"]) for r in runner_records)
+            - min(int(r["monotonic_ns"]) for r in runner_records)
+        ) / 1e9
+        suspension = max(0.0, wall_span - monotonic_span)
+    else:
+        suspension = 0.0
+
     executions: list[ExecutionRecord] = []
     for execution_id, item in plan.items():
         classification = final.get(execution_id)
@@ -385,6 +448,8 @@ def load_run(directory: Path) -> RunRecord | None:
         config_digest=str(config.get("config_digest", "")),
         has_sigkill=bool(environment.get("has_sigkill", False)),
         wall_seconds=max(0.0, (run_finished_ms - run_started_ms) / 1000.0),
+        had_recovery_service=bool(events_of(records, "recovery_spawned")),
+        suspension_seconds=round(suspension, 3),
         executions=executions,
         crash_injections=len(events_of(records, "crash_injected")),
     )
@@ -463,6 +528,12 @@ def compute_metric(
     resamples: int,
     seed: int,
 ) -> MetricResult:
+    if metric == "recovery_success_rate":
+        # A run with no recovery service contributes no observations to a
+        # metric about recovery. Excluded rather than counted as zero *or* as
+        # success: both would be statements about a component that was not
+        # present.
+        runs = [run for run in runs if run.had_recovery_service]
     clusters: list[tuple[int, int]] = []
     successes = total = 0
     for run in runs:
@@ -633,25 +704,41 @@ def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
     """Step latency, recovery latency and throughput, per system."""
     rows: list[dict[str, Any]] = []
     for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
+        # Timing only from runs whose two clocks agree. A host suspension puts
+        # its whole duration into every wall-clock interval in the run, and no
+        # amount of averaging removes it.
+        timed_runs = [run for run in system_runs if run.timing_is_usable]
         step = [
             execution.step_latency_ms
-            for run in system_runs
+            for run in timed_runs
             for execution in run.executions
             if execution.step_latency_ms is not None
         ]
+        # Only from runs that actually had a recovery service. See the module
+        # docstring: without one, crash-to-classified is the latency of a
+        # re-execution, which is a different quantity wearing the same units.
         recovery = [
             execution.recovery_latency_ms
-            for run in system_runs
+            for run in timed_runs
+            if run.had_recovery_service
             for execution in run.executions
             if execution.recovery_latency_ms is not None and execution.crashed
         ]
-        executions = sum(len(run.executions) for run in system_runs)
-        wall = sum(run.wall_seconds for run in system_runs)
-        row: dict[str, Any] = {"system": system, "runs": len(system_runs)}
+        executions = sum(len(run.executions) for run in timed_runs)
+        wall = sum(run.wall_seconds for run in timed_runs)
+        row: dict[str, Any] = {
+            "system": system,
+            "runs": len(system_runs),
+            "runs_with_usable_timing": len(timed_runs),
+            "runs_dropped_for_clock_suspension": len(system_runs) - len(timed_runs),
+        }
         for prefix, values in (("step_latency_ms", step), ("recovery_latency_ms", recovery)):
             for key, value in summarise(values).items():
                 row[f"{prefix}_{key}"] = value
         row["executions"] = executions
+        row["recovery_service"] = int(
+            all(run.had_recovery_service for run in system_runs)
+        )
         row["run_wall_seconds"] = round(wall, 3)
         row["executions_per_second"] = round(executions / wall, 4) if wall else None
         rows.append(row)
@@ -872,6 +959,13 @@ def main(argv: list[str] | None = None) -> int:
         "readback_keyings": sorted({run.readback_keying for run in runs}),
         "cells": len({run.cell_key for run in runs}),
         "all_runs_used_real_sigkill": all(run.has_sigkill for run in runs),
+        "runs_with_usable_timing": sum(1 for run in runs if run.timing_is_usable),
+        "runs_dropped_for_clock_suspension": sum(
+            1 for run in runs if not run.timing_is_usable
+        ),
+        "worst_suspension_seconds": round(
+            max((run.suspension_seconds for run in runs), default=0.0), 3
+        ),
         "bootstrap_seed": arguments.bootstrap_seed,
         "bootstrap_resamples": arguments.resamples,
     }
@@ -915,6 +1009,18 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "WARNING: at least one run was collected on a platform without "
             "SIGKILL. Its crashes were TerminateProcess."
+        )
+    dropped = coverage["runs_dropped_for_clock_suspension"]
+    if dropped:
+        print(
+            f"WARNING: {dropped} of {coverage['runs']} run(s) show a "
+            f"wall-versus-monotonic divergence above "
+            f"{TIMING_SUSPENSION_TOLERANCE_SECONDS}s (worst: "
+            f"{coverage['worst_suspension_seconds']}s). The host suspended "
+            "during them, so every wall-clock duration they contain includes "
+            "the suspension. Their COUNTS are unaffected and are still in the "
+            "rate metrics; their TIMINGS are excluded from the latency and "
+            "throughput aggregates."
         )
     print("written:")
     for path in written:

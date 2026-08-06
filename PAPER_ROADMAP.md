@@ -136,6 +136,34 @@ Run the full suite against real Redis 7.2 in Docker and paste the raw output int
 > are fixed with regressions. Read §F1, §F2, §F6 and §F7 of the Session 2
 > report before Session 3: only one of the six crash points has actually been
 > run, and only once.
+>
+> **Session 3 is COMPLETE for D0–D3; the matrix is PARTIAL** — report:
+> `reports/phase-report-2b-session3-2026-08-06.md`. `experiments/baselines/`
+> ships all six systems of §3.3 behind one connector, one workload driver and
+> one oracle, each with failing-then-passing tests and a machine-readable
+> descriptor that tests check against the implementation. **B4 is a real
+> event-sourced engine, not the qualitative fallback** — it has a durable,
+> `WAITAOF`-acknowledged write-ahead record and still duplicates, which is the
+> sharpest statement of the contribution available: the record is necessary and
+> is not sufficient. `experiments/run_matrix.py` emits its plan, seeds and cost
+> estimate before running (216 cells, 198 applicable, 594 runs, ≈5.9 h) and is
+> resumable; `experiments/analyze.py` computes every §3.2 metric from
+> `events.jsonl` and the oracle ledger *only*, enforced by a source gate.
+> 1565 → 1624 tests.
+>
+> Three things a reader of the results must know. **(1)** The entry gate
+> D0(ii) failed on its first attempt: six runs shared one provider, so each
+> reconciled against its predecessors' effects *and* drew faults from a
+> generator they had already advanced — which would have made the seed in every
+> run log a fiction. Every run now owns its provider, ledger and seed.
+> **(2)** The matrix then found two more defects the 1 600-test suite had not:
+> a re-executing supervisor abandoned the lease instead of waiting for it, and
+> `seed_execution_state` was not idempotent. Both made a baseline look *better*
+> than it is. **(3)** B3's ablation cannot yet show the barrier's *benefit*:
+> `appendfsync everysec` plus a graceful `docker restart` does not lose a
+> buffered write, so a hard Redis kill is needed before any B3-versus-AEP claim
+> is made. That is §F3 and the first prerequisite in §H of the Session 3
+> report.
 
 Build a **crash-point fault-injection harness** + **mock legacy API** + **multi-process workload driver**. Everything runs on one machine with Docker.
 
