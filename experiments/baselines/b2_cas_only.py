@@ -29,7 +29,6 @@ import time
 from typing import Any
 
 from aep_core.core.intent_workflow import ConnectorPolicy
-from aep_core.core.exceptions import LockAcquisitionError
 from aep_core.core.locks import DistributedLockManager
 from aep_core.core.request_binding import EndpointProfile, ExactMutationRequest
 from aep_core.core.storage import (
@@ -40,6 +39,8 @@ from aep_core.core.storage import (
 
 from experiments.baselines.common import (
     STATUS_APPLIED,
+    acquire_lease_or_wait,
+    default_lease_wait_seconds,
     STATUS_FAILED,
     STATUS_REFUSED,
     STATUS_TO_CLASS,
@@ -78,6 +79,7 @@ class CasOnlyRunner(CheckpointMixin):
         profile: EndpointProfile,
         policy: ConnectorPolicy,
         max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+        lease_wait_seconds: float | None = None,
         crash_injector: Any = None,
         crash_point_enum: type[Any] | None = None,
         state_ttl_seconds: int = 7 * 24 * 60 * 60,
@@ -91,6 +93,11 @@ class CasOnlyRunner(CheckpointMixin):
         self.profile = profile
         self.policy = policy
         self.max_attempts = max_attempts
+        self.lease_wait_seconds = (
+            default_lease_wait_seconds(policy)
+            if lease_wait_seconds is None
+            else float(lease_wait_seconds)
+        )
         self.crash_injector = crash_injector
         self.crash_point_enum = crash_point_enum
         self.state_ttl_seconds = state_ttl_seconds
@@ -137,13 +144,15 @@ class CasOnlyRunner(CheckpointMixin):
         step_id: str,
         request: ExactMutationRequest,
     ) -> ExecutionOutcome:
-        token = await self.lock_manager.acquire_lock(
-            execution_id, ttl_seconds=self.policy.lock_ttl_seconds
+        # Waits for a lease a dead worker still holds. See
+        # experiments/baselines/tests/test_lease_waiting.py: giving up here
+        # would credit the lease with preventing a duplicate it only delays.
+        token, lease_wait_seconds = await acquire_lease_or_wait(
+            self.lock_manager,
+            execution_id,
+            ttl_seconds=self.policy.lock_ttl_seconds,
+            wait_seconds=self.lease_wait_seconds,
         )
-        if token is None:
-            raise LockAcquisitionError(
-                f"execution lease unavailable for {execution_id}"
-            )
         try:
             await self._checkpoint("BEFORE_ANY_WRITE")
             payload = exact_bytes(self.profile, request)

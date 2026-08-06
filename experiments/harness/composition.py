@@ -59,6 +59,7 @@ from experiments.baselines import (
     b4_durable_workflow,
 )
 from experiments.baselines.b3_no_barrier import NoBarrierDurabilityBarrier
+from experiments.baselines.common import acquire_lease_or_wait
 from experiments.baselines.contract import SystemId
 from experiments.baselines.crash_points import BaselineCrashPoint
 from experiments.baselines.intent_classifier import NO_INTENT, classify_intent_state
@@ -370,13 +371,37 @@ def build_recovery_service(
 
 
 async def seed_execution_state(
-    *, storage_adapter: RedisStorageAdapter, lock_manager, execution_id: str
+    *,
+    storage_adapter: RedisStorageAdapter,
+    lock_manager,
+    execution_id: str,
+    lease_wait_seconds: float = 30.0,
 ) -> None:
-    """Create the execution state the write-ahead workflow requires to exist."""
-    token = await lock_manager.acquire_lock(execution_id, ttl_seconds=60)
-    if token is None:
-        raise RuntimeError(f"could not seed execution {execution_id}: lease unavailable")
+    """Create the execution state the write-ahead workflow requires to exist.
+
+    Idempotent, and it waits for the lease. Both were learned from the matrix
+    rather than reasoned out (see
+    ``experiments/harness/tests/test_seed_idempotence.py``): B2 is the only
+    system that both uses the fenced write path and re-executes a crashed
+    execution, so it is the only one that reaches this function twice for one
+    execution id -- and when it did, ``expected_version=0`` raised
+    ``StaleWriteError``, the re-execution never transmitted, and B2's cell
+    reported lost effects instead of the duplicates it actually causes.
+    """
+    if await storage_adapter.get_state(execution_id) is not None:
+        # Already seeded, and possibly already worked on. Re-seeding would
+        # reset a version and a status that the run is about to be judged by.
+        return
+    token, _waited = await acquire_lease_or_wait(
+        lock_manager,
+        execution_id,
+        ttl_seconds=60,
+        wait_seconds=lease_wait_seconds,
+    )
     try:
+        if await storage_adapter.get_state(execution_id) is not None:
+            # Another worker seeded it while this one waited for the lease.
+            return
         await storage_adapter.save_state(
             AEPExecutionState(execution_id=execution_id, status=AEPStatus.IDLE),
             expected_version=0,

@@ -50,8 +50,9 @@ env:
   # Guards against a collapsed collection reading as success. Raise this when
   # the suite grows; never lower it without saying why.
   # 1223 (Phase 2A) -> 1387 with the Phase 2B Session 1 harness tests
-  #                 -> 1565 with the Session 2 crash injector and runner.
-  MINIMUM_TESTS: "1500"
+  #                 -> 1565 with the Session 2 crash injector and runner
+  #                 -> 1624 with the Session 3 baselines, statistics and analysis.
+  MINIMUM_TESTS: "1590"
 
 jobs:
   # =========================================================================

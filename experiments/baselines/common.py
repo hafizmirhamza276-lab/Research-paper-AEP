@@ -23,10 +23,13 @@ the oracle through the response code and would score better than it deserves.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import time
 from enum import Enum
 from typing import Any, Mapping, Protocol
 
+from aep_core.core.exceptions import LockAcquisitionError
 from aep_core.core.request_binding import (
     EndpointProfile,
     ExactMutationRequest,
@@ -69,6 +72,56 @@ STATUS_TO_CLASS: Mapping[str, OutcomeClass] = {
     # then re-runs the activity rather than escalating.
     STATUS_SCHEDULED: OutcomeClass.UNVERIFIED_FAILURE,
 }
+
+
+#: How far past the lock TTL a re-executing supervisor is willing to wait for
+#: a lease. A lease held by a process that no longer exists goes away when
+#: Redis expires it and not before, so anything shorter than the TTL abandons
+#: every crashed execution -- which is what the first matrix smoke did, and
+#: which would have credited the lease with preventing a duplicate it only
+#: delays.
+LEASE_WAIT_MARGIN_SECONDS = 5.0
+
+#: How often to re-attempt while waiting. Small enough that the measured wait
+#: is dominated by the TTL rather than by the polling interval.
+LEASE_POLL_SECONDS = 0.25
+
+
+def default_lease_wait_seconds(policy) -> float:
+    return float(policy.lock_ttl_seconds) + LEASE_WAIT_MARGIN_SECONDS
+
+
+async def acquire_lease_or_wait(
+    lock_manager,
+    execution_id: str,
+    *,
+    ttl_seconds: int,
+    wait_seconds: float,
+    poll_seconds: float = LEASE_POLL_SECONDS,
+) -> tuple[str, float]:
+    """Take the lease, waiting for a dead holder's to expire. Bounded.
+
+    Returns ``(token, seconds_waited)``. The wait is returned rather than
+    hidden because it is a result: it is the throughput cost a lease imposes
+    under crashes, and it is the whole of what B1's and B2's leases buy over
+    B0 -- a delay, not a prevention.
+
+    Bounded, and then it raises. Fail-closed applies here as everywhere: an
+    unbounded wait is not patience, it is a hang, and a run that hung would be
+    reported as a slow cell rather than as a broken one.
+    """
+    started = time.monotonic()
+    deadline = started + wait_seconds
+    while True:
+        token = await lock_manager.acquire_lock(execution_id, ttl_seconds=ttl_seconds)
+        if token is not None:
+            return token, time.monotonic() - started
+        if time.monotonic() >= deadline:
+            raise LockAcquisitionError(
+                f"execution lease for {execution_id} was still held after "
+                f"{wait_seconds}s"
+            )
+        await asyncio.sleep(poll_seconds)
 
 
 class Transmitter(Protocol):

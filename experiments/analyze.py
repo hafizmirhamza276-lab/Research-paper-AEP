@@ -1,0 +1,927 @@
+"""Every metric in PAPER_ROADMAP.md section 3.2, from two files per run.
+
+Amendment D3: *"experiments/analyze.py computes all section 3.2 metrics with
+bootstrap 95% CIs and Fisher's exact tests, and emits: (i) CSV per metric,
+(ii) the paper's Table 1 (undetected duplicate rate + known-ambiguity rate per
+system), (iii) PDF figures. The analysis must read ONLY events.jsonl + the
+oracle ledger -- never internal AEP state directly."*
+
+**The reading restriction is the point, not a formality.** This module opens
+exactly two things per run: the run's ``events.jsonl`` and the run's
+``ground_truth.sqlite3``. It never connects to Redis, never imports a storage
+adapter, and never asks the system under test what it thinks happened -- it
+reads what the system *recorded* that it thought happened, at the time, into a
+log that was flushed on every write and survived the SIGKILLs. There is a gate
+in ``experiments/tests/test_analysis_isolation.py`` that fails if an import of
+``redis`` or of ``aep_core``'s storage ever appears here, because the
+difference between "asked the oracle" and "asked the system under test" is the
+whole reason any of these numbers mean anything.
+
+**What is counted, and against what.**
+
+``undetected_duplicate_rate``
+    The headline. An execution whose resource was mutated more than once in
+    the ground-truth ledger, and whose system did *not* end it in a declared
+    ambiguity. Both halves matter: the numerator comes from the oracle, the
+    "not flagged" comes from the system's own final record, and neither can
+    see the other. AEP's target is zero.
+
+``known_ambiguity_rate``
+    Executions ending in a declared ambiguity. This is what AEP converts
+    silent failures *into*, so it is expected to be positive and is not a
+    defect -- reporting it beside the duplicate rate is what makes the trade
+    visible rather than hidden.
+
+``lost_effect_rate``
+    The world changed and the system neither says so nor flags it. The failure
+    mode that is invisible from inside a naive system.
+
+``unverified_failure_rate``
+    The system wrote "failed" with no evidence that nothing was applied. Sums
+    with the ambiguity rate to "the call did not visibly succeed", and the
+    split between them is the contribution.
+
+``state_corruption_rate``
+    Executions whose own record could not be read.
+
+``recovery_success_rate`` / ``recovery_latency``
+    Of the executions that crashed, the fraction that reached a terminal
+    classification, and how long crash-to-classified took. Only meaningful for
+    the systems that have a recovery service; reported as not-applicable for
+    the others rather than as zero.
+
+``step_latency`` / ``throughput``
+    End-to-end wall time per resolved execution, and executions per second of
+    run wall time. The overhead columns.
+
+Rates carry a percentile bootstrap 95% interval, clustered by run, and every
+baseline is compared against AEP-full with a two-tailed Fisher exact test. Both
+procedures are in ``experiments/statistics.py`` with their seeds.
+
+    python -m experiments.analyze --results-root experiments/results/matrix
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import sqlite3
+import sys
+from collections import Counter, defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Sequence
+
+from experiments.statistics import (
+    DEFAULT_BOOTSTRAP_SEED,
+    DEFAULT_RESAMPLES,
+    cluster_bootstrap_proportion,
+    compare_rates,
+    proportion,
+    summarise,
+)
+
+#: The system every other one is compared against.
+REFERENCE_SYSTEM = "AEP_FULL"
+
+#: Outcome classes, repeated here rather than imported, so that this module
+#: depends on the *log format* and not on the code that produced it. A rename
+#: in the harness that did not reach the log would then be caught by the
+#: unknown-class guard below instead of silently agreeing with itself.
+CONFIRMED_APPLIED = "CONFIRMED_APPLIED"
+CONFIRMED_NOT_APPLIED = "CONFIRMED_NOT_APPLIED"
+DECLARED_AMBIGUOUS = "DECLARED_AMBIGUOUS"
+UNVERIFIED_FAILURE = "UNVERIFIED_FAILURE"
+NO_RECORD = "NO_RECORD"
+UNREADABLE = "UNREADABLE"
+
+KNOWN_CLASSES = frozenset(
+    {
+        CONFIRMED_APPLIED,
+        CONFIRMED_NOT_APPLIED,
+        DECLARED_AMBIGUOUS,
+        UNVERIFIED_FAILURE,
+        NO_RECORD,
+        UNREADABLE,
+    }
+)
+
+#: The rate metrics, in the order the paper's tables use them.
+RATE_METRICS: tuple[str, ...] = (
+    "undetected_duplicate_rate",
+    "known_ambiguity_rate",
+    "lost_effect_rate",
+    "unverified_failure_rate",
+    "state_corruption_rate",
+    "recovery_success_rate",
+)
+
+
+class AnalysisError(RuntimeError):
+    """The results cannot be interpreted, so nothing is reported from them."""
+
+
+# ===========================================================================
+# Reading. Two files, and nothing else.
+# ===========================================================================
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    """Parse a run log, tolerating only a truncated final line.
+
+    A worker killed mid-write leaves a partial last line; that is an artifact
+    of the experiment. Any other unparseable line raises, because silently
+    skipping one would lower a count the paper reports.
+    """
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    records: list[dict[str, Any]] = []
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            records.append(json.loads(stripped))
+        except json.JSONDecodeError:
+            if index == len(lines) - 1:
+                break
+            raise AnalysisError(f"{path} line {index + 1} is not valid JSON")
+    return records
+
+
+def events_of(records: Iterable[Mapping[str, Any]], event: str) -> list[dict[str, Any]]:
+    return [dict(record) for record in records if record.get("event") == event]
+
+
+def oracle_effects_by_target(ledger_path: Path) -> Counter[str]:
+    """How many times each resource was actually mutated.
+
+    Read straight out of the ground-truth SQLite with a read-only connection
+    and one SQL statement. Deliberately not through ``GroundTruthLedger``: that
+    class is part of the apparatus under test's environment, and the analysis
+    should be able to run against a published artifact containing nothing but
+    the database file.
+    """
+    if not ledger_path.is_file():
+        raise AnalysisError(f"no ground-truth ledger at {ledger_path}")
+    connection = sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True)
+    try:
+        rows = connection.execute(
+            "SELECT target, COUNT(*) FROM applied_mutations GROUP BY target"
+        ).fetchall()
+    except sqlite3.DatabaseError as error:
+        raise AnalysisError(f"cannot read {ledger_path}: {error}") from None
+    finally:
+        connection.close()
+    return Counter({str(target): int(count) for target, count in rows})
+
+
+# ===========================================================================
+# One run
+# ===========================================================================
+
+
+@dataclass
+class ExecutionRecord:
+    """One agent execution, as the two oracles jointly describe it."""
+
+    run_id: str
+    system: str
+    crash_point: str
+    endpoint: str
+    response_class: str
+    readback_keying: str
+    execution_id: str
+    outcome_class: str
+    status: str
+    applied_effects: int
+    crashed: bool
+    dispatch_attempts: int
+    resolved_wall_ms: int | None = None
+    step_latency_ms: float | None = None
+    crash_wall_ms: int | None = None
+    classified_wall_ms: int | None = None
+
+    @property
+    def recovery_latency_ms(self) -> float | None:
+        if self.crash_wall_ms is None or self.classified_wall_ms is None:
+            return None
+        return float(self.classified_wall_ms - self.crash_wall_ms)
+
+    @property
+    def is_undetected_duplicate(self) -> bool:
+        return self.applied_effects > 1 and self.outcome_class != DECLARED_AMBIGUOUS
+
+    @property
+    def is_lost_effect(self) -> bool:
+        return (
+            self.applied_effects > 0
+            and self.outcome_class != CONFIRMED_APPLIED
+            and self.outcome_class != DECLARED_AMBIGUOUS
+        )
+
+    @property
+    def is_terminal(self) -> bool:
+        """Did the system reach a decision it is willing to stand behind?"""
+        return self.outcome_class in {
+            CONFIRMED_APPLIED,
+            CONFIRMED_NOT_APPLIED,
+            DECLARED_AMBIGUOUS,
+        }
+
+
+@dataclass
+class RunRecord:
+    """One run, reduced to the executions it produced."""
+
+    run_id: str
+    system: str
+    crash_point: str
+    endpoint: str
+    response_class: str
+    readback_keying: str
+    seed: int
+    config_digest: str
+    has_sigkill: bool
+    wall_seconds: float
+    executions: list[ExecutionRecord] = field(default_factory=list)
+    crash_injections: int = 0
+
+    @property
+    def cell_key(self) -> str:
+        return "|".join(
+            (self.system, self.crash_point, self.endpoint, self.readback_keying)
+        )
+
+
+def load_run(directory: Path) -> RunRecord | None:
+    """Reduce one results directory to a :class:`RunRecord`, or skip it.
+
+    ``None`` for a directory with no merged log or no ledger: an interrupted
+    run is not a result and must not be counted as an empty one.
+    """
+    events_path = directory / "events.jsonl"
+    ledger_path = directory / "ground_truth.sqlite3"
+    if not events_path.is_file() or not ledger_path.is_file():
+        return None
+
+    records = read_jsonl(events_path)
+    started = events_of(records, "run_started")
+    if not started:
+        return None
+    opening = started[0]
+    config = dict(opening["run_config"])
+    mock_config = dict(opening.get("mock_api_config", {}))
+    environment = dict(opening.get("environment", {}))
+
+    endpoint = str(config["endpoint"])
+    response_class = str(
+        mock_config.get("endpoints", {}).get(endpoint, {}).get("response_class", "")
+    )
+
+    effects = oracle_effects_by_target(ledger_path)
+
+    # The workload plan is echoed into the log, so the execution -> target
+    # mapping comes out of the log rather than being recomputed from the seed.
+    # An analysis that re-derived it would agree with the harness by
+    # construction even if the harness had run something else.
+    plan = {
+        str(item["execution_id"]): item
+        for item in opening.get("workload", {}).get("items", [])
+    }
+
+    crash_wall: dict[str, int] = {}
+    for record in events_of(records, "crash_injected"):
+        execution_id = record.get("execution_id")
+        if execution_id and execution_id not in crash_wall:
+            crash_wall[str(execution_id)] = int(record["wall_ms"])
+
+    resolved: dict[str, dict[str, Any]] = {}
+    for record in events_of(records, "execution_resolved"):
+        resolved[str(record["execution_id"])] = record
+
+    classified_wall: dict[str, int] = {}
+    final: dict[str, dict[str, Any]] = {}
+    for record in events_of(records, "final_classification"):
+        execution_id = str(record["execution_id"])
+        final[execution_id] = record
+        classified_wall[execution_id] = int(record["wall_ms"])
+
+    # A settling poll that first reports an execution settled is a better
+    # estimate of "when was it classified" than the end-of-run sweep, which
+    # happens once and late. Where the run has them, use the earliest poll at
+    # which nothing was pending.
+    settled_at: int | None = None
+    for record in events_of(records, "settling_poll"):
+        if int(record.get("pending", 1)) == 0:
+            settled_at = int(record["wall_ms"])
+            break
+
+    run_started_ms = int(opening["wall_ms"])
+    finished = events_of(records, "run_finished")
+    run_finished_ms = int(finished[-1]["wall_ms"]) if finished else run_started_ms
+
+    executions: list[ExecutionRecord] = []
+    for execution_id, item in plan.items():
+        classification = final.get(execution_id)
+        if classification is None:
+            # No final classification means the run did not complete its
+            # sweep. Counting the execution as anything would be inventing a
+            # result for it.
+            continue
+        outcome_class = str(classification.get("outcome_class", ""))
+        if outcome_class not in KNOWN_CLASSES:
+            raise AnalysisError(
+                f"{directory.name}: unknown outcome class {outcome_class!r}. The "
+                "analysis reads the log format, not the harness's enum, so a "
+                "class it has never seen is refused rather than bucketed."
+            )
+        target = str(item["target"])
+        resolution = resolved.get(execution_id)
+        crash_ms = crash_wall.get(execution_id)
+        executions.append(
+            ExecutionRecord(
+                run_id=str(config["run_id"]),
+                system=str(config["system"]),
+                crash_point=str(config.get("crash_point") or "none"),
+                endpoint=endpoint,
+                response_class=response_class,
+                readback_keying=str(config["readback_keying"]),
+                execution_id=execution_id,
+                outcome_class=outcome_class,
+                status=str(classification.get("status", "")),
+                applied_effects=int(effects.get(target, 0)),
+                crashed=crash_ms is not None,
+                dispatch_attempts=int(
+                    (resolution or {}).get(
+                        "dispatch_attempts", classification.get("dispatch_attempts", 0)
+                    )
+                ),
+                resolved_wall_ms=(
+                    int(resolution["wall_ms"]) if resolution is not None else None
+                ),
+                step_latency_ms=(
+                    float(resolution["duration_ns"]) / 1e6
+                    if resolution is not None and "duration_ns" in resolution
+                    else None
+                ),
+                crash_wall_ms=crash_ms,
+                classified_wall_ms=(
+                    settled_at
+                    if settled_at is not None
+                    else classified_wall.get(execution_id)
+                ),
+            )
+        )
+
+    return RunRecord(
+        run_id=str(config["run_id"]),
+        system=str(config["system"]),
+        crash_point=str(config.get("crash_point") or "none"),
+        endpoint=endpoint,
+        response_class=response_class,
+        readback_keying=str(config["readback_keying"]),
+        seed=int(config["seed"]),
+        config_digest=str(config.get("config_digest", "")),
+        has_sigkill=bool(environment.get("has_sigkill", False)),
+        wall_seconds=max(0.0, (run_finished_ms - run_started_ms) / 1000.0),
+        executions=executions,
+        crash_injections=len(events_of(records, "crash_injected")),
+    )
+
+
+def load_runs(results_root: Path) -> list[RunRecord]:
+    runs: list[RunRecord] = []
+    for directory in sorted(path for path in results_root.iterdir() if path.is_dir()):
+        run = load_run(directory)
+        if run is not None:
+            runs.append(run)
+    return runs
+
+
+# ===========================================================================
+# Metrics
+# ===========================================================================
+
+
+def _numerator(metric: str, execution: ExecutionRecord) -> int:
+    if metric == "undetected_duplicate_rate":
+        return int(execution.is_undetected_duplicate)
+    if metric == "known_ambiguity_rate":
+        return int(execution.outcome_class == DECLARED_AMBIGUOUS)
+    if metric == "lost_effect_rate":
+        return int(execution.is_lost_effect)
+    if metric == "unverified_failure_rate":
+        return int(execution.outcome_class == UNVERIFIED_FAILURE)
+    if metric == "state_corruption_rate":
+        return int(execution.outcome_class == UNREADABLE)
+    if metric == "recovery_success_rate":
+        return int(execution.crashed and execution.is_terminal)
+    raise AnalysisError(f"unknown metric {metric!r}")
+
+
+def _denominator(metric: str, execution: ExecutionRecord) -> int:
+    # Recovery success is conditional on having crashed. Every other rate is
+    # per execution.
+    if metric == "recovery_success_rate":
+        return int(execution.crashed)
+    return 1
+
+
+@dataclass
+class MetricResult:
+    """One metric, for one group of runs."""
+
+    metric: str
+    group: dict[str, str]
+    successes: int
+    total: int
+    interval: Any
+    runs: int
+
+    def echo(self) -> dict[str, Any]:
+        return {
+            "metric": self.metric,
+            **self.group,
+            "successes": self.successes,
+            "total": self.total,
+            "rate": proportion(self.successes, self.total),
+            "runs": self.runs,
+            **{
+                key: value
+                for key, value in self.interval.echo().items()
+                if key != "point"
+            },
+        }
+
+
+def compute_metric(
+    metric: str,
+    runs: Sequence[RunRecord],
+    group: Mapping[str, str],
+    *,
+    resamples: int,
+    seed: int,
+) -> MetricResult:
+    clusters: list[tuple[int, int]] = []
+    successes = total = 0
+    for run in runs:
+        run_successes = sum(_numerator(metric, item) for item in run.executions)
+        run_total = sum(_denominator(metric, item) for item in run.executions)
+        clusters.append((run_successes, run_total))
+        successes += run_successes
+        total += run_total
+    return MetricResult(
+        metric=metric,
+        group=dict(group),
+        successes=successes,
+        total=total,
+        interval=cluster_bootstrap_proportion(
+            clusters, resamples=resamples, seed=seed
+        ),
+        runs=len(runs),
+    )
+
+
+def group_runs(
+    runs: Sequence[RunRecord], keys: Sequence[str]
+) -> dict[tuple[str, ...], list[RunRecord]]:
+    grouped: dict[tuple[str, ...], list[RunRecord]] = defaultdict(list)
+    for run in runs:
+        grouped[tuple(getattr(run, key) for key in keys)].append(run)
+    return dict(grouped)
+
+
+# ===========================================================================
+# Outputs
+# ===========================================================================
+
+
+def write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return path
+    columns: list[str] = []
+    for row in rows:
+        for key in row:
+            if key not in columns:
+                columns.append(key)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+    return path
+
+
+def build_table_one(
+    runs: Sequence[RunRecord], *, resamples: int, seed: int
+) -> list[dict[str, Any]]:
+    """The paper's Table 1: undetected duplicates and known ambiguity, per system.
+
+    Pooled over crash points, response classes and keyings -- the row is "this
+    system, under the whole fault matrix collected so far". Every partial
+    collection therefore produces a *readable* Table 1 whose coverage is stated
+    beside it, which is what makes a partial matrix usable.
+    """
+    reference = [run for run in runs if run.system == REFERENCE_SYSTEM]
+    rows: list[dict[str, Any]] = []
+    for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
+        duplicate = compute_metric(
+            "undetected_duplicate_rate",
+            system_runs,
+            {"system": system},
+            resamples=resamples,
+            seed=seed,
+        )
+        ambiguity = compute_metric(
+            "known_ambiguity_rate",
+            system_runs,
+            {"system": system},
+            resamples=resamples,
+            seed=seed,
+        )
+        lost = compute_metric(
+            "lost_effect_rate",
+            system_runs,
+            {"system": system},
+            resamples=resamples,
+            seed=seed,
+        )
+        row: dict[str, Any] = {
+            "system": system,
+            "runs": len(system_runs),
+            "executions": duplicate.total,
+            "crash_points_covered": len({run.crash_point for run in system_runs}),
+            "response_classes_covered": len({run.response_class for run in system_runs}),
+            "undetected_duplicates": duplicate.successes,
+            "undetected_duplicate_rate": proportion(
+                duplicate.successes, duplicate.total
+            ),
+            "undetected_duplicate_ci_low": duplicate.interval.low,
+            "undetected_duplicate_ci_high": duplicate.interval.high,
+            "known_ambiguities": ambiguity.successes,
+            "known_ambiguity_rate": proportion(ambiguity.successes, ambiguity.total),
+            "known_ambiguity_ci_low": ambiguity.interval.low,
+            "known_ambiguity_ci_high": ambiguity.interval.high,
+            "lost_effects": lost.successes,
+            "lost_effect_rate": proportion(lost.successes, lost.total),
+        }
+        if system != REFERENCE_SYSTEM and reference:
+            reference_duplicate = compute_metric(
+                "undetected_duplicate_rate",
+                reference,
+                {"system": REFERENCE_SYSTEM},
+                resamples=resamples,
+                seed=seed,
+            )
+            comparison = compare_rates(
+                "undetected_duplicate_rate",
+                system=system,
+                reference=REFERENCE_SYSTEM,
+                system_successes=duplicate.successes,
+                system_total=duplicate.total,
+                reference_successes=reference_duplicate.successes,
+                reference_total=reference_duplicate.total,
+            )
+            row["fisher_p_vs_aep_full"] = comparison.p_value
+        else:
+            row["fisher_p_vs_aep_full"] = None
+        rows.append(row)
+    return rows
+
+
+def build_comparisons(
+    runs: Sequence[RunRecord], *, resamples: int, seed: int
+) -> list[dict[str, Any]]:
+    """Every baseline against AEP-full, on every rate metric."""
+    by_system = group_runs(runs, ["system"])
+    reference_runs = by_system.get((REFERENCE_SYSTEM,), [])
+    if not reference_runs:
+        return []
+    rows: list[dict[str, Any]] = []
+    for metric in RATE_METRICS:
+        reference = compute_metric(
+            metric,
+            reference_runs,
+            {"system": REFERENCE_SYSTEM},
+            resamples=resamples,
+            seed=seed,
+        )
+        for (system,), system_runs in sorted(by_system.items()):
+            if system == REFERENCE_SYSTEM:
+                continue
+            result = compute_metric(
+                metric, system_runs, {"system": system}, resamples=resamples, seed=seed
+            )
+            rows.append(
+                compare_rates(
+                    metric,
+                    system=system,
+                    reference=REFERENCE_SYSTEM,
+                    system_successes=result.successes,
+                    system_total=result.total,
+                    reference_successes=reference.successes,
+                    reference_total=reference.total,
+                ).echo()
+            )
+    return rows
+
+
+def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
+    """Step latency, recovery latency and throughput, per system."""
+    rows: list[dict[str, Any]] = []
+    for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
+        step = [
+            execution.step_latency_ms
+            for run in system_runs
+            for execution in run.executions
+            if execution.step_latency_ms is not None
+        ]
+        recovery = [
+            execution.recovery_latency_ms
+            for run in system_runs
+            for execution in run.executions
+            if execution.recovery_latency_ms is not None and execution.crashed
+        ]
+        executions = sum(len(run.executions) for run in system_runs)
+        wall = sum(run.wall_seconds for run in system_runs)
+        row: dict[str, Any] = {"system": system, "runs": len(system_runs)}
+        for prefix, values in (("step_latency_ms", step), ("recovery_latency_ms", recovery)):
+            for key, value in summarise(values).items():
+                row[f"{prefix}_{key}"] = value
+        row["executions"] = executions
+        row["run_wall_seconds"] = round(wall, 3)
+        row["executions_per_second"] = round(executions / wall, 4) if wall else None
+        rows.append(row)
+    return rows
+
+
+def build_per_cell(
+    runs: Sequence[RunRecord], *, resamples: int, seed: int
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    keys = ["system", "crash_point", "response_class", "readback_keying"]
+    for values, cell_runs in sorted(group_runs(runs, keys).items()):
+        group = dict(zip(keys, values))
+        for metric in RATE_METRICS:
+            rows.append(
+                compute_metric(
+                    metric, cell_runs, group, resamples=resamples, seed=seed
+                ).echo()
+            )
+    return rows
+
+
+def build_executions_csv(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
+    """Every execution, so a reader can recompute every rate above."""
+    return [
+        {
+            "run_id": execution.run_id,
+            "system": execution.system,
+            "crash_point": execution.crash_point,
+            "endpoint": execution.endpoint,
+            "response_class": execution.response_class,
+            "readback_keying": execution.readback_keying,
+            "execution_id": execution.execution_id,
+            "outcome_class": execution.outcome_class,
+            "status": execution.status,
+            "applied_effects": execution.applied_effects,
+            "crashed": int(execution.crashed),
+            "dispatch_attempts": execution.dispatch_attempts,
+            "step_latency_ms": execution.step_latency_ms,
+            "recovery_latency_ms": execution.recovery_latency_ms,
+            "undetected_duplicate": int(execution.is_undetected_duplicate),
+            "lost_effect": int(execution.is_lost_effect),
+        }
+        for run in runs
+        for execution in run.executions
+    ]
+
+
+# ===========================================================================
+# Figures
+# ===========================================================================
+
+
+def write_figures(
+    table_one: Sequence[Mapping[str, Any]],
+    per_cell: Sequence[Mapping[str, Any]],
+    destination: Path,
+) -> list[Path]:
+    """Two PDFs: the headline bars, and the crash-point breakdown.
+
+    matplotlib is imported here rather than at module scope so that the CSVs
+    and the tables can still be produced on a machine without it -- a partial
+    result is worth more than an import error.
+    """
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return []
+
+    destination.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+
+    # -- Figure 1: the headline trade, per system ---------------------------
+    systems = [row["system"] for row in table_one]
+    duplicates = [row["undetected_duplicate_rate"] for row in table_one]
+    ambiguities = [row["known_ambiguity_rate"] for row in table_one]
+    lows = [
+        row["undetected_duplicate_rate"] - row["undetected_duplicate_ci_low"]
+        for row in table_one
+    ]
+    highs = [
+        row["undetected_duplicate_ci_high"] - row["undetected_duplicate_rate"]
+        for row in table_one
+    ]
+
+    figure, axis = plt.subplots(figsize=(9, 4.2))
+    positions = range(len(systems))
+    offset = 0.2
+    axis.bar(
+        [position - offset for position in positions],
+        duplicates,
+        width=0.4,
+        yerr=[lows, highs],
+        capsize=3,
+        label="undetected duplicate rate",
+    )
+    axis.bar(
+        [position + offset for position in positions],
+        ambiguities,
+        width=0.4,
+        label="known ambiguity rate",
+    )
+    axis.set_xticks(list(positions))
+    axis.set_xticklabels(systems, rotation=20, ha="right", fontsize=8)
+    axis.set_ylabel("rate per execution")
+    axis.set_title(
+        "Undetected duplicates versus declared ambiguity, by system\n"
+        "(95% cluster-bootstrap CI on the duplicate rate)",
+        fontsize=10,
+    )
+    axis.legend(fontsize=8)
+    axis.grid(axis="y", alpha=0.3)
+    figure.tight_layout()
+    path = destination / "figure-1-undetected-vs-ambiguity.pdf"
+    figure.savefig(path)
+    plt.close(figure)
+    written.append(path)
+
+    # -- Figure 2: undetected duplicate rate by crash point -----------------
+    duplicate_cells = [
+        row for row in per_cell if row["metric"] == "undetected_duplicate_rate"
+    ]
+    crash_points = sorted({row["crash_point"] for row in duplicate_cells})
+    by_system: dict[str, dict[str, float]] = defaultdict(dict)
+    for row in duplicate_cells:
+        current = by_system[row["system"]]
+        # Pool across response classes and keyings by weighting on counts.
+        previous = current.get(row["crash_point"])
+        current[row["crash_point"]] = (
+            row["rate"] if previous is None else (previous + row["rate"]) / 2
+        )
+
+    if crash_points and by_system:
+        figure, axis = plt.subplots(figsize=(10, 4.6))
+        width = 0.8 / max(1, len(by_system))
+        for index, (system, values) in enumerate(sorted(by_system.items())):
+            axis.bar(
+                [
+                    position + index * width - 0.4
+                    for position in range(len(crash_points))
+                ],
+                [values.get(point, 0.0) for point in crash_points],
+                width=width,
+                label=system,
+            )
+        axis.set_xticks(list(range(len(crash_points))))
+        axis.set_xticklabels(crash_points, rotation=20, ha="right", fontsize=8)
+        axis.set_ylabel("undetected duplicate rate")
+        axis.set_title("Undetected duplicate rate by crash point", fontsize=10)
+        axis.legend(fontsize=7, ncol=3)
+        axis.grid(axis="y", alpha=0.3)
+        figure.tight_layout()
+        path = destination / "figure-2-duplicates-by-crash-point.pdf"
+        figure.savefig(path)
+        plt.close(figure)
+        written.append(path)
+
+    return written
+
+
+# ===========================================================================
+# Entry point
+# ===========================================================================
+
+
+def render_table_one(rows: Sequence[Mapping[str, Any]]) -> str:
+    header = (
+        f"{'system':<22} {'runs':>5} {'exec':>6} {'undet.dup':>10} "
+        f"{'95% CI':>16} {'known amb.':>11} {'lost':>7} {'Fisher p':>10}"
+    )
+    lines = ["", "Table 1 -- per system, pooled over every cell collected", "=" * len(header), header, "-" * len(header)]
+    for row in rows:
+        probability = row.get("fisher_p_vs_aep_full")
+        lines.append(
+            f"{row['system']:<22} {row['runs']:>5} {row['executions']:>6} "
+            f"{row['undetected_duplicate_rate']:>10.4f} "
+            f"{'[' + format(row['undetected_duplicate_ci_low'], '.3f') + ', ' + format(row['undetected_duplicate_ci_high'], '.3f') + ']':>16} "
+            f"{row['known_ambiguity_rate']:>11.4f} "
+            f"{row['lost_effect_rate']:>7.4f} "
+            f"{('%.2e' % probability) if probability is not None else '--':>10}"
+        )
+    lines.append("=" * len(header))
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Compute PAPER_ROADMAP.md section 3.2's metrics."
+    )
+    parser.add_argument("--results-root", default="experiments/results/matrix")
+    parser.add_argument("--destination", default=None)
+    parser.add_argument("--resamples", type=int, default=DEFAULT_RESAMPLES)
+    parser.add_argument("--bootstrap-seed", type=int, default=DEFAULT_BOOTSTRAP_SEED)
+    arguments = parser.parse_args(argv)
+
+    results_root = Path(arguments.results_root)
+    if not results_root.is_dir():
+        print(f"no results directory at {results_root}")
+        return 2
+    destination = Path(arguments.destination or results_root / "analysis")
+    destination.mkdir(parents=True, exist_ok=True)
+
+    runs = load_runs(results_root)
+    if not runs:
+        print(f"no completed runs found under {results_root}")
+        return 2
+
+    executions = sum(len(run.executions) for run in runs)
+    coverage = {
+        "runs": len(runs),
+        "executions": executions,
+        "systems": sorted({run.system for run in runs}),
+        "crash_points": sorted({run.crash_point for run in runs}),
+        "response_classes": sorted({run.response_class for run in runs}),
+        "readback_keyings": sorted({run.readback_keying for run in runs}),
+        "cells": len({run.cell_key for run in runs}),
+        "all_runs_used_real_sigkill": all(run.has_sigkill for run in runs),
+        "bootstrap_seed": arguments.bootstrap_seed,
+        "bootstrap_resamples": arguments.resamples,
+    }
+
+    table_one = build_table_one(
+        runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
+    )
+    per_cell = build_per_cell(
+        runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
+    )
+    comparisons = build_comparisons(
+        runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
+    )
+    latencies = build_latencies(runs)
+    per_execution = build_executions_csv(runs)
+
+    written = [
+        write_csv(destination / "table-1.csv", table_one),
+        write_csv(destination / "per-cell-metrics.csv", per_cell),
+        write_csv(destination / "comparisons-vs-aep-full.csv", comparisons),
+        write_csv(destination / "latency-and-throughput.csv", latencies),
+        write_csv(destination / "per-execution.csv", per_execution),
+    ]
+    for metric in RATE_METRICS:
+        written.append(
+            write_csv(
+                destination / f"metric-{metric.replace('_', '-')}.csv",
+                [row for row in per_cell if row["metric"] == metric],
+            )
+        )
+    written.extend(write_figures(table_one, per_cell, destination))
+
+    (destination / "coverage.json").write_text(
+        json.dumps(coverage, indent=2, sort_keys=True), encoding="utf-8"
+    )
+
+    print(json.dumps(coverage, indent=2, sort_keys=True))
+    print(render_table_one(table_one))
+    print("")
+    if not coverage["all_runs_used_real_sigkill"]:
+        print(
+            "WARNING: at least one run was collected on a platform without "
+            "SIGKILL. Its crashes were TerminateProcess."
+        )
+    print("written:")
+    for path in written:
+        print(f"  {path}")
+    print(f"  {destination / 'coverage.json'}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - process entry point
+    sys.exit(main())
