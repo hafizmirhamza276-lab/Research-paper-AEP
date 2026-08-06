@@ -48,6 +48,7 @@ from typing import Any, Callable, Mapping
 
 from experiments.harness.crash_points import (
     DEFERRED_CRASH_POINTS,
+    ROADMAP_CRASH_POINTS,
     CrashPoint,
     resolve_crash_point,
     roadmap_name_for,
@@ -102,17 +103,28 @@ class CrashStyle(str, Enum):
 class CrashPlan:
     """What this process will do, decided before it does any protocol work."""
 
-    point: CrashPoint
+    #: A member of *some* declared crash-point vocabulary. ``aep_core``'s for
+    #: AEP-full and B3; ``experiments.baselines.crash_points``' for the four
+    #: baselines, which have their own instruction boundaries because they do
+    #: not have AEP's. The injector compares members by identity and never by
+    #: name, so mixing the two vocabularies is impossible rather than merely
+    #: discouraged.
+    point: Enum
     style: CrashStyle = CrashStyle.SIGKILL_IMMEDIATE
     #: Only meaningful for ``SIGKILL_DEFERRED``.
     deferred_delay_seconds: float = 0.4
     #: ``None`` means every execution is eligible. A set scopes the crash to
     #: named executions, so one run can contain crashed and control executions.
     executions: frozenset[str] | None = None
+    #: The roadmap's name for this position, when the caller selected one. A
+    #: baseline's vocabulary has no reverse lookup into the roadmap -- several
+    #: roadmap names can share one baseline position -- so the name is carried
+    #: rather than derived, and every record says which cell it belongs to.
+    roadmap_name: str | None = None
 
     def __post_init__(self) -> None:
-        if not isinstance(self.point, CrashPoint):
-            raise TypeError("crash plan requires a CrashPoint member")
+        if not isinstance(self.point, Enum):
+            raise TypeError("crash plan requires a declared crash-point member")
         if self.deferred_delay_seconds < 0:
             raise ValueError("deferred_delay_seconds cannot be negative")
         if (
@@ -125,10 +137,16 @@ class CrashPlan:
             # `mid_dispatch`. Callers must say so explicitly.
             pass
 
+    @property
+    def roadmap_crash_point(self) -> str | None:
+        if self.roadmap_name is not None:
+            return self.roadmap_name
+        return roadmap_name_for(self.point) if isinstance(self.point, CrashPoint) else None
+
     def echo(self) -> dict[str, Any]:
         return {
             "crash_point": self.point.value,
-            "roadmap_crash_point": roadmap_name_for(self.point),
+            "roadmap_crash_point": self.roadmap_crash_point,
             "style": self.style.value,
             "deferred_delay_seconds": self.deferred_delay_seconds,
             "scoped_executions": (
@@ -169,17 +187,27 @@ class ProcessCrashInjector:
         environ: Mapping[str, str] | None = None,
         emit: Callable[..., None] = _no_emit,
         killer: Callable[[CrashPoint], None] = hard_kill_self,
+        resolver: Callable[[str | None], Any] = resolve_crash_point,
+        deferred_points: frozenset = DEFERRED_CRASH_POINTS,
     ) -> "ProcessCrashInjector | None":
-        """Build an injector, or return ``None`` if none was selected."""
+        """Build an injector, or return ``None`` if none was selected.
+
+        ``resolver`` and ``deferred_points`` default to ``aep_core``'s
+        vocabulary and are overridden by a worker running one of the section
+        3.3 baselines, whose instruction boundaries are its own. Passing them
+        in rather than reading a system name here keeps this module ignorant
+        of which systems exist, which is what stops the injector from becoming
+        the place new systems have to be registered.
+        """
         source = os.environ if environ is None else environ
-        point = resolve_crash_point(source.get(CRASH_POINT_VARIABLE))
+        point = resolver(source.get(CRASH_POINT_VARIABLE))
         if point is None:
             return None
 
         declared_style = source.get(CRASH_STYLE_VARIABLE)
         if declared_style:
             style = CrashStyle(declared_style)
-        elif point in DEFERRED_CRASH_POINTS:
+        elif point in deferred_points:
             style = CrashStyle.SIGKILL_DEFERRED
         else:
             style = CrashStyle.SIGKILL_IMMEDIATE
@@ -198,12 +226,18 @@ class ProcessCrashInjector:
             else None
         )
 
+        declared_name = source.get(CRASH_POINT_VARIABLE)
         return cls(
             plan=CrashPlan(
                 point=point,
                 style=style,
                 deferred_delay_seconds=delay,
                 executions=executions,
+                roadmap_name=(
+                    declared_name
+                    if declared_name in ROADMAP_CRASH_POINTS
+                    else None
+                ),
             ),
             emit=emit,
             killer=killer,
@@ -233,7 +267,7 @@ class ProcessCrashInjector:
             self.emit(
                 "crash_injected",
                 crash_point=self.plan.point.value,
-                roadmap_crash_point=roadmap_name_for(self.plan.point),
+                roadmap_crash_point=self.plan.roadmap_crash_point,
                 style=self.plan.style.value,
                 execution_id=self._execution_id,
                 has_sigkill=HAS_SIGKILL,
@@ -244,7 +278,7 @@ class ProcessCrashInjector:
         self.emit(
             "crash_armed",
             crash_point=self.plan.point.value,
-            roadmap_crash_point=roadmap_name_for(self.plan.point),
+            roadmap_crash_point=self.plan.roadmap_crash_point,
             style=self.plan.style.value,
             deferred_delay_seconds=self.plan.deferred_delay_seconds,
             execution_id=self._execution_id,
@@ -266,7 +300,7 @@ class ProcessCrashInjector:
             self.emit(
                 "crash_injected",
                 crash_point=self.plan.point.value,
-                roadmap_crash_point=roadmap_name_for(self.plan.point),
+                roadmap_crash_point=self.plan.roadmap_crash_point,
                 style=self.plan.style.value,
                 execution_id=execution_id,
                 deferred_delay_seconds=delay,

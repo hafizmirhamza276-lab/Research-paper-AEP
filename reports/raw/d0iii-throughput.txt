@@ -1,0 +1,31 @@
+{
+  "achieved_requests_per_second": 468.79,
+  "concurrency": 16,
+  "duration_seconds": 20.017,
+  "headroom_multiple": 187.52,
+  "latency_ms": {
+    "max": 428.652,
+    "mean": 34.112,
+    "median": 32.145,
+    "p95": 44.764,
+    "p99": 63.443
+  },
+  "ledger_applied_rows": 9385,
+  "non_200_responses": 0,
+  "passes": true,
+  "planned_peak_model": {
+    "max_dispatch_attempts": 3,
+    "note": "upper bound: every worker assumed to issue its maximum attempts plus one read-back, back to back, never idle",
+    "per_execution_seconds": 3.2,
+    "requests_per_execution": 4,
+    "workers": 2
+  },
+  "planned_peak_requests_per_second": 2.5,
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.13.0",
+  "requests_sent": 9384,
+  "required_headroom_multiple": 10.0,
+  "warmup_requests": 1
+}
+
+D0(iii) PASS -- 468.79 req/s sustained is 187.52x the busiest planned configuration's 2.5 req/s (bar: 10.0x).

@@ -29,7 +29,14 @@ from typing import Any
 
 from aep_core.core.intent_workflow import ConnectorPolicy, DispatchMode
 
-from experiments.harness.crash_points import CrashPoint, resolve_crash_point
+from experiments.baselines.contract import (
+    ResumePolicy,
+    SystemId,
+    descriptor_for,
+    resolve_system,
+)
+from experiments.baselines.crash_points import resolve_for_system
+from experiments.harness.crash_points import CrashPoint
 from experiments.harness.injector import CrashStyle
 from experiments.mock_api.config import ReadbackKeying
 
@@ -55,6 +62,18 @@ class RunConfig:
     # -- measurement decisions --------------------------------------------
     dispatch_mode: DispatchMode = DispatchMode.EVALUATION
     readback_keying: ReadbackKeying = ReadbackKeying.CALLER_REFERENCE
+    #: Which of PAPER_ROADMAP.md section 3.3's six systems this run measures.
+    #: Named explicitly rather than inferred, and inside ``config_digest``, so
+    #: two systems' runs can never be pooled by accident.
+    system: SystemId = SystemId.AEP_FULL
+    #: ``None`` takes the system's declared policy. Set it to measure the
+    #: other choice -- ``experiments/baselines/contract.py`` explains why the
+    #: choice exists and why it is not the harness's to make silently.
+    resume_policy: ResumePolicy | None = None
+    #: How many times a retrying system sends the same mutation before giving
+    #: up. Ignored by the systems that never retry; recorded for all of them,
+    #: because a duplicate count is uninterpretable without it.
+    max_dispatch_attempts: int = 3
 
     # -- fault injection ---------------------------------------------------
     crash_point: str | None = None
@@ -98,6 +117,9 @@ class RunConfig:
     def __post_init__(self) -> None:
         object.__setattr__(self, "dispatch_mode", DispatchMode(self.dispatch_mode))
         object.__setattr__(self, "readback_keying", ReadbackKeying(self.readback_keying))
+        object.__setattr__(self, "system", resolve_system(self.system))
+        if self.resume_policy is not None:
+            object.__setattr__(self, "resume_policy", ResumePolicy(self.resume_policy))
 
         if self.dispatch_mode is not DispatchMode.EVALUATION:
             raise ValueError(
@@ -122,6 +144,8 @@ class RunConfig:
             raise ValueError("partition_seconds must not be negative")
         if self.recovery_deadline_seconds <= 0:
             raise ValueError("recovery_deadline_seconds must be positive")
+        if self.max_dispatch_attempts < 1:
+            raise ValueError("max_dispatch_attempts must be at least 1")
         if self.config_version != RUN_CONFIG_VERSION:
             raise ValueError(
                 f"unsupported run config version {self.config_version!r}; this "
@@ -129,8 +153,10 @@ class RunConfig:
             )
 
         # Raises KeyError on a typo rather than silently running without a
-        # crash, and raises ValueError on an impossible timing policy.
-        resolve_crash_point(self.crash_point)
+        # crash, CrashPointNotApplicable when this system has no such moment,
+        # and ValueError on an impossible timing policy. All three are
+        # discovered here rather than inside three spawned subprocesses.
+        resolve_for_system(self.system, self.crash_point)
         if self.crash_style is not None:
             CrashStyle(self.crash_style)
         try:
@@ -141,8 +167,18 @@ class RunConfig:
     # -- derived -----------------------------------------------------------
 
     @property
-    def resolved_crash_point(self) -> CrashPoint | None:
-        return resolve_crash_point(self.crash_point)
+    def descriptor(self):
+        """What the system under test claims about itself."""
+        return descriptor_for(self.system)
+
+    @property
+    def effective_resume_policy(self) -> ResumePolicy:
+        """The supervisor policy in force, explicit or declared."""
+        return self.resume_policy or self.descriptor.resume_policy
+
+    @property
+    def resolved_crash_point(self):
+        return resolve_for_system(self.system, self.crash_point)
 
     @property
     def total_executions(self) -> int:

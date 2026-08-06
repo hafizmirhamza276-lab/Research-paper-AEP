@@ -108,7 +108,11 @@ jobs:
         # pyproject.toml), and those tests import fastapi/httpx/pyyaml. Without
         # it the harness tests fail to import -- which is a collection error,
         # not a skip, but the suite would still stop describing what it claims.
-        run: uv sync --frozen --extra dev --extra cov --extra experiments
+        # `analysis` likewise: experiments/analyze.py imports matplotlib, and
+        # its tests are collected by the same invocation.
+        run: >-
+          uv sync --frozen --extra dev --extra cov --extra experiments
+          --extra analysis
 
       - name: Start Redis 7.2 from compose.phase2.yml
         run: |

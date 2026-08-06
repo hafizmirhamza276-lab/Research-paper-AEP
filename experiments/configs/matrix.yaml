@@ -1,0 +1,48 @@
+# The provider configuration every matrix run is rendered from.
+#
+# `experiments/harness/orchestrate.py` copies this file into each run's own
+# results directory, points it at that run's own ledger, sets that run's seed
+# and read-back keying, and applies `run_matrix.FAULTS`. The copy -- not this
+# file -- is what a run is collected against, and it is kept beside the run's
+# events.jsonl so a result directory is interpretable on its own.
+#
+# The three endpoints are the response-class dimension of the matrix. They
+# differ in exactly one respect: what their reconciliation capability permits
+# them to assert. Their identity fields are identical, because the workload is
+# identical, and a mutation must fingerprint the same way whichever endpoint
+# receives it.
+config_version: aep.mock-legacy-api.config/1
+seed: 20260806
+ledger_path: experiments/results/matrix/ground_truth.sqlite3
+readback_keying: CALLER_REFERENCE
+
+defaults:
+  faults:
+    # Overridden per run by run_matrix.FAULTS. The values here are the
+    # no-fault defaults, so a run that failed to apply its overrides would
+    # produce visibly unperturbed results rather than plausible ones.
+    delay:
+      distribution: constant
+      seconds: 0.0
+    timeout_probability: 0.0
+    server_error_probability: 0.0
+    duplicate_response_probability: 0.0
+
+endpoints:
+  # Can prove both presence and absence of a past mutation.
+  payments:
+    response_class: AUTHORITATIVE_READBACK
+    identity_fields: ["action", "amount_minor"]
+
+  # Can confirm that a mutation happened, never that it did not. An ambiguous
+  # call whose read-back returns UNKNOWN cannot be resolved by asking again.
+  notifications:
+    response_class: POSITIVE_ONLY_READBACK
+    identity_fields: ["action", "amount_minor"]
+
+  # Offers no reconciliation at all. Every ambiguous call here can only end in
+  # operator escalation, which is where AEP's known-ambiguity rate comes from
+  # and where every other system has to guess.
+  ledger_postings:
+    response_class: NO_READBACK
+    identity_fields: ["action", "amount_minor"]

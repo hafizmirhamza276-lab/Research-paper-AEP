@@ -30,13 +30,24 @@ from pathlib import Path
 
 from redis.asyncio import Redis
 
+from aep_core.core.intent_workflow import DispatchMode
 from aep_core.core.locks import DistributedLockManager
 from aep_core.core.storage import RedisStorageAdapter
 
+from experiments.baselines.contract import SystemId
+from experiments.baselines.crash_points import (
+    DEFERRED_BASELINE_POINTS,
+    resolve_for_system,
+    uses_aep_crash_points,
+)
 from experiments.harness.composition import (
     build_connector,
-    build_runner,
+    build_system,
     seed_execution_state,
+)
+from experiments.harness.crash_points import (
+    DEFERRED_CRASH_POINTS,
+    resolve_crash_point,
 )
 from experiments.harness.config import RunConfig, load_run_config
 from experiments.harness.events import EventLog
@@ -70,7 +81,20 @@ async def run_worker(
         run_id=config.run_id,
         source=source_name(worker_index, attempt),
     )
-    injector = ProcessCrashInjector.from_environment(emit=log.emit)
+    # Each system announces its own instruction boundaries, so the injector
+    # is handed that system's resolver rather than being told which system is
+    # running. See experiments/baselines/crash_points.py for why the roadmap's
+    # six names do not all exist in all six systems.
+    if uses_aep_crash_points(config.system):
+        resolver, deferred = resolve_crash_point, DEFERRED_CRASH_POINTS
+    else:
+        def resolver(name, _system=config.system):
+            return resolve_for_system(_system, name)
+
+        deferred = DEFERRED_BASELINE_POINTS
+    injector = ProcessCrashInjector.from_environment(
+        emit=log.emit, resolver=resolver, deferred_points=deferred
+    )
 
     items = [
         item
@@ -97,7 +121,7 @@ async def run_worker(
     try:
         lock_manager = DistributedLockManager(redis_client)
         storage_adapter = RedisStorageAdapter(redis_client)
-        runner = build_runner(
+        runner = build_system(
             config,
             redis_client=redis_client,
             lock_manager=lock_manager,
@@ -108,9 +132,13 @@ async def run_worker(
         await runner.validate_startup()
         log.emit(
             "composition_validated",
-            dispatch_mode=runner.mode.value,
-            barrier=type(runner.barrier).__name__,
-            vault=type(runner.binding_service.vault).__name__,
+            system=config.system.value,
+            resume_policy=config.effective_resume_policy.value,
+            dispatch_mode=getattr(runner, "mode", DispatchMode.EVALUATION).value,
+            barrier=type(getattr(runner, "barrier", None)).__name__,
+            vault=type(
+                getattr(getattr(runner, "binding_service", None), "vault", None)
+            ).__name__,
             connector=type(connector).__name__,
             # Discovered from the object, not spelled out: any truthy
             # ``allow_*`` attribute the runner carries is named here, so the
@@ -139,11 +167,16 @@ async def run_worker(
             )
             started = time.monotonic_ns()
             try:
-                await seed_execution_state(
-                    storage_adapter=storage_adapter,
-                    lock_manager=lock_manager,
-                    execution_id=item.execution_id,
-                )
+                if config.descriptor.uses_fenced_state_writes:
+                    # The fenced write path requires the record to exist. The
+                    # systems that do not use it must not have one seeded for
+                    # them: a state key B0 never wrote would misreport what B0
+                    # leaves behind.
+                    await seed_execution_state(
+                        storage_adapter=storage_adapter,
+                        lock_manager=lock_manager,
+                        execution_id=item.execution_id,
+                    )
                 resolved = await runner.execute(
                     execution_id=item.execution_id,
                     step_id=item.step_id,
@@ -167,7 +200,9 @@ async def run_worker(
                 execution_id=item.execution_id,
                 execution_index=item.execution_index,
                 intent_id=resolved.intent_id,
-                status=resolved.status.value,
+                status=resolved.status,
+                outcome_class=resolved.outcome_class.value,
+                dispatch_attempts=resolved.dispatch_attempts,
                 request_fingerprint=resolved.request_fingerprint,
                 duration_ns=time.monotonic_ns() - started,
             )

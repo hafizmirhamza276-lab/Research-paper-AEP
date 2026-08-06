@@ -52,6 +52,16 @@ from aep_core.core.request_binding import CommitmentKeyring, RequestBindingServi
 from aep_core.core.request_vault import EvaluationRedisRequestVault
 from aep_core.core.storage import AEPExecutionState, AEPStatus, RedisStorageAdapter
 
+from experiments.baselines import (
+    b0_naive_retry,
+    b1_lease_only,
+    b2_cas_only,
+    b4_durable_workflow,
+)
+from experiments.baselines.b3_no_barrier import NoBarrierDurabilityBarrier
+from experiments.baselines.contract import SystemId
+from experiments.baselines.crash_points import BaselineCrashPoint
+from experiments.baselines.intent_classifier import NO_INTENT, classify_intent_state
 from experiments.harness.crash_points import CrashPoint
 from experiments.harness.workload import (
     CONNECTOR_OPERATION,
@@ -148,6 +158,20 @@ def build_binding_service(config, redis_client) -> RequestBindingService:
     )
 
 
+def build_barrier(config):
+    """The durability barrier the run's system declares it has.
+
+    B3 is the *only* system that gets a different one, and what it gets is the
+    ablated barrier from ``experiments/baselines/b3_no_barrier.py`` -- same
+    startup validation, no per-dispatch ``WAITAOF``. Selecting it from the
+    descriptor rather than from a flag means "B3 has no barrier" is read from
+    the same table the paper prints.
+    """
+    if not config.descriptor.uses_durability_barrier:
+        return NoBarrierDurabilityBarrier()
+    return RealWaitAofDurabilityBarrier()
+
+
 def build_runner(
     config,
     *,
@@ -156,12 +180,12 @@ def build_runner(
     connector,
     crash_injector=None,
 ) -> WriteAheadRunner:
-    """The runner every worker executes with. No test authorisation exists."""
+    """The runner AEP-full and B3 execute with. No test authorisation exists."""
     return WriteAheadRunner(
         store=IntentLedgerStore(redis_client),
         lock_manager=lock_manager,
         connector=connector,
-        barrier=RealWaitAofDurabilityBarrier(),
+        barrier=build_barrier(config),
         policy=config.policy(),
         connector_name=CONNECTOR_OPERATION,
         binding_service=build_binding_service(config, redis_client),
@@ -169,6 +193,146 @@ def build_runner(
         crash_point_enum=CrashPoint if crash_injector is not None else None,
         mode=DispatchMode.EVALUATION,
     )
+
+
+class _IntentSystemAdapter:
+    """Present ``WriteAheadRunner`` through the baselines' outcome vocabulary.
+
+    AEP-full and B3 return an ``IntentRecord``; the baselines return an
+    ``ExecutionOutcome``. The worker should not have to know which, so the two
+    protocol systems are wrapped rather than the four baselines being made to
+    imitate an intent ledger they do not have.
+    """
+
+    def __init__(self, runner: WriteAheadRunner, system: SystemId) -> None:
+        self.runner = runner
+        self.system = system
+
+    @property
+    def mode(self):
+        return self.runner.mode
+
+    @property
+    def barrier(self):
+        return self.runner.barrier
+
+    @property
+    def binding_service(self):
+        return self.runner.binding_service
+
+    async def validate_startup(self) -> None:
+        await self.runner.validate_startup()
+
+    async def execute(self, *, execution_id: str, step_id: str, request):
+        resolved = await self.runner.execute(
+            execution_id=execution_id, step_id=step_id, request=request
+        )
+        return classify_intent_state(
+            resolved.status.value,
+            system=self.system,
+            execution_id=execution_id,
+            # One transmission per intent, by construction. It is asserted by
+            # the ledger cross-check rather than counted here: this number is
+            # what the protocol *claims*, and the oracle is what checks it.
+            dispatch_attempts=1,
+            intent_id=resolved.intent_id,
+        )
+
+
+def build_system(
+    config,
+    *,
+    redis_client,
+    lock_manager: DistributedLockManager,
+    connector,
+    crash_injector=None,
+):
+    """The runner for whichever of the six systems this run measures."""
+    system = config.system
+    if system in (SystemId.AEP_FULL, SystemId.B3_INTENT_NO_BARRIER):
+        return _IntentSystemAdapter(
+            build_runner(
+                config,
+                redis_client=redis_client,
+                lock_manager=lock_manager,
+                connector=connector,
+                crash_injector=crash_injector,
+            ),
+            system,
+        )
+
+    shared = {
+        "redis_client": redis_client,
+        "connector": connector,
+        "profile": harness_profile(),
+        "policy": config.policy(),
+        "max_attempts": config.max_dispatch_attempts,
+        "crash_injector": crash_injector,
+        "crash_point_enum": (
+            BaselineCrashPoint if crash_injector is not None else None
+        ),
+    }
+    if system is SystemId.B0_NAIVE_RETRY:
+        return b0_naive_retry.NaiveRetryRunner(**shared)
+    if system is SystemId.B1_LEASE_ONLY:
+        return b1_lease_only.LeaseOnlyRunner(lock_manager=lock_manager, **shared)
+    if system is SystemId.B2_CAS_ONLY:
+        return b2_cas_only.CasOnlyRunner(
+            lock_manager=lock_manager,
+            storage_adapter=RedisStorageAdapter(redis_client),
+            **shared,
+        )
+    if system is SystemId.B4_DURABLE_WORKFLOW:
+        return b4_durable_workflow.DurableWorkflowRunner(
+            lock_manager=lock_manager,
+            barrier=RealWaitAofDurabilityBarrier(),
+            **shared,
+        )
+    raise KeyError(f"no runner is registered for {system}")
+
+
+async def classify_execution(config, redis_client, execution_id: str):
+    """What the run's system says about one execution, after everything.
+
+    Read from whichever durable record that system keeps -- the intent ledger,
+    a raw key, a fenced state, an event history -- and returned in the shared
+    vocabulary the metrics use. This is the *only* place the harness looks at
+    a system's internal state, and it never looks at the ground-truth ledger:
+    keeping those two readers apart is what makes the reconciliation a check
+    rather than a restatement.
+    """
+    system = config.system
+    if system in (SystemId.AEP_FULL, SystemId.B3_INTENT_NO_BARRIER):
+        store = IntentLedgerStore(redis_client)
+        try:
+            state = await store.get_execution(execution_id)
+        except Exception as error:  # noqa: BLE001 -- a corrupt state is a result
+            return classify_intent_state(
+                f"UNREADABLE:{type(error).__name__}",
+                system=system,
+                execution_id=execution_id,
+            )
+        if state is None or not state.intent_ledger:
+            return classify_intent_state(
+                NO_INTENT, system=system, execution_id=execution_id
+            )
+        intent = sorted(
+            state.intent_ledger.values(), key=lambda item: item.prepared_at
+        )[-1]
+        return classify_intent_state(
+            intent.status.value,
+            system=system,
+            execution_id=execution_id,
+            intent_id=intent.intent_id,
+        )
+
+    classifier = {
+        SystemId.B0_NAIVE_RETRY: b0_naive_retry.classify,
+        SystemId.B1_LEASE_ONLY: b1_lease_only.classify,
+        SystemId.B2_CAS_ONLY: b2_cas_only.classify,
+        SystemId.B4_DURABLE_WORKFLOW: b4_durable_workflow.classify,
+    }[system]
+    return await classifier(redis_client, execution_id)
 
 
 def build_recovery_service(
@@ -237,6 +401,12 @@ async def delete_run_keys(redis_client, execution_ids) -> int:
     for execution_id in execution_ids:
         keys.append(f"aep:state:{execution_id}")
         keys.append(f"aep:lock:{execution_id}")
+        # The baselines keep their records outside the protocol's namespace,
+        # so the run has to name them here or a matrix would accumulate one
+        # key per execution per cell for the whole of its retention.
+        keys.append(f"aep:b0:result:{execution_id}")
+        keys.append(f"aep:b1:state:{execution_id}")
+        keys.append(f"aep:b4:history:{execution_id}")
         for pattern in (
             f"aep:dispatch-auth:{execution_id}:*",
             # A quarantined payload is never removed by the protocol, so a

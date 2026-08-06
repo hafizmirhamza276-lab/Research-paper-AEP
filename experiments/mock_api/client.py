@@ -160,15 +160,44 @@ class MockLegacyApiConnector:
             correlation_id=binding.correlation_id,
         )
 
+        return await self.transmit(
+            exact_request_bytes=exact_request_bytes,
+            client_reference=client_reference,
+            client_timeout=client_timeout,
+        )
+
+    async def transmit(
+        self,
+        *,
+        exact_request_bytes: bytes,
+        client_reference: str | None,
+        client_timeout: float,
+    ) -> MutationResponse:
+        """Put one already-built request on the wire and read one answer.
+
+        Split out of :meth:`mutate` so the PAPER_ROADMAP.md section 3.3
+        baselines can share this connector -- the same HTTP client, the same
+        endpoint, the same evidence policy, the same provider -- without also
+        inheriting the request-binding machinery that is the thing being
+        ablated. A baseline that had to build a ``VerifiedDispatch`` would be
+        paying AEP's per-call cost while claiming not to have AEP's
+        protections, and the overhead comparison in section 3.2 would measure
+        nothing.
+
+        ``client_reference`` may be ``None``: a caller with no pre-dispatch
+        record has no stable identifier to send, and sending none is the
+        honest model of it. The provider stores whatever arrives and never
+        uses it to decide whether two applications are the same mutation.
+        """
         http = await self._http()
+        headers = {"content-type": "application/json"}
+        if client_reference is not None:
+            headers[CLIENT_REFERENCE_HEADER] = client_reference
         try:
             response = await http.post(
                 f"{self.base_url}/v1/endpoints/{self.endpoint}/mutations",
                 content=exact_request_bytes,
-                headers={
-                    "content-type": "application/json",
-                    CLIENT_REFERENCE_HEADER: client_reference,
-                },
+                headers=headers,
                 timeout=client_timeout,
             )
         except httpx.HTTPError as error:

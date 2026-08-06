@@ -44,9 +44,10 @@ from redis.asyncio import Redis
 
 from aep_core.core.intents import IntentLedgerStore, IntentStatus
 
+from experiments.baselines.contract import ResumePolicy
 from experiments.harness import recovery as recovery_module
 from experiments.harness import worker as worker_module
-from experiments.harness.composition import delete_run_keys
+from experiments.harness.composition import classify_execution, delete_run_keys
 from experiments.harness.config import RunConfig, load_run_config
 from experiments.harness.crash_points import roadmap_name_for
 from experiments.harness.events import EventLog, merge_event_shards, read_events
@@ -163,6 +164,25 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
             for item in items
             if item.crash_selected and item.execution_index >= from_index
         ]
+        if (
+            config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED
+            and attempt > 1
+        ):
+            # The re-executed execution must not be crashed a second time, or
+            # a system crashed at every attempt would never make progress and
+            # the run would exhaust its lifetimes instead of producing a
+            # result. The event being measured is "one crash, then the
+            # supervisor's retry", and it is recorded as such.
+            resumed = {
+                item.execution_id
+                for item in items
+                if item.execution_index == from_index
+            }
+            remaining_crashes = [
+                execution_id
+                for execution_id in remaining_crashes
+                if execution_id not in resumed
+            ]
         command = [
             sys.executable,
             "-m",
@@ -209,7 +229,20 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
                 f"any execution (exit {process.returncode}):\n"
                 f"{stderr.decode(errors='replace')[-4000:]}"
             )
-        from_index = last_started + 1
+        if config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED:
+            # The supervisor runs the crashed execution again. With no durable
+            # pre-dispatch record there is no third option (see
+            # experiments/baselines/contract.py), and this is the branch that
+            # turns a crash into a duplicated external effect.
+            from_index = last_started
+            log.emit(
+                "resume_reexecuting_crashed",
+                worker_index=worker_index,
+                execution_index=last_started,
+                policy=config.effective_resume_policy.value,
+            )
+        else:
+            from_index = last_started + 1
         if from_index >= config.executions_per_worker:
             # Killed during its last execution: nothing left to resume.
             return
@@ -224,8 +257,14 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
 
 
 async def execution_status(store: IntentLedgerStore, execution_id: str) -> str:
-    """The terminal status of one execution, as the protocol left it."""
-    from experiments.harness.reconcile import NO_INTENT
+    """The terminal intent status of one execution, as the protocol left it.
+
+    Used for *settling* only -- "has recovery finished with this?" -- so it
+    stays specific to the intent ledger. A run's final classification goes
+    through ``composition.classify_execution``, which reads whichever record
+    the run's system actually keeps.
+    """
+    from experiments.baselines.intent_classifier import NO_INTENT
 
     try:
         state = await store.get_execution(execution_id)
@@ -360,22 +399,32 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
         # That is not hypothetical -- it is what the first self-validation run
         # of this harness did, and it froze recovery 14 seconds in while the
         # run went on collecting numbers as though recovery were working.
-        recovery_out = (config.results_dir / "recovery-stdout.log").open("wb")
-        recovery_err = (config.results_dir / "recovery-stderr.log").open("wb")
-        recovery_process = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                recovery_module.__name__,
-                "--run-config",
-                str(config_path),
-            ],
-            cwd=str(REPO_ROOT),
-            env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
-            stdout=recovery_out,
-            stderr=recovery_err,
-        )
-        log.emit("recovery_spawned", recovery_pid=recovery_process.pid)
+        if not config.descriptor.has_recovery_service:
+            # B0, B1, B2 and B4 have no recovery service. Starting AEP's for
+            # them would put a component under test inside a run whose whole
+            # claim is that it lacks that component.
+            log.emit(
+                "recovery_not_started",
+                system=config.system.value,
+                reason="this system declares no recovery service",
+            )
+        else:
+            recovery_out = (config.results_dir / "recovery-stdout.log").open("wb")
+            recovery_err = (config.results_dir / "recovery-stderr.log").open("wb")
+            recovery_process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    recovery_module.__name__,
+                    "--run-config",
+                    str(config_path),
+                ],
+                cwd=str(REPO_ROOT),
+                env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+                stdout=recovery_out,
+                stderr=recovery_err,
+            )
+            log.emit("recovery_spawned", recovery_pid=recovery_process.pid)
 
         poisoned_ids = await poison_executions(config, redis_client, log)
 
@@ -403,16 +452,29 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
             toxiproxy.heal()
             log.emit("partition_healed")
 
-        settled = await wait_until_settled(
-            config, store, execution_ids, log, recovery_process
-        )
+        if config.descriptor.has_recovery_service:
+            settled = await wait_until_settled(
+                config, store, execution_ids, log, recovery_process
+            )
+        else:
+            # Nothing is going to change after the last worker exits: no
+            # recovery service is running, so polling for a transition that
+            # cannot happen would only add the recovery deadline to every
+            # baseline run's wall time.
+            settled = True
+            log.emit("settling_skipped", system=config.system.value)
         log.emit("settled", settled=settled)
 
         for execution_id in execution_ids:
+            outcome = await classify_execution(config, redis_client, execution_id)
             log.emit(
                 "final_classification",
                 execution_id=execution_id,
-                status=await execution_status(store, execution_id),
+                status=outcome.status,
+                outcome_class=outcome.outcome_class.value,
+                system=config.system.value,
+                dispatch_attempts=outcome.dispatch_attempts,
+                intent_id=outcome.intent_id,
             )
         for execution_id in poisoned_ids:
             log.emit(
