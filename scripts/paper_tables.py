@@ -51,7 +51,8 @@ from typing import Any, Iterable
 # scripts/ and `experiments` is not importable without help. Reusing the
 # repository's exact Fisher implementation rather than reimplementing it is
 # the point: a second implementation is a second thing to keep correct.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from experiments.statistics import fisher_exact_two_tailed  # noqa: E402
 
@@ -1084,6 +1085,29 @@ def emit_numbers(
     if flakey:
         for name, value, *why in flakey_macros(flakey):
             macro(name, value, *why)
+
+    # --- Implementation size, counted rather than remembered -------------
+    # These were hand-written with a shell command in a comment beside them,
+    # and the harness figure had drifted by 1,359 lines by the time anyone
+    # re-ran it. A number in the paper that is not regenerated is a number
+    # that is eventually wrong.
+    for label, tree in (("Core", "aep_core"), ("Harness", "experiments")):
+        directory = ROOT / tree
+        if not directory.is_dir():
+            continue
+        total = 0
+        files = 0
+        for path in sorted(directory.rglob("*.py")):
+            if "__pycache__" in path.parts:
+                continue
+            total += len(path.read_text(encoding="utf-8", errors="replace").splitlines())
+            files += 1
+        macro(
+            f"{label}Loc",
+            f"{total:,}".replace(",", r"\,"),
+            f"lines of Python under {tree}/, excluding __pycache__",
+            f"{files} files; regenerated on every run of this script",
+        )
 
     (out / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
