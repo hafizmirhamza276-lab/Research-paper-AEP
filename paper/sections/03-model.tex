@@ -1,0 +1,172 @@
+\section{System and Failure Model}
+\label{sec:model}
+
+This section is a condensation of \texttt{docs/22-formal-model.md} in the
+artifact, which states every claim below with a \texttt{file:line} citation to
+the enforcing code and is machine-checked in CI: a script fails the build if a
+cited path stops existing or a cited line falls outside its file. That check
+proves citation \emph{ranges} are valid, not that the semantics are right; the
+semantic evidence is the per-property regression tests named in
+\cref{sec:protocol}.
+
+\subsection{Principals and store}
+
+A \emph{runner} performs at most one external mutation per invocation. A
+\emph{recovery service} is read-only with respect to the external system and
+writes only coordination state. A \emph{connector} is the only component that
+touches the external API. The store is a single self-hosted Redis~7.2 instance
+with the append-only file enabled and RDB snapshots disabled --- no replica, no
+Sentinel, no Cluster.
+
+Redis executes a Lua script without interleaving, so a script is a single
+serialisation point. This is the only atomicity primitive the protocol has and
+every invariant below is expressed inside one.
+
+\subsection{Clocks}
+
+There is no synchrony assumption beyond lease TTLs. All ordering decisions
+between principals are taken against the Redis server clock; no cross-worker
+clock comparison occurs. Process-local monotonic time is used only for
+heartbeat intervals and watchdogs, never for an authoritative decision. The
+lease budget $T_{\text{client}} \le T_{\text{lock}} - B$ with $B \ge 15$\,s is
+enforced at configuration time, and it is a timing budget rather than a
+guarantee: a scheduling gap remains between a successful preflight and
+transmission, and we declare it as such.
+
+\subsection{The external endpoint}
+\label{sec:model-endpoint}
+
+The endpoint is non-idempotent and non-cooperative: it need not accept an
+idempotency key, and its response may be absent, late, or self-contradictory.
+Two things about it are modelled explicitly, and the second is the axis the
+evaluation turns on.
+
+\paragraph{Evidence at mutation time} The runner accepts only policy-declared
+success and failure values, required non-empty and disjoint. Any other value,
+and \emph{any} exception, is coerced to ambiguity. Ambiguity is the default,
+not a special case.
+
+\paragraph{Reconciliation capability} What the endpoint can be asked
+\emph{afterwards} is a declared, typed property with three values
+(\cref{tab:capabilities}). The declaration fails closed: a missing, null or
+unrecognised capability is treated as the weakest, not as the strongest.
+Classification is total --- in particular, ``the endpoint reports the mutation
+absent'' combined with a positive-only capability is a \emph{named contract
+violation} that resolves to ambiguity, not a fall-through to ``it did not
+happen''.
+
+\begin{table}[t]
+\centering
+\caption{Endpoint reconciliation capability. The right-hand column is the
+ceiling on what \emph{any} protocol can conclude, and \cref{sec:eval-rq1} shows
+AEP's declared-ambiguity rate tracking it.}
+\label{tab:capabilities}
+\small
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.60\columnwidth}@{}}
+\toprule
+Capability & Conclusions the endpoint can support \\
+\midrule
+\textsc{authoritative} \textsc{readback} &
+  applied, not-applied, unknown, conflict. Absence \emph{proves} the mutation
+  did not occur. \\
+\textsc{positive-only} \textsc{readback} &
+  applied, unknown, conflict. Presence can be confirmed; absence proves
+  nothing. \\
+\textsc{no-readback} &
+  none. The endpoint cannot be queried at all. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Failure model}
+
+Crash-and-delay, not Byzantine. Redis is trusted to execute scripts atomically
+and honour expiry; the provider is trusted only insofar as its declared
+evidence is truthful.
+
+\begin{itemize}
+\item[\textbf{F1}] \textbf{Worker crash at any instruction boundary.} Six named
+      crash points around the external call
+      (\cref{tab:crashpoints}). In the evaluation these are OS-level
+      \texttt{SIGKILL} of a separate worker process, not in-process
+      exceptions.
+\item[\textbf{F2}] \textbf{Partition between a worker and Redis.} Any Redis
+      command may raise; every raise forbids progress rather than permitting a
+      guess. A partition outlasting the lease is observationally equal to F5.
+\item[\textbf{F3}] \textbf{Redis restart with AOF replay.} Up to roughly one
+      second of acknowledged-but-unsynced writes may be absent under
+      \texttt{appendfsync everysec}~\cite{redis-persistence}. \Cref{sec:eval-rq2}
+      reports a measurement that sharpens this considerably: which
+      \emph{faults} can actually realise that loss is narrower than the
+      documentation's wording suggests.
+\item[\textbf{F4}] \textbf{Delayed or duplicated external responses.} A late
+      effect cannot be recalled; recovery waits out a reconciliation delay
+      before drawing any conclusion, and never re-dispatches.
+\item[\textbf{F5}] \textbf{Worker pause past lease expiry} (GC or VM stall),
+      handled by an atomic pre-dispatch preflight, cancellation of the
+      protected task on ownership loss, and CAS rejection of the late write.
+\end{itemize}
+
+Out of model: Byzantine Redis; a provider whose declared evidence contradicts
+its own effects; loss of the Redis host \emph{after} fsync acknowledgement;
+adversarial writers with direct socket access; compromise of vault keys.
+
+\begin{table}[t]
+\centering
+\caption{The six crash points, and what exists in the world at each. The
+right-hand column is why the known-ambiguity rate in \cref{sec:eval-rq1} varies
+so sharply across them.}
+\label{tab:crashpoints}
+\small
+\begin{tabular}{@{}p{0.44\columnwidth}p{0.46\columnwidth}@{}}
+\toprule
+Crash point & State when the worker dies \\
+\midrule
+\texttt{before\_intent\_write}            & no record, no effect \\
+\texttt{after\_intent\_before\_barrier}   & record in memory, maybe not on disk; no effect \\
+\texttt{after\_barrier\_before\_dispatch} & record durable; \textbf{no effect} \\
+\texttt{mid\_dispatch}                    & record durable; effect \textbf{likely} \\
+\texttt{after\_response\_before\_resolution} & record durable; effect known to the dead process only \\
+\texttt{after\_resolution\_before\_barrier}  & outcome written, not yet acknowledged \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Non-claims}
+\label{sec:nonclaims}
+
+We state these because reviewers are right to look for them, and because
+several are structural rather than incidental.
+
+\begin{table}[t]
+\centering
+\caption{Non-claims, with the reason each is out of scope.}
+\label{tab:nonclaims}
+\small
+\begin{tabular}{@{}p{0.36\columnwidth}p{0.54\columnwidth}@{}}
+\toprule
+Non-claim & Why \\
+\midrule
+Exactly-once external execution
+  & Redis and a legacy provider share no transaction coordinator. The
+    protocol converts this into declared ambiguity. \\
+Duplicate \emph{prevention}
+  & AEP prevents \emph{automatic} duplicates. An effect the provider already
+    accepted cannot be recalled. \\
+HA, consensus, split-brain immunity
+  & Single instance; the lock is a lease~\cite{gray1989leases}. This is also
+    why the AOF-rewind residual below has no local fix. \\
+A hardened trust domain
+  & No Redis ACL; any principal reaching the socket can write the state key
+    directly. \\
+Durability beyond one local AOF fsync
+  & The barrier requires one \emph{local} fsync~\cite{redis-waitaof}; it is
+    explicitly not a substitute for replication. \\
+Operator alerting
+  & Not implemented. ``Escalates'' means \emph{reaches a terminal automated
+    state and pauses the execution}, nothing more. \\
+Machine-checked proofs
+  & Properties are argued from code paths, not model-checked. \\
+\bottomrule
+\end{tabular}
+\end{table}

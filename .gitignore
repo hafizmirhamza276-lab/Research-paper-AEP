@@ -91,3 +91,15 @@ pip-delete-this-directory.txt
 
 # --- OS junk ------------------------------------------------------------------
 desktop.ini
+
+# LaTeX build products. The .tex sources and the generated tables are tracked;
+# the artifacts of compiling them are not.
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.pdf
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk

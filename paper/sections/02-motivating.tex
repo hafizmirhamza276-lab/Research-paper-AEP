@@ -1,0 +1,107 @@
+\section{Motivating Traces}
+\label{sec:motivating}
+
+The three traces below are not hypotheticals. Each is a run of our harness
+(\cref{sec:evaluation}), replayed from its event log and cross-checked against
+the mock provider's ground-truth ledger --- an independently written record of
+every mutation the provider \emph{actually applied}. In each, the agent
+workload is the same: acquire work, call one non-idempotent endpoint, record
+the outcome.
+
+\subsection{Trace 1 --- the duplicate nobody sees (B0, naive retry)}
+
+A worker sends the mutation. The provider applies it. The worker is
+\texttt{SIGKILL}ed after the response is on the wire but before the outcome is
+recorded (crash point \texttt{after\_response\_before\_resolution}). A
+supervisor observes an execution with no terminal record and runs the step
+again. The provider applies the mutation a second time.
+
+The ground-truth ledger now holds two applied mutations for one logical
+step. The system's own records hold one successful execution. Nothing in the
+system is in a state that a monitor could alert on: there is no error, no
+retry counter above its threshold, no ambiguous record. The execution is
+\emph{green}.
+
+This is not a strawman configuration; it is what a retry-on-timeout loop does,
+and it is the behaviour we measure for B0. Across the crashed cells,
+\todoitem{final B0 rate inserted at freeze} of executions ended this way.
+
+\subsection{Trace 2 --- a lease and a fenced write do not help}
+
+The same crash, against B1 (a real Redis lease) and B2 (a lease plus an exact
+expected-version compare-and-swap on the state document). Both are the patterns
+an experienced engineer reaches for, and both are doing their job: no stale
+writer corrupts the state document, and no two workers hold the lock at once.
+
+Neither prevents the second effect. The lease governs \emph{who may write
+state}; the CAS governs \emph{which version of state may be replaced}. The
+external call is neither. When the supervisor re-runs the step it holds a
+valid, freshly acquired lease and writes a correctly versioned record --- of a
+duplicate. \Cref{sec:evaluation} shows B1 and B2 duplicating at
+substantially the same rate as B0, which is the point: the mechanisms that
+protect the database do not protect the world.
+
+\subsection{Trace 3 --- a durable log is necessary and not sufficient (B4)}
+
+B4 is an event-sourced durable-execution engine of the kind these systems are
+built on: an append-only history in Redis, each append acknowledged durable
+with the \emph{same} \texttt{WAITAOF} barrier AEP uses, replay after a crash,
+and completed activities memoised so they are not re-run. It is not ablated on
+durability. Its history is on disk before the call.
+
+It duplicates anyway. The history records that the activity was
+\emph{scheduled}; it does not, and cannot, record whether the provider applied
+the effect, because that fact was never available to the engine. On replay the
+engine sees a scheduled activity with no completion and --- following the
+vendor's documented default, where Activity Maximum Attempts is
+unlimited~\cite{temporal-retry} --- schedules it again.
+
+The mitigation the vendor recommends is to make the activity
+idempotent~\cite{temporal-activity-definition}. That is exactly the
+precondition this paper's premise removes.
+
+\subsection{Trace 3b --- and the at-most-once configuration loses the effect}
+
+Setting Maximum Attempts to 1 is documented and standard: ``Setting the value
+to 1 means a single execution attempt and no retries''~\cite{temporal-retry}.
+We run it as B4b. It cannot produce a caller-caused duplicate, and it does not.
+
+What it produces instead is the other silent failure. Where the provider
+applied the mutation before the worker died, B4b's history records an activity
+that timed out; the workflow fails; the effect exists and the records deny
+it. Critically, that record is an ordinary failure and not a declared
+ambiguity --- there is no outcome class in B4b in which the engine can say
+\emph{I do not know}, so nothing escalates and no operator is told that a
+real-world effect may be unaccounted for.
+
+\subsection{What the traces establish}
+
+\begin{table}[t]
+\centering
+\caption{The trilemma, as the four baselines instantiate it. A durable
+write-ahead record is necessary (Trace 1, 2) and not sufficient (Trace 3); what
+distinguishes AEP is an outcome class in which it can decline to decide.}
+\label{tab:trilemma}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \undetdup{} & \lostfx{} & \declamb{} \\
+\midrule
+B0 naive retry            & \textbf{yes} & --- & no \\
+B1 lease-only             & \textbf{yes} & --- & no \\
+B2 CAS-only               & \textbf{yes} & --- & no \\
+B4 durable, max attempts $\infty$  & \textbf{yes} & --- & no \\
+B4b durable, max attempts $=1$     & no & \textbf{yes} & no \\
+AEP-full                  & no & no & \textbf{yes, bounded} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:trilemma} is the shape of the argument. At-most-once dispatch is
+available off the shelf --- B4b buys it with one configuration setting, and so
+does AEP's ablation B3. What is not available off the shelf is knowing
+\emph{which} of duplicate-or-loss occurred, because the fact a system would
+need for that --- whether the provider applied the effect --- is not in any log
+it can write and cannot be put there by any amount of logging. It has to be
+obtained from the endpoint, and \cref{sec:eval-rq1} shows the price of that: the
+achievable outcome is bounded by what the endpoint can be asked.

@@ -1,0 +1,138 @@
+\section{Threats to Validity}
+\label{sec:threats}
+
+\subsection{Construct validity}
+
+\paragraph{The barrier's durability benefit is argued, not measured} This is
+the sharpest limitation in the paper and \cref{sec:eval-negative} is our own
+demonstration of it. We show that no process-level fault can separate B3 from
+AEP-full on record durability, because \texttt{appendfsync everysec} defers the
+\texttt{fsync(2)} and not the \texttt{write(2)}. The fault class against which
+\texttt{WAITAOF} does defend --- host power loss, kernel panic, VM destruction
+--- was not injected. Obtaining it requires a VM whose power can be cut or a
+block layer that drops writes, and we judged a narrowed claim plus the probe
+that narrows it more useful than a fault a reviewer would not believe. The
+consequence is explicit: \textbf{the paper claims the barrier withholds
+dispatch when durability cannot be confirmed (measured, $p=1.9\times10^{-6}$)
+and does not claim that the barrier is what keeps the record across a crash}.
+Under a process kill, \texttt{appendonly yes} alone already does that.
+
+\paragraph{The mock provider's realism} The endpoint is a purpose-built service
+with a configurable delay, timeout and error distribution, and a
+transactionally written ground-truth ledger. It is realistic in the dimension
+the experiment turns on --- its reconciliation capability, which is the
+independent variable of \cref{tab:outcomes} --- and unrealistic in most others:
+no authentication, no rate limits, no partial writes, no schema evolution, one
+mutation shape. A real legacy endpoint may also \emph{misdeclare} its
+capability, which the protocol cannot detect (\cref{sec:model-endpoint}); we
+validate the capability's shape, never its truthfulness.
+
+\paragraph{B4 is not Temporal} B4 shares exactly one mechanism with a
+production durable-execution engine: durable history, replay, and at-least-once
+activity re-execution. It does not model heartbeating, backoff timing, task
+queues, versioning, or determinism checking. Its re-execution policy is the
+vendor's documented default and is quoted as such~\cite{temporal-retry}, but
+the decision is our code. No claim about Temporal's throughput, latency,
+maturity or correctness as a product is made or supported anywhere in this
+paper, and B4's latency in particular should not be read as any engine's
+recovery latency. B4 and B4b \emph{bracket} the configuration space rather than
+survey it: a deployment could set Maximum Attempts to 3, add a heartbeat, or
+make the activity idempotent --- the first two land between our two points on
+the same duplicate/loss trade, and the third leaves the problem this paper is
+about.
+
+\paragraph{Test counts are not protocol assurance} Stated in
+\cref{sec:implementation} and repeated because it is a live temptation: the
+suite's size is evidence about the artifact's hygiene, not about the protocol's
+behaviour under faults. The evidence for the latter is the fault-injection
+matrix.
+
+\subsection{Internal validity}
+
+\paragraph{A resume defect that would have inflated counts} Our matrix runner
+supports resumption, and a run whose previous attempt was interrupted left
+event shards on disk that a fresh attempt could merge into its own log,
+double-counting executions that were never part of the run being recorded. It
+surfaced as a configuration-digest mismatch --- the digest check did what it
+exists to do --- but between two attempts of the same harness version the merge
+would have been \emph{silent}, and the error class is ``a resumed run
+over-counts'', which for a paper measuring rates is as bad as errors get. The
+safeguard is now explicit: the runner discards stale event shards and any stale
+summary before a run writes anything, logs what it discarded, and leaves the
+run's \emph{inputs} --- the rendered provider config and the oracle ledger ---
+untouched, with a test pinning that distinction. Every resumed run in the
+current results was collected after the fix; runs collected before it were
+re-analysed and the single affected run was re-collected.
+
+\paragraph{Two further defects the matrix found that the unit suite had not}
+A re-executing supervisor abandoned the lease instead of waiting for it, and
+execution-state seeding was not idempotent. Both made a \emph{baseline} look
+better than it is, so both were biasing against our own hypothesis and are
+fixed; we record them because the general point --- that a fault-injection
+harness is a stronger verification tool than a unit suite --- cuts both ways,
+and there may be defects it has not found.
+
+\paragraph{Ambiguity is counted from the oracle, not from self-report} A system
+that declared ambiguity liberally could otherwise score well by saying ``I do
+not know'' about everything. Duplicates and lost effects are counted by
+comparing the provider's independently written ledger against the system's
+records; the analysis is prevented by a parsed source gate from reading live
+protocol state.
+
+\subsection{External validity}
+
+\paragraph{Single node, single trust domain} One Redis instance, no replica, no
+consensus. \Cref{tab:nonclaims} lists what this forecloses. One residual is
+worth repeating here because it interacts with the results: an AOF rewind can
+un-fence a lease, since lock keys are deliberately not barriered, and the fix
+is HA rather than anything local.
+
+\paragraph{Platform, and a development/measurement split} All measurements were
+collected on Ubuntu inside WSL2 on Windows~11, with Docker Desktop port
+forwarding in the path, on mains power with sleep and hibernation disabled.
+Development and part of the test suite run on the Windows host; \emph{every}
+number in \cref{sec:evaluation} comes from the Linux tree against real Redis.
+The split is a threat and we manage it explicitly rather than eliding it: one
+known test failure is a \texttt{fakeredis} scan-batching artifact that occurs
+only on Windows and predates this work, and the Linux suite against real Redis
+is the one the artifact rests on. Absolute latency and throughput are
+platform-bound; only comparisons \emph{between} systems sharing this platform
+are meaningful, which is why \cref{tab:latency} is presented as increments over
+a common floor.
+
+\paragraph{Timing hygiene, and what it cost us} The host's modern-standby
+setting suspended it mid-run during earlier collection, silently inflating
+wall-clock durations --- in one case by eighteen hours. We now require both a
+pre-run declaration that the host cannot suspend and a per-run
+wall-versus-monotonic check. The gate is strict enough that \emph{no} run
+collected before it existed contributes a timing number. It also costs us
+coverage: recovery-latency distributions are not reported
+(\cref{sec:eval-rq4}), because the gated crashed runs are too few, and we
+prefer the gap to ungated numbers.
+
+\paragraph{Coverage of the matrix is partial, and the gaps are named} The full
+plan is 1\,068 runs; we report the cells that answer the research questions.
+Specifically: the \textsc{pos-only} and \textsc{no-readback} columns of
+\cref{tab:outcomes} are complete for AEP-full, B0 and B1 and
+\todoitem{state final B2/B3/B4 coverage at freeze}; the second Redis-kill
+variant (in-flight rather than pre-acknowledgement) is implemented and not
+collected, where our own analysis predicts a tie; the $30\%$ crash-probability
+regime is implemented and not collected; and the alternative read-back keying
+is a sensitivity variant that has not been run. A rate we did not measure is
+absent from the tables rather than interpolated.
+
+\paragraph{One endpoint for the cost measurement} RQ3's cells were collected
+against a single endpoint. Overhead should not depend on an endpoint's
+reconciliation capability in a crash-free run, since no read-back occurs, but
+that is an argument and not a measurement.
+
+\subsection{Where the protocol should not be used}
+
+If the endpoint accepts an idempotency key, or can be enrolled in a
+transaction, or the effect can be made idempotent, then a durable-execution
+engine gives a strictly stronger guarantee at lower cost and AEP is the wrong
+tool. Its cost is real: two fsync barriers, which under \texttt{appendfsync
+everysec} dominate the protocol's latency by two orders of magnitude
+(\cref{tab:latency}). AEP is for the case where the precondition those systems
+require cannot be obtained, and its value is a declared residual rather than a
+better guarantee.

@@ -348,6 +348,19 @@ class RunRecord:
             parts.append(self.regime)
         return "|".join(parts)
 
+    @property
+    def regime_label(self) -> str:
+        """The regime, with Session 3's unnamed one given a printable name.
+
+        ``regime`` is ``""`` for the runs collected before regimes existed,
+        which is what preserves their cell identity (see
+        ``experiments/tests/test_cell_identity.py``). An empty string is the
+        right *key* and the wrong *label*: in a CSV column it reads as a
+        missing value rather than as the every-execution-crashed condition it
+        denotes.
+        """
+        return self.regime or "(session-3)"
+
 
 def load_run(directory: Path) -> RunRecord | None:
     """Reduce one results directory to a :class:`RunRecord`, or skip it.
@@ -924,13 +937,41 @@ def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]
     return rows
 
 
+#: What makes two runs the same cell, for the file the paper quotes.
+#:
+#: ``regime`` is here because Table 1 is banned as a source precisely for
+#: pooling regimes (Session 3B §F2), and a per-cell file that pooled them too
+#: would inherit the same defect one level down. It nearly did: the
+#: ``redis-kill-preack`` runs carry ``crash_point = "none"`` because no *worker*
+#: is killed in them, and so do the crash-free ``p0`` runs. Today the two are
+#: told apart only by an accident of which endpoints each happened to be
+#: collected against; collect ``p0`` on ``NO_READBACK`` -- it is in the plan --
+#: and a crash-free cell would silently merge with a hard-Redis-kill cell into
+#: one rate. The grouping attribute is ``regime_label`` and the column is
+#: ``regime``: the key must print, and ``""`` does not.
+PER_CELL_GROUP_ATTRIBUTES = (
+    "regime_label",
+    "system",
+    "crash_point",
+    "response_class",
+    "readback_keying",
+)
+PER_CELL_GROUP_COLUMNS = (
+    "regime",
+    "system",
+    "crash_point",
+    "response_class",
+    "readback_keying",
+)
+
+
 def build_per_cell(
     runs: Sequence[RunRecord], *, resamples: int, seed: int
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    keys = ["system", "crash_point", "response_class", "readback_keying"]
-    for values, cell_runs in sorted(group_runs(runs, keys).items()):
-        group = dict(zip(keys, values))
+    grouped = group_runs(runs, PER_CELL_GROUP_ATTRIBUTES)
+    for values, cell_runs in sorted(grouped.items()):
+        group = dict(zip(PER_CELL_GROUP_COLUMNS, values))
         for metric in RATE_METRICS:
             rows.append(
                 compute_metric(
@@ -945,6 +986,7 @@ def build_executions_csv(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
     return [
         {
             "run_id": execution.run_id,
+            "regime": run.regime_label,
             "system": execution.system,
             "crash_point": execution.crash_point,
             "endpoint": execution.endpoint,

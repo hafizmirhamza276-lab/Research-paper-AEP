@@ -1,0 +1,105 @@
+\section{Introduction}
+\label{sec:introduction}
+
+An autonomous agent is asked to post a journal entry, issue a refund, or file a
+regulatory notification. It calls an enterprise API written years before agents
+existed. The call times out. The agent does not know whether the money moved.
+
+This is an old problem in a new setting, and the new setting removes the
+assumption that the old solutions rest on. Durable-execution engines, workflow
+systems and message brokers achieve their guarantees by requiring that the
+operation being retried is idempotent, or that the remote side will accept a
+deduplication key, or that both endpoints can be enrolled in one
+transaction~\cite{helland2007apostate,burckhardt2021durable,zhuang2023exoflow}.
+Temporal's own documentation is explicit about the precondition: ``You should
+always make your business logic Activities idempotent in Temporal. Because
+Activities may be retried, these functions may be executed more than
+once''~\cite{temporal-activity-definition}. The legacy endpoints that agents are
+now being pointed at satisfy none of this. They are non-idempotent, they accept
+no idempotency key, and --- the property that does the real damage --- many of
+them cannot be asked afterwards whether a mutation was applied.
+
+\subsection{The trilemma}
+\label{sec:trilemma}
+
+Consider a worker that has sent a mutation and then crashed, and a recovery
+process that must decide what to do. Exactly three things can happen to the
+external world, and a system must choose which one it is willing to produce.
+
+\begin{itemize}
+\item An \textbf{\undetdup{}}. The recovery process re-sends. If the first
+      request had in fact been applied, a second real effect now exists and no
+      component of the system knows it. This is what a naive retry produces,
+      and, as we show in \cref{sec:evaluation}, it is also what a lease, a
+      fenced compare-and-swap, and a durable event-sourced history each fail
+      to prevent, because none of them is a record written \emph{before} the
+      call.
+\item A \textbf{\lostfx{}}. The recovery process does not re-send and records
+      the attempt as failed. If the first request \emph{was} applied, a real
+      effect now exists that the system's records deny. This is what an
+      at-most-once configuration produces. It is quieter than a duplicate and
+      it is not better; a refund that the ledger says did not happen is a
+      reconciliation problem that surfaces weeks later, in the accounts.
+\item A \textbf{\declamb{}}. The system declines to decide, records that it
+      cannot decide, and stops. The effect may or may not exist; what is
+      guaranteed is that a durable record says so and that no further
+      automated action is taken on that execution.
+\end{itemize}
+
+The first two are silent. The third is not. Our position is that the third
+corner is the one a protocol should be engineered to reach, and that the
+quantity a system should be judged on is not whether it avoids ambiguity ---
+which, against an endpoint that cannot be queried, is impossible --- but
+whether its residual uncertainty is \emph{declared and bounded} rather than
+\emph{silent and unbounded}.
+
+The impossibility is not incidental. Deciding whether a remote effect occurred,
+when the channel may fail and the remote side may not answer, is the
+coordinated-attack problem; no protocol resolves it with certainty, and the
+classical results on consensus under crash faults and on failure detection say
+why~\cite{fischer1985impossibility,chandra1996failuredetectors}. What is
+available is a choice about where the uncertainty is allowed to
+surface. AEP's answer is: in a durable state, visible to an operator, never in
+the accounts.
+
+\subsection{Contributions}
+
+\begin{itemize}
+\item[\textbf{C1}] \textbf{The declared-ambiguity formulation.} We state the
+      problem as the three-way trade of \cref{sec:trilemma} rather than as a
+      pursuit of exactly-once, and we give three properties --- fenced state,
+      detectable ambiguity, and a fail-closed liveness bound --- each mapped to
+      the code path that enforces it and each with its residual window declared
+      rather than assumed away (\cref{sec:model,sec:protocol}).
+\item[\textbf{C2}] \textbf{A protocol and an implementation} in which a
+      durably acknowledged write-ahead intent is a \emph{checked precondition}
+      of dispatch authority rather than a matter of call ordering: the fsync
+      acknowledgement mints an unforgeable, single-use, scope-bound token, the
+      token is consumed to write a Redis-visible authorization, and the
+      pre-dispatch script refuses to proceed without it (\cref{sec:protocol}).
+\item[\textbf{C3}] \textbf{An evaluation under real process kills} across six
+      named crash points, three endpoint reconciliation capabilities and five
+      fault regimes, against five baselines. AEP records no undetected
+      duplicate and no lost effect in any cell measured; the baselines without
+      a pre-dispatch record duplicate in most crashed executions. AEP's
+      residual is declared ambiguity whose rate is a function of what the
+      endpoint can be asked (\cref{sec:evaluation}).
+\item[\textbf{C4}] \textbf{Two negative results that narrow our own claims},
+      both of which a reviewer would otherwise have to extract from us. First,
+      a hard process kill \emph{cannot} lose an unacknowledged Redis AOF write,
+      because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not
+      the \texttt{write(2)}; the durability barrier's benefit is therefore
+      unobservable under any process-level fault, and we name the fault class
+      it does hold against. Second, the same barrier's \emph{other} benefit ---
+      withholding dispatch when durability cannot be confirmed --- is real,
+      large and measured (\cref{sec:eval-rq2}).
+\end{itemize}
+
+\subsection{What this paper does not claim}
+
+We claim no exactly-once external execution, no prevention of a duplicate the
+provider has already accepted, no high availability, consensus or split-brain
+immunity, and no durability beyond one local AOF fsync. The system is a single
+Redis trust domain and the measurements are single-node. These are stated as a
+table of non-claims in \cref{sec:model} with the reason each is out of scope,
+and revisited in \cref{sec:threats}.

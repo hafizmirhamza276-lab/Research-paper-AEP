@@ -1,0 +1,365 @@
+% =====================================================================
+% refs.bib -- every entry verified to exist before it was written here.
+%
+% Amendment F4: "every citation must be checked to exist via web search or a
+% known DOI; a fabricated reference is a D4-level halt."
+%
+% Verification method, per entry:
+%   [DBLP]  matched against dblp.org's search API -- authors, venue, year,
+%           pages and DOI copied from the returned record, not from memory.
+%   [DOI]   the DOI was resolved through doi.org with
+%           `Accept: application/x-bibtex` and returned HTTP 200 with a
+%           record whose title and authors match.
+%   [URL]   no DBLP/DOI record exists (vendor documentation); the live page
+%           was fetched and the quoted text read off it on the stated date.
+%
+% Raw output of the sweep: reports/raw/f4-citation-verification.txt
+% Re-run with: python scripts/verify_refs.py
+%
+% -- Two failures worth keeping, because both were silent --
+%
+% 1. A FABRICATED DOI. The ACM Queue version of Helland's idempotence article
+%    was first written from memory as 10.1145/2181796.2229155. That DOI does
+%    not resolve; doi.org returned HTTP 404 ("DOI Not Found") while the nine
+%    real DOIs in this file all returned 200. The correct records are
+%    10.1145/2160718.2160734 (CACM, used below) and 10.1145/2181796.2187821
+%    (ACM Queue). A plausible-looking DOI is precisely what F4 is about, and
+%    only the resolution check caught it.
+%
+% 2. COMMENTS INSIDE ENTRIES. The first version of this file put the
+%    provenance note on the line after the entry's opening brace. BibTeX does
+%    not accept "%" comments inside an entry: it reported "You're missing a
+%    field name ... I'm skipping whatever remains of this entry" and emitted
+%    24 EMPTY \bibitem blocks. The document still compiled and reported no
+%    undefined citations, so nothing in the build said the bibliography was
+%    blank. Provenance comments therefore live ABOVE each entry, never inside
+%    one.
+%
+%    A second bite of the same apple: BibTeX's scanner treats an at-sign as
+%    the start of an entry even on a line beginning with "%", so a comment
+%    quoting an entry header silently swallowed the entry after it. No at-sign
+%    appears in any comment in this file.
+%
+%    scripts/check_paper_numbers.py greps main.bbl for empty \bibitem blocks
+%    and main.blg for BibTeX errors, so neither failure can recur silently.
+% =====================================================================
+
+
+% --------------------------------------------------------------------
+% Leases, locks, and fencing
+% --------------------------------------------------------------------
+
+% [DBLP][DOI 200] Gray, Cheriton. SOSP 1989, pp. 202-210.
+@inproceedings{gray1989leases,
+  author    = {Cary G. Gray and David R. Cheriton},
+  title     = {Leases: An Efficient Fault-Tolerant Mechanism for Distributed
+               File Cache Consistency},
+  booktitle = {Proceedings of the 12th ACM Symposium on Operating Systems
+               Principles (SOSP)},
+  pages     = {202--210},
+  year      = {1989},
+  doi       = {10.1145/74850.74870}
+}
+
+% [DBLP] Burrows. OSDI 2006, pp. 335-350. No DOI; USENIX permalink.
+@inproceedings{burrows2006chubby,
+  author    = {Michael Burrows},
+  title     = {The {Chubby} Lock Service for Loosely-Coupled Distributed
+               Systems},
+  booktitle = {Proceedings of the 7th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {335--350},
+  year      = {2006}
+}
+
+% [URL] Redis distributed-locks pattern page, read 2026-08-07.
+@misc{redis-locks,
+  author       = {{Redis}},
+  title        = {Distributed Locks with {Redis}},
+  howpublished = {\url{https://redis.io/docs/latest/develop/use-cases/patterns/distributed-locks/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-07}
+}
+
+% [URL] Kleppmann's critique of Redlock, read 2026-08-07. Cited for the
+% fencing-token argument, which is why AEP pairs the lock token with an
+% expected-version CAS rather than trusting the lock alone.
+@misc{kleppmann2016locking,
+  author       = {Martin Kleppmann},
+  title        = {How to Do Distributed Locking},
+  howpublished = {\url{https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html}},
+  year         = {2016},
+  note         = {Accessed 2026-08-07}
+}
+
+
+% --------------------------------------------------------------------
+% Transactions, logging, and the limits of agreement
+% --------------------------------------------------------------------
+
+% [DOI 200] Garcia-Molina, Salem. SIGMOD 1987, pp. 249-259. doi.org returned a
+% record keyed Garcia_Molina_1987 with title "Sagas" and pages 249-259.
+@inproceedings{garciamolina1987sagas,
+  author    = {Hector Garcia-Molina and Kenneth Salem},
+  title     = {Sagas},
+  booktitle = {Proceedings of the 1987 ACM SIGMOD International Conference on
+               Management of Data},
+  pages     = {249--259},
+  year      = {1987},
+  doi       = {10.1145/38713.38742}
+}
+
+% [DBLP][DOI 200] Mohan, Haderle, Lindsay, Pirahesh, Schwarz.
+% ACM TODS 17(1):94-162, 1992.
+@article{mohan1992aries,
+  author  = {C. Mohan and Don Haderle and Bruce G. Lindsay and Hamid Pirahesh
+             and Peter M. Schwarz},
+  title   = {{ARIES}: A Transaction Recovery Method Supporting
+             Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead
+             Logging},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {17},
+  number  = {1},
+  pages   = {94--162},
+  year    = {1992},
+  doi     = {10.1145/128765.128770}
+}
+
+% [DBLP][DOI 200] Kung, Robinson. ACM TODS 6(2):213-226, 1981.
+% (A 1979 VLDB abstract also exists; the journal version is cited.)
+@article{kung1981optimistic,
+  author  = {H. T. Kung and John T. Robinson},
+  title   = {On Optimistic Methods for Concurrency Control},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {6},
+  number  = {2},
+  pages   = {213--226},
+  year    = {1981},
+  doi     = {10.1145/319566.319567}
+}
+
+% [DOI 200] Fischer, Lynch, Paterson. J. ACM 32(2):374-382, 1985.
+@article{fischer1985impossibility,
+  author  = {Michael J. Fischer and Nancy A. Lynch and Michael S. Paterson},
+  title   = {Impossibility of Distributed Consensus with One Faulty Process},
+  journal = {Journal of the ACM},
+  volume  = {32},
+  number  = {2},
+  pages   = {374--382},
+  year    = {1985},
+  doi     = {10.1145/3149.214121}
+}
+
+% [DBLP][DOI 200] Chandra, Toueg. J. ACM 43(2):225-267, 1996.
+@article{chandra1996failuredetectors,
+  author  = {Tushar Deepak Chandra and Sam Toueg},
+  title   = {Unreliable Failure Detectors for Reliable Distributed Systems},
+  journal = {Journal of the ACM},
+  volume  = {43},
+  number  = {2},
+  pages   = {225--267},
+  year    = {1996},
+  doi     = {10.1145/226643.226647}
+}
+
+% [DBLP] Ongaro, Ousterhout. USENIX ATC 2014, pp. 305-319. No DOI.
+@inproceedings{ongaro2014raft,
+  author    = {Diego Ongaro and John Ousterhout},
+  title     = {In Search of an Understandable Consensus Algorithm},
+  booktitle = {Proceedings of the 2014 USENIX Annual Technical Conference
+               (USENIX ATC)},
+  pages     = {305--319},
+  year      = {2014}
+}
+
+% [DBLP] Helland. CIDR 2007, pp. 132-141. No DOI; cidrdb.org PDF.
+@inproceedings{helland2007apostate,
+  author    = {Pat Helland},
+  title     = {Life beyond Distributed Transactions: An Apostate's Opinion},
+  booktitle = {Proceedings of the 3rd Biennial Conference on Innovative Data
+               Systems Research (CIDR)},
+  pages     = {132--141},
+  year      = {2007}
+}
+
+% [DBLP][DOI 200] Helland. CACM 55(5):56-65, 2012.
+% See the header note: the ACM Queue variant is 10.1145/2181796.2187821, and
+% 10.1145/2181796.2229155 -- written from memory -- does not exist.
+@article{helland2012idempotence,
+  author  = {Pat Helland},
+  title   = {Idempotence Is Not a Medical Condition},
+  journal = {Communications of the ACM},
+  volume  = {55},
+  number  = {5},
+  pages   = {56--65},
+  year    = {2012},
+  doi     = {10.1145/2160718.2160734}
+}
+
+
+% --------------------------------------------------------------------
+% Durable execution and stateful serverless
+% --------------------------------------------------------------------
+
+% [DBLP] Zhang, Cardoza, Chen, Angel, Liu. OSDI 2020, pp. 1187-1204 (Beldi).
+@inproceedings{zhang2020beldi,
+  author    = {Haoran Zhang and Adney Cardoza and Peter Baile Chen and
+               Sebastian Angel and Vincent Liu},
+  title     = {Fault-Tolerant and Transactional Stateful Serverless Workflows},
+  booktitle = {Proceedings of the 14th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {1187--1204},
+  year      = {2020}
+}
+
+% [DBLP] Zhuang, Wang, Liang, Cheng, Stoica. OSDI 2023, pp. 269-286.
+@inproceedings{zhuang2023exoflow,
+  author    = {Siyuan Zhuang and Stephanie Wang and Eric Liang and Yi Cheng
+               and Ion Stoica},
+  title     = {{ExoFlow}: A Universal Workflow System for Exactly-Once {DAGs}},
+  booktitle = {Proceedings of the 17th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {269--286},
+  year      = {2023}
+}
+
+% [DBLP][DOI 200] Burckhardt, Gillum, Justo, Kallas, McMahon, Meiklejohn.
+% PACMPL 5(OOPSLA):1-27, 2021.
+@article{burckhardt2021durable,
+  author  = {Sebastian Burckhardt and Chris Gillum and David Justo and
+             Konstantinos Kallas and Connor McMahon and
+             Christopher S. Meiklejohn},
+  title   = {Durable Functions: Semantics for Stateful Serverless},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume  = {5},
+  number  = {OOPSLA},
+  pages   = {1--27},
+  year    = {2021},
+  doi     = {10.1145/3485510}
+}
+
+% [DBLP][DOI 200] Jia, Witchel. SOSP 2021, pp. 691-707.
+@inproceedings{jia2021boki,
+  author    = {Zhipeng Jia and Emmett Witchel},
+  title     = {{Boki}: Stateful Serverless Computing with Shared Logs},
+  booktitle = {Proceedings of the 28th ACM Symposium on Operating Systems
+               Principles (SOSP)},
+  pages     = {691--707},
+  year      = {2021},
+  doi       = {10.1145/3477132.3483541}
+}
+
+
+% --------------------------------------------------------------------
+% Agents
+% --------------------------------------------------------------------
+
+% [DBLP] Yao, Zhao, Yu, Du, Shafran, Narasimhan, Cao. ICLR 2023.
+@inproceedings{yao2023react,
+  author    = {Shunyu Yao and Jeffrey Zhao and Dian Yu and Nan Du and
+               Izhak Shafran and Karthik Narasimhan and Yuan Cao},
+  title     = {{ReAct}: Synergizing Reasoning and Acting in Language Models},
+  booktitle = {Proceedings of the 11th International Conference on Learning
+               Representations (ICLR)},
+  year      = {2023}
+}
+
+% [DBLP] Schick, Dwivedi-Yu, Dessi, Raileanu, Lomeli, Hambro, Zettlemoyer,
+% Cancedda, Scialom. NeurIPS 2023.
+@inproceedings{schick2023toolformer,
+  author    = {Timo Schick and Jane Dwivedi-Yu and Roberto Dess{\`\i} and
+               Roberta Raileanu and Maria Lomeli and Eric Hambro and
+               Luke Zettlemoyer and Nicola Cancedda and Thomas Scialom},
+  title     = {{Toolformer}: Language Models Can Teach Themselves to Use
+               Tools},
+  booktitle = {Advances in Neural Information Processing Systems 36
+               (NeurIPS)},
+  year      = {2023}
+}
+
+% [DBLP] Mei, Li, Xu, Ye, Ge, Zhang. CoRR abs/2403.16971. Preprint, cited
+% as such.
+@article{mei2024aios,
+  author  = {Kai Mei and Zelong Li and Shuyuan Xu and Ruosong Ye and
+             Yingqiang Ge and Yongfeng Zhang},
+  title   = {{AIOS}: {LLM} Agent Operating System},
+  journal = {CoRR},
+  volume  = {abs/2403.16971},
+  year    = {2024},
+  doi     = {10.48550/arXiv.2403.16971}
+}
+
+% [DBLP] Zheng, Yang, Zhang, Quinn. CoRR abs/2603.20625, 2026. Preprint,
+% cited as such.
+@article{zheng2026acrfence,
+  author  = {Yusheng Zheng and Yiwei Yang and Wei Zhang and Andi Quinn},
+  title   = {{ACRFence}: Preventing Semantic Rollback Attacks in Agent
+             Checkpoint-Restore},
+  journal = {CoRR},
+  volume  = {abs/2603.20625},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2603.20625}
+}
+
+
+% --------------------------------------------------------------------
+% Vendor documentation -- no DBLP record. URL plus access date, and the
+% quoted text was read off the live page on the stated day.
+% experiments/baselines/B4_SEMANTICS.md holds the full quotations.
+% --------------------------------------------------------------------
+
+% [URL] Read 2026-08-07. Load-bearing: "blocks the current client until all
+% previous write commands by that client are acknowledged as having been
+% fsynced to the AOF of the local Redis"; available "since 7.2.0"; and
+% "WAITAOF does not make Redis a strongly-consistent store."
+@misc{redis-waitaof,
+  author       = {{Redis}},
+  title        = {{WAITAOF}},
+  howpublished = {\url{https://redis.io/docs/latest/commands/waitaof/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-07}
+}
+
+% [URL] Read 2026-08-07. Load-bearing for Section 6.2: "appendfsync everysec:
+% fsync every second. Fast enough ... and you may lose 1 second of data if
+% there is a disaster"; "appendfsync always: fsync every time new commands are
+% appended to the AOF. Very very slow, very safe."
+@misc{redis-persistence,
+  author       = {{Redis}},
+  title        = {{Redis} Persistence},
+  howpublished = {\url{https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-07}
+}
+
+% [URL] Read 2026-08-06 (recorded in B4_SEMANTICS.md). Load-bearing: the
+% default Activity Maximum Attempts is unlimited, and "Setting the value to 1
+% means a single execution attempt and no retries."
+@misc{temporal-retry,
+  author       = {{Temporal Technologies}},
+  title        = {Retry Policies},
+  howpublished = {\url{https://docs.temporal.io/encyclopedia/retry-policies}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}
+
+% [URL] Read 2026-08-06. Load-bearing: "If a Retry Policy dictates a retry,
+% the Temporal Service schedules another Activity Task."
+@misc{temporal-activity-failures,
+  author       = {{Temporal Technologies}},
+  title        = {Detecting Activity Failures},
+  howpublished = {\url{https://docs.temporal.io/encyclopedia/detecting-activity-failures}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}
+
+% [URL] Read 2026-08-06. Load-bearing: "You should always make your business
+% logic Activities idempotent in Temporal. Because Activities may be retried,
+% these functions may be executed more than once."
+@misc{temporal-activity-definition,
+  author       = {{Temporal Technologies}},
+  title        = {Activity Definition},
+  howpublished = {\url{https://docs.temporal.io/activity-definition}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}

@@ -1,0 +1,298 @@
+\section{Evaluation}
+\label{sec:evaluation}
+
+\begin{itemize}
+\item[\textbf{RQ1}] Under crashes, does AEP eliminate \emph{undetected}
+      duplicates, and what does its residual ambiguity depend on?
+\item[\textbf{RQ2}] What does each mechanism contribute --- in particular, what
+      does the durability barrier buy, and against which faults?
+\item[\textbf{RQ3}] What does the protocol cost?
+\item[\textbf{RQ4}] How does recovery behave?
+\end{itemize}
+
+\subsection{Setup}
+\label{sec:eval-setup}
+
+\paragraph{Systems} The six of \cref{tab:trilemma}, implemented as thin
+variants over one connector, one workload driver and one oracle, so that only
+the differences differ. Each carries a machine-readable descriptor that tests
+check against the implementation, and a crash point that does not exist in a
+given system is marked inapplicable and never run rather than silently skipped.
+
+\paragraph{Faults} Workers are separate OS processes killed with real
+\texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
+\emph{regime} is a named fault condition --- not a matrix dimension --- and we
+report each separately because they are different experiments:
+
+\begin{itemize}
+\item \textbf{crashed}: every execution is killed at the cell's crash point.
+      This is the regime RQ1 is about.
+\item \textbf{crash-free} (\texttt{p0}): nothing is injected. The only regime
+      RQ3 may use.
+\item \textbf{\texttt{redis-kill-preack}}: no worker crash; Redis is hard-killed
+      with \texttt{docker kill -s KILL} at the instruction boundary between the
+      intent CAS and the barrier acknowledgement, then restarted and verified.
+      This is RQ2's ablation.
+\end{itemize}
+
+\paragraph{Oracle} A standalone mock provider records every \emph{actually
+applied} mutation in a SQLite ledger (WAL, \texttt{synchronous=FULL}, one
+transaction per mutation). Duplicates are counted from that ledger, never from
+the system's own opinion of itself. The analysis is permitted to read exactly
+two files per run --- the event log and the oracle ledger --- and a source gate
+that parses the analysis modules fails the build if they import anything that
+could reach live protocol state.
+
+\paragraph{Statistics} Rates are over executions, with cluster-aware bootstrap
+95\% confidence intervals (10\,000 resamples, seeded) and Fisher's exact test
+for rate comparisons. Seeds and repetition counts are recorded per run.
+
+\paragraph{Two reporting rules we hold ourselves to} First, \emph{no pooled
+table}. A rate computed across fault regimes is a property of how many runs of
+each kind were collected, not of any system; our own analysis tool prints a
+warning whenever more than one regime is present, and every number below names
+its regime. Second, \emph{no absolute timing from an ungated host}. A run
+contributes a duration only if the operator declared before the run that the
+host cannot suspend \emph{and} the run's wall-versus-monotonic divergence stays
+within tolerance. Both halves are necessary: a host that merely was not idle
+long enough to suspend is indistinguishable from one that cannot. Under this
+gate, \emph{zero} runs collected before this rule existed contribute a timing
+number, and none does.
+
+\subsection{RQ1 --- undetected duplicates and the shape of the residual}
+\label{sec:eval-rq1}
+
+\Cref{tab:outcomes} is the anchor result.
+
+\input{generated/table-outcomes}
+
+Three readings, in the order they matter.
+
+\paragraph{AEP's two silent columns are empty, everywhere measured} Across
+\AepDupAuthN{}, \AepDupPosOnlyN{} and \AepDupNoReadbackN{} crashed executions on
+the three capability classes, AEP-full recorded an undetected-duplicate rate of
+\AepDupAuth{}, \AepDupPosOnly{} and \AepDupNoReadback{}, and a lost-effect rate
+of \AepLostAuth{}, \AepLostPosOnly{} and \AepLostNoReadback{}. Every one of
+those executions was killed by \texttt{SIGKILL} at a named point around the
+external call. This was the pre-registered halt condition of the experiment: a
+single undetected duplicate in AEP-full would have stopped the matrix and
+become the paper's primary result. It did not occur.
+
+\paragraph{The baselines without a pre-dispatch record duplicate in most
+crashed executions} B0, B1 and B2 sit between $0.77$ and $0.83$, and the
+comparison against AEP-full is significant at $p < 10^{-100}$ by Fisher's exact
+test.
+% source: analysis/comparisons-vs-aep-full.csv, crashed regime.
+The gap between B1/B2 and B0 is small and that is the finding: a lease and a
+fenced CAS are doing exactly what they promise and neither promise is about the
+external call.
+
+\paragraph{A durable log is not enough --- and this is the sharpest statement
+available} B4 has a write-ahead record, acknowledged durable by the same
+\texttt{WAITAOF} barrier AEP uses. It is not ablated on durability. It
+duplicates at \todoitem{B4 tier-1 completion, currently $n{=}20$}. The record
+is necessary and it is not sufficient, because the record cannot contain the
+fact that matters --- whether the provider applied the effect. What separates
+B3 and AEP-full from B4 is not durability but the \emph{absence of an edge back
+into the dispatching state}: the transition table has no path that re-enters
+\textsc{about-to-fire}, checked inside the atomic script
+(\cref{fig:statemachine}).
+
+\subsubsection{The residual is set by the endpoint, not the protocol}
+
+AEP's declared-ambiguity column is \AepAmbAuth{} on \textsc{auth},
+\AepAmbPosOnly{} on \textsc{pos-only} and \AepAmbNoReadback{} on
+\textsc{none}. That ordering is not a defect that better engineering would
+remove; it is \cref{tab:capabilities} showing through. Where the endpoint can
+prove absence, recovery resolves everything and nothing is left ambiguous.
+Where it can only confirm presence, absence is uninformative and the honest
+answer is ``I do not know''. Where it cannot be queried at all, no amount of
+protocol recovers the fact.
+
+\Cref{tab:ambiguity-by-crashpoint} decomposes this further, and it is where the
+protocol's conservatism becomes visible.
+
+\input{generated/table-ambiguity-by-crashpoint}
+
+Two cells carry the argument. At \texttt{before\_intent\_write} the rate is
+$0$ in every capability class: the crash precedes the intent, nothing was
+promised, and there is nothing to be ambiguous about. At
+\texttt{after\_barrier\_before\_dispatch} it is at its maximum --- and that is
+the crash point at which \emph{no effect can possibly exist}, because the
+worker died before sending anything. AEP declares ambiguity most often exactly
+where it is least warranted by the world. That is the false-positive ambiguity
+of \cref{sec:p2}, and its direction is the whole design: the protocol's errors
+are toward saying ``I might have done something'' when it did not, never toward
+silence when it did. The cells where an effect \emph{does} typically exist ---
+\texttt{mid\_dispatch} and \texttt{after\_response\_before\_resolution} under
+\textsc{pos-only} --- show low ambiguity, because a positive read-back
+confirms the effect and the intent resolves.
+
+\subsection{RQ2 --- what each mechanism contributes}
+\label{sec:eval-rq2}
+
+B3 is AEP-full with the \texttt{WAITAOF} barrier removed and nothing else
+removed. On the crashed regime it is indistinguishable from AEP-full: both
+record zero undetected duplicates. That is not a null result about the barrier;
+it is a statement that the \emph{worker-crash} fault class cannot separate
+them, and it sent us looking for the fault that can.
+
+\subsubsection{A negative result that narrows our own claim}
+\label{sec:eval-negative}
+
+The intuitive story is that the barrier protects the write-ahead record from
+being lost on a crash. We tested that premise before building on it, and it is
+false for the fault we and most readers would first reach for.
+
+Ten trials, each phase-aligning the \texttt{everysec} timer with a
+\texttt{WAITAOF} so the window under test is as wide as it can be, writing a key
+\emph{without} waiting for it, hard-killing the container with
+\texttt{docker kill -s KILL}, restarting, and reading back. Every kill landed
+(\texttt{uptime} $=0$\,s afterwards in all ten) and every kill landed inside the
+window (write-to-death $419$--$992$\,ms against a $1\,000$\,ms fsync period).
+\textbf{Not one unfsynced write was lost: 0/10.}
+% source: reports/raw/e1-durability-window.txt; Session 3B section C.2.
+
+The mechanism is not subtle once seen. \texttt{appendfsync everysec} defers the
+\texttt{fsync(2)}, \textbf{not} the \texttt{write(2)}: Redis writes the AOF
+buffer to the operating system on every event-loop iteration. A
+\texttt{SIGKILL} destroys the \emph{process}; the kernel and its page cache are
+untouched, and a kernel that is still running flushes those bytes to disk. The
+same result reappears at $n{=}60$ inside the ablation cells below, where a
+canary write made immediately before each kill survived in
+\AepKillCanary{} and \BthreeKillCanary{} runs.
+
+\textbf{The consequence for the claim.} \texttt{WAITAOF} defends against loss of
+the page cache --- host power failure, kernel panic, VM destruction --- and
+\emph{not} against process death, because \texttt{appendonly yes} already
+covers that. No process-level fault can separate B3 from AEP-full on the
+durability of the write-ahead record, and we therefore do not claim it does.
+The Redis documentation's ``you may lose 1 second of data if there is a
+disaster''~\cite{redis-persistence} is correct; what our probe adds is that
+``disaster'' must mean the host, and that the widely repeated reading of the
+sentence as covering a crashed Redis process is wrong.
+
+\subsubsection{The benefit that is measurable, and it is large}
+
+The barrier buys a second thing, and that one is observable. If the barrier's
+acknowledgement is a checked precondition of dispatch (\cref{sec:p2}), then
+losing Redis \emph{during} the barrier must withhold the dispatch --- whereas
+B3, which does not wait, proceeds.
+
+We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
+boundary between the intent CAS and the acknowledgement. AEP-full is inside
+\texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
+that round trip. One execution per run, \AepKillRuns{} runs per system, no
+worker crash --- the fault under study is Redis dying.
+
+\begin{table}[t]
+\centering
+\caption{The hard-Redis-kill ablation. Identical faults; the only difference is
+whether the system waits for the durability acknowledgement before
+dispatching. Source: \texttt{redis-kill-ablation.csv}, regime
+\texttt{redis-kill-preack}, \textsc{no-readback}.}
+\label{tab:killablation}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & runs & applied an effect & canary survived \\
+\midrule
+AEP-full & \AepKillRuns{} & \AepKillApplied{} & \AepKillCanary{} \\
+B3 (no barrier) & \BthreeKillRuns{} & \BthreeKillApplied{} & \BthreeKillCanary{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+AEP-full's dispatch gate withheld the mutation in 20 of 30 runs; B3 put it on
+the wire in 28 of 30. Fisher's exact test, two-tailed: $p = 1.9\times10^{-6}$.
+% source: analysis/redis-kill-ablation.csv; Session 3B section C.5.
+That is \textbf{18 real, non-idempotent effects} that AEP-full did not commit
+and B3 did, on the same injected fault, bought by one round trip.
+
+Two honest qualifications. First, \emph{AEP-full still applied 10}. The kill is
+asynchronous and takes $400$--$1\,000$\,ms to land, so in roughly a third of
+runs \texttt{WAITAOF} completed before Redis died and AEP-full held a genuine
+acknowledgement and dispatched correctly. That is the race the fault creates,
+not a protocol failure, and we report it as it came out rather than widening
+the window until it looks better. Second, and for the same reason, \emph{the
+effect size is a property of this host's \texttt{docker} latency}. A faster
+kill pushes AEP-full toward 0 and widens the gap; a slower one narrows it. The
+\emph{direction} is structural --- B3 cannot be protected by a barrier it does
+not wait for --- but the magnitude should not be read as a constant of the
+protocol.
+
+Third: \emph{both systems declared ambiguity on all 30}. The endpoint is
+\textsc{no-readback}, so neither can resolve what it does not know, and both
+fail closed. The difference between them is not in what they \emph{say}; it is
+in what they did to the outside world before saying it.
+
+\subsection{RQ3 --- cost}
+\label{sec:eval-rq3}
+
+Only crash-free runs on a suspend-disabled host contribute. The provider is
+configured with a constant $2\,000$\,ms delay, so one round trip is the floor
+and the interesting quantity is the increment over it.
+
+\begin{table}[t]
+\centering
+\caption{Median step latency, crash-free runs only, E5-gated. The provider's
+own $2\,000$\,ms delay is included in every row, so the increments are the
+result. Source: \texttt{latency-and-throughput.csv}.}
+\label{tab:latency}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+system & median step (ms) & over the floor \\
+\midrule
+B0 no protocol            & \BzeroStepMedian{}  & --- \\
+B1 $+$ lease              & \BoneStepMedian{}   & $+3.8$ \\
+B2 $+$ fenced CAS         & \BtwoStepMedian{}   & $+7.2$ \\
+B3 full protocol, no barrier & \BthreeStepMedian{} & $\mathbf{+28.0}$ \\
+AEP-full                  & \AepStepMedian{}    & $\mathbf{+1\,994.7}$ \\
+B4b durable, 1 attempt    & \BfourbStepMedian{} & $+2\,003.2$ \\
+B4 durable, $\infty$      & \BfourStepMedian{}  & $+2\,005.5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{The overhead is the barrier, and nothing else.} Everything the
+write-ahead protocol does apart from waiting for \texttt{fsync} --- the intent
+ledger, the vault, the request binding, the preflight, the recovery service ---
+costs $28$\,ms on a two-second call, under $1.4\%$. The two \texttt{WAITAOF}
+round trips cost $\approx 1\,967$\,ms between them, or $\approx 983$\,ms each.
+
+That figure is a property of a \emph{configuration}, not of AEP. Under
+\texttt{appendfsync everysec} a write must wait for the next scheduled fsync,
+and those are one second apart; a mean wait of half a second per barrier, twice,
+is precisely what we measure. B4 and B4b landing on the same figure with their
+own two acknowledged appends is independent confirmation that the cost is the
+barrier and not anything AEP does around it.
+
+To show that the barrier's cost is a point on a curve rather than a constant,
+we re-ran the crash-free AEP-full configuration against a Redis configured with
+\texttt{appendfsync always}, changing nothing else.
+% source: reports/raw/f0iii-appendfsync-always.txt
+\input{generated/fsync-comparison}
+
+\subsection{RQ4 --- recovery}
+\label{sec:eval-rq4}
+
+Recovery behaviour is reported through the outcome distribution rather than a
+success rate, for a reason worth stating: ``recovery success'' means two
+different things either side of whether a recovery service was running. Where
+one ran, a crashed execution reaching a terminal classification was
+\emph{recovered}. Where none ran --- B0, B1, B2, B4, B4b declare none --- the
+same execution reached its classification because a supervisor ran the step
+again, which is not recovery but the thing recovery exists to avoid. Our
+analysis excludes runs without a recovery service from that metric rather than
+scoring them zero or one, because both would be statements about a component
+that was not present.
+
+Within that scope: every AEP-full and B3 execution in the crashed regime
+reached a terminal classification, and \emph{zero} reconciliation
+disagreements were recorded across all runs --- every run's own event log
+agreed with its independently written oracle ledger.
+% source: analysis/coverage.json and the per-run reconcile step.
+Recovery latency is not reported as an absolute figure: the E5 gate leaves too
+few gated crashed runs to support a distribution, and \cref{sec:threats}
+records this as a gap rather than filling it with ungated numbers.

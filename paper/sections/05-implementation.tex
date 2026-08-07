@@ -1,0 +1,48 @@
+\section{Implementation}
+\label{sec:implementation}
+
+AEP is 6\,849 lines of Python~3.13 against Redis~7.2.5, pinned by image digest.
+% source: `find aep_core -name "*.py" | xargs wc -l`, 2026-08-07.
+The evaluation harness, mock provider and six baseline systems are a further
+20\,099 lines.
+% source: `find experiments -name "*.py" -not -path "*/__pycache__/*" | xargs wc -l`.
+
+\paragraph{What the protocol rests on} Three Lua scripts, each a single
+serialisation point: the intent compare-and-swap that carries the whole
+transition table, the pre-dispatch preflight, and the dispatch-authorization
+writer. A Lua re-implementation of the strict UTF-8 and duplicate-JSON-member
+checks is prefixed to every authoritative script, so the store rejects a
+malformed document rather than trusting the client that sent it.
+
+\paragraph{Composition modes} A start-up gate distinguishes \textsc{test},
+\textsc{evaluation} and \textsc{production} compositions and refuses to run a
+mismatched one. \textsc{production} and \textsc{evaluation} share one block of
+requirements and differ only in the connector endpoint, which makes ``the
+measurements ran in a production-shaped composition'' a property of the code
+rather than of this sentence. \textsc{production} is nevertheless
+\emph{unsatisfiable} in this repository --- there is no production vault and no
+production connector, and the gate fails closed for it. Every number in
+\cref{sec:evaluation} was therefore collected in \textsc{evaluation} mode, with
+no test-only flags anywhere in the harness, and the evaluation vault's two
+weaknesses relative to the production design (it shares the Redis trust domain,
+and its keys are operator-supplied rather than KMS-wrapped) are declared rather
+than hidden.
+
+\paragraph{On test counts} The artifact carries a large automated suite and CI
+that fails if any test is skipped. We deliberately do \emph{not} offer the test
+count as evidence of protocol assurance. A prior internal audit of this
+repository established that the suite had grown chiefly in rejection branches,
+gate scripts and artifact metadata, while the number of tests exercising the
+write-ahead path was close to unchanged; a reader who reads a doubled test
+count as a doubled protocol guarantee would be wrong. The evidence for the
+protocol's behaviour under faults is \cref{sec:evaluation}, and the harness
+found three defects the suite had missed --- discussed in \cref{sec:threats}
+because two of them would have biased results in AEP's favour had they gone
+unnoticed.
+
+\paragraph{Reproducibility} The environment is locked (\texttt{uv.lock}), the
+Redis image is pinned by digest, and CI provisions Redis from the same compose
+file the experiments use, so no job can pass against a differently configured
+store. Continuous integration runs three jobs --- the full suite, the
+\texttt{WAITAOF} durability suite, and a citation-range check over the formal
+model --- and the build fails if any test is skipped.

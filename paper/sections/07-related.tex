@@ -1,0 +1,85 @@
+\section{Related Work}
+\label{sec:related}
+
+AEP sits at the intersection of three literatures, and its contribution is not
+a new mechanism in any of them. Every primitive it uses --- leases, fenced
+compare-and-swap, write-ahead logging, an fsync barrier --- is decades old. The
+contribution is the \emph{semantics they are composed to deliver}: declared
+ambiguity for non-cooperative endpoints, rather than exactly-once for
+cooperative ones.
+
+\paragraph{Leases and fencing} Leases are Gray and Cheriton's time-bounded
+mutual exclusion under crash faults~\cite{gray1989leases}; Chubby made the
+pattern an infrastructural service~\cite{burrows2006chubby}, and the Redis
+lock pattern~\cite{redis-locks} is its commodity form. The well-known critique
+is that a lease alone is not sufficient, because a lease holder may stall past
+expiry and write afterwards; the remedy is a monotonic fencing
+token~\cite{kleppmann2016locking}. AEP implements exactly that remedy and adds
+the observation that it is not enough for our problem: a fencing token protects
+\emph{the store}. Our B1 and B2 baselines make this concrete --- both prevent
+state corruption and neither prevents a duplicate external effect
+(\cref{tab:outcomes}).
+
+\paragraph{Concurrency control, logging, and long-lived transactions} The
+expected-version CAS is optimistic concurrency control~\cite{kung1981optimistic}
+applied to a single document. The write-ahead intent is write-ahead logging in
+the sense of ARIES~\cite{mohan1992aries} --- record the intention durably
+before performing the action --- with the crucial difference that ARIES logs an
+action the same system will perform and can therefore undo or redo, while AEP
+logs an action a \emph{foreign} system will perform and can do neither. Sagas
+address long-lived transactions by pairing each step with a compensating
+action~\cite{garciamolina1987sagas}; that is the right answer where a
+compensation exists, and AEP's premise is the case where it does not, or where
+compensating requires first knowing whether the effect occurred --- which is
+the question. Helland's analysis of what survives when distributed transactions
+are unavailable~\cite{helland2007apostate}, and his treatment of idempotence as
+the property everything else is built on~\cite{helland2012idempotence}, are the
+closest conceptual antecedents; AEP can be read as asking what to do when the
+idempotence Helland requires cannot be obtained from the far side.
+
+\paragraph{Why certainty is unavailable} That an outcome may be undecidable is
+not an engineering shortfall. Consensus is unsolvable in an asynchronous system
+with even one crash fault~\cite{fischer1985impossibility}, and what can be
+recovered depends on the failure-detection assumptions one is willing to
+make~\cite{chandra1996failuredetectors}; replicated state machines buy
+agreement between replicas~\cite{ongaro2014raft} but not agreement with a
+legacy endpoint that participates in no protocol. AEP takes the impossibility
+as given and makes the residual explicit and bounded rather than implicit and
+silent.
+
+\paragraph{Durable execution and stateful serverless} This is the closest
+active area and the one AEP must be distinguished from most carefully.
+Beldi~\cite{zhang2020beldi} provides fault-tolerant, transactional stateful
+serverless workflows with exactly-once semantics over its own data
+plane. Durable Functions~\cite{burckhardt2021durable} gives a formal semantics
+for stateful serverless in terms of replay over a durable history.
+Boki~\cite{jia2021boki} builds consistency and fault tolerance on shared logs.
+ExoFlow~\cite{zhuang2023exoflow} is the most direct comparison: it targets
+exactly-once DAGs and is explicit that the guarantee requires each step to be
+recoverable --- idempotent, transactional, or paired with a compensation.
+
+Every one of these systems achieves its guarantee \emph{with the cooperation of
+the effectful endpoint}, whether by enrolling it in a transaction, by requiring
+idempotence, or by requiring a compensation. Our B4 baseline is an
+event-sourced engine of this family, using the same durability barrier as AEP,
+and it duplicates --- not because it is badly built, but because it is
+correctly implementing at-least-once activity execution against an endpoint
+that cannot absorb it. Temporal states the precondition plainly: activities
+should be made idempotent, because they may be executed more than
+once~\cite{temporal-activity-definition}. B4b shows the documented alternative
+--- Maximum Attempts of 1~\cite{temporal-retry} --- purchasing at-most-once and
+paying in lost effects. \textbf{The difference AEP claims is not a better
+guarantee than these systems provide; it is a different residual.} Where they
+must assume the precondition and are silent when it fails, AEP declines to
+decide and says so.
+
+\paragraph{Agents} Tool-using and reasoning-acting agents~\cite{yao2023react,
+schick2023toolformer} and agent operating systems~\cite{mei2024aios} have made
+the workload in this paper common: autonomous, nondeterministic planners
+invoking effectful enterprise APIs. The reliability literature for this setting
+is young. ACRFence~\cite{zheng2026acrfence} is the nearest work, addressing
+semantic rollback in agent checkpoint-restore --- an adjacent hazard from the
+same root cause, that an agent's durable record and the world can disagree
+after a fault. AEP addresses the forward direction of the same disagreement:
+not what a restored checkpoint wrongly believes, but what an interrupted
+dispatch cannot determine.

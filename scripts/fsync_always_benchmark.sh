@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# The barrier's cost is a property of a durability configuration, not of AEP.
+#
+# Amendment F0(iii): run one crash-free AEP-full configuration against a Redis
+# with `appendfsync always`, so the paper can state the barrier cost as a
+# function of the durability setting rather than as one large number. The
+# `everysec` figure it is compared against is the same cell -- same system,
+# same endpoint, same seeds, same executions -- already collected in the main
+# matrix, so the only variable is the fsync policy.
+#
+# Three things this script refuses to do:
+#
+#   1. Touch the matrix's Redis. It starts a SECOND container on a different
+#      port with its own volume. The main instance is left alone, because a
+#      `CONFIG SET appendfsync always` on it would silently change the
+#      durability policy under every other result in the paper.
+#
+#   2. Write into the frozen results tree. Its results root is separate.
+#
+#   3. Measure a configuration it did not actually get. It reads
+#      `CONFIG GET appendfsync` back from the running server and exits
+#      non-zero unless the answer is literally `always`. A benchmark that
+#      reports a number for a setting it failed to apply is worse than no
+#      benchmark.
+#
+# Usage (from the repository root, on the Linux measurement host):
+#   AEP_HARNESS_SUSPEND_DISABLED=1 bash scripts/fsync_always_benchmark.sh
+set -euo pipefail
+
+# Same image digest as compose.phase2.yml -- a different Redis build would
+# make the comparison meaningless.
+IMAGE="redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"
+NAME="aep-fsync-always"
+PORT="6383"
+RESULTS_ROOT="experiments/results/fsync-always"
+CONF="/tmp/aep-fsync-always.conf"
+
+echo "=============================================================="
+echo "F0(iii)  barrier latency under appendfsync=always"
+echo "=============================================================="
+echo
+
+# ---------------------------------------------------------------- teardown
+cleanup() {
+  echo
+  echo "--- teardown ---"
+  docker rm -f "${NAME}" >/dev/null 2>&1 || true
+  echo "removed ${NAME}"
+}
+trap cleanup EXIT
+
+docker rm -f "${NAME}" >/dev/null 2>&1 || true
+
+# ---------------------------------------------------------- the config file
+# Identical to redis/phase2.conf except for the one line under test.
+cat > "${CONF}" <<'CONFEOF'
+bind 0.0.0.0
+protected-mode no
+port 6379
+databases 16
+dir /data
+save ""
+appendonly yes
+appendfsync always
+appenddirname appendonlydir
+aof-use-rdb-preamble yes
+CONFEOF
+
+echo "--- config under test (diff against redis/phase2.conf) ---"
+diff <(sed 's/[[:space:]]*$//' redis/phase2.conf | grep -v '^#' | grep -v '^$') \
+     <(sed 's/[[:space:]]*$//' "${CONF}" | grep -v '^$') || true
+echo
+
+# ------------------------------------------------------------------ start
+echo "--- starting ${NAME} on 127.0.0.1:${PORT} ---"
+docker run -d --name "${NAME}" \
+  -p "127.0.0.1:${PORT}:6379" \
+  -v "${CONF}:/usr/local/etc/redis/redis.conf:ro" \
+  "${IMAGE}" \
+  redis-server /usr/local/etc/redis/redis.conf >/dev/null
+
+for _ in $(seq 1 30); do
+  if docker exec "${NAME}" redis-cli PING 2>/dev/null | grep -q PONG; then break; fi
+  sleep 1
+done
+
+# ------------------------------------------------- the gate: did it apply?
+echo
+echo "--- verifying the server is actually running the policy under test ---"
+echo '$ redis-cli CONFIG GET appendfsync'
+ACTUAL="$(docker exec "${NAME}" redis-cli CONFIG GET appendfsync | tail -1 | tr -d '\r')"
+echo "appendfsync = ${ACTUAL}"
+echo '$ redis-cli CONFIG GET appendonly'
+docker exec "${NAME}" redis-cli CONFIG GET appendonly | tail -1
+echo '$ redis-cli INFO server | grep redis_version'
+docker exec "${NAME}" redis-cli INFO server | grep -E "redis_version|run_id" | tr -d '\r'
+
+if [ "${ACTUAL}" != "always" ]; then
+  echo
+  echo "REFUSING TO MEASURE: appendfsync is '${ACTUAL}', not 'always'." >&2
+  exit 1
+fi
+echo "gate passed."
+echo
+
+# --------------------------------------------------------------- the cell
+echo "--- the cell: AEP-full, crash-free (p0), payments, 3 runs x 10 exec ---"
+echo "    identical to the everysec cell aep_full-none-payments-e5e5c7dc"
+echo "    (same matrix seed, so the per-run seeds are the same)"
+echo
+rm -rf "${RESULTS_ROOT}"
+set -x
+uv run --frozen python -m experiments.run_matrix \
+  --regime p0 \
+  --system AEP_FULL \
+  --endpoint payments \
+  --redis-url "redis://127.0.0.1:${PORT}/15" \
+  --results-root "${RESULTS_ROOT}" \
+  --port 8098
+set +x
+
+# ------------------------------------------------------------- the numbers
+echo
+echo "--- analysis of the appendfsync=always cell ---"
+uv run --frozen python -m experiments.analyze \
+  --results-root "${RESULTS_ROOT}" \
+  --destination "${RESULTS_ROOT}/analysis"
+
+echo
+echo "--- side by side ---"
+uv run --frozen python scripts/fsync_compare.py \
+  --always "${RESULTS_ROOT}/analysis/latency-and-throughput.csv" \
+  --everysec experiments/results/matrix/analysis/latency-and-throughput.csv

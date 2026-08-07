@@ -1,0 +1,261 @@
+### Leases Efficient Fault-Tolerant Mechanism Distributed File Cache Consistency   (1 hit(s))
+  title:   Leases: An Efficient Fault-Tolerant Mechanism for Distributed File Cache Consistency.
+  authors: Cary G. Gray, David R. Cheriton
+  venue:   SOSP vol=- no=- year=1989 pp=202-210 type=Conference and Workshop Papers
+  doi:     10.1145/74850.74870
+  ee:      https://doi.org/10.1145/74850.74870
+
+
+### Sagas Garcia-Molina Salem   (3 hit(s))
+  title:   Modeling Long-Running Activities as Nested Sagas.
+  authors: Hector Garcia-Molina, Dieter Gawlick, Johannes Klein, Karl Kleissner, Kenneth Salem
+  venue:   IEEE Data Eng. Bull. vol=14 no=1 year=1991 pp=14-18 type=Journal Articles
+  doi:     -
+  ee:      http://sites.computer.org/debull/91MAR-CD.pdf
+
+  title:   Coordinating activities through extended sagas: a summary.
+  authors: Hector Garcia-Molina, Dieter Gawlick, Johannes Klein, Karl Kleissner, Kenneth Salem
+  venue:   Compcon vol=- no=- year=1991 pp=568-573 type=Conference and Workshop Papers
+  doi:     10.1109/CMPCON.1991.128867
+  ee:      https://doi.org/10.1109/CMPCON.1991.128867
+
+  title:   Sagas.
+  authors: Hector Garcia-Molina, Kenneth Salem
+  venue:   SIGMOD Conference vol=- no=- year=1987 pp=249-259 type=Conference and Workshop Papers
+  doi:     10.1145/38713.38742
+  ee:      https://doi.org/10.1145/38713.38742
+
+
+!! LOOKUP FAILED  Chubby lock service for loosely-coupled distributed systems
+   HTTP Error 500: Internal Server Error
+
+!! LOOKUP FAILED  ARIES transaction recovery method supporting fine-granularity locking
+   HTTP Error 500: Internal Server Error
+
+!! LOOKUP FAILED  On optimistic methods for concurrency control Kung Robinson
+   HTTP Error 500: Internal Server Error
+
+!! LOOKUP FAILED  Impossibility of distributed consensus with one faulty process
+   HTTP Error 500: Internal Server Error
+
+!! LOOKUP FAILED  In Search of an Understandable Consensus Algorithm Raft
+   HTTP Error 500: Internal Server Error
+
+### Life beyond Distributed Transactions an apostate's opinion   (1 hit(s))
+  title:   Life beyond Distributed Transactions: an Apostate&apos;s Opinion.
+  authors: Pat Helland
+  venue:   CIDR vol=- no=- year=2007 pp=132-141 type=Conference and Workshop Papers
+  doi:     -
+  ee:      http://cidrdb.org/cidr2007/papers/cidr07p15.pdf
+
+
+### Idempotence is not a medical condition Helland   (2 hit(s))
+  title:   Idempotence is not a medical condition.
+  authors: Pat Helland
+  venue:   Commun. ACM vol=55 no=5 year=2012 pp=56-65 type=Journal Articles
+  doi:     10.1145/2160718.2160734
+  ee:      https://doi.org/10.1145/2160718.2160734
+
+  title:   Idempotence Is Not a Medical Condition.
+  authors: Pat Helland
+  venue:   ACM Queue vol=10 no=4 year=2012 pp=30 type=Journal Articles
+  doi:     10.1145/2181796.2187821
+  ee:      https://doi.org/10.1145/2181796.2187821
+
+
+### Fault-tolerant and transactional stateful serverless workflows   (2 hit(s))
+  title:   Fault-tolerant and transactional stateful serverless workflows.
+  authors: Haoran Zhang 0009, Adney Cardoza, Peter Baile Chen, Sebastian Angel, Vincent Liu 0001
+  venue:   OSDI vol=- no=- year=2020 pp=1187-1204 type=Conference and Workshop Papers
+  doi:     -
+  ee:      https://www.usenix.org/conference/osdi20/presentation/zhang-haoran
+
+  title:   Fault-tolerant and Transactional Stateful Serverless Workflows (extended version).
+  authors: Haoran Zhang 0009, Adney Cardoza, Peter Baile Chen, Sebastian Angel, Vincent Liu 0001
+  venue:   CoRR vol=abs/2010.06706 no=- year=2020 pp=- type=Informal and Other Publications
+  doi:     -
+  ee:      https://arxiv.org/abs/2010.06706
+
+
+### ExoFlow universal workflow system exactly-once   (1 hit(s))
+  title:   ExoFlow: A Universal Workflow System for Exactly-Once DAGs.
+  authors: Siyuan Zhuang, Stephanie Wang, Eric Liang, Yi Cheng, Ion Stoica
+  venue:   OSDI vol=- no=- year=2023 pp=269-286 type=Conference and Workshop Papers
+  doi:     -
+  ee:      https://www.usenix.org/conference/osdi23/presentation/zhuang
+
+
+### Durable functions semantics for stateful serverless   (1 hit(s))
+  title:   Durable functions: semantics for stateful serverless.
+  authors: Sebastian Burckhardt, Chris Gillum, David Justo, Konstantinos Kallas, Connor McMahon, Christopher S. Meiklejohn
+  venue:   Proc. ACM Program. Lang. vol=5 no=OOPSLA year=2021 pp=1-27 type=Journal Articles
+  doi:     10.1145/3485510
+  ee:      https://doi.org/10.1145/3485510
+
+
+### Boki stateful serverless computing with shared logs   (2 hit(s))
+  title:   Boki: Towards Data Consistency and Fault Tolerance with Shared Logs in Stateful Serverless Computing.
+  authors: Zhipeng Jia, Emmett Witchel
+  venue:   ACM Trans. Comput. Syst. vol=42 no=3-4 year=2024 pp=1-35 type=Journal Articles
+  doi:     10.1145/3653072
+  ee:      https://doi.org/10.1145/3653072
+
+  title:   Boki: Stateful Serverless Computing with Shared Logs.
+  authors: Zhipeng Jia, Emmett Witchel
+  venue:   SOSP vol=- no=- year=2021 pp=691-707 type=Conference and Workshop Papers
+  doi:     10.1145/3477132.3483541
+  ee:      https://doi.org/10.1145/3477132.3483541
+
+
+### Notes on Data Base Operating Systems Gray   (1 hit(s))
+  title:   Notes on Data Base Operating Systems.
+  authors: Jim Gray 0001
+  venue:   Advanced Course - Operating Systems vol=- no=- year=1978 pp=393-481 type=Conference and Workshop Papers
+  doi:     10.1007/3-540-08755-9_9
+  ee:      https://doi.org/10.1007/3-540-08755-9_9
+
+
+### ReAct synergizing reasoning and acting in language models   (2 hit(s))
+  title:   ReAct: Synergizing Reasoning and Acting in Language Models.
+  authors: Shunyu Yao 0006, Jeffrey Zhao, Dian Yu, Nan Du 0002, Izhak Shafran, Karthik R. Narasimhan, Yuan Cao 0007
+  venue:   ICLR vol=- no=- year=2023 pp=- type=Conference and Workshop Papers
+  doi:     -
+  ee:      https://openreview.net/forum?id=WE_vluYUL-X
+
+  title:   ReAct: Synergizing Reasoning and Acting in Language Models.
+  authors: Shunyu Yao 0006, Jeffrey Zhao, Dian Yu, Nan Du 0002, Izhak Shafran, Karthik Narasimhan, Yuan Cao 0007
+  venue:   CoRR vol=abs/2210.03629 no=- year=2022 pp=- type=Informal and Other Publications
+  doi:     10.48550/ARXIV.2210.03629
+  ee:      https://doi.org/10.48550/arXiv.2210.03629
+
+
+### AIOS LLM agent operating system   (1 hit(s))
+  title:   AIOS: LLM Agent Operating System.
+  authors: Kai Mei, Zelong Li 0001, Shuyuan Xu, Ruosong Ye, Yingqiang Ge, Yongfeng Zhang 0003
+  venue:   CoRR vol=abs/2403.16971 no=- year=2024 pp=- type=Informal and Other Publications
+  doi:     10.48550/ARXIV.2403.16971
+  ee:      https://doi.org/10.48550/arXiv.2403.16971
+
+
+### Toolformer language models can teach themselves to use tools   (2 hit(s))
+  title:   Toolformer: Language Models Can Teach Themselves to Use Tools.
+  authors: Timo Schick, Jane Dwivedi-Yu, Roberto Dessì, Roberta Raileanu, Maria Lomeli, Eric Hambro, Luke Zettlemoyer, Nicola Cancedda, Thomas Scialom
+  venue:   NeurIPS vol=- no=- year=2023 pp=- type=Conference and Workshop Papers
+  doi:     -
+  ee:      http://papers.nips.cc/paper_files/paper/2023/hash/d842425e4bf79ba039352da0f658a906-Abstract-Conference.html
+
+  title:   Toolformer: Language Models Can Teach Themselves to Use Tools.
+  authors: Timo Schick, Jane Dwivedi-Yu, Roberto Dessì, Roberta Raileanu, Maria Lomeli, Luke Zettlemoyer, Nicola Cancedda, Thomas Scialom
+  venue:   CoRR vol=abs/2302.04761 no=- year=2023 pp=- type=Informal and Other Publications
+  doi:     10.48550/ARXIV.2302.04761
+  ee:      https://doi.org/10.48550/arXiv.2302.04761
+
+
+### Unreliable failure detectors for reliable distributed systems   (1 hit(s))
+  title:   Unreliable Failure Detectors for Reliable Distributed Systems.
+  authors: Tushar Deepak Chandra, Sam Toueg
+  venue:   J. ACM vol=43 no=2 year=1996 pp=225-267 type=Journal Articles
+  doi:     10.1145/226643.226647
+  ee:      https://doi.org/10.1145/226643.226647
+
+
+======================================================================
+Sources with no DBLP record -- verify by fetching the URL:
+  Temporal retry policies                      https://docs.temporal.io/encyclopedia/retry-policies
+  Temporal activity execution                  https://docs.temporal.io/activity-execution
+  Redis WAITAOF command                        https://redis.io/docs/latest/commands/waitaof/
+  Redis persistence (appendfsync)              https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/
+  Redis distributed locks / Redlock            https://redis.io/docs/latest/develop/use-cases/patterns/distributed-locks/
+  Kleppmann, How to do distributed locking     https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html
+
+############################################################
+# Retry of the five lookups DBLP throttled in the sweep above.
+# Each also carries a doi.org resolution where a DOI exists.
+############################################################
+
+### Chubby lock service for loosely-coupled distributed systems   (1 hit(s))
+  title:   The Chubby Lock Service for Loosely-Coupled Distributed Systems.
+  authors: Michael Burrows
+  venue:   OSDI vol=- no=- year=2006 pp=335-350 type=Conference and Workshop Papers
+  doi:     -
+  ee:      http://www.usenix.org/events/osdi06/tech/burrows.html
+
+
+### ARIES transaction recovery method supporting fine-granularity locking partial rollbacks   (1 hit(s))
+  title:   ARIES: A Transaction Recovery Method Supporting Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead Logging.
+  authors: C. Mohan 0001, Don Haderle, Bruce G. Lindsay 0001, Hamid Pirahesh, Peter M. Schwarz
+  venue:   ACM Trans. Database Syst. vol=17 no=1 year=1992 pp=94-162 type=Journal Articles
+  doi:     10.1145/128765.128770
+  ee:      https://doi.org/10.1145/128765.128770
+
+
+### On optimistic methods for concurrency control   (3 hit(s))
+  title:   On the Use of Optimistic Methods for Concurrency Control in Distributed Databases.
+  authors: Stefano Ceri, Susan S. Owicki
+  venue:   Berkeley Workshop vol=- no=- year=1982 pp=117-129 type=Conference and Workshop Papers
+  doi:     -
+  ee:      -
+
+  title:   On Optimistic Methods for Concurrency Control.
+  authors: H. T. Kung 0001, John T. Robinson
+  venue:   ACM Trans. Database Syst. vol=6 no=2 year=1981 pp=213-226 type=Journal Articles
+  doi:     10.1145/319566.319567
+  ee:      https://doi.org/10.1145/319566.319567
+
+  title:   On Optimistic Methods for Concurrency Control.
+  authors: H. T. Kung 0001, John T. Robinson
+  venue:   VLDB vol=- no=- year=1979 pp=351 type=Conference and Workshop Papers
+  doi:     -
+  ee:      -
+
+
+### In Search of an Understandable Consensus Algorithm   (1 hit(s))
+  title:   In Search of an Understandable Consensus Algorithm.
+  authors: Diego Ongaro, John K. Ousterhout
+  venue:   USENIX ATC vol=- no=- year=2014 pp=305-319 type=Conference and Workshop Papers
+  doi:     -
+  ee:      https://www.usenix.org/conference/atc14/technical-sessions/presentation/ongaro
+
+
+
+=== doi.org resolution (Accept: application/x-bibtex) ===
+
+--- 10.1145/128765.128770 ---
+HTTP 200
+ @article{Mohan_1992, title={ARIES: a transaction recovery method supporting fine-granularity locking and partial rollbacks using write-ahead logging}, volume={17}, ISSN={1557-4644}, url={http://dx.doi.org/10.1145/128765.128770}, DOI={10.1145/128765.128770}, number={1}, journal={ACM Transactions on Database Systems}, publisher={Association for Computing Machinery (ACM)}, author={Mohan, C. and Hade
+
+--- 10.1145/319566.319567 ---
+HTTP 200
+ @article{Kung_1981, title={On optimistic methods for concurrency control}, volume={6}, ISSN={1557-4644}, url={http://dx.doi.org/10.1145/319566.319567}, DOI={10.1145/319566.319567}, number={2}, journal={ACM Transactions on Database Systems}, publisher={Association for Computing Machinery (ACM)}, author={Kung, H. T. and Robinson, John T.}, year={1981}, month=June, pages={213–226} }
+
+--- 10.1145/3149.214121 ---
+HTTP 200
+ @article{Fischer_1985, title={Impossibility of distributed consensus with one faulty process}, volume={32}, ISSN={1557-735X}, url={http://dx.doi.org/10.1145/3149.214121}, DOI={10.1145/3149.214121}, number={2}, journal={Journal of the ACM}, publisher={Association for Computing Machinery (ACM)}, author={Fischer, Michael J. and Lynch, Nancy A. and Paterson, Michael S.}, year={1985}, month=Apr, pages
+
+--- 10.1145/38713.38742 ---
+HTTP 200
+ @inproceedings{Garcia_Molina_1987, series={SIGMOD ’87}, title={Sagas}, url={http://dx.doi.org/10.1145/38713.38742}, DOI={10.1145/38713.38742}, booktitle={Proceedings of the 1987 ACM SIGMOD international conference on Management of data  - SIGMOD ’87}, publisher={ACM Press}, author={Garcia-Molina, Hector and Salem, Kenneth}, year={1987}, pages={249–259}, collection={SIGMOD ’87} }
+
+--- 10.1145/2160718.2160734 ---
+HTTP 200
+ @article{Helland_2012, title={Idempotence is not a medical condition}, volume={55}, ISSN={1557-7317}, url={http://dx.doi.org/10.1145/2160718.2160734}, DOI={10.1145/2160718.2160734}, number={5}, journal={Communications of the ACM}, publisher={Association for Computing Machinery (ACM)}, author={Helland, Pat}, year={2012}, month=May, pages={56–65} }
+
+--- 10.1145/74850.74870 ---
+HTTP 200
+ @inproceedings{Gray_1989, series={SOSP89}, title={Leases: an efficient fault-tolerant mechanism for distributed file cache consistency}, url={http://dx.doi.org/10.1145/74850.74870}, DOI={10.1145/74850.74870}, booktitle={Proceedings of the twelfth ACM symposium on Operating systems principles}, publisher={ACM}, author={Gray, C. and Cheriton, D.}, year={1989}, month=Nov, pages={202–210}, collecti
+
+--- 10.1145/226643.226647 ---
+HTTP 200
+ @article{Chandra_1996, title={Unreliable failure detectors for reliable distributed systems}, volume={43}, ISSN={1557-735X}, url={http://dx.doi.org/10.1145/226643.226647}, DOI={10.1145/226643.226647}, number={2}, journal={Journal of the ACM}, publisher={Association for Computing Machinery (ACM)}, author={Chandra, Tushar Deepak and Toueg, Sam}, year={1996}, month=Mar, pages={225–267} }
+
+--- 10.1145/3485510 ---
+HTTP 200
+ @article{Burckhardt_2021, title={Durable functions: semantics for stateful serverless}, volume={5}, ISSN={2475-1421}, url={http://dx.doi.org/10.1145/3485510}, DOI={10.1145/3485510}, number={OOPSLA}, journal={Proceedings of the ACM on Programming Languages}, publisher={Association for Computing Machinery (ACM)}, author={Burckhardt, Sebastian and Gillum, Chris and Justo, David and Kallas, Konstanti
+
+--- 10.1145/3477132.3483541 ---
+HTTP 200
+ @inproceedings{Jia_2021, series={SOSP ’21}, title={Boki: Stateful Serverless Computing with Shared Logs}, url={http://dx.doi.org/10.1145/3477132.3483541}, DOI={10.1145/3477132.3483541}, booktitle={Proceedings of the ACM SIGOPS 28th Symposium on Operating Systems Principles}, publisher={ACM}, author={Jia, Zhipeng and Witchel, Emmett}, year={2021}, month=Oct, pages={691–707}, collection={SOSP �
+
+--- 10.1145/2181796.2229155 ---
+HTTP 404
+<!DOCTYPE html><html lang="en-us"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1">    <meta http-equiv="X-UA-Compatible" content="IE=edge">    <title>Error: DOI Not Found</title>    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"          rel="stylesheet"          integrity="sha384-EVSTQN3/azp

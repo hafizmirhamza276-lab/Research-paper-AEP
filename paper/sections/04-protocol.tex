@@ -1,0 +1,176 @@
+\section{The AEP Protocol}
+\label{sec:protocol}
+
+\subsection{Ordering}
+
+The runner's sequence, with the property each step exists to serve:
+
+\begin{enumerate}
+\item Acquire the lease with jittered retry.
+\item Require that execution state already exists.
+\item Prepare, vault and read back the request \emph{before any intent
+      exists}, so that the intent, once written, names a request that is
+      already durable.
+\item Write the intent \textsc{none}$\rightarrow$\textsc{about-to-fire} by
+      fenced CAS, \textbf{and} run the durability barrier on the \emph{same
+      pinned connection}.
+\item Convert the barrier's acknowledgement into a Redis-visible dispatch
+      authorization.
+\item Run the atomic pre-dispatch preflight, which re-checks that
+      authorization.
+\item Mint a single-use dispatch capability.
+\item Only then call the connector.
+\end{enumerate}
+
+If the barrier fails, the runner makes one fenced attempt to record
+\textsc{failed-confirmed} with evidence \texttt{LOCAL\_NO\_DISPATCH}, falling
+back to leaving the intent for recovery. No bytes were sent, so a confirmed
+failure is sound there --- and this is the path that produces the measured
+result of \cref{sec:eval-rq2}.
+
+\subsection{P1 --- Fenced state}
+
+\begin{property}[Fenced state]
+No committed state write can be superseded and then resurrected by a stale
+writer. Every write to the state key is admitted only if, in one atomic Lua
+invocation, (a)~the caller's ownership token equals the live value of the lock
+key, and (b)~the stored version equals the caller's expected version and the
+candidate's version equals expected${}+1$.
+\end{property}
+
+Both conjuncts are necessary and the failure of either is a known
+pattern. Version-only CAS admits a writer that lost its lease but holds the
+current version; token-only checking admits a writer rebasing on a stale
+read. The pairing is the fencing-token argument made against lease-only
+locking~\cite{kleppmann2016locking}, with the token check and the write placed
+inside one script so they cannot interleave. The same script additionally
+freezes, inside the atomic region, the execution identity, the schema version,
+every envelope field outside a declared mutable set, every other ledger entry,
+and the intent's immutable fields; transitions are append-only with a prefix
+check, and ledger entries can never be deleted.
+
+\paragraph{Declared residuals} A plain \texttt{SET} from any client with socket
+access is unconstrained (there is no ACL). Expiry, not deletion, ends the
+guarantee: after the retention floor elapses the record is gone and any writer
+may create version~1 again. And --- confirmed by a probe rather than argued ---
+an AOF rewind can un-fence: P1 is a statement about one monotonic Redis
+timeline, and because lock keys are deliberately \emph{not} barriered, a lease
+whose release was lost can reappear alongside a rewound version, so a
+previously fenced writer satisfies both conjuncts. There is no local fix; the
+fix is consensus, which is a non-claim (\cref{tab:nonclaims}).
+
+\subsection{P2 --- Detectable ambiguity}
+\label{sec:p2}
+
+\begin{property}[Detectable ambiguity]
+If a \emph{durable} \textsc{about-to-fire} intent exists, then under F1--F5 the
+intent is eventually assigned exactly one of \textsc{fired-confirmed},
+\textsc{failed-confirmed} or \textsc{permanently-ambiguous} --- never silently
+re-dispatched and never silently dropped --- provided the recovery loop runs,
+survives its own pass, and can eventually obtain the lease.
+\end{property}
+
+The design question P2 raises is what makes ``barrier before dispatch'' more
+than a convention. In this protocol it is a checked precondition, in four
+links:
+
+\begin{enumerate}
+\item The barrier mints a \texttt{DurabilityAck} \emph{only} when
+      \texttt{WAITAOF} returned at least one local fsync.
+\item \texttt{DurabilityAck} cannot be constructed, subclassed or copied; it is
+      single-use and scope-bound by an HMAC provenance registry to
+      \texttt{execution:intent:prepared\_version}, so an ack for one attempt
+      cannot authorise another.
+\item Authorizing dispatch \emph{consumes} the ack, then runs a script that
+      re-checks lease, version, status and binding digest and writes an
+      authorization key.
+\item The preflight script requires that exact value; an absent authorization
+      defaults to a value that cannot match, so it fails closed.
+\end{enumerate}
+
+\paragraph{The irreducible gap, stated} Redis exposes no way for a Lua script
+to verify that a previous \texttt{WAITAOF} succeeded. A complete in-store proof
+is therefore impossible, and what the authorization proves is \emph{that a
+barrier ran in this process}, not that Redis fsynced. We state this rather
+than let the mechanism imply more than it delivers. Two consequences follow and
+are declared: a principal with direct Redis access can write the authorization
+key itself, and a caller inside the process could compose the binding service
+with a connector directly, bypassing the runner.
+
+\paragraph{Recovery classification} For an eligible intent, under a freshly
+acquired lease and after re-validating status and version, the mapping from
+observation to outcome is total (\cref{tab:classification}). Recovery has no
+reference to the mutation call at all --- it can only read back --- and the
+transition table has no edge back to \textsc{about-to-fire}, checked in Python
+and re-checked inside the atomic script.
+
+\begin{table}[t]
+\centering
+\caption{Recovery classification. The two rows in bold are where declared
+ambiguity is produced by design rather than by failure, and they are what
+\cref{sec:eval-rq1} measures.}
+\label{tab:classification}
+\small
+\begin{tabular}{@{}p{0.50\columnwidth}p{0.40\columnwidth}@{}}
+\toprule
+Observation & Outcome \\
+\midrule
+capability undeclared / unrecognised & \textbf{ambiguous}, no query \\
+\textsc{no-readback}                 & \textbf{ambiguous}, no query \\
+applied (either querying class)      & confirmed \\
+not-applied $+$ \textsc{authoritative} & refuted \\
+not-applied $+$ \textsc{positive-only} & \textbf{ambiguous} (named violation) \\
+conflict                             & \textbf{ambiguous} \\
+unknown, budget remaining            & stay unresolved, backoff \\
+unknown, budget exhausted            & \textbf{ambiguous} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{False-positive ambiguity is the price, and it is the right
+direction} A crash after a durable intent but \emph{before} transmission yields
+an intent that recovery must treat as ambiguous even though no effect
+exists. This inflates the declared-ambiguity rate; it can never inflate the
+undetected-duplicate rate. \Cref{sec:eval-rq1} shows this asymmetry directly in
+the data: ambiguity is highest at exactly the crash point where no effect can
+possibly exist.
+
+\subsection{P3 --- Fail-closed liveness bound}
+
+\begin{property}[Fail-closed bound]
+Automated reconciliation of one intent terminates within a configurable attempt
+budget and duration budget, after which the intent is placed in a terminal
+automated state and the execution is withdrawn from normal scheduling.
+\end{property}
+
+Defaults are 8 attempts and 24 hours, with full-jitter backoff. Attempt
+counting is monotone and re-checked inside the atomic script: an
+unresolved-to-unresolved edge must increment the counter by exactly one. On
+exhaustion the intent becomes \textsc{permanently-ambiguous}, the execution is
+paused, no new intent may be created for it, and the only exit is an operator
+transition that itself requires the lease and the exact version.
+
+\paragraph{Declared residuals} The bound is consulted only on the
+\emph{unknown} branch --- every other observation resolves immediately, so this
+is not a gap in practice, but it is not a global watchdog either. Lease
+contention does not consume budget. There is no escalation \emph{mechanism}:
+``ejects to operator escalation'' means reaching a terminal state and pausing,
+and nothing alerts. And escalated records still expire: a retention floor of 31
+days is enforced for any ledger containing an unresolved or ambiguous record,
+but a floor is not permanence, so after it elapses the escalation evidence is
+deleted without an operator having acted. Both residuals are confirmed by
+executable probes in the artifact, not asserted.
+
+\subsection{The state machine}
+
+\begin{figure}[t]
+\centering
+\input{figures/state-machine}
+\caption{The intent state machine, generated from the transition table in
+\texttt{aep\_core/core/intents.py}. Solid edges are automated; the dashed edges
+from \textsc{ambiguous} are the operator-only transitions. There is no edge
+back into \textsc{about-to-fire} --- that absence is what ``never silently
+re-dispatched'' means, and it is enforced inside the atomic script rather than
+by the caller.}
+\label{fig:statemachine}
+\end{figure}

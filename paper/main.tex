@@ -1,0 +1,129 @@
+% =====================================================================
+% AEP: Declared Ambiguity for Autonomous Agents Calling Non-Idempotent
+%      Legacy APIs
+%
+% Target venue: IEEE Transactions on Software Engineering (TSE).
+% Class: IEEEtran, journal mode, double column.
+%
+% NUMBERS DISCIPLINE (amendment F3). Every numeric claim in this manuscript
+% carries a LaTeX comment naming the CSV cell or raw report section it came
+% from. The two permitted sources are:
+%
+%   experiments/results/matrix/analysis/per-cell-metrics.csv
+%       -- the ONLY quotable source for rates. Keyed by
+%          (regime, system, crash_point, response_class, readback_keying).
+%   experiments/results/matrix/analysis/latency-and-throughput.csv
+%       -- timings, and only from runs that passed the E5 gate.
+%
+% Table-1-pooled (analysis/table-1.csv) is BANNED as a source: it pools three
+% fault regimes and three response classes, so every rate in it is a property
+% of the collected mix rather than of any system. Session 3B section F2 says
+% so, and analyze.py prints the warning itself.
+%
+% scripts/check_paper_numbers.py re-reads the CSVs and fails if any number
+% annotated below has drifted from its source.
+% =====================================================================
+
+\documentclass[journal,10pt]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds}
+\usepackage{listings}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% \todo markers: amendment F4 permits them only where a cell still running at
+% the time of writing could change the value.
+\newcommand{\todoitem}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% Semantic macros for the three outcome classes, so the trilemma reads the
+% same way everywhere it appears.
+\newcommand{\undetdup}{\emph{undetected duplicate}}
+\newcommand{\lostfx}{\emph{lost effect}}
+\newcommand{\declamb}{\emph{declared ambiguity}}
+
+\newtheorem{property}{Property}
+\newtheorem{definition}{Definition}
+
+% Headline scalars, generated from the frozen CSVs by scripts/paper_tables.py.
+% Every macro in here carries a comment naming the file, the filter and the
+% arithmetic that produced it. Do not hand-edit; regenerate.
+\input{generated/numbers}
+
+\begin{document}
+
+\title{Declared Ambiguity: A Fail-Closed Execution Protocol for\\
+Autonomous Agents Calling Non-Idempotent Legacy APIs}
+
+\author{%
+  \IEEEauthorblockN{Anonymous Author(s)}%
+  \thanks{Manuscript prepared \today. Artifact:
+  \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}.}%
+}
+
+\markboth{IEEE Transactions on Software Engineering}%
+{Declared Ambiguity for Agents Calling Non-Idempotent Legacy APIs}
+
+\IEEEtitleabstractindextext{%
+\begin{abstract}
+Autonomous software agents increasingly invoke legacy enterprise APIs that are
+non-idempotent, accept no idempotency key, and cannot be asked, after the
+fact, whether a mutation was applied. When an agent crashes around such a call,
+every available strategy loses something. Retrying risks a second real-world
+effect that nobody observes. Not retrying risks an effect that exists and that
+no record accounts for. We argue that the choice between these is not a
+question of engineering quality but a three-way trade, and that a system's
+obligation is to make the third corner reachable: to convert silent failure
+into \emph{declared, durable, bounded ambiguity} that an operator can act on.
+We present AEP, a fail-closed execution protocol in which every external side
+effect is preceded by a durably acknowledged write-ahead intent, every state
+write is fenced by lock ownership and an exact expected-version
+compare-and-swap in one atomic script, and every unresolvable outcome halts and
+escalates rather than guessing. We evaluate AEP against five baselines --- naive
+retry, lease-only, CAS-only, an ablation without the durability barrier, and a
+durable-execution engine in both its vendor-default and at-most-once
+configurations --- under real \texttt{SIGKILL} process faults and hard Redis
+kills, across three endpoint reconciliation capabilities. AEP records no
+undetected duplicate and no lost effect in any configuration measured, while
+the baselines that lack a pre-dispatch record duplicate in the majority of
+crashed executions. AEP's residual is declared ambiguity, and its rate is set
+by what the endpoint can be asked rather than by the protocol. A hard Redis
+kill placed between the intent write and its acknowledgement shows what the
+durability barrier buys: AEP withheld the dispatch where the ablation did not,
+preventing 18 real effects in 30 trials. We also report a negative result that
+narrows our own claim: a process-level kill cannot lose an unacknowledged
+Redis AOF write, so the barrier's durability benefit is unobservable under any
+process fault and holds only against loss of the page cache.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Fault tolerance, autonomous agents, idempotence, distributed coordination,
+write-ahead logging, fault injection, reliability engineering.
+\end{IEEEkeywords}}
+
+\maketitle
+\IEEEdisplaynontitleabstractindextext
+\IEEEpeerreviewmaketitle
+
+\input{sections/01-introduction}
+\input{sections/02-motivating}
+\input{sections/03-model}
+\input{sections/04-protocol}
+\input{sections/05-implementation}
+\input{sections/06-evaluation}
+\input{sections/07-related}
+\input{sections/08-threats}
+\input{sections/09-artifact}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}
