@@ -372,12 +372,18 @@ file \texttt{fsync}-ed before the switch must survive and one \texttt{fsync}-ed
 after it must not. The probe refuses to report Redis trials unless that holds.
 % source: experiments/flakey_write_loss.py; reports/raw/g2-flakey-write-loss.txt.
 
-\paragraph{The result} Over \FlakeyN{} trials in two independent
-replications, the acknowledged record survived \FlakeyAckSurvived{} and the
+\paragraph{The result} Over \FlakeyN{} trials in \FlakeyReplications{}
+independent replications, each rebuilding the device and the filesystem from
+scratch, the acknowledged record survived \FlakeyAckSurvived{} and the
 unacknowledged one was destroyed \FlakeyUnackLost{}
 ($p = \FlakeyBarrierP{}$). Against the same two keys under a process kill ---
 $0/10$ lost --- the fault classes separate at
-$p = \FlakeyVsProcessKillP{}$.
+$p = \FlakeyVsProcessKillP{}$. The filesystem was mounted
+\texttt{ext4 rw,relatime} with its journal enabled and no \texttt{nobarrier},
+and the server's \texttt{appendfsync} was read back as \texttt{everysec} from
+the running instance; the probe refuses to measure if either is otherwise,
+because under \texttt{always} there is no unacknowledged write to lose and
+under \texttt{nobarrier} a surviving acknowledged one would prove nothing.
 
 \textbf{The barrier's durability benefit is therefore real and now measured,
 and the fault class matters more than the mechanism.} The Redis documentation's

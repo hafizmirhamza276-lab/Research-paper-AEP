@@ -167,31 +167,35 @@
 % AEP-full vs B3 on the unwanted-applied-effect rate
 \newcommand{\UnwantedP}{1.9\times10^{-6}}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
+% independent runs of the probe, each rebuilding the device stack and the filesystem from scratch
+\newcommand{\FlakeyReplications}{3}
+
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % countable trials: the acknowledged write survived, so the trial says something about the unacknowledged one
-\newcommand{\FlakeyN}{60}
+\newcommand{\FlakeyN}{90}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % WAITAOF-acknowledged writes still present after the device stopped accepting writes
-\newcommand{\FlakeyAckSurvived}{60/60}
+\newcommand{\FlakeyAckSurvived}{90/90}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % un-acknowledged writes destroyed by the same event
-\newcommand{\FlakeyUnackLost}{60/60}
+\newcommand{\FlakeyUnackLost}{90/90}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % narrowest write-to-write-loss exposure window, ms
 \newcommand{\FlakeyWindowMin}{12.4}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % widest write-to-write-loss exposure window, ms; the appendfsync everysec period it sits inside is 1000 ms
-\newcommand{\FlakeyWindowMax}{42.6}
+\newcommand{\FlakeyWindowMax}{61.8}
 
-% experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
-% Fisher exact two-tailed, acknowledged vs un-acknowledged loss over the same 60 trials
-\newcommand{\FlakeyBarrierP}{2.1\times10^{-35}}
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
+% Fisher exact two-tailed, acknowledged vs un-acknowledged loss over the same 90 trials
+\newcommand{\FlakeyBarrierP}{2.2\times10^{-53}}
 
-% reports/raw/e1-durability-window.txt (0/10 lost under docker kill -s KILL) vs experiments/results/g2-flakey-write-loss*.json | 2 replication(s) of experiments/flakey_write_loss.py
+% reports/raw/e1-durability-window.txt (0/10 lost under docker kill -s KILL) vs experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % Fisher exact two-tailed across the two fault classes
-\newcommand{\FlakeyVsProcessKillP}{2.5\times10^{-12}}
+\newcommand{\FlakeyVsProcessKillP}{5.8\times10^{-14}}
 

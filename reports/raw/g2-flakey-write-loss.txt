@@ -9,7 +9,7 @@ $ uname -r ; dmsetup targets | grep flakey
 6.6.114.1-microsoft-standard-WSL2
 flakey           v1.5.0
 
---- replication 2, full stdout ---
+--- replication 3, full stdout (the one that records the environment) ---
 ==============================================================================
 G2: host-level write loss (dm-flakey drop_writes)
 ==============================================================================
@@ -22,6 +22,14 @@ G2: host-level write loss (dm-flakey drop_writes)
   dm table (pass) 0 524288 flakey /dev/loop0 0 1 0
   dm table (drop) 0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
 
+--- the environment the durability claim rests on ---
+  mount_options            ext4 rw,relatime
+  ext4_features            has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum
+  appendfsync              everysec
+  appendonly               yes
+  redis_dir                /root/aep-g2/mnt/redisdata
+  redis_version            7.2.5
+
 --- selftest: does the device stack actually lose writes? ---
   table_pass                       0 524288 flakey /dev/loop0 0 1 0
   table_drop                       0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
@@ -31,36 +39,36 @@ G2: host-level write loss (dm-flakey drop_writes)
   valid                            True
 
 --- 30 trials ---
-  trial  0  barrier=  694.4ms  write->drop=  17.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  1  barrier=  666.0ms  write->drop=  23.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  2  barrier=  591.2ms  write->drop=  21.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  3  barrier=  564.9ms  write->drop=  28.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  4  barrier=  661.5ms  write->drop=  29.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  5  barrier=  465.7ms  write->drop=  21.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  6  barrier=  658.0ms  write->drop=  17.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  7  barrier=  660.6ms  write->drop=  24.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  8  barrier=  567.9ms  write->drop=  36.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial  9  barrier=  661.2ms  write->drop=  19.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 10  barrier=  662.3ms  write->drop=  23.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 11  barrier=  660.2ms  write->drop=  27.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 12  barrier=  660.0ms  write->drop=  15.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 13  barrier=  658.3ms  write->drop=  16.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 14  barrier=  683.2ms  write->drop=  24.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 15  barrier=  672.2ms  write->drop=  18.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 16  barrier=  558.8ms  write->drop=  22.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 17  barrier=  666.7ms  write->drop=  25.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 18  barrier=  556.5ms  write->drop=  19.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 19  barrier=  672.2ms  write->drop=  20.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 20  barrier=  661.7ms  write->drop=  22.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 21  barrier=  664.5ms  write->drop=  18.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 22  barrier=  661.8ms  write->drop=  22.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 23  barrier=  569.7ms  write->drop=  42.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 24  barrier=  562.7ms  write->drop=  21.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 25  barrier=  668.4ms  write->drop=  15.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 26  barrier=  665.2ms  write->drop=  24.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 27  barrier=  673.0ms  write->drop=  32.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 28  barrier=  581.4ms  write->drop=  25.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
-  trial 29  barrier=  664.7ms  write->drop=  17.5ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  0  barrier=  896.7ms  write->drop=  28.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  1  barrier=  565.1ms  write->drop=  35.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  2  barrier=  561.5ms  write->drop=  40.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  3  barrier=  679.4ms  write->drop=  31.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  4  barrier=  566.9ms  write->drop=  18.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  5  barrier=  666.6ms  write->drop=  30.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  6  barrier=  475.8ms  write->drop=  28.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  7  barrier=  565.5ms  write->drop=  39.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  8  barrier=  594.9ms  write->drop=  15.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  9  barrier=  566.1ms  write->drop=  36.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 10  barrier=  584.2ms  write->drop=  18.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 11  barrier=  558.2ms  write->drop=  18.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 12  barrier=  496.0ms  write->drop=  29.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 13  barrier=  393.0ms  write->drop=  23.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 14  barrier=  396.8ms  write->drop=  38.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 15  barrier=  461.8ms  write->drop=  33.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 16  barrier=  466.8ms  write->drop=  23.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 17  barrier=  591.5ms  write->drop=  28.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 18  barrier=  686.3ms  write->drop=  23.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 19  barrier=  559.5ms  write->drop=  28.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 20  barrier=  569.9ms  write->drop=  24.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 21  barrier=  599.6ms  write->drop=  61.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 22  barrier=  570.7ms  write->drop=  41.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 23  barrier=  568.2ms  write->drop=  27.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 24  barrier=  462.4ms  write->drop=  25.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 25  barrier=  664.0ms  write->drop=  21.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 26  barrier=  570.1ms  write->drop=  37.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 27  barrier=  470.6ms  write->drop=  27.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 28  barrier=  165.4ms  write->drop=  23.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 29  barrier=  568.9ms  write->drop=  24.5ms  ack=True  unack=False  UNACKNOWLEDGED LOST
 
 --- summary ---
   trials                         30
@@ -70,23 +78,24 @@ G2: host-level write loss (dm-flakey drop_writes)
   unacknowledged_lost            30
   unacknowledged_survived        0
   unacknowledged_loss_rate       1.0
-  write_to_drop_ms_min           15.558742001303472
-  write_to_drop_ms_max           42.63575799996033
-  barrier_ms_min                 465.6889179968857
-  barrier_ms_max                 694.4091379991733
+  write_to_drop_ms_min           15.341246995376423
+  write_to_drop_ms_max           61.78867100243224
+  barrier_ms_min                 165.445730999636
+  barrier_ms_max                 896.7037929978687
 
-wrote experiments/results/g2-flakey-write-loss-rep2.json
+wrote experiments/results/g2-flakey-write-loss-rep3.json
 
---- both replications, and the comparison against the E1 process-kill probe ---
-  g2-flakey-write-loss.json              counted= 30  void=0  ack survived=30/30  unack lost=30/30  window 12.4-34.8 ms
-  g2-flakey-write-loss-rep2.json         counted= 30  void=0  ack survived=30/30  unack lost=30/30  window 15.6-42.6 ms
+--- all three replications pooled, and the cross-fault comparison ---
+  results\g2-flakey-write-loss-rep2.json   counted= 30 void=0 ack=30/30 unack lost=30/30 window 15.6-42.6 ms
+  results\g2-flakey-write-loss-rep3.json   counted= 30 void=0 ack=30/30 unack lost=30/30 window 15.3-61.8 ms
+  results\g2-flakey-write-loss.json        counted= 30 void=0 ack=30/30 unack lost=30/30 window 12.4-34.8 ms
 
-  POOLED  n=60  acknowledged survived 60/60  unacknowledged lost 60/60
+  POOLED n=90  void=0  acknowledged survived 90/90  unacknowledged lost 90/90
 
-  Within G2: acknowledged lost 0/60 vs unacknowledged lost 60/60
-    Fisher exact, two-tailed p = 2.070073888186964e-35
+  Within G2: acknowledged lost 0/90 vs unacknowledged lost 90/90
+    Fisher exact, two-tailed p = 2.197506411680401e-53
 
   Across fault classes, same probe, same two keys:
     E1 docker kill -s KILL (process death) : 0/10 unacknowledged lost
-    G2 dm-flakey drop_writes (write loss)  : 60/60 unacknowledged lost
-    Fisher exact, two-tailed p = 2.5207678232969033e-12
+    G2 dm-flakey drop_writes (write loss)  : 90/90 unacknowledged lost
+    Fisher exact, two-tailed p = 5.776904234533874e-14

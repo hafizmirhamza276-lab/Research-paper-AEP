@@ -213,6 +213,22 @@ class DeviceStack:
         subprocess.run(["sync"], capture_output=True, timeout=60)
         Path("/proc/sys/vm/drop_caches").write_text("3\n", encoding="ascii")
 
+    def mount_options(self) -> str:
+        """The options the filesystem is actually mounted with.
+
+        A reviewer's first question about an fsync result is whether the
+        filesystem was honouring fsync. ``nobarrier`` or ``data=writeback``
+        would change what an acknowledgement means, so the answer is recorded
+        from ``/proc/mounts`` rather than assumed from the ``mount`` command
+        that was issued.
+        """
+        target = str(self.mountpoint)
+        for line in Path("/proc/mounts").read_text(encoding="utf-8").splitlines():
+            fields = line.split()
+            if len(fields) >= 4 and fields[1] == target:
+                return f"{fields[2]} {fields[3]}"
+        return "(not mounted)"
+
     def destroy(self) -> None:
         try:
             self.unmount()
@@ -406,6 +422,57 @@ async def one_trial(
     return trial
 
 
+async def describe_environment(
+    stack: DeviceStack, binary: str, port: int
+) -> dict[str, Any]:
+    """Read back the settings the result depends on, from the live system.
+
+    Every value here is one a reader would otherwise have to take on trust,
+    and two of them (``appendfsync`` and the mount options) are settings under
+    which this experiment would produce a confident wrong answer. They are
+    read from the running server and from ``/proc/mounts``, never from the
+    arguments that were meant to set them -- the same discipline that caught
+    a benchmark labelled ``always`` running under ``everysec``.
+    """
+    stack.set_mode("pass")
+    stack.unmount()
+    stack.mkfs()
+    stack.mount()
+    described: dict[str, Any] = {
+        "mount_options": stack.mount_options(),
+        "ext4_features": "",
+        "appendfsync": "",
+        "appendonly": "",
+        "redis_dir": "",
+    }
+    dump = subprocess.run(
+        ["dumpe2fs", "-h", stack.dm_path], capture_output=True, text=True, timeout=60
+    )
+    for line in dump.stdout.splitlines():
+        if line.startswith("Filesystem features:"):
+            described["ext4_features"] = line.split(":", 1)[1].strip()
+
+    server = RedisProcess(binary=binary, data_dir=stack.data_dir, port=port)
+    try:
+        server.start()
+        await wait_ready(server.url)
+        client = Redis.from_url(server.url, socket_timeout=30)
+        try:
+            for setting in ("appendfsync", "appendonly", "dir"):
+                value = await client.config_get(setting)
+                described[
+                    "redis_dir" if setting == "dir" else setting
+                ] = value.get(setting, "")
+            info = await client.info("server")
+            described["redis_version"] = info.get("redis_version", "")
+        finally:
+            await client.aclose()
+    finally:
+        server.kill()
+        stack.unmount()
+    return described
+
+
 def selftest(stack: DeviceStack) -> dict[str, Any]:
     """Prove the device stack drops writes, with no Redis in the picture.
 
@@ -526,6 +593,29 @@ async def main_async(arguments: argparse.Namespace) -> int:
         print(f"  dm table (pass) {stack.table('pass')}")
         print(f"  dm table (drop) {stack.table('drop')}")
         print()
+
+        print("--- the environment the durability claim rests on ---")
+        environment = await describe_environment(stack, binary, arguments.port)
+        payload["environment"] = environment
+        for key, value in environment.items():
+            print(f"  {key:24s} {value}")
+        print()
+        if environment.get("appendfsync") != "everysec":
+            print(
+                "REFUSING TO MEASURE: appendfsync is "
+                f"{environment.get('appendfsync')!r}, not 'everysec'. The "
+                "comparison against the process-kill probe assumes the same "
+                "policy, and under 'always' there is no unacknowledged write "
+                "to lose."
+            )
+            return 1
+        if "nobarrier" in environment.get("mount_options", ""):
+            print(
+                "REFUSING TO MEASURE: the filesystem is mounted nobarrier, so "
+                "fsync does not mean what the barrier assumes it means and a "
+                "surviving acknowledged write would prove nothing."
+            )
+            return 1
 
         print("--- selftest: does the device stack actually lose writes? ---")
         check = selftest(stack)

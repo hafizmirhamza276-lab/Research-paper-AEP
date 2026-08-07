@@ -463,6 +463,13 @@ def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
     )
     emitted: list[tuple[str, ...]] = [
         (
+            "FlakeyReplications",
+            str(len(payloads)),
+            source,
+            "independent runs of the probe, each rebuilding the device stack "
+            "and the filesystem from scratch",
+        ),
+        (
             "FlakeyN",
             str(counted),
             source,
