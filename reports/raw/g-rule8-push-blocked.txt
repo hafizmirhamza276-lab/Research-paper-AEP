@@ -1,0 +1,24 @@
+=== Rule 8 status at end of Phase 4B ===
+
+$ git status -sb
+## main...origin/main [ahead 3]
+ M reports/phase-report-4b-2026-08-07.md
+
+$ git log --oneline -10
+b4876ed Phase 4B G4: put an error bar on the barrier cost, and lose a headline number
+7ff034d Phase 4B G4: what the hostile read broke, and what it could not
+fc2ed65 Phase 4B G3: B4 and B4b complete on POSITIVE_ONLY and NO_READBACK
+cfadc44 Phase 4B: generate the LOC figures, and stop the measurement tree drifting
+676bae0 Phase 4B: three counting errors in the claims, found by checking them
+d6067d8 Phase 4B: name the two coverage gaps a reviewer finds first
+44a6d4d Phase 4B: a build script that fails on LaTeX's two silent successes
+d28250b Phase 4B: defend the write-loss probe's layering, and place the decomposition
+e6546b6 Phase 4B: refuse to collect the matrix beside a destructive test suite
+1da5810 Phase 4B G2: record the settings the durability claim rests on, and replicate
+
+$ git ls-remote origin HEAD   (the remote is reachable)
+833bd91b321168f2fc42b5c9a74e01d76f08ad95	HEAD
+
+$ GIT_TERMINAL_PROMPT=0 timeout 60 git push --verbose
+Pushing to https://github.com/hafizmirhamza276-lab/Research-paper-AEP.git
+  (blocks; killed by timeout. Six attempts, same result.)
