@@ -52,7 +52,9 @@ env:
   # 1223 (Phase 2A) -> 1387 with the Phase 2B Session 1 harness tests
   #                 -> 1565 with the Session 2 crash injector and runner
   #                 -> 1624 with the Session 3 baselines, statistics and analysis.
-  MINIMUM_TESTS: "1590"
+  #                 -> 1700 with Phase 4B's write-loss probe and the
+  #                    manuscript number-generator tests (1721 collected).
+  MINIMUM_TESTS: "1700"
 
 jobs:
   # =========================================================================
