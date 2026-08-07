@@ -60,6 +60,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping, Sequence
 
+from redis.asyncio import Redis
+
 from experiments.baselines.contract import ResumePolicy, SystemId, descriptor_for
 from experiments.baselines.crash_points import (
     NOT_APPLICABLE_REASONS,
@@ -803,6 +805,62 @@ def suspend_disabled_declared() -> bool:
     }
 
 
+#: Modules that inject faults below the process level. Running one of these
+#: beside the matrix is not a slow matrix, it is a *wrong* one: they disturb
+#: the kernel the matrix's Redis is running on, and the runs that survive the
+#: disturbance are indistinguishable from clean runs in every artifact the
+#: analysis reads.
+HOST_LEVEL_FAULT_INJECTORS = ("experiments.flakey_write_loss",)
+
+
+async def coordinator_run_id(redis_url: str) -> str | None:
+    """The coordinator's identity, so a restart mid-run is visible.
+
+    Redis mints a fresh ``run_id`` on every start, so comparing it either side
+    of a run detects a restart that nothing else in the results would record.
+    Returns ``None`` if the server cannot be reached, because a probe that
+    cannot answer must not be read as "no restart"; the caller treats a
+    missing reading as unknown rather than as clean.
+    """
+    client = Redis.from_url(redis_url, socket_connect_timeout=5, socket_timeout=5)
+    try:
+        info = await client.info("server")
+        return info.get("run_id")
+    except Exception:  # noqa: BLE001 -- unreachable is "unknown", not "clean"
+        return None
+    finally:
+        try:
+            await client.aclose()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def host_level_fault_injector_running() -> str | None:
+    """Name a conflicting fault injector alive on this host, if any.
+
+    Deliberately best-effort: ``/proc`` is read directly so that the check
+    needs no dependency and no privileges, and a platform without ``/proc``
+    simply reports nothing rather than blocking a run it cannot assess.
+    """
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return None
+    own = str(os.getpid())
+    for entry in proc.iterdir():
+        if not entry.name.isdigit() or entry.name == own:
+            continue
+        try:
+            cmdline = (entry / "cmdline").read_bytes().decode(
+                "utf-8", errors="replace"
+            )
+        except OSError:
+            continue
+        for module in HOST_LEVEL_FAULT_INJECTORS:
+            if module in cmdline:
+                return module
+    return None
+
+
 def run_directory(results_root: str, entry: dict[str, Any]) -> Path:
     return Path(results_root) / entry["run_id"]
 
@@ -853,7 +911,12 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
         )
         print(label, flush=True)
         started = time.monotonic()
-        record: dict[str, Any] = {**entry, "started_at": started}
+        coordinator_before = await coordinator_run_id(plan.redis_url)
+        record: dict[str, Any] = {
+            **entry,
+            "started_at": started,
+            "coordinator_run_id_before": coordinator_before,
+        }
         try:
             workers = int(entry.get("workers") or plan.workers)
             executions_per_run = int(
@@ -895,6 +958,18 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
                 provider_seed=entry["seed"],
             )
             report = outcome["report"]
+            # A run collected against a coordinator that was replaced
+            # underneath it is not a slow run, it is a different experiment.
+            # The regimes that kill Redis on purpose expect this and say so.
+            coordinator_after = await coordinator_run_id(plan.redis_url)
+            record["coordinator_run_id_after"] = coordinator_after
+            unexpected_restart = (
+                coordinator_before is not None
+                and coordinator_after is not None
+                and coordinator_before != coordinator_after
+                and not entry["redis_kill_point"]
+            )
+            record["coordinator_restarted_unexpectedly"] = unexpected_restart
             record.update(
                 {
                     "status": "collected",
@@ -913,6 +988,19 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
             collected += 1
             if not report.agrees:
                 failed.append(record)
+            if unexpected_restart:
+                # Loud, and in the results rather than only on the terminal:
+                # the whole point is that this run looks ordinary otherwise.
+                print(
+                    "  WARNING: the coordinator's run_id changed during this "
+                    f"run ({coordinator_before[:12]} -> "
+                    f"{coordinator_after[:12]}). Something restarted Redis "
+                    "while the matrix was collecting -- most likely the "
+                    "integration suite, which restarts the container by name "
+                    "and clears the aep:* namespace. This run is recorded "
+                    "with the flag set; do not report it.",
+                    flush=True,
+                )
             # D4: an undetected duplicate in AEP-full halts the matrix. It is
             # the session's primary result if it happens, and continuing would
             # only bury it under six hours of further runs.
@@ -1064,6 +1152,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument(
+        "--allow-concurrent-fault-injector",
+        action="store_true",
+        help=(
+            "collect even though a host-level fault injector is running. "
+            "The runs will be disturbed in ways nothing downstream can see; "
+            "this exists so that the refusal can be tested, not so that it "
+            "can be routinely bypassed."
+        ),
+    )
+    parser.add_argument(
         "--no-halt-on-undetected",
         action="store_true",
         help=(
@@ -1096,6 +1194,18 @@ def main(argv: list[str] | None = None) -> int:
             "REFUSED: amendment D2 requires every run in EVALUATION mode on "
             "Linux. This platform has no SIGKILL, so its crashes would be "
             "TerminateProcess (Session 2 report F4)."
+        )
+        return 2
+    conflict = host_level_fault_injector_running()
+    if conflict and not arguments.allow_concurrent_fault_injector:
+        print(
+            f"REFUSED: {conflict} is running on this host. It writes "
+            "/proc/sys/vm/drop_caches, which is kernel-wide, and the matrix's "
+            "Redis lives on the same kernel. A batch collected this way had "
+            "runs fail with connection errors and its Redis restarted "
+            "underneath it; the runs that completed anyway looked like "
+            "ordinary runs. Wait for it to finish, or pass "
+            "--allow-concurrent-fault-injector and say so in the report."
         )
         return 2
     return asyncio.run(execute_plan(plan, arguments))

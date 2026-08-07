@@ -125,6 +125,36 @@ fixed; we record them because the general point --- that a fault-injection
 harness is a stronger verification tool than a unit suite --- cuts both ways,
 and there may be defects it has not found.
 
+\paragraph{The test suite is destructive to a running matrix, and one batch
+learned that the hard way} While collecting the B4/B4b cells we ran the
+project's own integration suite against the same Redis. The suite is
+deliberately destructive: it deletes the \texttt{aep:*} namespace in the
+database the matrix is using, and one of its durability tests
+\texttt{docker restart}s the matrix's Redis container by name to prove the AOF
+survives. Several runs died with connection errors, and the server the batch
+was collecting against was replaced underneath it.
+
+Runs that \emph{fail} are harmless --- they write no summary, and the
+resumption logic re-runs them. The runs that \emph{completed} during that
+window are the hazard, because a coordinator blip makes a re-executing
+baseline retry, a baseline that retries more produces more duplicates, and
+that bias points toward our own hypothesis. They are also indistinguishable
+from clean runs in every artifact the analysis reads. Every B4/B4b run
+collected in the disturbed window was therefore discarded and re-collected on
+an otherwise idle host, and the server's \texttt{run\_id} was recorded before
+and after the replacement batch to confirm it was not restarted again; none of
+the discarded runs contributes a number here.
+
+Two rules follow, and the artifact enforces both rather than documenting them:
+the runner refuses to start beside a host-level fault injector, and it now
+records the coordinator's \texttt{run\_id} with every run so that a restart
+during collection is visible in the results rather than inferred from a
+connection error that happened to be logged. We report the episode because the
+generalisation is not ``be careful'': it is that a fault-injection harness and
+a fault-injection test suite make the same assumptions about owning the
+system, and running both is a measurement error that produces ordinary-looking
+data.
+
 \paragraph{Ambiguity is counted from the oracle, not from self-report} A system
 that declared ambiguity liberally could otherwise score well by saying ``I do
 not know'' about everything. Duplicates and lost effects are counted by
