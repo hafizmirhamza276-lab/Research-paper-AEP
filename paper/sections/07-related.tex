@@ -64,7 +64,19 @@ idempotence, or by requiring a compensation. Our B4 baseline is an
 event-sourced engine of this family, using the same durability barrier as AEP,
 and it duplicates --- not because it is badly built, but because it is
 correctly implementing at-least-once activity execution against an endpoint
-that cannot absorb it. Temporal states the precondition plainly: activities
+that cannot absorb it.
+
+That pairing is also where our decomposition (\cref{sec:eval-detection})
+lands relative to this literature. Durability of the log is the property these
+systems are engineered around, and it is the property our two systems on
+either side of the result do \emph{not} differ in the way one would expect:
+B4 has the durable acknowledged record and duplicates at the highest rate we
+measure, while B3 has an unacknowledged one and duplicates at zero. The
+variable that separates them is not how durable the record is but whether the
+recovery path may re-enter the dispatching state --- a property of the
+transition table rather than of the log. To our knowledge this attribution has
+not been isolated by ablation before; it is usually a design assumption, and
+where it is stated at all it is stated the other way round. Temporal states the precondition plainly: activities
 should be made idempotent, because they may be executed more than
 once~\cite{temporal-activity-definition}. B4b shows the documented alternative
 --- Maximum Attempts of 1~\cite{temporal-retry} --- purchasing at-most-once and

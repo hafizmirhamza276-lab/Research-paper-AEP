@@ -31,6 +31,21 @@ maximised by phase-aligning to a just-completed fsync, so
 $\FlakeyUnackLost{}$ is the loss rate for a worst-placed cut rather than a
 uniformly-timed one (\cref{sec:eval-durability}).
 
+\paragraph{The write-loss probe runs several layers above hardware, and does
+not need to be closer} Our \texttt{dm-flakey} target sits on a loop device
+backed by a file on the WSL2 root filesystem, which is itself a virtual disk
+on the host. A reviewer is entitled to ask what a ``block device'' means five
+layers up. The answer is that the layering is irrelevant to the claim, because
+\texttt{dm-flakey} \emph{is} the boundary under test: the experiment asks
+whether a \texttt{WAITAOF} acknowledgement corresponds to bytes that have
+crossed a chosen point in the storage path before that point stops accepting
+writes, and everything below the target is on the far side of it in both arms
+equally. What the layering \emph{would} threaten is a claim about absolute
+fsync latency on real hardware, which we do not make from this probe --- the
+barrier's cost comes from \cref{tab:deployment}, measured elsewhere. It would
+also threaten a claim that a real power cut cannot do worse, which we
+explicitly do not make above.
+
 \paragraph{No process-level fault can exercise the barrier's durability at all}
 Stated separately because it is the more surprising half and it is the half a
 reader is most likely to have assumed the other way. \texttt{appendfsync

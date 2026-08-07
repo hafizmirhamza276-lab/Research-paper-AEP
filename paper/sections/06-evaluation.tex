@@ -297,8 +297,9 @@ The unwanted-applied-effect rate is \AepUnwantedRate{} for AEP-full and
 \BthreeUnwantedRate{} for B3 (Fisher's exact test, two-tailed,
 $p = \UnwantedP{}$). That is \textbf{\UnwantedPrevented{} real, non-idempotent
 effects} that AEP-full did not commit and B3 did, on the same injected fault,
-bought by one round trip --- and note that this is the \emph{only} metric in
-the paper on which the two systems differ at all.
+bought by one round trip --- and note that this is the only fault in the study
+under which the two systems diverge. Everywhere else they differ by at most
+two executions in six hundred (\cref{tab:ablation}).
 
 Two honest qualifications. First, \emph{AEP-full still applied
 \AepKillApplied{}}. The kill is asynchronous and takes $400$--$1\,000$\,ms to
