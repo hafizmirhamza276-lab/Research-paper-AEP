@@ -103,3 +103,6 @@ paper/*.pdf
 paper/*.synctex.gz
 paper/*.fls
 paper/*.fdb_latexmk
+
+# Session scratch: staging for scripts copied into the WSL measurement tree.
+.scratch/
