@@ -18,8 +18,22 @@ Two rules are enforced here rather than remembered:
    regime and the ``redis-kill-preack`` regime are reported separately because
    they are different experiments.
 
+Amendment G1 adds a third rule, because the manuscript's framing now turns on
+it:
+
+3. **Detection and prevention are separate claims with separate numbers.** The
+   pre-dispatch intent ledger is what makes an outcome detectable; the
+   ``WAITAOF`` barrier is what withholds an effect when the coordinator is
+   lost. They are measured by different metrics, on different regimes, against
+   different baselines, and this script emits them as different macros so that
+   no sentence can borrow one's evidence for the other. ``\\BthreeVsAep*``
+   exists precisely so the ablation's *null* result is quotable rather than
+   paraphrased.
+
 Usage:
     python scripts/paper_tables.py --analysis experiments/results/matrix/analysis \\
+                                   --fsync-analysis experiments/results/fsync-always/analysis \\
+                                   --flakey experiments/results \\
                                    --out paper/generated
 """
 
@@ -27,9 +41,19 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable
+
+# check_paper_numbers.py runs this file as a script, so sys.path[0] is
+# scripts/ and `experiments` is not importable without help. Reusing the
+# repository's exact Fisher implementation rather than reimplementing it is
+# the point: a second implementation is a second thing to keep correct.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from experiments.statistics import fisher_exact_two_tailed  # noqa: E402
 
 #: The regime whose runs answer RQ1. A regime is a named fault condition, not
 #: a matrix dimension; ``(session-3)`` is the one in which every execution is
@@ -392,10 +416,324 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
     )
 
 
+def tex_p_value(value: float) -> str:
+    """A p-value as LaTeX maths, in the form a reviewer can check.
+
+    Below 1e-4 the exact mantissa is noise from the bootstrap-free exact
+    computation's floating point, but the exponent is not, so the number is
+    rendered in scientific form rather than rounded to ``0.0000``. At the
+    other end, ``p = 1.0`` is a real and important value here -- it is what an
+    ablation that changes nothing looks like -- and must not print as
+    ``1.0\\times10^{0}``.
+    """
+    if value >= 0.01:
+        return f"{value:.2f}"
+    mantissa, exponent = f"{value:.1e}".split("e")
+    return f"{mantissa}\\times10^{{{int(exponent)}}}"
+
+
+def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
+    """The G2 write-loss probe's numbers, pooled over its replications.
+
+    Pooling here is legitimate and elsewhere is not, because every
+    replication is the same probe against the same fault on the same host;
+    there is no regime mixing of the kind Session 3B banned. The replication
+    count is emitted so a reader can see what is being pooled.
+    """
+    counted = ack_survived = unack_lost = 0
+    windows: list[float] = []
+    barriers: list[float] = []
+    for payload in payloads:
+        summary = payload.get("summary") or {}
+        counted += int(summary.get("counted", 0))
+        ack_survived += int(summary.get("acknowledged_survived", 0))
+        unack_lost += int(summary.get("unacknowledged_lost", 0))
+        for trial in payload.get("trials", []):
+            if trial.get("error") or not trial.get("acknowledged_survived"):
+                continue
+            windows.append(float(trial["write_to_drop_ms"]))
+            barriers.append(float(trial["barrier_ms"]))
+    if not counted:
+        return []
+
+    source = (
+        "experiments/results/g2-flakey-write-loss*.json | "
+        f"{len(payloads)} replication(s) of "
+        "experiments/flakey_write_loss.py"
+    )
+    emitted: list[tuple[str, ...]] = [
+        (
+            "FlakeyN",
+            str(counted),
+            source,
+            "countable trials: the acknowledged write survived, so the "
+            "trial says something about the unacknowledged one",
+        ),
+        (
+            "FlakeyAckSurvived",
+            f"{ack_survived}/{counted}",
+            source,
+            "WAITAOF-acknowledged writes still present after the device "
+            "stopped accepting writes",
+        ),
+        (
+            "FlakeyUnackLost",
+            f"{unack_lost}/{counted}",
+            source,
+            "un-acknowledged writes destroyed by the same event",
+        ),
+        (
+            "FlakeyWindowMin",
+            f"{min(windows):.1f}",
+            source,
+            "narrowest write-to-write-loss exposure window, ms",
+        ),
+        (
+            "FlakeyWindowMax",
+            f"{max(windows):.1f}",
+            source,
+            "widest write-to-write-loss exposure window, ms; the "
+            "appendfsync everysec period it sits inside is 1000 ms",
+        ),
+        (
+            "FlakeyBarrierP",
+            tex_p_value(
+                fisher_exact_two_tailed(
+                    counted - ack_survived,
+                    ack_survived,
+                    unack_lost,
+                    counted - unack_lost,
+                )
+            ),
+            source,
+            "Fisher exact two-tailed, acknowledged vs un-acknowledged "
+            f"loss over the same {counted} trials",
+        ),
+    ]
+    # The cross-fault comparison is the point of the probe: the same two keys
+    # under a process kill lost nothing.
+    emitted.append(
+        (
+            "FlakeyVsProcessKillP",
+            tex_p_value(fisher_exact_two_tailed(0, 10, unack_lost, 0)),
+            "reports/raw/e1-durability-window.txt (0/10 lost under "
+            "docker kill -s KILL) vs " + source,
+            "Fisher exact two-tailed across the two fault classes",
+        )
+    )
+    return emitted
+
+
+def emit_ablation_table(
+    per_cell: list[dict[str, str]],
+    comparisons: list[dict[str, str]],
+    out: Path,
+) -> None:
+    """AEP-full against its own barrier-ablation, on the detection metrics.
+
+    This table exists to make a *null* result quotable. A sentence saying the
+    ablation ``performed similarly'' is unfalsifiable; a table with both
+    numerators, both denominators and the exact p-value is not. It is also the
+    table that licenses the B3-mode row of \\cref{tab:deployment}, so it has
+    to be visibly complete rather than a selected pair of columns.
+    """
+    crashed = [r for r in per_cell if r["regime"] == CRASHED_REGIME]
+    metrics = (
+        ("undetected_duplicate_rate", "undetected duplicate"),
+        ("lost_effect_rate", "lost effect"),
+        ("known_ambiguity_rate", "declared ambiguity"),
+    )
+
+    fragment = [
+        "% GENERATED by scripts/paper_tables.py -- do not edit.",
+        "% Source: analysis/per-cell-metrics.csv (rates, "
+        f"regime={CRASHED_REGIME})",
+        "%         analysis/comparisons-vs-aep-full.csv (p-values).",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\caption{The barrier ablation on the detection metrics. B3 is "
+        r"AEP-full with the \texttt{WAITAOF} barrier removed and nothing else "
+        r"removed. Crashed regime; rates are over executions, pooled across "
+        r"crash points within one capability class. The p-values are Fisher's "
+        r"exact, two-tailed, over all capability classes together.}",
+        r"\label{tab:ablation}",
+        r"\small",
+        r"\begin{tabular}{@{}llccc@{}}",
+        r"\toprule",
+        r"metric & capability & AEP-full & B3 & $p$\\",
+        r"\midrule",
+    ]
+    for metric, label in metrics:
+        comparison = next(
+            (
+                r
+                for r in comparisons
+                if r["system"] == "B3_INTENT_NO_BARRIER" and r["metric"] == metric
+            ),
+            None,
+        )
+        p_cell = (
+            f"\\multirow{{3}}{{*}}{{${tex_p_value(float(comparison['fisher_p_value']))}$}}"
+            if comparison
+            else ""
+        )
+        for index, response in enumerate(RESPONSE_ORDER):
+            aep = [
+                r
+                for r in crashed
+                if r["system"] == "AEP_FULL" and r["response_class"] == response
+            ]
+            b3 = [
+                r
+                for r in crashed
+                if r["system"] == "B3_INTENT_NO_BARRIER"
+                and r["response_class"] == response
+            ]
+            aep_s, aep_t = totals(aep, metric)
+            b3_s, b3_t = totals(b3, metric)
+            if not aep_t and not b3_t:
+                continue
+            first = f"\\multirow{{3}}{{*}}{{{label}}}" if index == 0 else ""
+            fragment.append(
+                f"{first} & {RESPONSE_SHORT[response]} & "
+                f"{rate(aep_s, aep_t)} & {rate(b3_s, b3_t)} & "
+                f"{p_cell if index == 0 else ''}\\\\"
+            )
+        fragment.append(r"\midrule" if metric != metrics[-1][0] else "")
+    fragment = [line for line in fragment if line != ""]
+    fragment += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+    ]
+    (out / "table-ablation.tex").write_text(
+        "\n".join(fragment) + "\n", encoding="utf-8"
+    )
+
+
+def emit_deployment_choice(
+    latency: list[dict[str, str]], always: list[dict[str, str]], out: Path
+) -> None:
+    """The three configurations an operator actually chooses between.
+
+    The manuscript previously reported the barrier's cost as one number and
+    then, separately, that ``appendfsync always`` changes it by a factor of
+    31. Read in sequence those invite the conclusion that AEP costs two
+    seconds. They are better read as one decision with three settled points,
+    and the third point -- running with no barrier at all, which is exactly
+    what B3 is -- has to be on the table for the other two to mean anything.
+    """
+    def crash_free_medians(rows: list[dict[str, str]]) -> dict[str, float]:
+        return {
+            row["system"]: float(row["step_latency_ms_median"])
+            for row in rows
+            if int(row["overhead_runs_crash_free"] or 0)
+        }
+
+    everysec = crash_free_medians(latency)
+    always_medians = crash_free_medians(always)
+    b0 = everysec.get("B0_NAIVE_RETRY")
+    b3 = everysec.get("B3_INTENT_NO_BARRIER")
+    aep = everysec.get("AEP_FULL")
+    aep_always = always_medians.get("AEP_FULL")
+    b3_always = always_medians.get("B3_INTENT_NO_BARRIER")
+    if not (b0 and b3 and aep and aep_always and b3_always):
+        return
+
+    def tex(value: float) -> str:
+        return f"{value:,.1f}".replace(",", r"\,")
+
+    # The barrier's cost is the ablation difference *within one fsync policy*.
+    # Subtracting the everysec B3 median from the always AEP median would
+    # assume the ablated protocol's own writes cost the same under both
+    # policies. They nearly do -- b3_always - b3 is small -- but "nearly"
+    # is a measurement, so the table takes each row's own B3.
+    rows = [
+        (
+            r"AEP-full, \texttt{everysec}",
+            aep,
+            aep - b3,
+            "yes",
+            "detection + prevention",
+        ),
+        (
+            r"AEP-full, \texttt{always}",
+            aep_always,
+            aep_always - b3_always,
+            "yes",
+            "detection + prevention",
+        ),
+        (
+            r"B3-mode, \texttt{everysec}",
+            b3,
+            0.0,
+            "no",
+            "detection only",
+        ),
+    ]
+
+    fragment = [
+        "% GENERATED by scripts/paper_tables.py -- do not edit.",
+        "% Sources: analysis/latency-and-throughput.csv (everysec rows),",
+        "%          fsync-always/analysis/latency-and-throughput.csv (always).",
+        "% step_latency_ms_median over crash-free, E5-gated runs only.",
+        "% Barrier column = row median - the B3 median collected under the",
+        f"% SAME fsync policy (everysec {tex(b3)} ms, always {tex(b3_always)} "
+        "ms),",
+        "% i.e. the same protocol with the barrier ablated and nothing else",
+        "% changed. Never across policies: that would assume the ablated",
+        "% protocol's own writes cost the same under both, which is exactly",
+        "% what the two B3 numbers are here to establish rather than assume.",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\caption{The barrier is a deployment choice, not a fixed cost. All "
+        r"three rows run the same pre-dispatch intent ledger and therefore "
+        r"make the same detection claim; they differ in what they pay to "
+        r"also withhold dispatch when durability cannot be confirmed. The "
+        r"barrier column is each row's own median minus a B3 median "
+        r"collected under the same \texttt{appendfsync} policy. Crash-free "
+        r"runs only, E5-gated, 2\,000\,ms provider floor.}",
+        r"\label{tab:deployment}",
+        r"\small",
+        r"\begin{tabular}{@{}lrrrcl@{}}",
+        r"\toprule",
+        r"configuration & median & over & barrier & prev- & claim\\",
+        r" & (ms) & floor & (ms) & ents & \\",
+        r"\midrule",
+    ]
+    for label, median, barrier, prevents, claim in rows:
+        fragment.append(
+            f"{label} & {tex(median)} & {tex(median - 2000.0)} & "
+            f"{tex(barrier)} & {prevents} & {claim}\\\\"
+        )
+    fragment += [
+        r"\midrule",
+        r"\multicolumn{6}{@{}p{0.94\columnwidth}@{}}{\footnotesize "
+        r"The detection claim of \cref{tab:outcomes} is unchanged down the "
+        r"whole table: it is produced by the durable pre-dispatch record, "
+        r"which all three rows have, and \cref{tab:ablation} is the "
+        r"ablation that shows it. What the barrier buys is the last "
+        r"column's second word, and \cref{tab:killablation} is what it is "
+        r"worth. `Over floor' is the same median less the provider's "
+        r"2\,000\,ms delay, and so includes the "
+        f"{tex(b3 - b0)}"
+        r"\,ms the protocol costs with the barrier already removed.}\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+    ]
+    (out / "table-deployment-choice.tex").write_text(
+        "\n".join(fragment) + "\n", encoding="utf-8"
+    )
+
+
 def emit_numbers(
     per_cell: list[dict[str, str]],
     latency: list[dict[str, str]],
     kill: list[dict[str, str]],
+    comparisons: list[dict[str, str]],
+    flakey: list[dict[str, Any]],
+    always: list[dict[str, str]],
     out: Path,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
@@ -405,7 +743,11 @@ def emit_numbers(
         "% Sources: analysis/per-cell-metrics.csv, "
         "analysis/latency-and-throughput.csv,"
     )
-    lines.append("%          analysis/redis-kill-ablation.csv")
+    lines.append(
+        "%          analysis/redis-kill-ablation.csv, "
+        "analysis/comparisons-vs-aep-full.csv,"
+    )
+    lines.append("%          experiments/results/g2-flakey-write-loss*.json")
     lines.append(
         "% Each macro carries the file, filter and arithmetic behind it."
     )
@@ -418,6 +760,7 @@ def emit_numbers(
         lines.append("")
 
     crashed = [r for r in per_cell if r["regime"] == CRASHED_REGIME]
+    denominators: dict[str, int] = {}
 
     # --- RQ1: AEP's three columns, per capability -----------------------
     for response in RESPONSE_ORDER:
@@ -445,11 +788,17 @@ def emit_numbers(
                 f"metric={metric} | sum(successes)/sum(total) "
                 f"= {successes}/{total}",
             )
-            macro(
-                f"Aep{tag}{suffix}N",
-                str(total),
-                f"denominator (executions) for \\Aep{tag}{suffix}",
-            )
+            denominators[suffix] = total
+    # One denominator per capability class, not one per metric: the three
+    # metrics are counted over the same executions, so three macros holding
+    # the same number is three chances for a stale one to survive an edit.
+    for suffix, total in denominators.items():
+        macro(
+            f"AepExec{suffix}",
+            str(total),
+            f"per-cell-metrics.csv | executions behind every AEP-full rate "
+            f"on this capability class (regime={CRASHED_REGIME})",
+        )
 
     # --- RQ1: the range the no-pre-dispatch-record baselines occupy -----
     # Typed as a literal once, it drifted the moment another cell landed.
@@ -481,18 +830,18 @@ def emit_numbers(
         )
 
     # --- RQ3: latency, E5-gated only ------------------------------------
+    # Only the three systems the cost decomposition is built from get a
+    # macro. Every system's median is in \cref{tab:latency}, which is
+    # generated from the same file; a macro for a median no sentence quotes
+    # is a number with no reader, and the manuscript gate now says so.
     for row in latency:
         crash_free = int(row["overhead_runs_crash_free"] or 0)
         if not crash_free:
             continue
         key = {
-            "AEP_FULL": "Aep",
-            "B0_NAIVE_RETRY": "Bzero",
-            "B1_LEASE_ONLY": "Bone",
-            "B2_CAS_ONLY": "Btwo",
-            "B3_INTENT_NO_BARRIER": "Bthree",
-            "B4_DURABLE_WORKFLOW": "Bfour",
-            "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE": "Bfourb",
+            "AEP_FULL": "Aep",  # the protocol with the barrier
+            "B0_NAIVE_RETRY": "Bzero",  # no protocol at all
+            "B3_INTENT_NO_BARRIER": "Bthree",  # the protocol without it
         }.get(row["system"])
         if not key:
             continue
@@ -534,7 +883,8 @@ def emit_numbers(
         macro(
             "BarrierCost",
             tex_number(aep - b3),
-            "latency-and-throughput.csv | AEP-full median - B3 median",
+            "latency-and-throughput.csv | AEP-full median - B3 median, both "
+            "under appendfsync=everysec",
             f"= {aep:.1f} - {b3:.1f}; the two WAITAOF round trips together",
         )
         macro(
@@ -544,7 +894,114 @@ def emit_numbers(
             "per step",
         )
 
-    # --- RQ2: the hard-Redis-kill ablation ------------------------------
+    # The same subtraction under the other durability policy. Both arms are
+    # collected under that policy; see emit_deployment_choice.
+    if always:
+        always_medians = {
+            row["system"]: float(row["step_latency_ms_median"])
+            for row in always
+            if int(row["overhead_runs_crash_free"] or 0)
+        }
+        aep_always = always_medians.get("AEP_FULL")
+        b3_always = always_medians.get("B3_INTENT_NO_BARRIER")
+        if aep_always and b3_always and b3 and aep:
+            macro(
+                "BarrierCostAlways",
+                tex_number(aep_always - b3_always),
+                "fsync-always/analysis/latency-and-throughput.csv | "
+                "AEP-full median - B3 median, both under appendfsync=always",
+                f"= {aep_always:.1f} - {b3_always:.1f}",
+            )
+            macro(
+                "BarrierCostRatio",
+                f"{(aep - b3) / (aep_always - b3_always):.0f}",
+                "\\BarrierCost / \\BarrierCostAlways -- what one line of "
+                "durability configuration is worth on this workload",
+            )
+            macro(
+                "BthreeAlwaysMedian",
+                tex_number(b3_always),
+                "fsync-always/analysis/latency-and-throughput.csv | "
+                "system=B3_INTENT_NO_BARRIER, appendfsync=always",
+                f"against {b3:.1f} ms under everysec: the ablated protocol's "
+                "own cost is nearly policy-independent, which is what makes "
+                "the two barrier figures comparable",
+            )
+
+    # --- G1: the ablation's NULL result, on detection --------------------
+    # The barrier is an ablation of AEP-full and it changes nothing that RQ1
+    # measures. That is a finding, so it is generated rather than asserted:
+    # every macro below is a number a reader can check, including the
+    # p-values that say the two systems are indistinguishable.
+    for response in RESPONSE_ORDER:
+        subset = [
+            r
+            for r in crashed
+            if r["system"] == "B3_INTENT_NO_BARRIER"
+            and r["response_class"] == response
+        ]
+        suffix = {
+            "AUTHORITATIVE_READBACK": "Auth",
+            "POSITIVE_ONLY_READBACK": "PosOnly",
+            "NO_READBACK": "NoReadback",
+        }[response]
+        # Only ambiguity varies by capability class and only ambiguity is
+        # quoted per class in prose. The duplicate and lost-effect rates are
+        # uniformly zero for both systems and are read off \cref{tab:ablation},
+        # which prints all nine cells; a macro per cell would be nine more
+        # numbers with no reader.
+        successes, total = totals(subset, "known_ambiguity_rate")
+        macro(
+            f"BthreeAmb{suffix}",
+            rate(successes, total),
+            f"per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER "
+            f"regime={CRASHED_REGIME} response_class={response}",
+            f"metric=known_ambiguity_rate | sum(successes)/sum(total) "
+            f"= {successes}/{total}",
+        )
+
+    arms: set[str] = set()
+    for metric, tag in (
+        ("undetected_duplicate_rate", "Dup"),
+        ("lost_effect_rate", "Lost"),
+        ("known_ambiguity_rate", "Amb"),
+    ):
+        row = next(
+            (
+                r
+                for r in comparisons
+                if r["system"] == "B3_INTENT_NO_BARRIER" and r["metric"] == metric
+            ),
+            None,
+        )
+        if not row:
+            continue
+        arms.add(row["system_total"])
+        macro(
+            f"BthreeVsAep{tag}P",
+            tex_p_value(float(row["fisher_p_value"])),
+            f"comparisons-vs-aep-full.csv | metric={metric} "
+            "system=B3_INTENT_NO_BARRIER reference=AEP_FULL",
+            f"B3 {row['system_successes']}/{row['system_total']} vs "
+            f"AEP-full {row['reference_successes']}/{row['reference_total']}",
+            "the ablation is indistinguishable from the full protocol here; "
+            "that is the finding, not a caveat",
+        )
+    if len(arms) == 1:
+        macro(
+            "BthreeVsAepN",
+            arms.pop(),
+            "comparisons-vs-aep-full.csv | executions per arm, identical "
+            "across all three metrics",
+        )
+
+    # --- G1/RQ2: the hard-Redis-kill ablation ---------------------------
+    # The barrier's own metric. Named `Unwanted` rather than `Applied`
+    # because "applied an effect" is not by itself a failure -- a dispatch
+    # that the coordinator authorised is supposed to apply one. What this
+    # counts is effects applied when durability could no longer be
+    # confirmed, which is the thing the barrier exists to prevent.
+    kill_by_system: dict[str, dict[str, str]] = {}
     for row in kill:
         key = {
             "AEP_FULL": "Aep",
@@ -552,12 +1009,26 @@ def emit_numbers(
         }.get(row["system"])
         if not key:
             continue
+        kill_by_system[key] = row
+        applied = int(row["executions_with_an_applied_effect"])
+        executions = int(row["executions"])
         macro(
             f"{key}KillApplied",
             row["executions_with_an_applied_effect"],
             f"redis-kill-ablation.csv | regime={row['regime']} "
             f"system={row['system']} response_class={row['response_class']}",
             "executions_with_an_applied_effect",
+        )
+        macro(
+            f"{key}UnwantedRate",
+            rate(applied, executions),
+            f"redis-kill-ablation.csv | regime={row['regime']} "
+            f"system={row['system']} response_class={row['response_class']}",
+            f"unwanted-applied-effect rate = "
+            f"executions_with_an_applied_effect/executions = "
+            f"{applied}/{executions}",
+            "an effect put on the wire while the durability of its own "
+            "intent record could no longer be confirmed",
         )
         macro(
             f"{key}KillRuns",
@@ -572,12 +1043,61 @@ def emit_numbers(
             "the un-acknowledged write made immediately before the hard kill",
         )
 
+    if {"Aep", "Bthree"} <= kill_by_system.keys():
+        aep_row = kill_by_system["Aep"]
+        b3_row = kill_by_system["Bthree"]
+        aep_applied = int(aep_row["executions_with_an_applied_effect"])
+        b3_applied = int(b3_row["executions_with_an_applied_effect"])
+        aep_n = int(aep_row["executions"])
+        b3_n = int(b3_row["executions"])
+        macro(
+            "UnwantedPrevented",
+            str(b3_applied - aep_applied),
+            "redis-kill-ablation.csv | B3 applied - AEP-full applied",
+            f"= {b3_applied} - {aep_applied}; real non-idempotent effects "
+            "that the barrier withheld under an identical injected fault",
+        )
+        macro(
+            "UnwantedP",
+            tex_p_value(
+                fisher_exact_two_tailed(
+                    aep_applied,
+                    aep_n - aep_applied,
+                    b3_applied,
+                    b3_n - b3_applied,
+                )
+            ),
+            "redis-kill-ablation.csv | Fisher exact two-tailed on "
+            f"[[{aep_applied}, {aep_n - aep_applied}], "
+            f"[{b3_applied}, {b3_n - b3_applied}]]",
+            "AEP-full vs B3 on the unwanted-applied-effect rate",
+        )
+
+    # --- G2: the fault class the barrier's durability claim names --------
+    if flakey:
+        for name, value, *why in flakey_macros(flakey):
+            macro(name, value, *why)
+
     (out / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--analysis", type=Path, required=True)
+    parser.add_argument(
+        "--fsync-analysis",
+        type=Path,
+        default=None,
+        help="analysis dir of the appendfsync=always re-run; enables "
+        "table-deployment-choice.tex",
+    )
+    parser.add_argument(
+        "--flakey",
+        type=Path,
+        default=None,
+        help="directory holding g2-flakey-write-loss*.json; enables the "
+        "host-level write-loss macros",
+    )
     parser.add_argument("--out", type=Path, required=True)
     arguments = parser.parse_args()
     arguments.out.mkdir(parents=True, exist_ok=True)
@@ -591,11 +1111,30 @@ def main() -> int:
         )
     latency = read_rows(arguments.analysis / "latency-and-throughput.csv")
     kill = read_rows(arguments.analysis / "redis-kill-ablation.csv")
+    comparisons = read_rows(arguments.analysis / "comparisons-vs-aep-full.csv")
+
+    flakey: list[dict[str, Any]] = []
+    if arguments.flakey:
+        for path in sorted(arguments.flakey.glob("g2-flakey-write-loss*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("summary"):
+                flakey.append(payload)
+
+    always: list[dict[str, str]] = []
+    if arguments.fsync_analysis:
+        always = read_rows(
+            arguments.fsync_analysis / "latency-and-throughput.csv"
+        )
 
     emit_outcomes_table(per_cell, arguments.out)
     emit_ambiguity_by_crashpoint(per_cell, arguments.out)
+    emit_ablation_table(per_cell, comparisons, arguments.out)
     emit_latency_table(latency, arguments.out)
-    emit_numbers(per_cell, latency, kill, arguments.out)
+    if always:
+        emit_deployment_choice(latency, always, arguments.out)
+    emit_numbers(
+        per_cell, latency, kill, comparisons, flakey, always, arguments.out
+    )
     for name in sorted(p.name for p in arguments.out.glob("*.tex")):
         print(f"wrote {arguments.out / name}")
     return 0

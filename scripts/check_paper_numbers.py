@@ -55,9 +55,29 @@ class Result:
             print(f"  FAIL  {name}\n        {detail}")
 
 
-def check_generated_tables(result: Result, paper: Path, analysis: Path) -> None:
-    """Regenerate into a temp dir and diff against what is committed."""
+def check_generated_tables(
+    result: Result,
+    paper: Path,
+    analysis: Path,
+    fsync_analysis: Path,
+    flakey: Path,
+) -> None:
+    """Regenerate into a temp dir and diff against what is committed.
+
+    Amendment G1 widened what "the numbers" means. The deployment-choice
+    table and the host-level write-loss macros are claims in the same sense
+    the outcome rates are, so they are regenerated here too rather than
+    trusted because a script wrote them once. The two extra inputs are
+    passed explicitly and their absence is a failure, not a silent skip: a
+    gate that quietly checks less than it did yesterday is the failure mode
+    this whole file exists to prevent.
+    """
     generated = paper / "generated"
+    for label, path in (
+        ("appendfsync=always analysis", fsync_analysis),
+        ("G2 write-loss results", flakey),
+    ):
+        result.check(path.is_dir(), f"{label} is present", f"missing {path}")
     with tempfile.TemporaryDirectory() as scratch:
         completed = subprocess.run(
             [
@@ -65,6 +85,10 @@ def check_generated_tables(result: Result, paper: Path, analysis: Path) -> None:
                 str(ROOT / "scripts" / "paper_tables.py"),
                 "--analysis",
                 str(analysis),
+                "--fsync-analysis",
+                str(fsync_analysis),
+                "--flakey",
+                str(flakey),
                 "--out",
                 scratch,
             ],
@@ -127,6 +151,36 @@ def check_no_banned_source(result: Result, paper: Path) -> None:
         declared > 0,
         "generated tables declare their sources",
         "no '% Source:' line found in paper/generated/*.tex",
+    )
+
+
+def check_macros_are_used(result: Result, paper: Path) -> None:
+    """Every generated number must appear somewhere in the manuscript.
+
+    A macro that is defined and never used is a number that was computed and
+    then dropped, and the reader has no way to know it existed. That is a
+    tolerable accident in a stable draft and a dangerous one during a framing
+    revision, which is exactly when a claim gets moved, its replacement gets
+    written, and its evidence gets orphaned. LaTeX catches the opposite
+    direction -- a macro used and not defined -- and says nothing about this
+    one.
+    """
+    numbers = paper / "generated" / "numbers.tex"
+    if not numbers.is_file():
+        result.check(False, "numbers.tex exists", f"missing {numbers}")
+        return
+    defined = set(
+        re.findall(r"\\newcommand\{\\([A-Za-z]+)\}", numbers.read_text(encoding="utf-8"))
+    )
+    used: set[str] = set()
+    for path in [paper / "main.tex", *sorted((paper / "sections").glob("*.tex"))]:
+        text = path.read_text(encoding="utf-8")
+        used.update(re.findall(r"\\([A-Za-z]+)\{?\}?", text))
+    orphans = sorted(defined - used)
+    result.check(
+        not orphans,
+        "every generated number is used in the manuscript",
+        f"{len(orphans)} orphaned: {', '.join(orphans)}",
     )
 
 
@@ -239,19 +293,38 @@ def main() -> int:
         type=Path,
         default=ROOT / "experiments" / "results" / "matrix" / "analysis",
     )
+    parser.add_argument(
+        "--fsync-analysis",
+        type=Path,
+        default=ROOT / "experiments" / "results" / "fsync-always" / "analysis",
+    )
+    parser.add_argument(
+        "--flakey",
+        type=Path,
+        default=ROOT / "experiments" / "results",
+    )
     arguments = parser.parse_args()
 
     print("=" * 70)
     print("check_paper_numbers.py -- the manuscript against its results")
     print("=" * 70)
-    print(f"paper    {arguments.paper}")
-    print(f"analysis {arguments.analysis}")
+    print(f"paper          {arguments.paper}")
+    print(f"analysis       {arguments.analysis}")
+    print(f"fsync analysis {arguments.fsync_analysis}")
+    print(f"flakey results {arguments.flakey}")
     print()
 
     result = Result()
     check_per_cell_has_regime(result, arguments.analysis)
-    check_generated_tables(result, arguments.paper, arguments.analysis)
+    check_generated_tables(
+        result,
+        arguments.paper,
+        arguments.analysis,
+        arguments.fsync_analysis,
+        arguments.flakey,
+    )
     check_no_banned_source(result, arguments.paper)
+    check_macros_are_used(result, arguments.paper)
     check_state_machine(result, arguments.paper)
     check_bibliography(result, arguments.paper)
     check_undefined_references(result, arguments.paper)

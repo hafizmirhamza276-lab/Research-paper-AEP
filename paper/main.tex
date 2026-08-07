@@ -87,23 +87,39 @@ We present the Agent Execution Protocol (AEP), a fail-closed execution protocol
 in which every external side effect is preceded by a durably acknowledged
 write-ahead intent, every state write is fenced by lock ownership and an exact
 expected-version compare-and-swap in one atomic script, and every unresolvable
-outcome halts and escalates rather than guessing. We evaluate AEP against five baselines --- naive
-retry, lease-only, CAS-only, an ablation without the durability barrier, and a
-durable-execution engine in both its vendor-default and at-most-once
-configurations --- under real \texttt{SIGKILL} process faults and hard Redis
-kills, across three endpoint reconciliation capabilities. AEP records no
-undetected duplicate and no lost effect in any configuration measured, while
-the baselines that lack a pre-dispatch record duplicate in the majority of
-crashed executions. AEP's residual is declared ambiguity, and its rate is set
-by what the endpoint can be asked rather than by the protocol. A hard Redis
-kill placed between the intent write and its acknowledgement shows what the
-durability barrier buys: over 30 runs per system under identical faults, AEP's
-dispatch gate withheld the mutation where the ablation sent it --- a difference
-of 18 real non-idempotent effects ($10/30$ versus $28/30$ applied, Fisher
-$p = 1.9\times10^{-6}$). We also report a negative result that
-narrows our own claim: a process-level kill cannot lose an unacknowledged
-Redis AOF write, so the barrier's durability benefit is unobservable under any
-process fault and holds only against loss of the page cache.
+outcome halts and escalates rather than guessing. We evaluate AEP against five
+baselines --- naive retry, lease-only, CAS-only, an ablation without the
+durability barrier, and a durable-execution engine in both its vendor-default
+and at-most-once configurations --- under real \texttt{SIGKILL} process faults,
+hard Redis kills and block-level write loss, across three endpoint
+reconciliation capabilities.
+
+Our central result separates two claims that the write-ahead pattern is usually
+sold as one. \emph{Detection} --- no undetected duplicate and no lost effect,
+with a residual of declared ambiguity whose rate is set by what the endpoint
+can be asked --- is produced by the durable pre-dispatch record alone. We show
+this by ablation rather than by argument: removing the durability barrier and
+changing nothing else leaves every detection metric statistically
+indistinguishable over \BthreeVsAepN{} executions per arm (undetected
+duplicates and lost effects both $0$ in both systems, $p = \BthreeVsAepDupP{}$;
+declared ambiguity $p = \BthreeVsAepAmbP{}$). \emph{Prevention} is what the
+barrier contributes, and it is a different quantity against a different fault:
+under a hard Redis kill placed between the intent write and its
+acknowledgement, the barrier withholds an effect the ablation puts on the wire,
+an unwanted-applied-effect rate of \AepUnwantedRate{} versus
+\BthreeUnwantedRate{} over \AepKillRuns{} runs per system
+($\AepKillApplied{}/\AepKillRuns{}$ versus
+$\BthreeKillApplied{}/\BthreeKillRuns{}$, Fisher $p = \UnwantedP{}$) ---
+\UnwantedPrevented{} real non-idempotent effects not committed.
+
+The barrier's durability claim, which a process kill cannot exercise at all
+because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not the
+\texttt{write(2)}, we test directly by making the block device stop accepting
+writes: acknowledged records survive \FlakeyAckSurvived{} and unacknowledged
+ones are destroyed \FlakeyUnackLost{} ($p = \FlakeyBarrierP{}$), against
+$0/10$ lost under a process kill on the same probe. Because detection does not
+depend on the barrier, its cost is a deployment choice rather than the
+protocol's price, and we give three measured points on that curve.
 \end{abstract}
 
 \begin{IEEEkeywords}

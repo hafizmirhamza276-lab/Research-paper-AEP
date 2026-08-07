@@ -3,19 +3,44 @@
 
 \subsection{Construct validity}
 
-\paragraph{The barrier's durability benefit is argued, not measured} This is
-the sharpest limitation in the paper and \cref{sec:eval-negative} is our own
-demonstration of it. We show that no process-level fault can separate B3 from
-AEP-full on record durability, because \texttt{appendfsync everysec} defers the
-\texttt{fsync(2)} and not the \texttt{write(2)}. The fault class against which
-\texttt{WAITAOF} does defend --- host power loss, kernel panic, VM destruction
---- was not injected. Obtaining it requires a VM whose power can be cut or a
-block layer that drops writes, and we judged a narrowed claim plus the probe
-that narrows it more useful than a fault a reviewer would not believe. The
-consequence is explicit: \textbf{the paper claims the barrier withholds
-dispatch when durability cannot be confirmed (measured, $p=1.9\times10^{-6}$)
-and does not claim that the barrier is what keeps the record across a crash}.
-Under a process kill, \texttt{appendonly yes} alone already does that.
+\paragraph{The barrier's durability benefit is measured on an emulated fault,
+not a real power cut} An earlier draft of this paper named the fault class
+\texttt{WAITAOF} defends against --- loss of the page cache --- and did not
+inject it, which left the durability half of the barrier's case resting on an
+argument. \Cref{sec:eval-durability} now injects it with a \texttt{dm-flakey}
+target in \texttt{drop\_writes} mode, and the result is unambiguous
+($\FlakeyAckSurvived{}$ acknowledged records survive,
+$\FlakeyUnackLost{}$ unacknowledged ones do not).
+
+What remains is that \texttt{drop\_writes} is an \emph{emulation} of a power
+cut, not a power cut. It is faithful in the dimension that matters --- writes
+issued after a chosen instant never reach the platter, while everything
+\texttt{fsync}-ed before it does --- and unfaithful in others: a real power
+loss can tear a sector mid-write, can lose writes the device claimed to have
+committed to its own volatile cache, and does not politely stop at a boundary
+we chose. Those differences all make real hardware \emph{worse} than our
+emulation, so the direction of the result is safe; its precision is not.
+Specifically, we cannot claim the acknowledged record would survive a real
+power cut on a device with a lying write cache, because \texttt{fsync} on such
+a device does not mean what the barrier assumes it means. That is a property of
+the storage, not of the protocol, and AEP inherits it from every system that
+trusts \texttt{fsync}.
+
+We also note what the probe deliberately does not model: the exposure window is
+maximised by phase-aligning to a just-completed fsync, so
+$\FlakeyUnackLost{}$ is the loss rate for a worst-placed cut rather than a
+uniformly-timed one (\cref{sec:eval-durability}).
+
+\paragraph{No process-level fault can exercise the barrier's durability at all}
+Stated separately because it is the more surprising half and it is the half a
+reader is most likely to have assumed the other way. \texttt{appendfsync
+everysec} defers the \texttt{fsync(2)} and not the \texttt{write(2)}, so a
+\texttt{SIGKILL} of Redis loses nothing that \texttt{appendonly yes} was not
+already keeping ($0/10$, and $n{=}60$ canaries in the ablation cells). The
+consequence for the claims is explicit: \textbf{under a process fault the
+barrier's contribution is prevention (\cref{sec:eval-prevention},
+$p=\UnwantedP{}$) and not durability}, and any reading of the barrier as
+protecting the record from a crashed Redis process is wrong.
 
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
 with a configurable delay, timeout and error distribution, and a

@@ -60,6 +60,19 @@ RESULTS_ROOT="experiments/results/fsync-always"
 CONF_LOCAL="${AEP_CONF_LOCAL:-$(pwd)/redis/phase2-always.conf}"
 CONF="${AEP_DOCKER_CONF:-${CONF_LOCAL}}"
 
+# Amendment G1 needs a second row in this cell: the same crash-free
+# configuration with the barrier ablated, under the same fsync policy. Without
+# it, "the barrier costs X under always" has to be computed by subtracting a
+# B3 median measured under *everysec*, which silently assumes the ablated
+# protocol's own writes cost the same under both policies -- an assumption,
+# not a measurement, sitting underneath a headline number.
+#
+# So the system list is a variable, and a second invocation can append to the
+# same results root instead of replacing it.
+SYSTEMS="${AEP_FSYNC_SYSTEMS:-AEP_FULL}"
+MOCK_PORT="${AEP_FSYNC_MOCK_PORT:-8098}"
+CLEAN="${AEP_FSYNC_CLEAN:-1}"
+
 echo "=============================================================="
 echo "F0(iii)  barrier latency under appendfsync=always"
 echo "=============================================================="
@@ -136,19 +149,28 @@ docker exec "${NAME}" redis-cli -n 15 SET aep:test-instance-marker 1
 echo
 
 # --------------------------------------------------------------- the cell
-echo "--- the cell: AEP-full, crash-free (p0), payments, 3 runs x 10 exec ---"
-echo "    identical to the everysec cell aep_full-none-payments-e5e5c7dc"
+echo "--- the cell: ${SYSTEMS}, crash-free (p0), payments, 3 runs x 10 exec ---"
+echo "    identical to the everysec cells of the same systems"
 echo "    (same matrix seed, so the per-run seeds are the same)"
 echo
-rm -rf "${RESULTS_ROOT}"
+if [ "${CLEAN}" = "1" ]; then
+  rm -rf "${RESULTS_ROOT}"
+else
+  echo "    appending to ${RESULTS_ROOT} (AEP_FSYNC_CLEAN=0)"
+fi
+SYSTEM_FLAGS=()
+for system in ${SYSTEMS}; do
+  SYSTEM_FLAGS+=(--system "${system}")
+done
 set -x
 uv run --frozen python -m experiments.run_matrix \
   --regime p0 \
-  --system AEP_FULL \
+  "${SYSTEM_FLAGS[@]}" \
   --endpoint payments \
   --redis-url "redis://127.0.0.1:${PORT}/15" \
   --results-root "${RESULTS_ROOT}" \
-  --port 8098
+  --resume \
+  --port "${MOCK_PORT}"
 set +x
 
 # ------------------------------------------------------------- the numbers

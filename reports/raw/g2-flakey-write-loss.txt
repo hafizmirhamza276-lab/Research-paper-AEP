@@ -1,0 +1,92 @@
+=== G2: host-level write loss (dm-flakey drop_writes), WSL2/Linux ===
+
+The same probe as experiments/redis_durability_window.py -- two keys, one
+WAITAOF-acknowledged and one not -- with the fault swapped from a process
+kill to a block device that stops accepting writes.
+
+--- kernel support ---
+$ uname -r ; dmsetup targets | grep flakey
+6.6.114.1-microsoft-standard-WSL2
+flakey           v1.5.0
+
+--- replication 2, full stdout ---
+==============================================================================
+G2: host-level write loss (dm-flakey drop_writes)
+==============================================================================
+  platform        Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  kernel          6.6.114.1-microsoft-standard-WSL2
+  redis           Redis server v=7.2.5 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=5259b0772c1000e1
+  dm targets      flakey           v1.5.0
+
+  loop            /dev/loop0
+  dm table (pass) 0 524288 flakey /dev/loop0 0 1 0
+  dm table (drop) 0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
+
+--- selftest: does the device stack actually lose writes? ---
+  table_pass                       0 524288 flakey /dev/loop0 0 1 0
+  table_drop                       0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
+  before_the_cut_survived          True
+  after_the_cut_survived           False
+  after_the_cut_fsync_error        None
+  valid                            True
+
+--- 30 trials ---
+  trial  0  barrier=  694.4ms  write->drop=  17.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  1  barrier=  666.0ms  write->drop=  23.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  2  barrier=  591.2ms  write->drop=  21.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  3  barrier=  564.9ms  write->drop=  28.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  4  barrier=  661.5ms  write->drop=  29.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  5  barrier=  465.7ms  write->drop=  21.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  6  barrier=  658.0ms  write->drop=  17.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  7  barrier=  660.6ms  write->drop=  24.9ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  8  barrier=  567.9ms  write->drop=  36.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial  9  barrier=  661.2ms  write->drop=  19.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 10  barrier=  662.3ms  write->drop=  23.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 11  barrier=  660.2ms  write->drop=  27.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 12  barrier=  660.0ms  write->drop=  15.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 13  barrier=  658.3ms  write->drop=  16.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 14  barrier=  683.2ms  write->drop=  24.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 15  barrier=  672.2ms  write->drop=  18.2ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 16  barrier=  558.8ms  write->drop=  22.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 17  barrier=  666.7ms  write->drop=  25.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 18  barrier=  556.5ms  write->drop=  19.4ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 19  barrier=  672.2ms  write->drop=  20.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 20  barrier=  661.7ms  write->drop=  22.3ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 21  barrier=  664.5ms  write->drop=  18.0ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 22  barrier=  661.8ms  write->drop=  22.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 23  barrier=  569.7ms  write->drop=  42.6ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 24  barrier=  562.7ms  write->drop=  21.7ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 25  barrier=  668.4ms  write->drop=  15.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 26  barrier=  665.2ms  write->drop=  24.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 27  barrier=  673.0ms  write->drop=  32.1ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 28  barrier=  581.4ms  write->drop=  25.8ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+  trial 29  barrier=  664.7ms  write->drop=  17.5ms  ack=True  unack=False  UNACKNOWLEDGED LOST
+
+--- summary ---
+  trials                         30
+  counted                        30
+  void                           0
+  acknowledged_survived          30
+  unacknowledged_lost            30
+  unacknowledged_survived        0
+  unacknowledged_loss_rate       1.0
+  write_to_drop_ms_min           15.558742001303472
+  write_to_drop_ms_max           42.63575799996033
+  barrier_ms_min                 465.6889179968857
+  barrier_ms_max                 694.4091379991733
+
+wrote experiments/results/g2-flakey-write-loss-rep2.json
+
+--- both replications, and the comparison against the E1 process-kill probe ---
+  g2-flakey-write-loss.json              counted= 30  void=0  ack survived=30/30  unack lost=30/30  window 12.4-34.8 ms
+  g2-flakey-write-loss-rep2.json         counted= 30  void=0  ack survived=30/30  unack lost=30/30  window 15.6-42.6 ms
+
+  POOLED  n=60  acknowledged survived 60/60  unacknowledged lost 60/60
+
+  Within G2: acknowledged lost 0/60 vs unacknowledged lost 60/60
+    Fisher exact, two-tailed p = 2.070073888186964e-35
+
+  Across fault classes, same probe, same two keys:
+    E1 docker kill -s KILL (process death) : 0/10 unacknowledged lost
+    G2 dm-flakey drop_writes (write loss)  : 60/60 unacknowledged lost
+    Fisher exact, two-tailed p = 2.5207678232969033e-12

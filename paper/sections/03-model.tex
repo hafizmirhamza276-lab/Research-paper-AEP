@@ -95,10 +95,12 @@ evidence is truthful.
       guess. A partition outlasting the lease is observationally equal to F5.
 \item[\textbf{F3}] \textbf{Redis restart with AOF replay.} Up to roughly one
       second of acknowledged-but-unsynced writes may be absent under
-      \texttt{appendfsync everysec}~\cite{redis-persistence}. \Cref{sec:eval-rq2}
-      reports a measurement that sharpens this considerably: which
-      \emph{faults} can actually realise that loss is narrower than the
-      documentation's wording suggests.
+      \texttt{appendfsync everysec}~\cite{redis-persistence}.
+      \Cref{sec:eval-durability} reports two probes that sharpen this
+      considerably: the set of \emph{faults} that can actually realise that
+      loss is narrower than the documentation's wording suggests --- a
+      process kill is not in it --- and a host-level write loss, which is,
+      realises it every time.
 \item[\textbf{F4}] \textbf{Delayed or duplicated external responses.} A late
       effect cannot be recalled; recovery waits out a reconciliation delay
       before drawing any conclusion, and never re-dispatches.

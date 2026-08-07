@@ -84,15 +84,20 @@ the accounts.
       a pre-dispatch record duplicate in most crashed executions. AEP's
       residual is declared ambiguity whose rate is a function of what the
       endpoint can be asked (\cref{sec:evaluation}).
-\item[\textbf{C4}] \textbf{Two negative results that narrow our own claims},
-      both of which a reviewer would otherwise have to extract from us. First,
-      a hard process kill \emph{cannot} lose an unacknowledged Redis AOF write,
-      because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not
-      the \texttt{write(2)}; the durability barrier's benefit is therefore
-      unobservable under any process-level fault, and we name the fault class
-      it does hold against. Second, the same barrier's \emph{other} benefit ---
-      withholding dispatch when durability cannot be confirmed --- is real,
-      large and measured (\cref{sec:eval-rq2}).
+\item[\textbf{C4}] \textbf{A decomposition of the mechanism, by ablation,
+      that reassigns our own headline result.} The write-ahead pattern is
+      normally presented as one mechanism delivering one guarantee. It is two.
+      The \emph{durable pre-dispatch record} is what makes an outcome
+      detectable, and it does so without the durability barrier: ablating the
+      barrier and changing nothing else leaves every detection metric
+      indistinguishable (\cref{sec:eval-detection}). The \emph{barrier} buys
+      something else --- it withholds the external call when durability can no
+      longer be confirmed --- which is invisible to the crash faults that
+      dominate this literature and large under the fault that targets the
+      coordinator (\cref{sec:eval-prevention}). Separating them changes what a
+      deployment must pay for: detection is nearly free, prevention is where
+      the fsync cost lives, and an operator can buy the first without the
+      second (\cref{sec:eval-deployment}).
 \end{itemize}
 
 \subsection{What this paper does not claim}

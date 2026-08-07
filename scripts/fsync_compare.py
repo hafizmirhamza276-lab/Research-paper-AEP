@@ -40,7 +40,14 @@ def main() -> int:
         "--emit",
         type=Path,
         default=None,
-        help="write the LaTeX fragment for paper/generated/fsync-comparison.tex",
+        help=(
+            "write a standalone LaTeX fragment. NOT used by the manuscript "
+            "since amendment G1: the two rows this produces are now part of "
+            "table-deployment-choice.tex, which paper_tables.py generates "
+            "alongside the barrier-less row and which check_paper_numbers.py "
+            "regenerates and diffs. Two generators for one table is two "
+            "places for a number to drift"
+        ),
     )
     arguments = parser.parse_args()
 
