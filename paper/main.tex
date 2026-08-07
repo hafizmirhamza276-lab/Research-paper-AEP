@@ -60,7 +60,7 @@
 
 \begin{document}
 
-\title{Declared Ambiguity: A Fail-Closed Execution Protocol for\\
+\title{Declared Ambiguity: The Agent Execution Protocol (AEP) for\\
 Autonomous Agents Calling Non-Idempotent Legacy APIs}
 
 \author{%
@@ -83,11 +83,11 @@ no record accounts for. We argue that the choice between these is not a
 question of engineering quality but a three-way trade, and that a system's
 obligation is to make the third corner reachable: to convert silent failure
 into \emph{declared, durable, bounded ambiguity} that an operator can act on.
-We present AEP, a fail-closed execution protocol in which every external side
-effect is preceded by a durably acknowledged write-ahead intent, every state
-write is fenced by lock ownership and an exact expected-version
-compare-and-swap in one atomic script, and every unresolvable outcome halts and
-escalates rather than guessing. We evaluate AEP against five baselines --- naive
+We present the Agent Execution Protocol (AEP), a fail-closed execution protocol
+in which every external side effect is preceded by a durably acknowledged
+write-ahead intent, every state write is fenced by lock ownership and an exact
+expected-version compare-and-swap in one atomic script, and every unresolvable
+outcome halts and escalates rather than guessing. We evaluate AEP against five baselines --- naive
 retry, lease-only, CAS-only, an ablation without the durability barrier, and a
 durable-execution engine in both its vendor-default and at-most-once
 configurations --- under real \texttt{SIGKILL} process faults and hard Redis

@@ -1,0 +1,174 @@
+==============================================================
+F0(iii)  barrier latency under appendfsync=always
+==============================================================
+
+--- config under test ---
+read by this script : /mnt/d/personal/AEP/Research-paper-AEP/redis/phase2-always.conf
+mounted by docker   : D:\personal\AEP\Research-paper-AEP\redis\phase2-always.conf
+
+--- the only line that differs from redis/phase2.conf ---
+1,12c1,10
+< bind 0.0.0.0
+< protected-mode no
+< port 6379
+< databases 16
+< 
+< dir /data
+< save ""
+< 
+< appendonly yes
+< appendfsync everysec
+< appenddirname appendonlydir
+< aof-use-rdb-preamble yes
+---
+> bind 0.0.0.0
+> protected-mode no
+> port 6379
+> databases 16
+> dir /data
+> save ""
+> appendonly yes
+> appendfsync always
+> appenddirname appendonlydir
+> aof-use-rdb-preamble yes
+
+--- starting aep-fsync-always on 127.0.0.1:6383 ---
+
+--- verifying the server is actually running the policy under test ---
+$ redis-cli CONFIG GET appendfsync
+appendfsync = always
+$ redis-cli CONFIG GET appendonly
+yes
+$ redis-cli INFO server | grep redis_version
+redis_version:7.2.5
+run_id:b91857894c60b611aeef37e39c686065efd4941f
+gate passed.
+
+--- marking the throwaway instance disposable (Phase 2A guard) ---
+$ redis-cli -n 15 SET aep:test-instance-marker 1
+OK
+
+--- the cell: AEP-full, crash-free (p0), payments, 3 runs x 10 exec ---
+    identical to the everysec cell aep_full-none-payments-e5e5c7dc
+    (same matrix seed, so the per-run seeds are the same)
+
++ uv run --frozen python -m experiments.run_matrix --regime p0 --system AEP_FULL --endpoint payments --redis-url redis://127.0.0.1:6383/15 --results-root experiments/results/fsync-always --port 8098
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     True   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     30 (3 runs x 10 executions)
+  workers per run      2
+  cells (total)        1
+  cells (applicable)   1
+  cells (not applic.)  0
+  runs planned         3
+  estimated wall time  0.04 h (130.5 s)
+
+  by tier:
+    tier 3:    3 runs,  0.04 h   E2: crash-free and 30% cells -- the only cells RQ3 can use
+
+  regimes (a regime is a condition, not a dimension):
+    p0                     p(crash)=0.0  runs=3    shape=3 x 10
+      no crash (RQ3 overhead: the only cells overhead is computed from)
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    3     p0                   AEP_FULL                             none                               payments         CALLER_REFERENCE     3
+
+==============================================================================
+plan written to experiments/results/fsync-always/matrix-plan.json and matrix-plan.txt
+[1/3] tier 3 AEP_FULL none payments CALLER_REFERENCE rep0
+[2/3] tier 3 AEP_FULL none payments CALLER_REFERENCE rep1
+[3/3] tier 3 AEP_FULL none payments CALLER_REFERENCE rep2
+
+==============================================================================
+collected 3 run(s), skipped 0 already-collected
+wall time 0.03 h
+progress: experiments/results/fsync-always/matrix-progress.jsonl
+resume with: python -m experiments.run_matrix --resume --results-root experiments/results/fsync-always
+==============================================================================
++ set +x
+
+--- analysis of the appendfsync=always cell ---
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 1,
+  "crash_free_runs": 3,
+  "crash_points": [
+    "none"
+  ],
+  "executions": 30,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "p0"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK"
+  ],
+  "runs": 3,
+  "runs_dropped_for_clock_suspension": 0,
+  "runs_dropped_for_undeclared_suspend_policy": 0,
+  "runs_with_a_hard_redis_kill": 0,
+  "runs_with_usable_timing": 3,
+  "systems": [
+    "AEP_FULL"
+  ],
+  "worst_suspension_seconds": 0.039
+}
+
+Table 1 -- per system, pooled over every cell collected
+==============================================================================================
+system                  runs   exec  undet.dup           95% CI  known amb.    lost   Fisher p
+----------------------------------------------------------------------------------------------
+AEP_FULL                   3     30     0.0000   [0.000, 0.000]      0.0000  0.0000         --
+==============================================================================================
+
+written:
+  experiments/results/fsync-always/analysis/table-1.csv
+  experiments/results/fsync-always/analysis/per-cell-metrics.csv
+  experiments/results/fsync-always/analysis/comparisons-vs-aep-full.csv
+  experiments/results/fsync-always/analysis/latency-and-throughput.csv
+  experiments/results/fsync-always/analysis/per-execution.csv
+  experiments/results/fsync-always/analysis/metric-undetected-duplicate-rate.csv
+  experiments/results/fsync-always/analysis/metric-known-ambiguity-rate.csv
+  experiments/results/fsync-always/analysis/metric-lost-effect-rate.csv
+  experiments/results/fsync-always/analysis/metric-unverified-failure-rate.csv
+  experiments/results/fsync-always/analysis/metric-state-corruption-rate.csv
+  experiments/results/fsync-always/analysis/metric-recovery-success-rate.csv
+  experiments/results/fsync-always/analysis/figure-1-undetected-vs-ambiguity.pdf
+  experiments/results/fsync-always/analysis/coverage.json
+
+--- side by side ---
+==============================================================================
+Barrier cost as a function of durability policy -- AEP_FULL
+==============================================================================
+appendfsync     runs   exec   median ms     p95 ms   over 2000ms floor
+------------------------------------------------------------------------------
+everysec           3     30      4004.9     6892.9              2004.9
+always             3     30      2063.4     5067.8                63.4
+------------------------------------------------------------------------------
+
+Two WAITAOF barriers cost 2004.9 ms under everysec and 63.4 ms under always.
+Difference: 1941.5 ms.
+
+The everysec figure is the one a reader would otherwise take as 'AEP's overhead'.
+It is the cost of waiting for a scheduled fsync that is up to one second away,
+not the cost of the protocol. The protocol minus the barrier costs 28 ms
+(B3 versus B0, same cell family).
+
+--- teardown ---
+removed aep-fsync-always
+
+=== throughput, both policies (AEP-full, crash-free, E5-gated) ===
+always     crashfree_runs=3   median=   2063.4 p95=   5067.8 min=   2038.7 exec_per_s= 0.4222 run_wall_s=71.062
+everysec   crashfree_runs=3   median=   4004.9 p95=   6892.9 min=   2651.2 exec_per_s= 0.3269 run_wall_s=91.785

@@ -23,8 +23,12 @@ retry counter above its threshold, no ambiguous record. The execution is
 \emph{green}.
 
 This is not a strawman configuration; it is what a retry-on-timeout loop does,
-and it is the behaviour we measure for B0. Across the crashed cells,
-\todoitem{final B0 rate inserted at freeze} of executions ended this way.
+and it is the behaviour we measure for B0. Across the crashed cells B0 ends
+this way in \BaselineDupLow{}--\BaselineDupHigh{} of executions depending on
+the endpoint, and so do B1 and B2 (\cref{tab:outcomes}).
+% \BaselineDupLow / \BaselineDupHigh: generated/numbers.tex, the min and max
+% undetected-duplicate rate over {B0,B1,B2} x three response classes,
+% crashed regime.
 
 \subsection{Trace 2 --- a lease and a fenced write do not help}
 

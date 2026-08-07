@@ -1,0 +1,18 @@
+=== The two figure-computation defects: failing, then passing ===
+
+Defect 1: write_figures() drew figure 1 from table_one -- analysis/table-1.csv,
+the table Session 3B banned for pooling three fault regimes.
+
+Defect 2: figure 2 pooled response classes with
+    current[point] = rate if previous is None else (previous + rate) / 2
+under a comment claiming it weighted on counts.
+
+$ python -m pytest experiments/tests/test_figure_pooling.py -q   # post-fix
+.....                                                                    [100%]
+5 passed in 0.02s
+
+The arithmetic the test pins, printed:
+  cells (successes/total): [(1, 10), (0, 10), (30, 30)]
+  correct pooled rate    : 31/50 = 0.6200
+  old running mean       : 0.5250
+  divergence             : 0.0950

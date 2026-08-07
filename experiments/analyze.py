@@ -1333,7 +1333,10 @@ def main(argv: list[str] | None = None) -> int:
             "here, and the pooled number is therefore a property of how many "
             "runs of each kind happen to have been collected. It is a coverage "
             "summary, NOT a result. Quote per-cell-metrics.csv, which is "
-            "grouped by system, crash point, response class and keying."
+            "grouped by regime, system, crash point, response class and "
+            "keying. The regime is in that key precisely so that the file "
+            "this warning points at cannot repeat the defect the warning "
+            "describes."
         )
     dropped = coverage["runs_dropped_for_clock_suspension"]
     if dropped:

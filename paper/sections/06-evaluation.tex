@@ -92,9 +92,14 @@ external call.
 \paragraph{A durable log is not enough --- and this is the sharpest statement
 available} B4 has a write-ahead record, acknowledged durable by the same
 \texttt{WAITAOF} barrier AEP uses. It is not ablated on durability. It
-duplicates at \todoitem{B4 tier-1 completion, currently $n{=}20$}. The record
-is necessary and it is not sufficient, because the record cannot contain the
-fact that matters --- whether the provider applied the effect. What separates
+duplicates at $0.9500$ --- the highest rate of any system here --- on the one
+capability class for which it was collected.
+% source: per-cell-metrics.csv, system=B4_DURABLE_WORKFLOW,
+% regime=(session-3), response_class=AUTHORITATIVE_READBACK: 19/20.
+% B4's tier-2 and tier-3 cells are in the plan and were not collected; see
+% the coverage paragraph in Section 8. n=20 is thin and the interval is wide.
+The record is necessary and it is not sufficient, because the record cannot
+contain the fact that matters --- whether the provider applied the effect. What separates
 B3 and AEP-full from B4 is not durability but the \emph{absence of an edge back
 into the dispatching state}: the transition table has no path that re-enters
 \textsc{about-to-fire}, checked inside the atomic script
@@ -143,6 +148,33 @@ silence when it did. The cells where an effect \emph{does} typically exist ---
 \texttt{mid\_dispatch} and \texttt{after\_response\_before\_resolution} under
 \textsc{pos-only} --- show low ambiguity, because a positive read-back
 confirms the effect and the intent resolves.
+
+\subsubsection{Why the provably-empty cell is not resolved, and what it would
+cost}
+\label{sec:eval-provable}
+
+The \texttt{after\_barrier\_before\_dispatch} row invites an obvious question:
+if the worker died before sending anything, \emph{the system could know that}.
+Why is the outcome ambiguous rather than a confirmed non-event?
+
+Because nothing durable records it. The last durable write before the call is
+the dispatch authorization, and the runner then performs preflight, mints the
+capability and calls the connector without touching Redis again. A recovery
+process reading the store afterwards sees an authorized, unresolved intent ---
+and that is exactly what it would see had the worker died \emph{during}
+transmission. The two histories are identical in the store, so recovery fails
+closed, which is the correct behaviour given what it can observe.
+
+Closing the gap is possible and we did not do it: a third durable barrier
+immediately before transmission would split the two cases and let recovery
+refute the earlier one. The measured price of a barrier on this configuration
+is \BarrierCostEach{}\,ms (\cref{sec:eval-rq3}), so that is roughly a 50\%
+latency increase to convert one crash point's declared ambiguities into
+confirmed non-events --- and it narrows rather than closes the window, since a
+crash between that barrier and the socket write returns the same ambiguity.
+We record the trade rather than take it, and note that its value depends
+entirely on the deployment's ratio of crash points, which our uniform matrix
+deliberately does not model.
 
 \begin{figure}[t]
 \centering
@@ -293,11 +325,42 @@ is precisely what we measure. B4 and B4b landing on the same figure with their
 own two acknowledged appends is independent confirmation that the cost is the
 barrier and not anything AEP does around it.
 
-To show that the barrier's cost is a point on a curve rather than a constant,
-we re-ran the crash-free AEP-full configuration against a Redis configured with
-\texttt{appendfsync always}, changing nothing else.
-% source: reports/raw/f0iii-appendfsync-always.txt
+\subsubsection{The barrier's cost is a configuration, and here is the second
+point on the curve}
+\label{sec:eval-fsync}
+
+The $\approx 2$-second figure above is the one a reader would carry away as
+``AEP's overhead''. To show that it is a property of the durability setting
+rather than of the protocol, we re-ran the identical crash-free AEP-full cell
+--- same system, endpoint, regime, seeds, host and provider --- against a Redis
+whose only changed line is \texttt{appendfsync always}.
+% source: reports/raw/f0iii-appendfsync-always.txt; the run refuses to proceed
+% unless CONFIG GET appendfsync reads back 'always' on the live server.
+
 \input{generated/fsync-comparison}
+
+The barrier's cost falls from $2\,004.9$\,ms to $63.4$\,ms --- a factor of
+$31$ --- for one line of configuration. The reason is mechanical: under
+\texttt{everysec} an acknowledgement must wait for the next scheduled fsync,
+up to a second away, and the protocol waits twice; under \texttt{always} the
+fsync has already happened by the time the write returns, so
+\texttt{WAITAOF} has nothing left to wait for.
+
+\textbf{This measurement says nothing about what \texttt{always} costs under
+load, and we are not recommending it.} The Redis documentation calls
+\texttt{always} ``very very slow, very safe''~\cite{redis-persistence}, and
+that judgement is about write throughput, which our workload cannot exercise:
+two workers, a two-second provider delay, and a handful of writes per step
+leave the system latency-bound and nowhere near an fsync-rate limit. Our
+throughput figure is in fact \emph{higher} under \texttt{always}
+($0.42$ versus $0.33$ executions/s), which is a statement about this
+workload's shape and not about Redis. A write-heavy deployment would land
+somewhere else on the curve entirely, and finding where is not something this
+evaluation attempted.
+
+What the two points do establish is the shape of the claim: the protocol's
+irreducible cost is \ProtocolMinusBarrier{}\,ms, and everything above that is
+the durability policy, which the operator chooses.
 
 \subsection{RQ4 --- recovery}
 \label{sec:eval-rq4}

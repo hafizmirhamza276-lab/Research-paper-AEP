@@ -1,0 +1,24 @@
+$ uv run --frozen python scripts/check_paper_numbers.py
+======================================================================
+check_paper_numbers.py -- the manuscript against its results
+======================================================================
+paper    /mnt/d/personal/AEP/Research-paper-AEP/paper
+analysis experiments/results/matrix/analysis
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  paper_tables.py runs
+  PASS  numbers.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  state-machine figure matches the transition table
+  PASS  bibliography has entries
+  PASS  no empty bibliography entries
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+13 passed, 0 failed

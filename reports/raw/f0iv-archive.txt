@@ -1,0 +1,47 @@
+=== F0(iv) archive ===
+
+Two things a reader needs: the run logs and oracle ledgers the numbers were
+computed from, and the manifest saying which cell each run belongs to.
+The -shm/-wal sidecars are excluded: they are SQLite runtime state, the
+ledgers are checkpointed, and they are a third of the tree.
+
+$ tar czf aep-matrix-results-2026-08-07.tar.gz --exclude=*-shm --exclude=*-wal matrix fsync-always
+-rw-r--r-- 1 root root 4816547 Aug  7 14:53 aep-matrix-results-2026-08-07.tar.gz
+
+$ sha256sum aep-matrix-results-2026-08-07.tar.gz
+84eed525309d98fca98bd76074ced79c06ba739e2c4022ac263c6a24bb831c46  aep-matrix-results-2026-08-07.tar.gz
+
+$ tar tzf ... | wc -l   # entries
+6731
+
+--- the manifest inside it ---
+# Results manifest -- Phase 4 Session 1
+
+Run counts per cell, keyed the way the paper quotes them. A cell is `(regime, system, crash point, response class, read-back keying)`. The regime is part of the key because pooling regimes is what disqualified the summary table as a source: a crash-free run and a run in which every execution was killed are different experiments, not repetitions of one.
+
+Produced by `scripts/freeze_results.py`, which loads each run through the same `experiments.analyze.load_run` the analysis uses, so these counts and the CSVs cannot disagree.
+
+## Totals
+
+- completed runs: **326**
+- executions: **2720**
+- of which crashed: **2450**
+- cells: **91**
+- directories with no parsing log (interrupted, not counted): **2**
+
+## By regime
+
+| regime | cells | runs |
+|---|---|---|
+| `(session-3)` | 82 | 245 |
+| `p0` | 7 | 21 |
+| `redis-kill-preack` | 2 | 60 |
+
+## Cells
+
+| regime | system | crash point | response class | keying | runs |
+|---|---|---|---|---|---|
+| `(session-3)` | AEP_FULL | `after_barrier_before_dispatch` | AUTHORITATIVE_READBACK | CALLER_REFERENCE | 3 |
+| `(session-3)` | AEP_FULL | `after_barrier_before_dispatch` | NO_READBACK | CALLER_REFERENCE | 3 |
+| `(session-3)` | AEP_FULL | `after_barrier_before_dispatch` | POSITIVE_ONLY_READBACK | CALLER_REFERENCE | 3 |
+| `(session-3)` | AEP_FULL | `after_intent_before_barrier` | AUTHORITATIVE_READBACK | CALLER_REFERENCE | 3 |

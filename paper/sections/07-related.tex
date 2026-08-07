@@ -73,6 +73,43 @@ guarantee than these systems provide; it is a different residual.} Where they
 must assume the precondition and are silent when it fails, AEP declines to
 decide and says so.
 
+\begin{table}[t]
+\centering
+\caption{Where AEP sits. ``Endpoint must cooperate'' means the guarantee
+requires something of the effectful callee --- idempotence, an idempotency key,
+transaction enrolment, or a compensation. ``Can report \emph{unknown}'' means
+the system has a terminal outcome class distinct from success and failure.
+AEP's row is not a stronger guarantee than the others; it is the only one whose
+residual is declared.}
+\label{tab:related}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & endpoint must & can report & residual on \\
+ & cooperate & \emph{unknown} & failure \\
+\midrule
+Lease / fenced CAS~\cite{gray1989leases,kleppmann2016locking}
+  & n/a & no & duplicate effect \\
+Sagas~\cite{garciamolina1987sagas}
+  & compensation & no & compensation gap \\
+Beldi~\cite{zhang2020beldi}
+  & yes & no & --- \\
+Durable Functions~\cite{burckhardt2021durable}
+  & yes & no & duplicate or loss \\
+Boki~\cite{jia2021boki}
+  & yes & no & --- \\
+ExoFlow~\cite{zhuang2023exoflow}
+  & yes & no & --- \\
+Temporal-style, $\infty$ retries~\cite{temporal-retry}
+  & yes & no & duplicate effect \\
+Temporal-style, 1 attempt~\cite{temporal-retry}
+  & yes & no & lost effect \\
+\midrule
+\textbf{AEP} & \textbf{no} & \textbf{yes} & \textbf{declared ambiguity} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Agents} Tool-using and reasoning-acting agents~\cite{yao2023react,
 schick2023toolformer} and agent operating systems~\cite{mei2024aios} have made
 the workload in this paper common: autonomous, nondeterministic planners

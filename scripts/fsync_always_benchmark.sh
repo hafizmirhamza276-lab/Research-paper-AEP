@@ -33,7 +33,32 @@ IMAGE="redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b
 NAME="aep-fsync-always"
 PORT="6383"
 RESULTS_ROOT="experiments/results/fsync-always"
-CONF="/tmp/aep-fsync-always.conf"
+
+# The config the container must actually load.
+#
+# Two attempts failed here and both failed *silently at the Docker layer*: the
+# container started, found nothing at the mount point, and came up on the
+# compiled-in defaults (`appendfsync everysec`, `appendonly no`). Only the
+# gate below noticed.
+#
+# The cause is that this Docker Desktop resolves bind-mount sources in the
+# Windows filesystem, not in the WSL distro's. The matrix's own Redis proves
+# it -- `docker inspect aep-phase2-redis72` reports its source as
+# `D:\...\Research-paper-AEP\redis\phase2.conf`, a Windows path, even though
+# the harness driving it runs inside WSL. A source under the distro's `/root`
+# or `/tmp` does not exist as far as the daemon is concerned.
+#
+# And `/mnt/d/...` is not it either: mounting that produced an empty directory
+# at the destination, the daemon's way of saying it could not resolve the
+# source. This `docker` is a wrapper forwarding to `docker.exe`, so the source
+# must be a *Windows* path.
+#
+# Two variables, because the shell and the daemon do not agree on what a path
+# is. CONF_LOCAL is what this script reads (POSIX, for the diff and the
+# existence check); AEP_DOCKER_CONF is what the daemon mounts. They must name
+# the same file, and the config gate below is what proves they did.
+CONF_LOCAL="${AEP_CONF_LOCAL:-$(pwd)/redis/phase2-always.conf}"
+CONF="${AEP_DOCKER_CONF:-${CONF_LOCAL}}"
 
 echo "=============================================================="
 echo "F0(iii)  barrier latency under appendfsync=always"
@@ -52,23 +77,18 @@ trap cleanup EXIT
 docker rm -f "${NAME}" >/dev/null 2>&1 || true
 
 # ---------------------------------------------------------- the config file
-# Identical to redis/phase2.conf except for the one line under test.
-cat > "${CONF}" <<'CONFEOF'
-bind 0.0.0.0
-protected-mode no
-port 6379
-databases 16
-dir /data
-save ""
-appendonly yes
-appendfsync always
-appenddirname appendonlydir
-aof-use-rdb-preamble yes
-CONFEOF
+if [ ! -f "${CONF_LOCAL}" ]; then
+  echo "missing ${CONF_LOCAL}" >&2
+  exit 1
+fi
 
-echo "--- config under test (diff against redis/phase2.conf) ---"
-diff <(sed 's/[[:space:]]*$//' redis/phase2.conf | grep -v '^#' | grep -v '^$') \
-     <(sed 's/[[:space:]]*$//' "${CONF}" | grep -v '^$') || true
+echo "--- config under test ---"
+echo "read by this script : ${CONF_LOCAL}"
+echo "mounted by docker   : ${CONF}"
+echo
+echo "--- the only line that differs from redis/phase2.conf ---"
+diff <(grep -vE '^#|^$' redis/phase2.conf) \
+     <(grep -vE '^#|^$' "${CONF_LOCAL}") || true
 echo
 
 # ------------------------------------------------------------------ start
@@ -101,6 +121,18 @@ if [ "${ACTUAL}" != "always" ]; then
   exit 1
 fi
 echo "gate passed."
+echo
+
+# ------------------------------------------------- the disposability marker
+# Phase 2A replaced the test fixture's FLUSHALL with a guard: the harness
+# refuses to run against a Redis that has not asserted it is disposable,
+# because it kills processes holding leases on that instance and deletes the
+# keys it created. A fresh throwaway container has to opt in explicitly, and
+# that opt-in is recorded here rather than buried, because the guard existing
+# is a property the artifact claims.
+echo "--- marking the throwaway instance disposable (Phase 2A guard) ---"
+echo '$ redis-cli -n 15 SET aep:test-instance-marker 1'
+docker exec "${NAME}" redis-cli -n 15 SET aep:test-instance-marker 1
 echo
 
 # --------------------------------------------------------------- the cell

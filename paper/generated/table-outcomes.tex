@@ -18,10 +18,10 @@
 system & \textsc{auth} & \textsc{pos-only} & \textsc{none} & \textsc{auth} & \textsc{pos-only} & \textsc{none} & \textsc{auth} & \textsc{pos-only} & \textsc{none}\\
 \midrule
 B0 naive retry & 0.8200 & 0.8000 & 0.7733 & 0.0133 & 0.0133 & 0.0067 & 0.0000 & 0.0000 & 0.0000\\
-B1 lease-only & 0.8133 & 0.7750 & 0.8267 & 0.0000 & 0.0083 & 0.0067 & 0.0000 & 0.0000 & 0.0000\\
-B2 CAS-only & 0.8067 & --- & --- & 0.0067 & --- & --- & 0.0000 & --- & ---\\
+B1 lease-only & 0.8133 & 0.8067 & 0.8267 & 0.0000 & 0.0067 & 0.0067 & 0.0000 & 0.0000 & 0.0000\\
+B2 CAS-only & 0.8067 & 0.7933 & 0.7800 & 0.0067 & 0.0067 & 0.0000 & 0.0000 & 0.0000 & 0.0000\\
 B4 durable, $\infty$ attempts & 0.9500 & --- & --- & 0.0000 & --- & --- & 0.0000 & --- & ---\\
-B3 intent, no barrier & 0.0000 & --- & --- & 0.0000 & --- & --- & 0.0000 & --- & ---\\
+B3 intent, no barrier & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.3667 & 0.7167\\
 \textbf{AEP-full} & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.3500 & 0.7222\\
 \bottomrule
 \end{tabular}
@@ -32,11 +32,15 @@ B3 intent, no barrier & 0.0000 & --- & --- & 0.0000 & --- & --- & 0.0000 & --- &
 %   B0_NAIVE_RETRY                     POSITIVE_ONLY_READBACK   executions=150   runs=15   crash_points=5
 %   B0_NAIVE_RETRY                     NO_READBACK              executions=150   runs=15   crash_points=5
 %   B1_LEASE_ONLY                      AUTHORITATIVE_READBACK   executions=150   runs=15   crash_points=5
-%   B1_LEASE_ONLY                      POSITIVE_ONLY_READBACK   executions=120   runs=12   crash_points=4
+%   B1_LEASE_ONLY                      POSITIVE_ONLY_READBACK   executions=150   runs=15   crash_points=5
 %   B1_LEASE_ONLY                      NO_READBACK              executions=150   runs=15   crash_points=5
 %   B2_CAS_ONLY                        AUTHORITATIVE_READBACK   executions=150   runs=15   crash_points=5
+%   B2_CAS_ONLY                        POSITIVE_ONLY_READBACK   executions=150   runs=15   crash_points=5
+%   B2_CAS_ONLY                        NO_READBACK              executions=150   runs=15   crash_points=5
 %   B4_DURABLE_WORKFLOW                AUTHORITATIVE_READBACK   executions=20    runs=2    crash_points=1
 %   B3_INTENT_NO_BARRIER               AUTHORITATIVE_READBACK   executions=180   runs=18   crash_points=6
+%   B3_INTENT_NO_BARRIER               POSITIVE_ONLY_READBACK   executions=180   runs=18   crash_points=6
+%   B3_INTENT_NO_BARRIER               NO_READBACK              executions=180   runs=18   crash_points=6
 %   AEP_FULL                           AUTHORITATIVE_READBACK   executions=180   runs=18   crash_points=6
 %   AEP_FULL                           POSITIVE_ONLY_READBACK   executions=180   runs=18   crash_points=6
 %   AEP_FULL                           NO_READBACK              executions=180   runs=18   crash_points=6
