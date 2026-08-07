@@ -283,10 +283,23 @@ def build_system(
             storage_adapter=RedisStorageAdapter(redis_client),
             **shared,
         )
-    if system is SystemId.B4_DURABLE_WORKFLOW:
+    if system in (
+        SystemId.B4_DURABLE_WORKFLOW,
+        SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
+    ):
+        # One class, two retry policies. B4b's Maximum Attempts = 1 is read
+        # from the descriptor's `redispatches_on_replay`, so "B4b does not
+        # re-send" is the same fact the paper's system table prints rather
+        # than a second, independently maintained switch.
         return b4_durable_workflow.DurableWorkflowRunner(
             lock_manager=lock_manager,
             barrier=RealWaitAofDurabilityBarrier(),
+            system=system,
+            activity_maximum_attempts=(
+                b4_durable_workflow.UNLIMITED_ACTIVITY_ATTEMPTS
+                if config.descriptor.redispatches_on_replay
+                else 1
+            ),
             **shared,
         )
     raise KeyError(f"no runner is registered for {system}")
@@ -327,11 +340,18 @@ async def classify_execution(config, redis_client, execution_id: str):
             intent_id=intent.intent_id,
         )
 
+    if system in (
+        SystemId.B4_DURABLE_WORKFLOW,
+        SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
+    ):
+        return await b4_durable_workflow.classify(
+            redis_client, execution_id, system=system
+        )
+
     classifier = {
         SystemId.B0_NAIVE_RETRY: b0_naive_retry.classify,
         SystemId.B1_LEASE_ONLY: b1_lease_only.classify,
         SystemId.B2_CAS_ONLY: b2_cas_only.classify,
-        SystemId.B4_DURABLE_WORKFLOW: b4_durable_workflow.classify,
     }[system]
     return await classifier(redis_client, execution_id)
 

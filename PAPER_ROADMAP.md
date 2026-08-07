@@ -7,6 +7,7 @@
 
 ---
 
+
 ## 0. Where the project stands today (honest baseline)
 
 **Strengths already in the repo:**
@@ -164,6 +165,44 @@ Run the full suite against real Redis 7.2 in Docker and paste the raw output int
 > buffered write, so a hard Redis kill is needed before any B3-versus-AEP claim
 > is made. That is §F3 and the first prerequisite in §H of the Session 3
 > report.
+>
+> **Session 3B is COMPLETE for E1–E6; the matrix is PARTIAL** — report:
+> `reports/phase-report-2b-session3b-2026-08-07.md`. Three results change what
+> the paper can say.
+>
+> **(1) The central claim has evidence, and it is graded.** Session 3's
+> known-ambiguity rate of 0.0000 was an artifact of running only the endpoint
+> that can prove absence. Against the endpoints where the claim lives,
+> AEP-full's known-ambiguity rate is **0.0000 / 0.4200 / 0.6667** for
+> `AUTHORITATIVE_READBACK` / `POSITIVE_ONLY_READBACK` / `NO_READBACK`, with
+> undetected duplicates and lost effects at **0.0000 in all three**. The bound
+> on ambiguity is set by what the endpoint can be asked, not by the protocol.
+>
+> **(2) The hard Redis kill exists, and it refuted half its own premise.** A
+> process `SIGKILL` **cannot** lose an unfsynced AOF write — `appendfsync
+> everysec` defers the `fsync(2)`, not the `write(2)`, so the bytes are already
+> in the kernel's page cache (0/10 lost in a dedicated probe, 60/60 canaries
+> surviving in the cells). **The barrier's durability benefit is unobservable
+> under any process-level fault and the paper's claim must name the fault class
+> it holds against — host power loss, kernel panic, VM destruction.** The
+> barrier's *other* benefit is measured and large: with Redis killed between
+> the intent CAS and the barrier acknowledgement, AEP-full's `DurabilityAck`
+> gate withheld the dispatch in **20 of 30** runs while B3 put the mutation on
+> the wire in **28 of 30** (10/30 vs 28/30 applied, Fisher **p = 1.9e-06**).
+>
+> **(3) RQ3 has numbers, and the overhead is the barrier.** From crash-free
+> cells only: the entire write-ahead protocol minus the barrier costs **28 ms**
+> on a 2-second call; the two `WAITAOF` round trips cost **≈ 1 967 ms**. That
+> is a property of `appendfsync everysec`, not of AEP.
+>
+> Also: `experiments/baselines/B4_SEMANTICS.md` is the B4 fairness lock, citing
+> Temporal's own documentation (default Maximum Attempts = *unlimited*), and
+> **B4b** — the documented at-most-once configuration — is implemented and
+> shows the trade it predicts: 0.0000 duplicates, 0.0000 declared ambiguity,
+> **0.1000 lost effects**. Read §F1, §F2 and §C.9 before Session 4: Table 1 now
+> pools three fault regimes and is a coverage summary rather than a result, and
+> a resume defect that could silently inflate a resumed run's counts was found
+> by the matrix and fixed.
 
 Build a **crash-point fault-injection harness** + **mock legacy API** + **multi-process workload driver**. Everything runs on one machine with Docker.
 
@@ -254,3 +293,5 @@ Create paper/ with a LaTeX project using the IEEEtran (TSE) template. Draft sect
 - **IEEE TPDS:** fits if the fault-injection + distributed-coordination results are the centerpiece.
 - **Fast-feedback path first:** submit a 4-page version to an ICSE/FSE workshop or the SANER/ISSRE track to collect reviews cheaply, then extend ≥30% for the journal (standard practice; disclose the prior version).
 - Post the preprint to **arXiv (cs.SE + cs.DC)** as soon as the evaluation is done — it timestamps your contribution against fast-moving agent-reliability work like ACRFence.
+
+8. GIT HYGIENE (mandatory): At the START of every session, verify the working tree is clean (git status); if it is not, stop and report what is uncommitted before doing anything else. At the END of every session, commit all work with a descriptive message, push, and confirm CI is green BEFORE writing the final report. A session whose work is not committed and pushed is not complete. Never leave staged work across sessions.

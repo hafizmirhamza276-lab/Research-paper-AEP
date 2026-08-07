@@ -37,6 +37,12 @@ import httpx
 
 from aep_core.core.durability import RealWaitAofDurabilityBarrier
 
+from experiments.harness.redis_kill import (
+    CanaryOutcome,
+    RedisKillRecord,
+    start_redis,
+)
+
 #: The toxic the harness installs. Named so it can be removed precisely rather
 #: than by resetting every toxic the proxy happens to have.
 PARTITION_TOXIC_NAME = "aep-harness-partition"
@@ -166,6 +172,73 @@ async def restart_redis_and_verify_aof(
         )
     if record.loading != 0:
         raise FaultInjectionError("Redis is still loading its dataset")
+    return record
+
+
+# ===========================================================================
+# Hard kill (amendment E1)
+# ===========================================================================
+
+
+async def restart_after_hard_kill(
+    config, *, redis_client, canary_key: str | None, timeout: float = 90.0
+) -> RedisKillRecord:
+    """Bring Redis back after a worker hard-killed it, and record what is true.
+
+    Unlike :func:`restart_redis_and_verify_aof` this does **not** raise when
+    something was lost. Losing the un-acknowledged tail is the outcome under
+    measurement, not a harness failure, and a function that raised on it would
+    turn the finding into an exception. What it does refuse is a run in which
+    the kill never landed: ``uptime_in_seconds`` after the restart is read, and
+    a server that has been up for longer than this run has existed is one that
+    was never killed, which means the cell's fault did not happen and its
+    numbers describe a different experiment.
+    """
+    started = time.monotonic()
+    start_outcome = start_redis(config.redis_container, timeout=timeout)
+    if start_outcome["returncode"] != 0:
+        raise FaultInjectionError(
+            f"docker start failed after the hard kill: {start_outcome['stderr']}"
+        )
+    readiness_ms = await _wait_until_ready(redis_client, timeout=timeout)
+
+    persistence = await redis_client.info("persistence")
+    server = await redis_client.info("server")
+    uptime = int(server.get("uptime_in_seconds", 10**9))
+
+    canary_outcome = CanaryOutcome.NOT_PROBED
+    if canary_key:
+        survived = await redis_client.get(canary_key)
+        canary_outcome = (
+            CanaryOutcome.SURVIVED if survived is not None else CanaryOutcome.LOST
+        )
+        await redis_client.unlink(canary_key)
+
+    record = RedisKillRecord(
+        container=config.redis_container,
+        # A server that has been up longer than the whole restart took cannot
+        # be the one this run killed.
+        was_killed=uptime <= max(30, int(time.monotonic() - started) + 10),
+        uptime_after_seconds=uptime,
+        start_ms=int(start_outcome["start_ms"]),
+        readiness_ms=readiness_ms,
+        aof_enabled=int(persistence.get("aof_enabled", 0)),
+        loading=int(persistence.get("loading", 1)),
+        redis_version=str(server.get("redis_version", "unknown")),
+        canary=canary_outcome,
+        canary_key=canary_key,
+    )
+    if not record.was_killed:
+        raise FaultInjectionError(
+            "the hard kill did not land: Redis reports "
+            f"uptime_in_seconds={uptime}, so it is the same server process the "
+            "run started with and no infrastructure fault was injected"
+        )
+    if record.aof_enabled != 1:
+        raise FaultInjectionError(
+            "Redis came back with AOF disabled; every durability claim "
+            "collected after this point would be worthless"
+        )
     return record
 
 

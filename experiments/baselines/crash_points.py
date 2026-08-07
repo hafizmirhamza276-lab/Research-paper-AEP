@@ -129,6 +129,9 @@ ROADMAP_TO_BASELINE: Mapping[SystemId, Mapping[str, BaselineCrashPoint | None]] 
             SystemId.B1_LEASE_ONLY: _WITHOUT_PRE_DISPATCH_RECORD,
             SystemId.B2_CAS_ONLY: _WITHOUT_PRE_DISPATCH_RECORD,
             SystemId.B4_DURABLE_WORKFLOW: _WITH_PRE_DISPATCH_RECORD,
+            # B4b runs the same code at the same checkpoints; only its retry
+            # policy differs, so it has exactly B4's positions.
+            SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE: _WITH_PRE_DISPATCH_RECORD,
         }
     )
 )

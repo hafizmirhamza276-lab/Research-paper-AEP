@@ -85,6 +85,34 @@ class RunConfig:
     poisoned_executions: int = 0
     redis_restarts: int = 0
     partition_seconds: float = 0.0
+    #: Amendment E1. The instruction boundary at which a worker hard-kills
+    #: Redis (``docker kill -s KILL``), named in the same vocabulary as
+    #: ``crash_point``. ``None`` means no Redis kill, and the disabled path is
+    #: the absence of the injector rather than a disabled one.
+    redis_kill_point: str | None = None
+    #: How long the watchdog waits after the checkpoint before issuing the
+    #: kill. Zero aims it at the checkpoint itself; a few hundred milliseconds
+    #: aims it past a dispatch the checkpoint precedes.
+    redis_kill_delay_ms: int = 0
+    #: How many of the run's executions arm the kill, taken from the front of
+    #: the plan. More than one would land a second kill on a Redis the first
+    #: one is still restarting, so this is 1 wherever it is not 0.
+    redis_kill_executions: int = 0
+
+    # -- timing validity (amendment E5) ------------------------------------
+    #: Whether the operator declared, before the run, that this host cannot
+    #: suspend. Session 3 lost the timings of 5 runs in 83 to a host that
+    #: entered S0 low-power idle after five minutes: ``CLOCK_MONOTONIC``
+    #: stopped, ``CLOCK_REALTIME`` was resynchronised on resume, and every
+    #: wall-clock interval in those runs silently contained the suspension.
+    #:
+    #: Amendment E5 says absolute timing may re-enter the paper only from runs
+    #: on a host with suspend disabled. This field is the *declaration*; the
+    #: analysis's wall-versus-monotonic gate is the *detection*. Both are
+    #: required, because a declaration can be wrong and a detection can only
+    #: catch a suspension that actually happened -- a run that was simply never
+    #: idle long enough looks identical either way.
+    suspend_disabled_declared: bool = False
 
     # -- timing policy -----------------------------------------------------
     client_timeout_seconds: float = 5.0
@@ -142,6 +170,21 @@ class RunConfig:
             raise ValueError("redis_restarts must not be negative")
         if self.partition_seconds < 0:
             raise ValueError("partition_seconds must not be negative")
+        if self.redis_kill_delay_ms < 0:
+            raise ValueError("redis_kill_delay_ms must not be negative")
+        if self.redis_kill_executions < 0:
+            raise ValueError("redis_kill_executions must not be negative")
+        if self.redis_kill_point is not None and self.redis_kill_executions < 1:
+            raise ValueError(
+                "a redis_kill_point with no armed executions would be a fault "
+                "the run log claims and never injects; set "
+                "redis_kill_executions to at least 1"
+            )
+        if self.redis_kill_point is None and self.redis_kill_executions:
+            raise ValueError(
+                "redis_kill_executions is set with no redis_kill_point, so "
+                "nothing would arm; name the instruction boundary"
+            )
         if self.recovery_deadline_seconds <= 0:
             raise ValueError("recovery_deadline_seconds must be positive")
         if self.max_dispatch_attempts < 1:
@@ -157,6 +200,9 @@ class RunConfig:
         # and ValueError on an impossible timing policy. All three are
         # discovered here rather than inside three spawned subprocesses.
         resolve_for_system(self.system, self.crash_point)
+        # Same treatment for the Redis kill: a name this system has no moment
+        # for is refused here rather than inside a spawned worker.
+        resolve_for_system(self.system, self.redis_kill_point)
         if self.crash_style is not None:
             CrashStyle(self.crash_style)
         try:

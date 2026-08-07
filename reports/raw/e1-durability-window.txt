@@ -1,0 +1,33 @@
+====================================================================================================
+Redis durability window -- what a hard process kill actually loses
+====================================================================================================
+  platform   Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  container  aep-phase2-redis72
+  url        redis://127.0.0.1:6381/15
+  trials     10
+  mechanism  docker kill -s KILL  (SIGKILL to the container's PID 1)
+
+trial  1  align= 117ms  write->death=  419ms  kill_cli= 765ms  restart= 786ms  ready=  59ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  2  align= 966ms  write->death=  992ms  kill_cli=1467ms  restart=1307ms  ready=   4ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  3  align=1234ms  write->death=  724ms  kill_cli=1143ms  restart=1002ms  ready=  14ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  4  align= 678ms  write->death=  531ms  kill_cli= 871ms  restart= 769ms  ready=  11ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  5  align= 390ms  write->death=  565ms  kill_cli= 964ms  restart=1156ms  ready=   6ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  6  align= 770ms  write->death=  606ms  kill_cli= 935ms  restart= 748ms  ready=   3ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  7  align= 387ms  write->death=  506ms  kill_cli= 854ms  restart= 783ms  ready=   3ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  8  align= 293ms  write->death=  671ms  kill_cli=1016ms  restart=1219ms  ready=   5ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial  9  align= 701ms  write->death=  851ms  kill_cli=1293ms  restart=1146ms  ready=   5ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+trial 10  align= 568ms  write->death=  587ms  kill_cli= 968ms  restart=1172ms  ready=   9ms  uptime_after=  0s  ack= kept  unack= kept  UNACKNOWLEDGED SURVIVED
+
+----------------------------------------------------------------------------------------------------
+unacknowledged write lost in 0/10 usable trials (0 void)
+
+FINDING. Not one un-acknowledged write was lost. With appendfsync everysec Redis still write(2)s the AOF on every event
+loop iteration; everysec defers the fsync, not the write. A SIGKILL removes the process and leaves those bytes in the
+kernel's page cache, which a still-running kernel flushes. So appendonly yes already survives a process death, and WAITAOF
+adds nothing against this fault class. Separating AEP-full from B3 on record DURABILITY requires a fault that loses the page
+cache -- host power loss, kernel panic, or VM destruction -- and no process-level fault can stand in for one.
+
+The barrier's other effect is untouched by this and is what the redis-kill-preack cells measure: AEP-full WAITS where B3 does
+not, so a Redis that dies inside that wait stops AEP-full dispatching and does not stop B3.
+
+written: experiments/results/e1-durability-window.json

@@ -282,18 +282,71 @@ class RunRecord:
     #: resume, so every wall-clock duration in the run silently includes the
     #: suspension. See ``TIMING_SUSPENSION_TOLERANCE_SECONDS``.
     suspension_seconds: float = 0.0
+    #: Amendment E5: whether the operator declared, before the run, that this
+    #: host cannot suspend. Read from the run's own config echo.
+    suspend_disabled_declared: bool = False
+    #: The named condition the cell was collected under. ``""`` is Session 3's
+    #: -- every execution crashed, no infrastructure fault.
+    regime: str = ""
+    #: Probability an execution was selected for the worker crash. The
+    #: denominator of every overhead number: a run with a nonzero value has no
+    #: crash-free step latency to contribute.
+    crash_probability: float = 1.0
+    #: Amendment E1: whether a worker hard-killed Redis during this run, and
+    #: what happened to the un-acknowledged write made just before it.
+    redis_kill_point: str | None = None
+    redis_kill_canary: str | None = None
     executions: list[ExecutionRecord] = field(default_factory=list)
     crash_injections: int = 0
 
     @property
+    def suspension_detected(self) -> bool:
+        return self.suspension_seconds > TIMING_SUSPENSION_TOLERANCE_SECONDS
+
+    @property
     def timing_is_usable(self) -> bool:
-        return self.suspension_seconds <= TIMING_SUSPENSION_TOLERANCE_SECONDS
+        """Amendment E5's gate: declared *and* not observed to have suspended.
+
+        Both halves are necessary and neither is sufficient. The detection
+        catches a host that suspended despite the declaration; the declaration
+        catches a host that could have suspended and merely did not happen to
+        during this run, which no measurement can distinguish from one that
+        cannot suspend at all. A run failing either contributes its **counts**
+        to every rate -- an execution either duplicated or it did not -- and
+        contributes no duration to anything.
+        """
+        return self.suspend_disabled_declared and not self.suspension_detected
+
+    @property
+    def is_crash_free(self) -> bool:
+        """Amendment E2: may this run contribute to an overhead number?
+
+        Only a run in which **nothing was injected at all** measures what the
+        protocol costs. Three conditions, and the third was learned the hard
+        way: the first pass at this counted the ``redis-kill-preack`` runs as
+        crash-free, because their ``crash_probability`` is 0 and no *worker*
+        was killed -- and every one of them contains a Redis outage and a
+        container restart. Overhead computed over those would have been the
+        cost of a hard kill wearing the units of protocol overhead, which is
+        precisely the error amendment E2 exists to stop.
+
+        At ``crash_probability = 1.0``, separately, AEP-full and B3 never reach
+        ``execution_resolved`` at all, and the step latencies that *do* appear
+        belong to the baselines' re-executions -- a measurement of the lease
+        wait in the same disguise.
+        """
+        return (
+            self.crash_probability == 0.0
+            and self.crash_injections == 0
+            and self.redis_kill_point is None
+        )
 
     @property
     def cell_key(self) -> str:
-        return "|".join(
-            (self.system, self.crash_point, self.endpoint, self.readback_keying)
-        )
+        parts = [self.system, self.crash_point, self.endpoint, self.readback_keying]
+        if self.regime:
+            parts.append(self.regime)
+        return "|".join(parts)
 
 
 def load_run(directory: Path) -> RunRecord | None:
@@ -437,6 +490,14 @@ def load_run(directory: Path) -> RunRecord | None:
             )
         )
 
+    # The regime is not in the run config -- it is the matrix's word, not the
+    # harness's -- so it is reconstructed from the two config fields that
+    # define it. A run collected before regimes existed has crash_probability
+    # 1.0 and no Redis kill, which is exactly Session 3's unnamed regime.
+    crash_probability = float(config.get("crash_probability", 1.0))
+    redis_kill_point = config.get("redis_kill_point") or None
+    kill_records = events_of(records, "redis_hard_killed")
+
     return RunRecord(
         run_id=str(config["run_id"]),
         system=str(config["system"]),
@@ -450,9 +511,36 @@ def load_run(directory: Path) -> RunRecord | None:
         wall_seconds=max(0.0, (run_finished_ms - run_started_ms) / 1000.0),
         had_recovery_service=bool(events_of(records, "recovery_spawned")),
         suspension_seconds=round(suspension, 3),
+        suspend_disabled_declared=bool(
+            config.get("suspend_disabled_declared", False)
+        ),
+        regime=_regime_of(crash_probability, redis_kill_point),
+        crash_probability=crash_probability,
+        redis_kill_point=redis_kill_point,
+        redis_kill_canary=(
+            str(kill_records[-1].get("canary")) if kill_records else None
+        ),
         executions=executions,
         crash_injections=len(events_of(records, "crash_injected")),
     )
+
+
+def _regime_of(crash_probability: float, redis_kill_point: str | None) -> str:
+    """The matrix regime a run belongs to, read back from its own config.
+
+    Deliberately derived rather than trusted from a field the matrix wrote:
+    the analysis reads what the *run* did, and a mislabelled cell would then
+    be a disagreement rather than a silently pooled result.
+    """
+    if redis_kill_point == "after_intent_before_barrier":
+        return "redis-kill-preack"
+    if redis_kill_point is not None:
+        return "redis-kill-inflight"
+    if crash_probability == 0.0:
+        return "p0"
+    if crash_probability == 1.0:
+        return ""
+    return f"p{int(round(crash_probability * 100))}"
 
 
 def load_runs(results_root: Path) -> list[RunRecord]:
@@ -701,16 +789,35 @@ def build_comparisons(
 
 
 def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
-    """Step latency, recovery latency and throughput, per system."""
+    """Step latency, recovery latency and throughput, per system.
+
+    Two gates apply and they are different gates, so both are reported.
+
+    **Amendment E5 (timing validity).** A duration is used only from a run on
+    a host declared unable to suspend *and* not observed to have suspended.
+
+    **Amendment E2 (what overhead means).** Step latency and throughput are
+    computed from **crash-free runs only**. RQ3 asks what the protocol costs,
+    and an execution that was killed partway through did not pay that cost --
+    it paid a different one. Session 3's overhead column was empty for
+    AEP-full and B3 for exactly this reason and full of the baselines' lease
+    waits for the same one. ``overhead_runs`` is the honest denominator and is
+    printed beside every number computed from it.
+
+    Recovery latency is *not* gated on crash-freedom: it has no meaning
+    without a crash, so it is drawn from the crashed runs, which is stated
+    rather than left to be inferred from the column being non-empty.
+    """
     rows: list[dict[str, Any]] = []
     for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
-        # Timing only from runs whose two clocks agree. A host suspension puts
-        # its whole duration into every wall-clock interval in the run, and no
-        # amount of averaging removes it.
+        # Timing only from runs whose clocks are trustworthy. A host suspension
+        # puts its whole duration into every wall-clock interval in the run,
+        # and no amount of averaging removes it.
         timed_runs = [run for run in system_runs if run.timing_is_usable]
+        overhead_runs = [run for run in timed_runs if run.is_crash_free]
         step = [
             execution.step_latency_ms
-            for run in timed_runs
+            for run in overhead_runs
             for execution in run.executions
             if execution.step_latency_ms is not None
         ]
@@ -724,13 +831,24 @@ def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
             for execution in run.executions
             if execution.recovery_latency_ms is not None and execution.crashed
         ]
-        executions = sum(len(run.executions) for run in timed_runs)
-        wall = sum(run.wall_seconds for run in timed_runs)
+        # Throughput is an overhead number too, so it shares the denominator.
+        executions = sum(len(run.executions) for run in overhead_runs)
+        wall = sum(run.wall_seconds for run in overhead_runs)
         row: dict[str, Any] = {
             "system": system,
             "runs": len(system_runs),
             "runs_with_usable_timing": len(timed_runs),
-            "runs_dropped_for_clock_suspension": len(system_runs) - len(timed_runs),
+            "runs_dropped_for_clock_suspension": sum(
+                1 for run in system_runs if run.suspension_detected
+            ),
+            "runs_dropped_for_undeclared_suspend_policy": sum(
+                1
+                for run in system_runs
+                if not run.suspend_disabled_declared and not run.suspension_detected
+            ),
+            # Amendment E2's denominator, printed so no reader has to guess
+            # which runs an overhead number came from.
+            "overhead_runs_crash_free": len(overhead_runs),
         }
         for prefix, values in (("step_latency_ms", step), ("recovery_latency_ms", recovery)):
             for key, value in summarise(values).items():
@@ -742,6 +860,67 @@ def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
         row["run_wall_seconds"] = round(wall, 3)
         row["executions_per_second"] = round(executions / wall, 4) if wall else None
         rows.append(row)
+    return rows
+
+
+def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
+    """Amendment E1: what each hard Redis kill did, per system and variant.
+
+    Two quantities, and the paper needs both.
+
+    ``applied_effects`` is the discriminator the ablation is *for*: under a
+    kill placed between the intent CAS and the barrier acknowledgement,
+    AEP-full's ``WAITAOF`` fails and its ``DurabilityAck`` is never minted, so
+    it must not have dispatched. B3, which does not wait, must have.
+
+    ``canary`` is the *durability* question, and it is reported because the
+    answer is counter-intuitive and load-bearing: an un-acknowledged write made
+    immediately before a hard kill is expected to survive, because
+    ``appendfsync everysec`` defers the fsync and not the ``write(2)``. Every
+    row that says ``SURVIVED`` is another instance of the finding that no
+    process-level fault can separate B3 from AEP-full on record durability.
+    """
+    rows: list[dict[str, Any]] = []
+    killed = [run for run in runs if run.redis_kill_point is not None]
+    keys = ["regime", "system", "response_class"]
+    for values, group in sorted(group_runs(killed, keys).items()):
+        executions = [
+            execution for run in group for execution in run.executions
+        ]
+        canaries = Counter(run.redis_kill_canary or "UNRECORDED" for run in group)
+        rows.append(
+            {
+                **dict(zip(keys, values)),
+                "runs": len(group),
+                "executions": len(executions),
+                "executions_with_an_applied_effect": sum(
+                    1 for execution in executions if execution.applied_effects > 0
+                ),
+                "applied_effects_total": sum(
+                    execution.applied_effects for execution in executions
+                ),
+                "declared_ambiguous": sum(
+                    1
+                    for execution in executions
+                    if execution.outcome_class == DECLARED_AMBIGUOUS
+                ),
+                "confirmed_not_applied": sum(
+                    1
+                    for execution in executions
+                    if execution.outcome_class == CONFIRMED_NOT_APPLIED
+                ),
+                "undetected_duplicates": sum(
+                    1
+                    for execution in executions
+                    if execution.is_undetected_duplicate
+                ),
+                "lost_effects": sum(
+                    1 for execution in executions if execution.is_lost_effect
+                ),
+                "canary_survived": canaries.get("SURVIVED", 0),
+                "canary_lost": canaries.get("LOST", 0),
+            }
+        )
     return rows
 
 
@@ -958,10 +1137,25 @@ def main(argv: list[str] | None = None) -> int:
         "response_classes": sorted({run.response_class for run in runs}),
         "readback_keyings": sorted({run.readback_keying for run in runs}),
         "cells": len({run.cell_key for run in runs}),
+        "regimes": sorted({run.regime or "(session-3)" for run in runs}),
         "all_runs_used_real_sigkill": all(run.has_sigkill for run in runs),
+        # Amendment E5. Three numbers, because they mean three things: how many
+        # runs may contribute a duration at all, how many were caught
+        # suspending, and how many were simply collected on a host that never
+        # promised not to.
         "runs_with_usable_timing": sum(1 for run in runs if run.timing_is_usable),
         "runs_dropped_for_clock_suspension": sum(
-            1 for run in runs if not run.timing_is_usable
+            1 for run in runs if run.suspension_detected
+        ),
+        "runs_dropped_for_undeclared_suspend_policy": sum(
+            1
+            for run in runs
+            if not run.suspend_disabled_declared and not run.suspension_detected
+        ),
+        # Amendment E2. The denominator of every overhead number.
+        "crash_free_runs": sum(1 for run in runs if run.is_crash_free),
+        "runs_with_a_hard_redis_kill": sum(
+            1 for run in runs if run.redis_kill_point is not None
         ),
         "worst_suspension_seconds": round(
             max((run.suspension_seconds for run in runs), default=0.0), 3
@@ -980,6 +1174,7 @@ def main(argv: list[str] | None = None) -> int:
         runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
     )
     latencies = build_latencies(runs)
+    redis_kill = build_redis_kill_evidence(runs)
     per_execution = build_executions_csv(runs)
 
     written = [
@@ -989,6 +1184,10 @@ def main(argv: list[str] | None = None) -> int:
         write_csv(destination / "latency-and-throughput.csv", latencies),
         write_csv(destination / "per-execution.csv", per_execution),
     ]
+    if redis_kill:
+        written.append(
+            write_csv(destination / "redis-kill-ablation.csv", redis_kill)
+        )
     for metric in RATE_METRICS:
         written.append(
             write_csv(
@@ -1010,6 +1209,18 @@ def main(argv: list[str] | None = None) -> int:
             "WARNING: at least one run was collected on a platform without "
             "SIGKILL. Its crashes were TerminateProcess."
         )
+    if len(coverage["regimes"]) > 1:
+        print(
+            "WARNING: Table 1 pools "
+            f"{len(coverage['regimes'])} fault regimes -- "
+            f"{', '.join(coverage['regimes'])}. They are different "
+            "experiments, not repetitions of one: a crash-free run and a run "
+            "in which every execution was killed contribute to the same rate "
+            "here, and the pooled number is therefore a property of how many "
+            "runs of each kind happen to have been collected. It is a coverage "
+            "summary, NOT a result. Quote per-cell-metrics.csv, which is "
+            "grouped by system, crash point, response class and keying."
+        )
     dropped = coverage["runs_dropped_for_clock_suspension"]
     if dropped:
         print(
@@ -1021,6 +1232,48 @@ def main(argv: list[str] | None = None) -> int:
             "the suspension. Their COUNTS are unaffected and are still in the "
             "rate metrics; their TIMINGS are excluded from the latency and "
             "throughput aggregates."
+        )
+    undeclared = coverage["runs_dropped_for_undeclared_suspend_policy"]
+    if undeclared:
+        print(
+            f"E5: {undeclared} of {coverage['runs']} run(s) were collected on a "
+            "host that did not declare suspend disabled. No suspension was "
+            "detected in them, and that is not evidence of absence -- a host "
+            "that was never idle long enough looks the same. Their COUNTS "
+            "stand; NO absolute timing from them may enter the paper, and none "
+            "is in the aggregates above."
+        )
+    if not coverage["crash_free_runs"]:
+        print(
+            "E2: no crash-free run has been collected, so every overhead "
+            "column above is empty by construction rather than by measurement. "
+            "RQ3 has no answer until the p0 regime is collected."
+        )
+    if redis_kill:
+        print("")
+        print("E1 -- the hard-Redis-kill ablation")
+        print("-" * 78)
+        header = (
+            f"{'regime':<21} {'system':<22} {'response class':<22} "
+            f"{'runs':>5} {'applied':>8} {'ambig':>6} {'canary survived':>16}"
+        )
+        print(header)
+        for row in redis_kill:
+            print(
+                f"{row['regime']:<21} {row['system']:<22} "
+                f"{row['response_class']:<22} {row['runs']:>5} "
+                f"{row['executions_with_an_applied_effect']:>8} "
+                f"{row['declared_ambiguous']:>6} "
+                f"{str(row['canary_survived']) + '/' + str(row['runs']):>16}"
+            )
+        print(
+            "\n'applied' is the discriminator: a system whose durability "
+            "acknowledgement never arrived must not have dispatched.\n"
+            "'canary survived' counts runs in which an UN-acknowledged write "
+            "made immediately before the kill was still\nthere afterwards. It "
+            "is expected to be every run: appendfsync everysec defers the "
+            "fsync, not the write(2),\nso a process kill leaves the bytes in "
+            "the kernel's page cache. See experiments/harness/redis_kill.py."
         )
     print("written:")
     for path in written:

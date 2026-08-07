@@ -58,6 +58,10 @@ class SystemId(str, Enum):
     B2_CAS_ONLY = "B2_CAS_ONLY"
     B3_INTENT_NO_BARRIER = "B3_INTENT_NO_BARRIER"
     B4_DURABLE_WORKFLOW = "B4_DURABLE_WORKFLOW"
+    #: B4 configured the one documented way that avoids the duplicate --
+    #: Temporal's ``Maximum Attempts = 1``. Amendment E4 requires it to be run
+    #: beside B4 rather than argued about; ``B4_SEMANTICS.md`` is the citation.
+    B4B_DURABLE_WORKFLOW_AT_MOST_ONCE = "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE"
     AEP_FULL = "AEP_FULL"
 
 
@@ -130,6 +134,13 @@ class SystemDescriptor:
     #: Does it send a stable caller reference the provider can index?
     sends_client_reference: bool
     resume_policy: ResumePolicy
+    #: When the supervisor runs a crashed execution again, does the system send
+    #: the mutation again? Separate from :attr:`resume_policy` because the two
+    #: are genuinely independent: B4 and B4b are both replayed from their
+    #: history, and only B4 re-dispatches from it. That difference is the whole
+    #: of amendment E4's B4-versus-B4b comparison, so it is a declared fact the
+    #: tests check against the implementation rather than an inference.
+    redispatches_on_replay: bool = True
 
     @property
     def dispatches_at_most_once(self) -> bool:
@@ -139,9 +150,15 @@ class SystemDescriptor:
         duplicates" is a property of AEP's dispatch discipline, not of the
         harness, so a baseline that duplicates must not be reported as a
         reconciliation failure.
+
+        Two ways to earn it, and B4b is why there are two. A system can decline
+        to be re-run at all (``NEXT_EXECUTION``), or it can be re-run and
+        decline to re-send (``redispatches_on_replay=False``). Both are
+        at-most-once dispatch; only the first was representable before E4.
         """
         return not self.retries_on_ambiguity and (
             self.resume_policy is ResumePolicy.NEXT_EXECUTION
+            or not self.redispatches_on_replay
         )
 
     def echo(self) -> dict[str, Any]:
@@ -158,6 +175,7 @@ class SystemDescriptor:
             "can_declare_ambiguity": self.can_declare_ambiguity,
             "sends_client_reference": self.sends_client_reference,
             "resume_policy": self.resume_policy.value,
+            "redispatches_on_replay": self.redispatches_on_replay,
             "dispatches_at_most_once": self.dispatches_at_most_once,
         }
 
@@ -236,6 +254,7 @@ SYSTEMS: Mapping[SystemId, SystemDescriptor] = MappingProxyType(
             can_declare_ambiguity=True,
             sends_client_reference=True,
             resume_policy=ResumePolicy.NEXT_EXECUTION,
+            redispatches_on_replay=False,
         ),
         SystemId.B4_DURABLE_WORKFLOW: SystemDescriptor(
             system=SystemId.B4_DURABLE_WORKFLOW,
@@ -257,6 +276,39 @@ SYSTEMS: Mapping[SystemId, SystemDescriptor] = MappingProxyType(
             can_declare_ambiguity=False,
             sends_client_reference=False,
             resume_policy=ResumePolicy.REEXECUTE_CRASHED,
+            redispatches_on_replay=True,
+        ),
+        SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE: SystemDescriptor(
+            system=SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
+            label="B4b: durable-workflow, Maximum Attempts = 1",
+            description=(
+                "B4 configured the one documented way that avoids the "
+                "duplicate: Temporal's retry policy with Maximum Attempts set "
+                "to 1, which its documentation defines as a single execution "
+                "attempt and no retries. The history is identical and the "
+                "replay is identical; only the answer to a "
+                "scheduled-but-uncompleted activity differs, and it is to "
+                "record a timeout rather than to send the mutation again. It "
+                "therefore contributes no duplicate and loses the effect "
+                "instead -- without telling anyone it may have. See "
+                "experiments/baselines/B4_SEMANTICS.md section 4."
+            ),
+            uses_lease=True,
+            uses_fenced_state_writes=False,
+            writes_pre_dispatch_record=True,
+            uses_durability_barrier=True,
+            has_recovery_service=False,
+            # Max Attempts = 1 spends the whole budget on the first dispatch,
+            # so an ambiguous answer is not retried either.
+            retries_on_ambiguity=False,
+            # A recorded timeout is an ordinary workflow failure. Nothing in
+            # B4b escalates it, which is the point of running it.
+            can_declare_ambiguity=False,
+            sends_client_reference=False,
+            # The engine still replays a crashed execution ...
+            resume_policy=ResumePolicy.REEXECUTE_CRASHED,
+            # ... and the replay refuses to send the mutation again.
+            redispatches_on_replay=False,
         ),
         SystemId.AEP_FULL: SystemDescriptor(
             system=SystemId.AEP_FULL,
@@ -276,6 +328,9 @@ SYSTEMS: Mapping[SystemId, SystemDescriptor] = MappingProxyType(
             can_declare_ambiguity=True,
             sends_client_reference=True,
             resume_policy=ResumePolicy.NEXT_EXECUTION,
+            # Recovery reconciles; it never re-sends. Vacuous under
+            # NEXT_EXECUTION, and stated anyway so the table is complete.
+            redispatches_on_replay=False,
         ),
     }
 )

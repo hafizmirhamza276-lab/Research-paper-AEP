@@ -53,6 +53,7 @@ from experiments.harness.crash_points import roadmap_name_for
 from experiments.harness.events import EventLog, merge_event_shards, read_events
 from experiments.harness.faults import (
     ToxiproxyControl,
+    restart_after_hard_kill,
     restart_redis_and_verify_aof,
 )
 from experiments.harness.injector import (
@@ -62,6 +63,13 @@ from experiments.harness.injector import (
     CRASH_STYLE_VARIABLE,
     HAS_SIGKILL,
     CrashStyle,
+)
+from experiments.harness.redis_kill import (
+    CANARY_PREFIX,
+    REDIS_KILL_CONTAINER_VARIABLE,
+    REDIS_KILL_DELAY_VARIABLE,
+    REDIS_KILL_EXECUTIONS_VARIABLE,
+    REDIS_KILL_POINT_VARIABLE,
 )
 from experiments.harness.reconcile import (
     poisoned_detection_latencies,
@@ -117,9 +125,25 @@ async def assert_disposable_redis(redis_client, url: str) -> None:
 # ===========================================================================
 
 
-def worker_environment(config: RunConfig, crash_execution_ids: Sequence[str]) -> dict:
+def worker_environment(
+    config: RunConfig,
+    crash_execution_ids: Sequence[str],
+    redis_kill_execution_ids: Sequence[str] = (),
+) -> dict:
     """The environment one worker process is launched with."""
     environment = {**os.environ, "PYTHONPATH": str(REPO_ROOT)}
+
+    # Amendment E1's Redis kill is independent of the worker crash: a cell may
+    # schedule either, both or neither.
+    environment.pop(REDIS_KILL_POINT_VARIABLE, None)
+    if config.redis_kill_point and redis_kill_execution_ids:
+        environment[REDIS_KILL_POINT_VARIABLE] = config.redis_kill_point
+        environment[REDIS_KILL_DELAY_VARIABLE] = str(config.redis_kill_delay_ms)
+        environment[REDIS_KILL_EXECUTIONS_VARIABLE] = ",".join(
+            redis_kill_execution_ids
+        )
+        environment[REDIS_KILL_CONTAINER_VARIABLE] = config.redis_container
+
     point = config.resolved_crash_point
     if point is None or not crash_execution_ids:
         # Absent, not empty: the injector returns None and the workflow's
@@ -154,9 +178,26 @@ def worker_progress(config: RunConfig, worker_index: int) -> tuple[int | None, b
     return last_started, finished
 
 
+def redis_kill_execution_ids(config: RunConfig) -> list[str]:
+    """The executions that arm the Redis kill: the first N of the whole plan.
+
+    Taken from the run's plan rather than from a worker's slice so that exactly
+    one execution in the run arms it however the plan is divided between
+    workers. A second kill would land on a Redis the first one is still
+    restarting and the run would be measuring the restart, not the fault.
+    """
+    if not config.redis_kill_point or config.redis_kill_executions < 1:
+        return []
+    return [
+        item.execution_id
+        for item in plan_workload(config)[: config.redis_kill_executions]
+    ]
+
+
 def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None:
     """Run one worker slot to completion, respawning it after each crash."""
     items = worker_items(plan_workload(config), worker_index)
+    armed_for_redis_kill = set(redis_kill_execution_ids(config))
     from_index = 0
     for attempt in range(1, MAX_ATTEMPTS_PER_WORKER + 1):
         remaining_crashes = [
@@ -196,17 +237,33 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
             "--from-index",
             str(from_index),
         ]
+        # The kill fires once per run. A respawned worker must not carry it,
+        # or a system whose supervisor re-executes would kill Redis once per
+        # lifetime while a system that does not would kill it once.
+        remaining_redis_kills = (
+            [
+                item.execution_id
+                for item in items
+                if item.execution_id in armed_for_redis_kill
+                and item.execution_index >= from_index
+            ]
+            if attempt == 1
+            else []
+        )
         log.emit(
             "worker_spawned",
             worker_index=worker_index,
             attempt=attempt,
             from_index=from_index,
             crash_armed_for=len(remaining_crashes),
+            redis_kill_armed_for=len(remaining_redis_kills),
         )
         process = subprocess.Popen(
             command,
             cwd=str(REPO_ROOT),
-            env=worker_environment(config, remaining_crashes),
+            env=worker_environment(
+                config, remaining_crashes, remaining_redis_kills
+            ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -329,8 +386,43 @@ async def wait_until_settled(
 # ===========================================================================
 
 
+def discard_stale_shards(config: RunConfig) -> list[str]:
+    """Remove event shards left by an earlier, interrupted attempt at this run.
+
+    Found by the matrix, not by reasoning. ``--resume`` re-runs any run without
+    a parsing ``summary.json``, and such a run's directory still holds the
+    shards its interrupted attempt wrote. A fresh attempt overwrites the shard
+    *names* it happens to reuse -- ``events-worker-0-attempt-1.jsonl`` and so
+    on -- but an attempt that respawned a worker more times than the new one
+    does leaves ``attempt-2`` and ``attempt-3`` behind, and
+    ``merge_event_shards`` merges every shard it finds. The merged log would
+    then contain two runs' events under one run id: two ``run_started``
+    records, two workloads, and executions that never happened in the run being
+    recorded.
+
+    It surfaced as a digest mismatch, because ``reconcile`` rebuilds the run
+    config from the *first* ``run_started`` record and that was the stale one,
+    written by an older harness whose config had fewer fields. That is the
+    digest check doing exactly what it exists to do. Had the two attempts run
+    under the same harness version the merge would have been silent, and the
+    run's counts would have been inflated by its own abandoned predecessor.
+    """
+    discarded: list[str] = []
+    for path in sorted(config.results_dir.glob("events*.jsonl")):
+        path.unlink()
+        discarded.append(path.name)
+    # A stale summary would make the *next* resume skip this run on the
+    # strength of a result this attempt is about to replace.
+    summary = config.results_dir / "summary.json"
+    if summary.is_file():
+        summary.unlink()
+        discarded.append(summary.name)
+    return discarded
+
+
 async def execute_run(config: RunConfig) -> dict[str, Any]:
     config.results_dir.mkdir(parents=True, exist_ok=True)
+    discarded = discard_stale_shards(config)
     config_path = config.results_dir / "run-config.json"
     config_path.write_text(json.dumps(config.echo(), indent=2), encoding="utf-8")
 
@@ -365,6 +457,9 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
             )
             toxiproxy.describe()  # raises if compose never declared it
             toxiproxy.heal()
+
+        if discarded:
+            log.emit("stale_shards_discarded", files=discarded)
 
         log.emit(
             "run_started",
@@ -437,6 +532,18 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
             )
         )
         log.emit("all_workers_finished")
+
+        # Amendment E1. A worker killed Redis and cannot have restarted it --
+        # it may not have survived its own fault. Everything after this point
+        # (settling, recovery, classification) reads Redis, so the restart has
+        # to happen here and has to be verified before anything believes what
+        # it reads.
+        if config.redis_kill_point:
+            canary_key = f"{CANARY_PREFIX}{config.run_id}"
+            kill_record = await restart_after_hard_kill(
+                config, redis_client=redis_client, canary_key=canary_key
+            )
+            log.emit("redis_hard_killed", **kill_record.echo())
 
         if config.redis_restarts:
             for restart in range(config.redis_restarts):

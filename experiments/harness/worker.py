@@ -51,7 +51,8 @@ from experiments.harness.crash_points import (
 )
 from experiments.harness.config import RunConfig, load_run_config
 from experiments.harness.events import EventLog
-from experiments.harness.injector import ProcessCrashInjector
+from experiments.harness.injector import ProcessCrashInjector, compose_injectors
+from experiments.harness.redis_kill import RedisKillInjector, canary_payload
 from experiments.harness.workload import (
     index_by_execution_id,
     plan_workload,
@@ -92,7 +93,7 @@ async def run_worker(
             return resolve_for_system(_system, name)
 
         deferred = DEFERRED_BASELINE_POINTS
-    injector = ProcessCrashInjector.from_environment(
+    crash_injector = ProcessCrashInjector.from_environment(
         emit=log.emit, resolver=resolver, deferred_points=deferred
     )
 
@@ -101,18 +102,43 @@ async def run_worker(
         for item in worker_items(plan_workload(config), worker_index)
         if item.execution_index >= from_index
     ]
+
+    redis_client = Redis.from_url(
+        config.effective_worker_redis_url, decode_responses=True
+    )
+
+    async def write_canary(key: str) -> None:
+        # Deliberately un-acknowledged: whether this write survives the kill is
+        # the measurement. Putting it through WAITAOF would guarantee it does.
+        await redis_client.set(key, canary_payload(config.run_id), ex=3600)
+
+    # Amendment E1. Resolved in the same vocabulary the crash point uses, so a
+    # kill can be aimed at any instruction boundary the running system
+    # announces -- in particular at the window between the intent CAS and the
+    # barrier's acknowledgement, which is the one the ablation is about.
+    redis_killer = RedisKillInjector.from_environment(
+        emit=log.emit,
+        resolver=resolver,
+        write_canary=write_canary,
+        run_id=config.run_id,
+    )
+    # The Redis kill is listed first: a synchronous worker kill at the same
+    # checkpoint never returns, and an injector after it would never fire.
+    injector = compose_injectors(redis_killer, crash_injector)
+
     log.emit(
         "worker_started",
         worker_index=worker_index,
         attempt=attempt,
         from_index=from_index,
         assigned=len(items),
-        crash_plan=injector.plan.echo() if injector is not None else None,
+        crash_plan=(
+            crash_injector.plan.echo() if crash_injector is not None else None
+        ),
+        redis_kill_plan=(
+            redis_killer.plan.echo() if redis_killer is not None else None
+        ),
         redis_url=config.effective_worker_redis_url,
-    )
-
-    redis_client = Redis.from_url(
-        config.effective_worker_redis_url, decode_responses=True
     )
     connector = build_connector(
         config, items=index_by_execution_id(plan_workload(config))
@@ -207,11 +233,19 @@ async def run_worker(
                 duration_ns=time.monotonic_ns() - started,
             )
     finally:
+        if redis_killer is not None:
+            # The kill is issued on a thread. Leaving the process before it has
+            # been issued would silently drop the run's only infrastructure
+            # fault, and the run would look like a clean one.
+            redis_killer.join_watchdog(timeout=60.0)
         log.emit("worker_finished", worker_index=worker_index, attempt=attempt)
         try:
             await connector.aclose()
         finally:
-            await redis_client.aclose()
+            try:
+                await redis_client.aclose()
+            except Exception:  # noqa: BLE001 -- the server may be the fault
+                pass
             log.close()
     return exit_status
 

@@ -72,13 +72,65 @@ def test_only_the_intent_systems_can_declare_ambiguity() -> None:
     assert can == {SystemId.B3_INTENT_NO_BARRIER, SystemId.AEP_FULL}
 
 
-def test_only_the_intent_systems_dispatch_at_most_once() -> None:
+def test_at_most_once_dispatch_is_not_what_distinguishes_aep() -> None:
+    """Three systems dispatch at most once, and only two can say they do not know.
+
+    This test used to assert that the intent systems were the *only*
+    at-most-once dispatchers. Amendment E4 made that false on purpose, by
+    adding B4b -- a durable-workflow engine configured with Temporal's
+    documented ``Maximum Attempts = 1``, which its own documentation defines as
+    "a single execution attempt and no retries". B4b therefore contributes no
+    duplicate of its own, exactly as AEP-full does.
+
+    Keeping the old assertion would have hidden the finding the amendment
+    exists to surface. At-most-once dispatch is **buyable off the shelf**; what
+    is not is knowing which of the two things happened. B4b pays for its
+    at-most-once with silent lost effects, because there is no outcome class in
+    which it can declare that it does not know.
+    """
     at_most_once = {
         system
         for system, descriptor in SYSTEMS.items()
         if descriptor.dispatches_at_most_once
     }
-    assert at_most_once == {SystemId.B3_INTENT_NO_BARRIER, SystemId.AEP_FULL}
+    assert at_most_once == {
+        SystemId.B3_INTENT_NO_BARRIER,
+        SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
+        SystemId.AEP_FULL,
+    }
+
+    # ... and the separation is here, not there.
+    can_declare = {
+        system
+        for system, descriptor in SYSTEMS.items()
+        if descriptor.can_declare_ambiguity
+    }
+    assert SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE in at_most_once
+    assert SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE not in can_declare
+
+
+def test_b4_and_b4b_differ_in_exactly_one_declared_property() -> None:
+    """The E4 pair must be an ablation of the retry policy, not of the engine.
+
+    If they differed anywhere else, a difference in their results could not be
+    attributed to the retry policy, and ``B4_SEMANTICS.md`` section 4's
+    three-way table would be comparing two different systems.
+    """
+    b4 = descriptor_for(SystemId.B4_DURABLE_WORKFLOW).echo()
+    b4b = descriptor_for(SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE).echo()
+    differing = {
+        key
+        for key in b4
+        if key not in {"system", "label", "description"} and b4[key] != b4b[key]
+    }
+    # `retries_on_ambiguity` and `dispatches_at_most_once` are both consequences
+    # of the one setting: Maximum Attempts = 1 spends the whole budget on the
+    # first dispatch, so nothing is re-sent in-process either.
+    assert differing == {
+        "redispatches_on_replay",
+        "retries_on_ambiguity",
+        "dispatches_at_most_once",
+    }
 
 
 def test_the_ablation_ladder_is_monotone() -> None:

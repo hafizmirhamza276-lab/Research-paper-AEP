@@ -321,3 +321,51 @@ class ProcessCrashInjector:
         """Wait for a deferred kill to be delivered. Tests only."""
         if self._watchdog is not None:
             self._watchdog.join(timeout)
+
+
+@dataclass
+class CompositeInjector:
+    """Fan one protocol's checkpoints out to several independent injectors.
+
+    Amendment E1 introduces a second thing that can happen at a named
+    instruction boundary -- a hard Redis kill -- and a run may want it beside a
+    worker crash or instead of one. ``WriteAheadRunner`` takes exactly one
+    injector, so the composition happens here rather than by teaching either
+    injector about the other.
+
+    Order is the order given, and it is load-bearing: a synchronous worker kill
+    never returns, so an injector that must act at the same checkpoint has to
+    be listed before it. The runner lists the Redis kill first for that reason.
+    """
+
+    injectors: tuple[Any, ...]
+
+    def __post_init__(self) -> None:
+        if not self.injectors:
+            raise ValueError(
+                "a composite of no injectors is not the same thing as no "
+                "injector; the disabled path is `crash_injector is None`"
+            )
+
+    def enter_execution(self, execution_id: str) -> None:
+        for injector in self.injectors:
+            injector.enter_execution(execution_id)
+
+    async def checkpoint(self, point: Any) -> None:
+        for injector in self.injectors:
+            await injector.checkpoint(point)
+
+    @property
+    def plan(self):
+        """The plans, so ``worker_started`` can echo whichever exist."""
+        return [injector.plan.echo() for injector in self.injectors]
+
+
+def compose_injectors(*injectors: Any) -> Any:
+    """The one injector a runner should pass, given zero or more of them."""
+    present = tuple(injector for injector in injectors if injector is not None)
+    if not present:
+        return None
+    if len(present) == 1:
+        return present[0]
+    return CompositeInjector(present)

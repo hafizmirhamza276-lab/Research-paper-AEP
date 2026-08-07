@@ -58,6 +58,7 @@ from experiments.baselines.common import (
     STATUS_FAILED,
     STATUS_REFUSED,
     STATUS_SCHEDULED,
+    STATUS_TIMED_OUT,
     STATUS_TO_CLASS,
     CheckpointMixin,
     Transmitter,
@@ -75,10 +76,19 @@ SYSTEM = SystemId.B4_DURABLE_WORKFLOW
 
 DEFAULT_MAX_ATTEMPTS = 3
 
+#: Temporal's documented default for an Activity Retry Policy's Maximum
+#: Attempts is *unlimited*; ``None`` is how that is spelled here. B4b passes
+#: ``1``, which the same documentation defines as "a single execution attempt
+#: and no retries". Both citations are in ``B4_SEMANTICS.md`` section 2.2/4.
+UNLIMITED_ACTIVITY_ATTEMPTS = None
+
 #: History event names. Chosen to read like the ones a durable-execution
 #: engine writes, because the comparison is with that class of system.
 ACTIVITY_SCHEDULED = "activity_scheduled"
 ACTIVITY_COMPLETED = "activity_completed"
+#: B4b's terminal event: the attempt budget is spent and the engine will not
+#: schedule another Activity Task.
+ACTIVITY_TIMED_OUT = "activity_timed_out"
 
 #: The outcome word an engine records for a completed activity, keyed by the
 #: verdict the activity returned.
@@ -108,7 +118,15 @@ async def read_history(redis_client, execution_id: str) -> list[dict[str, Any]]:
 
 
 class DurableWorkflowRunner(CheckpointMixin):
-    """Replay the history; run what is not yet recorded; append what happens."""
+    """Replay the history; run what is not yet recorded; append what happens.
+
+    One constructor argument decides whether this is B4 or B4b.
+    ``activity_maximum_attempts`` is Temporal's Retry Policy field of the same
+    name: ``None`` is its documented default (unlimited), and ``1`` is its
+    documented at-most-once setting. Everything else -- the history, the
+    barrier, the replay, the memoisation -- is shared, which is what makes the
+    pair an ablation of the retry policy rather than of the engine.
+    """
 
     system = SYSTEM
 
@@ -122,6 +140,8 @@ class DurableWorkflowRunner(CheckpointMixin):
         policy: ConnectorPolicy,
         barrier: Any,
         max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+        activity_maximum_attempts: int | None = UNLIMITED_ACTIVITY_ATTEMPTS,
+        system: SystemId = SYSTEM,
         lease_wait_seconds: float | None = None,
         crash_injector: Any = None,
         crash_point_enum: type[Any] | None = None,
@@ -129,6 +149,13 @@ class DurableWorkflowRunner(CheckpointMixin):
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
+        if activity_maximum_attempts is not None and activity_maximum_attempts < 1:
+            raise ValueError(
+                "activity_maximum_attempts must be at least 1, or None for the "
+                "vendor default of unlimited"
+            )
+        self.activity_maximum_attempts = activity_maximum_attempts
+        self.system = system
         self.redis = redis_client
         self.lock_manager = lock_manager
         self.connector = connector
@@ -203,12 +230,26 @@ class DurableWorkflowRunner(CheckpointMixin):
                 # recorded completion.
                 status = str(completed[-1].get("status", STATUS_FAILED))
                 return ExecutionOutcome(
-                    system=SYSTEM,
+                    system=self.system,
                     execution_id=execution_id,
                     status=status,
                     outcome_class=STATUS_TO_CLASS.get(
                         status, OutcomeClass.UNVERIFIED_FAILURE
                     ),
+                    dispatch_attempts=0,
+                )
+
+            timed_out = [
+                event for event in history if event.get("event") == ACTIVITY_TIMED_OUT
+            ]
+            if timed_out:
+                # B4b reached its terminal state on an earlier replay. Nothing
+                # further is scheduled, and nothing is re-sent.
+                return ExecutionOutcome(
+                    system=self.system,
+                    execution_id=execution_id,
+                    status=STATUS_TIMED_OUT,
+                    outcome_class=STATUS_TO_CLASS[STATUS_TIMED_OUT],
                     dispatch_attempts=0,
                 )
 
@@ -219,6 +260,33 @@ class DurableWorkflowRunner(CheckpointMixin):
             # at-least-once is the only semantics an engine with no visibility
             # into the provider can offer. See the module docstring.
             attempt_number = len(scheduled) + 1
+
+            # ... unless the retry policy's attempt budget is already spent,
+            # which is B4b. Temporal's Maximum Attempts = 1 is "a single
+            # execution attempt and no retries", so an activity that was
+            # scheduled once and never reported back is timed out rather than
+            # sent again. No duplicate is possible from here; a lost effect is,
+            # and nothing about this record says so to an operator.
+            budget = self.activity_maximum_attempts
+            if budget is not None and len(scheduled) >= budget:
+                await self._append(
+                    execution_id,
+                    {
+                        "event": ACTIVITY_TIMED_OUT,
+                        "step_id": step_id,
+                        "attempt": len(scheduled),
+                        "status": STATUS_TIMED_OUT,
+                        "reason": "activity_maximum_attempts_exhausted",
+                        "activity_maximum_attempts": budget,
+                    },
+                )
+                return ExecutionOutcome(
+                    system=self.system,
+                    execution_id=execution_id,
+                    status=STATUS_TIMED_OUT,
+                    outcome_class=STATUS_TO_CLASS[STATUS_TIMED_OUT],
+                    dispatch_attempts=0,
+                )
             await self._append(
                 execution_id,
                 {
@@ -232,7 +300,15 @@ class DurableWorkflowRunner(CheckpointMixin):
             payload = exact_bytes(self.profile, request)
             attempts = 0
             verdict = Verdict.AMBIGUOUS
-            for _ in range(self.max_attempts):
+            # An in-process retry after an ambiguous answer spends the same
+            # budget a post-crash replay would. Under Max Attempts = 1 there is
+            # exactly one dispatch, ambiguous answer or not.
+            in_process_attempts = (
+                self.max_attempts
+                if budget is None
+                else min(self.max_attempts, budget - len(scheduled))
+            )
+            for _ in range(in_process_attempts):
                 await self._checkpoint("BEFORE_REQUEST_TRANSMISSION")
                 attempts += 1
                 verdict = await transmit_once(
@@ -259,7 +335,7 @@ class DurableWorkflowRunner(CheckpointMixin):
             await self._checkpoint("AFTER_RECORD_BEFORE_BARRIER")
 
             return ExecutionOutcome(
-                system=SYSTEM,
+                system=self.system,
                 execution_id=execution_id,
                 status=status,
                 outcome_class=STATUS_TO_CLASS[status],
@@ -269,26 +345,34 @@ class DurableWorkflowRunner(CheckpointMixin):
             await self.lock_manager.release_lock(execution_id, token)
 
 
-async def classify(redis_client, execution_id: str) -> ExecutionOutcome:
-    """What B4's history says about one execution.
+async def classify(
+    redis_client, execution_id: str, *, system: SystemId = SYSTEM
+) -> ExecutionOutcome:
+    """What the engine's history says about one execution.
+
+    Serves B4 and B4b, whose histories are the same shape. ``system`` is
+    passed rather than read from a module constant so that a B4b result is
+    never attributed to B4 in a table that pools by system name.
 
     A history that stops at ``activity_scheduled`` is reported as
     ``SCHEDULED`` -- an unverified failure, not a declared ambiguity. The
     distinction is the whole point of this baseline: B4 *has* the record, and
     its own semantics say the record means "run it again", so nothing in B4
-    ever escalates it to an operator.
+    ever escalates it to an operator. A history that stops at
+    ``activity_timed_out`` is B4b's terminal state and classifies the same way,
+    for the same reason: it is a failure record over an effect that may exist.
     """
     events = await read_history(redis_client, execution_id)
     if not events:
         return ExecutionOutcome(
-            system=SYSTEM,
+            system=system,
             execution_id=execution_id,
             status="NO_RECORD",
             outcome_class=OutcomeClass.NO_RECORD,
         )
     if any(event.get("event") == "unreadable" for event in events):
         return ExecutionOutcome(
-            system=SYSTEM,
+            system=system,
             execution_id=execution_id,
             status="UNREADABLE",
             outcome_class=OutcomeClass.UNREADABLE,
@@ -298,7 +382,7 @@ async def classify(redis_client, execution_id: str) -> ExecutionOutcome:
     if completed:
         status = str(completed[-1].get("status", STATUS_FAILED))
         return ExecutionOutcome(
-            system=SYSTEM,
+            system=system,
             execution_id=execution_id,
             status=status,
             outcome_class=STATUS_TO_CLASS.get(
@@ -306,8 +390,16 @@ async def classify(redis_client, execution_id: str) -> ExecutionOutcome:
             ),
             dispatch_attempts=int(completed[-1].get("dispatch_attempts", 0)),
         )
+    if any(event.get("event") == ACTIVITY_TIMED_OUT for event in events):
+        return ExecutionOutcome(
+            system=system,
+            execution_id=execution_id,
+            status=STATUS_TIMED_OUT,
+            outcome_class=STATUS_TO_CLASS[STATUS_TIMED_OUT],
+            dispatch_attempts=0,
+        )
     return ExecutionOutcome(
-        system=SYSTEM,
+        system=system,
         execution_id=execution_id,
         status=STATUS_SCHEDULED,
         outcome_class=STATUS_TO_CLASS[STATUS_SCHEDULED],

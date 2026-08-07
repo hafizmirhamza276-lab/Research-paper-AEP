@@ -59,6 +59,11 @@ STATUS_APPLIED = "APPLIED"
 STATUS_REFUSED = "REFUSED"
 STATUS_FAILED = "FAILED"
 STATUS_SCHEDULED = "SCHEDULED"
+#: B4b only: the activity's attempt budget was spent by an attempt that never
+#: reported back, so the engine records a timeout instead of sending again.
+#: Kept distinct from ``STATUS_FAILED`` because the two arise differently and
+#: the report has to be able to tell them apart -- it classifies the same.
+STATUS_TIMED_OUT = "TIMED_OUT"
 
 #: How a baseline's own status maps onto the shared vocabulary the metrics use.
 #: ``STATUS_FAILED`` is the load-bearing row: a baseline that has exhausted its
@@ -71,6 +76,10 @@ STATUS_TO_CLASS: Mapping[str, OutcomeClass] = {
     # outcome at all. It is *not* a declared ambiguity either: B4 writes it and
     # then re-runs the activity rather than escalating.
     STATUS_SCHEDULED: OutcomeClass.UNVERIFIED_FAILURE,
+    # B4b's terminal record. An operator reading it sees "this activity timed
+    # out", which is indistinguishable from "nothing was applied" and is not
+    # an escalation -- exactly the definition of an unverified failure.
+    STATUS_TIMED_OUT: OutcomeClass.UNVERIFIED_FAILURE,
 }
 
 
