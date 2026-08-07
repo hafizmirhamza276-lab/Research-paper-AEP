@@ -97,8 +97,10 @@ the baselines that lack a pre-dispatch record duplicate in the majority of
 crashed executions. AEP's residual is declared ambiguity, and its rate is set
 by what the endpoint can be asked rather than by the protocol. A hard Redis
 kill placed between the intent write and its acknowledgement shows what the
-durability barrier buys: AEP withheld the dispatch where the ablation did not,
-preventing 18 real effects in 30 trials. We also report a negative result that
+durability barrier buys: over 30 runs per system under identical faults, AEP's
+dispatch gate withheld the mutation where the ablation sent it --- a difference
+of 18 real non-idempotent effects ($10/30$ versus $28/30$ applied, Fisher
+$p = 1.9\times10^{-6}$). We also report a negative result that
 narrows our own claim: a process-level kill cannot lose an unacknowledged
 Redis AOF write, so the barrier's durability benefit is unobservable under any
 process fault and holds only against loss of the page cache.

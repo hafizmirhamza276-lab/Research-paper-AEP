@@ -89,6 +89,7 @@ from experiments.statistics import (
     compare_rates,
     proportion,
     summarise,
+    wilson_interval,
 )
 
 #: The system every other one is compared against.
@@ -126,6 +127,19 @@ KNOWN_CLASSES = frozenset(
 #: dropped. Two seconds is generous for scheduling noise and far below any
 #: real suspension.
 TIMING_SUSPENSION_TOLERANCE_SECONDS = 2.0
+
+#: The single regime the figures are drawn from.
+#:
+#: A regime is a named fault condition, not a matrix dimension: the crash-free
+#: cells, the every-execution-crashed cells and the hard-Redis-kill cells are
+#: three different experiments. A bar drawn across all three has a height set
+#: by how many runs of each kind happened to be collected, which is exactly why
+#: the pooled summary table is not quotable. Figures obey the same rule as
+#: tables, so they name one regime and print it in the title.
+#:
+#: ``""`` is Session 3's unnamed regime -- every execution killed at the cell's
+#: crash point -- which is the one the duplicate and ambiguity claims are about.
+FIGURE_REGIME = "(session-3)"
 
 #: The rate metrics, in the order the paper's tables use them.
 RATE_METRICS: tuple[str, ...] = (
@@ -1023,6 +1037,16 @@ def write_figures(
     matplotlib is imported here rather than at module scope so that the CSVs
     and the tables can still be produced on a machine without it -- a partial
     result is worth more than an import error.
+
+    **Both figures are built from ``per_cell``, filtered to one regime.** The
+    first version of figure 1 was built from ``table_one``, which is the table
+    Session 3B banned as a source for exactly this reason: it pools the
+    crash-free, every-execution-crashed and hard-Redis-kill regimes into one
+    bar, so the bar's height is a property of how many runs of each kind were
+    collected. A banned table does not become quotable by being drawn.
+
+    ``table_one`` is still accepted, and still used for the system ordering
+    only, so that the figure lists systems in the same order as the CSV.
     """
     try:
         import matplotlib
@@ -1035,18 +1059,47 @@ def write_figures(
     destination.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
 
-    # -- Figure 1: the headline trade, per system ---------------------------
-    systems = [row["system"] for row in table_one]
-    duplicates = [row["undetected_duplicate_rate"] for row in table_one]
-    ambiguities = [row["known_ambiguity_rate"] for row in table_one]
-    lows = [
-        row["undetected_duplicate_rate"] - row["undetected_duplicate_ci_low"]
-        for row in table_one
+    # -- Figure 1: the headline trade, per system, ONE regime ---------------
+    #
+    # Pooled over the six crash points within the crashed regime, weighted by
+    # each cell's own denominator -- which is what a rate over executions
+    # means. Averaging the per-cell rates instead would weight a 10-execution
+    # cell equally with a 30-execution one.
+    figure_regime = FIGURE_REGIME
+    pooled: dict[str, dict[str, list[int]]] = defaultdict(
+        lambda: defaultdict(lambda: [0, 0])
+    )
+    for row in per_cell:
+        if row.get("regime") != figure_regime:
+            continue
+        bucket = pooled[row["system"]][row["metric"]]
+        bucket[0] += int(row["successes"])
+        bucket[1] += int(row["total"])
+
+    def _pooled_rate(system: str, metric: str) -> float:
+        successes, total = pooled[system][metric]
+        return successes / total if total else 0.0
+
+    systems = [
+        row["system"] for row in table_one if row["system"] in pooled
     ]
-    highs = [
-        row["undetected_duplicate_ci_high"] - row["undetected_duplicate_rate"]
-        for row in table_one
+    duplicates = [
+        _pooled_rate(system, "undetected_duplicate_rate") for system in systems
     ]
+    ambiguities = [
+        _pooled_rate(system, "known_ambiguity_rate") for system in systems
+    ]
+    # A Wilson interval on the pooled counts. The per-cell CSV carries proper
+    # cluster bootstrap intervals; this is a figure, and drawing the bootstrap
+    # interval of a *differently pooled* quantity next to this bar would be
+    # worse than drawing a simpler interval of the right one.
+    lows, highs = [], []
+    for system in systems:
+        successes, total = pooled[system]["undetected_duplicate_rate"]
+        low, high = wilson_interval(successes, total)
+        rate_here = successes / total if total else 0.0
+        lows.append(max(0.0, rate_here - low))
+        highs.append(max(0.0, high - rate_here))
 
     figure, axis = plt.subplots(figsize=(9, 4.2))
     positions = range(len(systems))
@@ -1070,8 +1123,10 @@ def write_figures(
     axis.set_ylabel("rate per execution")
     axis.set_title(
         "Undetected duplicates versus declared ambiguity, by system\n"
-        "(95% cluster-bootstrap CI on the duplicate rate)",
-        fontsize=10,
+        f"regime {figure_regime} only; pooled over crash points and endpoint "
+        "capabilities, weighted by executions\n"
+        "(95% Wilson interval on the duplicate rate)",
+        fontsize=9,
     )
     axis.legend(fontsize=8)
     axis.grid(axis="y", alpha=0.3)
@@ -1083,17 +1138,34 @@ def write_figures(
 
     # -- Figure 2: undetected duplicate rate by crash point -----------------
     duplicate_cells = [
-        row for row in per_cell if row["metric"] == "undetected_duplicate_rate"
+        row
+        for row in per_cell
+        if row["metric"] == "undetected_duplicate_rate"
+        and row.get("regime") == figure_regime
     ]
     crash_points = sorted({row["crash_point"] for row in duplicate_cells})
-    by_system: dict[str, dict[str, float]] = defaultdict(dict)
+    # Pool across response classes and keyings ON THE COUNTS.
+    #
+    # This previously read `(previous + rate) / 2`, which the comment beside
+    # it described as weighting on counts and which does not: it is a running
+    # mean whose value depends on the order rows arrive in, and which gives a
+    # 10-execution cell the same influence as a 30-execution one. With three
+    # response classes it also silently weights the last-seen class at 1/2 and
+    # the first at 1/4. A rate over executions is a ratio of sums.
+    counts: dict[str, dict[str, list[int]]] = defaultdict(
+        lambda: defaultdict(lambda: [0, 0])
+    )
     for row in duplicate_cells:
-        current = by_system[row["system"]]
-        # Pool across response classes and keyings by weighting on counts.
-        previous = current.get(row["crash_point"])
-        current[row["crash_point"]] = (
-            row["rate"] if previous is None else (previous + row["rate"]) / 2
-        )
+        bucket = counts[row["system"]][row["crash_point"]]
+        bucket[0] += int(row["successes"])
+        bucket[1] += int(row["total"])
+    by_system: dict[str, dict[str, float]] = {
+        system: {
+            point: (pair[0] / pair[1] if pair[1] else 0.0)
+            for point, pair in points.items()
+        }
+        for system, points in counts.items()
+    }
 
     if crash_points and by_system:
         figure, axis = plt.subplots(figsize=(10, 4.6))

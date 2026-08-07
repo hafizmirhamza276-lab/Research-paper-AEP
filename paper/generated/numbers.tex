@@ -66,6 +66,14 @@
 % denominator (executions) for \AepLostNoReadback
 \newcommand{\AepLostNoReadbackN}{180}
 
+% per-cell-metrics.csv | min undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
+% regime=(session-3) | 7 cells
+\newcommand{\BaselineDupLow}{0.77}
+
+% per-cell-metrics.csv | max undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
+% regime=(session-3) | 7 cells
+\newcommand{\BaselineDupHigh}{0.83}
+
 % latency-and-throughput.csv | system=AEP_FULL
 % step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
 % E5 gate: runs without a declared suspend-disabled host contribute NO timing
@@ -100,6 +108,20 @@
 % step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
 % E5 gate: runs without a declared suspend-disabled host contribute NO timing
 \newcommand{\BfourStepMedian}{4\,015.7}
+
+% latency-and-throughput.csv | B3 median - B0 median
+% = 2038.2 - 2010.2; the whole write-ahead protocol except the barrier
+\newcommand{\ProtocolMinusBarrier}{28.0}
+
+% = (2038.2 - 2010.2) / 2010.2 x 100
+\newcommand{\ProtocolMinusBarrierPct}{1.4}
+
+% latency-and-throughput.csv | AEP-full median - B3 median
+% = 4004.9 - 2038.2; the two WAITAOF round trips together
+\newcommand{\BarrierCost}{1\,966.7}
+
+% half of \BarrierCost -- the protocol runs exactly two barriers per step
+\newcommand{\BarrierCostEach}{983.3}
 
 % redis-kill-ablation.csv | regime=redis-kill-preack system=AEP_FULL response_class=NO_READBACK
 % executions_with_an_applied_effect

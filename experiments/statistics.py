@@ -31,6 +31,7 @@ be reproducible from the numbers printed beside it.
 
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
 from math import comb
@@ -76,6 +77,38 @@ def proportion(successes: int, total: int) -> float:
     would be read as a measurement.
     """
     return successes / total if total else 0.0
+
+
+def wilson_interval(
+    successes: int, total: int, *, z: float = 1.959963984540054
+) -> tuple[float, float]:
+    """A 95% Wilson score interval on a pooled proportion.
+
+    This exists for the *figures* and nowhere else. Every interval in the CSVs
+    is a cluster bootstrap over runs, because executions within one run are
+    not independent -- one crash produces ten correlated outcomes -- and an
+    interval that ignored that would be too narrow.
+
+    A figure that pools across cells has no cluster structure left to
+    resample: the pooled counts are all that remain. Wilson is the right
+    interval for that shape (it does not misbehave at 0 or 1, where a normal
+    approximation produces bounds outside [0, 1], and the duplicate rates in
+    this paper sit at exactly 0 for three systems).
+
+    **These bounds are not the ones in the CSV and are not interchangeable
+    with them.** The CSV's are cluster-aware and wider; quote those.
+    """
+    if total <= 0:
+        return (0.0, 0.0)
+    phat = successes / total
+    denominator = 1.0 + z * z / total
+    centre = (phat + z * z / (2 * total)) / denominator
+    spread = (
+        z
+        * math.sqrt(phat * (1.0 - phat) / total + z * z / (4 * total * total))
+        / denominator
+    )
+    return (max(0.0, centre - spread), min(1.0, centre + spread))
 
 
 def cluster_bootstrap_proportion(

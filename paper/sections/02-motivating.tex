@@ -78,9 +78,12 @@ real-world effect may be unaccounted for.
 
 \begin{table}[t]
 \centering
-\caption{The trilemma, as the four baselines instantiate it. A durable
-write-ahead record is necessary (Trace 1, 2) and not sufficient (Trace 3); what
-distinguishes AEP is an outcome class in which it can decline to decide.}
+\caption{The trilemma, as the systems under comparison instantiate it. A
+durable write-ahead record is necessary (Traces 1, 2) and not sufficient
+(Trace 3); what distinguishes AEP is an outcome class in which it can decline
+to decide. B3 --- AEP with the durability barrier removed and nothing else ---
+reaches the same corner, which is the point: the barrier is not what buys
+declared ambiguity, and \cref{sec:eval-rq2} isolates what it does buy.}
 \label{tab:trilemma}
 \small
 \begin{tabular}{@{}lccc@{}}
@@ -92,6 +95,8 @@ B1 lease-only             & \textbf{yes} & --- & no \\
 B2 CAS-only               & \textbf{yes} & --- & no \\
 B4 durable, max attempts $\infty$  & \textbf{yes} & --- & no \\
 B4b durable, max attempts $=1$     & no & \textbf{yes} & no \\
+\midrule
+B3 AEP minus the barrier  & no & no & \textbf{yes, bounded} \\
 AEP-full                  & no & no & \textbf{yes, bounded} \\
 \bottomrule
 \end{tabular}

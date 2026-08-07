@@ -41,6 +41,34 @@ make the activity idempotent --- the first two land between our two points on
 the same duplicate/loss trade, and the third leaves the problem this paper is
 about.
 
+\paragraph{Declared ambiguity is not evaluated as an operational outcome} The
+paper measures how often AEP declares ambiguity and shows that it never
+substitutes a silent failure for it. It does \emph{not} show that declaring is
+better in practice. That would require an operator study --- do teams resolve
+declared ambiguities, how long does it take, what fraction are resolved
+correctly, and does the queue stay bounded? --- and we have run none. The
+argument that a declared incident beats an undiscovered one is a normative
+claim about failure handling, not a result of this evaluation, and we mark it
+as such. Relatedly, the artifact has no escalation \emph{mechanism}
+(\cref{tab:nonclaims}): reaching the terminal state pauses the execution and
+alerts nobody.
+
+\paragraph{The motivating traces come from our own harness} \Cref{sec:motivating}
+reproduces failures in baselines we implemented, not in deployed systems. It
+establishes that the failure modes are reachable under the stated fault model;
+it is not evidence about their frequency in production agent deployments, and
+we have no such evidence. A field study of how often agent frameworks meet
+non-idempotent endpoints without idempotency keys would strengthen the
+motivation considerably and does not exist here.
+
+\paragraph{One author implemented every system under comparison} B0--B2 are
+small enough to inspect, each carries a machine-readable descriptor that tests
+check against its implementation, and B4's re-execution policy is defended
+against the vendor's own documentation in the artifact. That is mitigation, not
+elimination: a baseline written by the people proposing the alternative is a
+structural conflict, and the artifact is released partly so the baselines can
+be re-implemented by someone else.
+
 \paragraph{Test counts are not protocol assurance} Stated in
 \cref{sec:implementation} and repeated because it is a live temptation: the
 suite's size is evidence about the artifact's hygiene, not about the protocol's

@@ -125,12 +125,26 @@ def main() -> int:
             r"over floor (ms)\\",
             r"\midrule",
         ]
+        def tex(value: float) -> str:
+            # The separator belongs to the number, not to the assembled row.
+            return f"{value:,.1f}".replace(",", r"\,")
+
         for row in rows:
             fragment.append(
                 f"\\texttt{{{row['policy']}}} & {row['runs']} & "
-                f"{row['executions']} & {row['median']:,.1f} & "
-                f"{row['over_floor']:,.1f}\\\\".replace(",", r"\,")
+                f"{row['executions']} & {tex(row['median'])} & "
+                f"{tex(row['over_floor'])}\\\\"
             )
+        fragment.append(r"\midrule")
+        fragment.append(
+            r"\multicolumn{5}{@{}p{0.94\columnwidth}@{}}{\footnotesize "
+            r"The two rows differ in one setting. Everything else --- system, "
+            r"endpoint, crash-free regime, seeds, host, provider delay --- is "
+            r"identical, so the difference of "
+            f"{tex(abs(delta))}"
+            r"\,ms is the price of the durability policy, not of the "
+            r"protocol.}\\"
+        )
         fragment += [
             r"\bottomrule",
             r"\end{tabular}",
