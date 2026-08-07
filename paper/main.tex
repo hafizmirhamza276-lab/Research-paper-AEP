@@ -88,11 +88,11 @@ in which every external side effect is preceded by a durably acknowledged
 write-ahead intent, every state write is fenced by lock ownership and an exact
 expected-version compare-and-swap in one atomic script, and every unresolvable
 outcome halts and escalates rather than guessing. We evaluate AEP against five
-baselines --- naive retry, lease-only, CAS-only, an ablation without the
-durability barrier, and a durable-execution engine in both its vendor-default
-and at-most-once configurations --- under real \texttt{SIGKILL} process faults,
-hard Redis kills and block-level write loss, across three endpoint
-reconciliation capabilities.
+baseline designs, one of them in two configurations --- naive retry,
+lease-only, CAS-only, an ablation without the durability barrier, and a
+durable-execution engine in both its vendor-default and at-most-once settings
+--- under real \texttt{SIGKILL} process faults, hard Redis kills and
+block-level write loss, across three endpoint reconciliation capabilities.
 
 Our central result separates two claims that the write-ahead pattern is usually
 sold as one. \emph{Detection} --- no undetected duplicate and no lost effect,
