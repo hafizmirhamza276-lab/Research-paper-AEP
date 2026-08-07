@@ -54,7 +54,10 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from experiments.statistics import fisher_exact_two_tailed  # noqa: E402
+from experiments.statistics import (  # noqa: E402
+    fisher_exact_two_tailed,
+    wilson_interval,
+)
 
 #: The regime whose runs answer RQ1. A regime is a named fault condition, not
 #: a matrix dimension; ``(session-3)`` is the one in which every execution is
@@ -1034,11 +1037,28 @@ def emit_numbers(
             "that is the finding, not a caveat",
         )
     if len(arms) == 1:
+        per_arm = arms.pop()
         macro(
             "BthreeVsAepN",
-            arms.pop(),
+            per_arm,
             "comparisons-vs-aep-full.csv | executions per arm, identical "
             "across all three metrics",
+        )
+        # A Fisher test on 0/600 against 0/600 returns p = 1.00 and means
+        # nothing: it has no power, and "we could not distinguish them" is
+        # not "they are the same". What IS defensible from two zero counts is
+        # a bound. The one-sided 95% Wilson upper limit on a zero numerator
+        # says how large either rate could be and still have produced this
+        # observation, and therefore how large the difference between them
+        # could be. That is the number the equivalence claim should rest on.
+        upper = wilson_interval(0, int(per_arm))[1]
+        macro(
+            "AblationZeroUpper",
+            f"{upper * 100:.2f}",
+            f"Wilson 95% upper limit on 0/{per_arm}, as a percentage",
+            "the largest undetected-duplicate or lost-effect rate either "
+            "system could have and still record zero; the difference between "
+            "them is bounded by it",
         )
 
     # --- G1/RQ2: the hard-Redis-kill ablation ---------------------------

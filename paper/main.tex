@@ -99,10 +99,12 @@ sold as one. \emph{Detection} --- no undetected duplicate and no lost effect,
 with a residual of declared ambiguity whose rate is set by what the endpoint
 can be asked --- is produced by the durable pre-dispatch record alone. We show
 this by ablation rather than by argument: removing the durability barrier and
-changing nothing else leaves every detection metric statistically
-indistinguishable over \BthreeVsAepN{} executions per arm (undetected
-duplicates and lost effects both $0$ in both systems, $p = \BthreeVsAepDupP{}$;
-declared ambiguity $p = \BthreeVsAepAmbP{}$). \emph{Prevention} is what the
+changing nothing else leaves every detection metric unchanged over
+\BthreeVsAepN{} executions per arm --- undetected duplicates and lost effects
+are $0$ in both systems, bounding each rate and the difference between them
+below \AblationZeroUpper{}\%, against baselines that differ from both by
+\BaselineDupLow{}--\BaselineDupHigh{}; declared ambiguity differs by two
+executions in six hundred ($p = \BthreeVsAepAmbP{}$). \emph{Prevention} is what the
 barrier contributes, and it is a different quantity against a different fault:
 under a hard Redis kill placed between the intent write and its
 acknowledgement, the barrier withholds an effect the ablation puts on the wire,

@@ -239,15 +239,31 @@ survives the barrier's removal intact.
 
 \input{generated/table-ablation}
 
-Over \BthreeVsAepN{} crashed executions per arm, B3 and AEP-full are
-indistinguishable on every metric the trilemma is defined in terms of. Both
-record an undetected-duplicate rate of $0$ ($p = \BthreeVsAepDupP{}$) and a
-lost-effect rate of $0$ ($p = \BthreeVsAepLostP{}$). Declared ambiguity differs
-by two executions in six hundred ($p = \BthreeVsAepAmbP{}$), and per capability
-class the two systems track each other: \BthreeAmbAuth{} against
-\AepAmbAuth{} on \textsc{auth}, \BthreeAmbPosOnly{} against \AepAmbPosOnly{}
-on \textsc{pos-only}, \BthreeAmbNoReadback{} against \AepAmbNoReadback{} on
-\textsc{none}.
+Over \BthreeVsAepN{} crashed executions per arm, B3 and AEP-full behave the
+same on every metric the trilemma is defined in terms of. Both record an
+undetected-duplicate rate of $0$ and a lost-effect rate of $0$; declared
+ambiguity differs by two executions in six hundred
+($p = \BthreeVsAepAmbP{}$), and per capability class the two systems track
+each other: \BthreeAmbAuth{} against \AepAmbAuth{} on \textsc{auth},
+\BthreeAmbPosOnly{} against \AepAmbPosOnly{} on \textsc{pos-only},
+\BthreeAmbNoReadback{} against \AepAmbNoReadback{} on \textsc{none}.
+
+\textbf{A word on what the zeros can and cannot support.} Fisher's exact test
+on $0/\BthreeVsAepN{}$ against $0/\BthreeVsAepN{}$ returns
+$p = \BthreeVsAepDupP{}$ for duplicates and $p = \BthreeVsAepLostP{}$ for lost
+effects, and both numbers are worth nothing: a test between two zero counts
+has no power, and failing to distinguish them is not evidence that they are
+the same. What two zeros do support is a \emph{bound}. The one-sided
+95\% Wilson limit on a zero numerator over \BthreeVsAepN{} executions is
+\AblationZeroUpper{}\%, so each system's true undetected-duplicate and
+lost-effect rate is below that, and the difference between the two systems is
+below it as well. That is the equivalence claim we make: not that the barrier
+provably changes nothing, but that whatever it changes about \emph{detection}
+is smaller than \AblationZeroUpper{} percentage points, against baselines that
+differ from both by \BaselineDupLow{}--\BaselineDupHigh{}. A barrier
+contributing less than \AblationZeroUpper{}\% to a quantity where the
+alternative mechanisms contribute $77$--$83$\% is, for the purposes of the
+design decision in \cref{sec:eval-deployment}, contributing nothing.
 
 \textbf{We report this as a finding rather than as a limitation, because it
 reassigns our own headline claim.} The property that distinguishes AEP from

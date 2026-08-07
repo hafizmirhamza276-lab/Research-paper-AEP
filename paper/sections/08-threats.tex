@@ -31,6 +31,21 @@ maximised by phase-aligning to a just-completed fsync, so
 $\FlakeyUnackLost{}$ is the loss rate for a worst-placed cut rather than a
 uniformly-timed one (\cref{sec:eval-durability}).
 
+\paragraph{The write-loss probe tests \texttt{WAITAOF}, not AEP}
+\Cref{sec:eval-durability} runs two Redis keys against a device that stops
+accepting writes. It does not run AEP-full and B3 through the evaluation
+harness under that fault, and so it does not measure a difference in
+\emph{protocol} outcomes --- duplicates, lost effects, declared ambiguity ---
+attributable to write loss. What it establishes is the premise the protocol's
+durability argument rests on: that an acknowledged record survives an event
+that destroys an unacknowledged one, which under a process kill is false and
+under write loss is true. Extending it to the full systems needs the harness's
+Redis to run on the flakey device, and the harness's Redis is a container
+whose bind mounts this Docker resolves in the Windows filesystem
+(\cref{sec:threats}, platform), so the two do not currently compose. We regard
+that as the most worthwhile single extension to this evaluation and we have
+not done it.
+
 \paragraph{The write-loss probe runs several layers above hardware, and does
 not need to be closer} Our \texttt{dm-flakey} target sits on a loop device
 backed by a file on the WSL2 root filesystem, which is itself a virtual disk
@@ -56,6 +71,28 @@ consequence for the claims is explicit: \textbf{under a process fault the
 barrier's contribution is prevention (\cref{sec:eval-prevention},
 $p=\UnwantedP{}$) and not durability}, and any reading of the barrier as
 protecting the record from a crashed Redis process is wrong.
+
+\paragraph{The decomposition weakens our own novelty claim, and we would
+rather say so than let a reader find it} \Cref{sec:eval-detection} attributes
+the detection guarantee to the durable pre-dispatch record and the
+transition table's missing re-entry edge, and not to the barrier. Contribution
+C2 is the barrier machinery: an fsync acknowledgement minting an unforgeable,
+single-use, scope-bound token that the pre-dispatch script refuses to proceed
+without. Put those together and the uncomfortable reading is available: our
+most novel mechanism serves the claim with the \emph{weakest} evidence --- one
+cell, \AepKillRuns{} runs, one capability class, a host-dependent effect size
+--- while the claim with the strongest evidence rests on write-ahead logging,
+which is decades old, plus a state-machine property that is a few lines of
+Lua.
+
+We think that reading is correct and that it is the paper's contribution
+rather than a hole in it. The composition being novel was never the argument;
+\cref{sec:related} says so in its first paragraph. What is new is the
+\emph{semantics} the composition delivers and, now, an ablation saying which
+half of the composition delivers which half of the semantics --- including
+that the expensive half is optional. But a reviewer weighing novelty should
+weigh it against that, not against the impression the introduction gives if
+C2 and C3 are read without \cref{sec:eval-detection} in between.
 
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
 with a configurable delay, timeout and error distribution, and a
