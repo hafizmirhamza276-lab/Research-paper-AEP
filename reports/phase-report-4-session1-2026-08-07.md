@@ -37,9 +37,13 @@ prompt block, preceded by the matrix closeout, under amendments **F0–F5**.
 > `everysec` costs **2 004.9 ms** — a factor of 31 for one configuration line.
 > §C.7.
 >
-> **One thing did not get done: the final push.** The credential helper wedged
-> mid-session and `git push` now fails with `fatal: unable to get password from
-> user`. Three commits are local-only and CI has not run on them. §E1.
+> **Rule 8 is discharged, after a delay worth recording.** The credential
+> helper wedged mid-session and three pushes in a row failed —
+> `fatal: unable to get password from user` — while `git ls-remote` kept
+> working. A later retry succeeded. All four commits are on `origin/main` and
+> CI is green on the tip: run
+> [31168669788](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31168669788),
+> three of three jobs. §C.12.
 
 ---
 
@@ -58,7 +62,7 @@ prompt block, preceded by the matrix closeout, under amendments **F0–F5**.
 | **F3** | Every number carries a pointer; timings only from suspend-gated runs; 28 ms and barrier cost separate; test counts never cited as assurance | ✅ (§C.2, §C.7) |
 | **F4** | All sections drafted; `\todo` only where completion cells could move a value; IEEEtran; verified-real refs only | ✅, and zero `\todo` remain (§C.2, §C.5) |
 | **F5** | Threats must include the six named items | ✅, plus three more a reviewer would raise first (§C.10) |
-| **Rule 8** | Commit, push, green CI **before** the report | ⚠️ **committed, not pushed** — §E1 |
+| **Rule 8** | Commit, push, green CI | ✅ **Done**, after three failed attempts — §C.12, §E1 |
 
 ---
 
@@ -587,6 +591,61 @@ The conclusion §F8 drew was right; its reason was wrong, and the corrected
 reason is more useful, because it says exactly which invocations are
 trustworthy.
 
+### C.12 Rule 8 — pushed, and green
+
+Three push attempts failed mid-session. The credential helper wedged (145 MB
+resident, no progress); killing it did not restore authentication, and
+subsequent attempts either hung on an invisible prompt or returned:
+
+```
+$ git -c credential.helper= push
+fatal: unable to get password from user
+
+$ git ls-remote origin main     # reads were unaffected throughout
+6cd6815cc3437ccac27c9d6ab46205fd0cb726fa        refs/heads/main
+```
+
+A later retry succeeded:
+
+```
+$ git push
+To https://github.com/hafizmirhamza276-lab/Research-paper-AEP.git
+   6cd6815..c5592b9  main -> main
+
+$ git status -sb
+## main...origin/main
+
+$ git log --oneline -4
+c5592b9 Phase 4 Session 1: the report
+118731c Phase 4: matrix closeout -- complete E3 comparison, fsync curve, frozen results
+f3808d4 Phase 4: fix two figure-computation defects, add figures to the paper
+6cd6815 Phase 4: manuscript draft, generated tables, and the numbers-drift gate
+```
+
+CI on the tip:
+
+```
+run        31168669788
+head_sha   c5592b974efba5cdd1654349ababfc59471203e9
+status     completed
+conclusion success
+
+$ jobs
+  success    Citation ranges (docs/22)
+  success    WAITAOF durability (compose, phase2.conf)
+  success    Suite (py3.13, Redis from compose)
+```
+
+Raw: `reports/raw/f-rule8-push-and-ci.txt`. The intermediate commit `6cd6815`
+also has a green run (31159347492).
+
+**Why this is recorded rather than deleted.** The first draft of this report
+was written while the push was still failing, and its §E1 said so. The failure
+was real and transient, and a report that silently replaced "blocked" with
+"done" would be exactly the kind of retrospective tidying the standing rules
+exist to prevent. The rule is satisfied; it was not satisfied for most of the
+session.
+
 ---
 
 ## D. Requirement checklist
@@ -618,31 +677,26 @@ trustworthy.
 | F4 | IEEEtran TSE format | ✅ | compiles |
 | F4 | Every citation verified to exist | ✅ | 24/24; one fabrication caught | 
 | F5 | Six named threats | ✅ + 3 more | §C.10 |
-| Rule 8 | Commit all work | ✅ | 3 commits |
-| Rule 8 | Push, confirm CI green **before** the report | ❌ **BLOCKED** | §E1 |
+| Rule 8 | Commit all work | ✅ | 4 commits |
+| Rule 8 | Push | ✅ after three failures | §C.12 |
+| Rule 8 | Confirm CI green | ✅ 3/3 jobs on `c5592b9` | run 31168669788; §C.12 |
 
 ---
 
 ## E. Deviations from the amendments
 
-**E1. Rule 8's push is not done, and this report was written anyway.** Two
-pushes succeeded this session (`8446103`, `6cd6815`). The third hangs: the
-credential helper wedged, and after it was killed, push fails outright.
+**E1. Rule 8's push failed three times before it succeeded, and the report was
+drafted in between.** Two pushes went through early (`8446103`, `6cd6815`);
+the next three failed with `fatal: unable to get password from user` after the
+credential helper wedged. The report was written during that window and its
+§E1 said the rule was unsatisfied, because it was. A later retry succeeded and
+CI is green on the tip (§C.12).
 
-```
-$ git -c credential.helper= push
-fatal: unable to get password from user
-
-$ git ls-remote origin main     # reads still work
-6cd6815cc3437ccac27c9d6ab46205fd0cb726fa        refs/heads/main
-```
-
-Three commits are local-only — `f3808d4`, `118731c`, and the commit carrying
-this report. **CI has not run on any of them.** Rule 8 says a session whose
-work is not pushed is not complete, and by that standard this session is not
-complete. Writing the report before the push is the deviation; the alternative
-was to withhold the report entirely, which would have lost the findings without
-making the push succeed. The one command needed is in §H.
+The deviation is that the report was drafted before the push rather than after
+it, which is the order rule 8 specifies. The alternative was to withhold the
+report while retrying a credential prompt, which would have lost the findings
+without making the push succeed any sooner. Both states are recorded rather
+than the second overwriting the first.
 
 **E2. The `appendfsync always` benchmark measures latency, not throughput.**
 F0(iii) asked for "one config, crash-free, AEP-full only", which is what was
@@ -813,16 +867,8 @@ open.**
 
 ## H. Recommended next phase and its prerequisites
 
-**Prerequisite, before anything else: push.** Three commits are local-only and
-unverified by CI.
-
-```
-git push        # re-authenticate when the credential helper prompts
-```
-
-Then confirm all three CI jobs are green on the final commit. Until that is
-done the session is incomplete by rule 8, and the report above should be read
-as provisional in exactly that respect.
+**No prerequisites outstanding.** Everything is pushed and CI is green on
+`c5592b9` (§C.12). The results are frozen, manifested and archived.
 
 **Next, in value order:**
 
