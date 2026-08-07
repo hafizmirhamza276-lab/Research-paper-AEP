@@ -233,6 +233,7 @@ def test_the_unwanted_applied_effect_rate_is_over_executions(
         comparisons=[],
         flakey=[],
         always=ALWAYS,
+        coverage={"runs": 398, "executions": 3440, "cells": 115},
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
@@ -250,6 +251,7 @@ def test_the_barrier_ratio_uses_the_within_policy_costs(tmp_path: Path) -> None:
         comparisons=[],
         flakey=[],
         always=ALWAYS,
+        coverage={"runs": 398, "executions": 3440, "cells": 115},
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
@@ -270,6 +272,7 @@ def test_every_emitted_macro_carries_a_provenance_comment(
         comparisons=[],
         flakey=[_payload(60, 60, 60, [_trial()] * 60)],
         always=ALWAYS,
+        coverage={"runs": 398, "executions": 3440, "cells": 115},
         out=tmp_path,
     )
     lines = (tmp_path / "numbers.tex").read_text(encoding="utf-8").splitlines()

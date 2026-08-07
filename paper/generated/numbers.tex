@@ -97,6 +97,34 @@
 % against 2038.2 ms under everysec: the ablated protocol's own cost is nearly policy-independent, which is what makes the two barrier figures comparable
 \newcommand{\BthreeAlwaysMedian}{2\,048.4}
 
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 106/180
+\newcommand{\BfourDupPosOnly}{0.5889}
+
+% per-cell-metrics.csv | executions behind \BfourDupPosOnly
+\newcommand{\BfourExecPosOnly}{180}
+
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=NO_READBACK
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 101/180
+\newcommand{\BfourDupNoReadback}{0.5611}
+
+% per-cell-metrics.csv | executions behind \BfourDupNoReadback
+\newcommand{\BfourExecNoReadback}{180}
+
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% metric=lost_effect_rate | sum(successes)/sum(total) = 91/180
+\newcommand{\BfourbLostPosOnly}{0.5056}
+
+% per-cell-metrics.csv | executions behind \BfourbLostPosOnly
+\newcommand{\BfourbExecPosOnly}{180}
+
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=NO_READBACK
+% metric=lost_effect_rate | sum(successes)/sum(total) = 93/180
+\newcommand{\BfourbLostNoReadback}{0.5167}
+
+% per-cell-metrics.csv | executions behind \BfourbLostNoReadback
+\newcommand{\BfourbExecNoReadback}{180}
+
 % per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=(session-3) response_class=AUTHORITATIVE_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\BthreeAmbAuth}{0.0000}
@@ -198,6 +226,15 @@
 % reports/raw/e1-durability-window.txt (0/10 lost under docker kill -s KILL) vs experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % Fisher exact two-tailed across the two fault classes
 \newcommand{\FlakeyVsProcessKillP}{5.8\times10^{-14}}
+
+% analysis/coverage.json | runs
+\newcommand{\RunsCollected}{398}
+
+% analysis/coverage.json | executions
+\newcommand{\ExecutionsCollected}{3\,440}
+
+% analysis/coverage.json | cells
+\newcommand{\CellsCollected}{115}
 
 % lines of Python under aep_core/, excluding __pycache__
 % 14 files; regenerated on every run of this script

@@ -90,21 +90,33 @@ The gap between B1/B2 and B0 is small and that is the finding: a lease and a
 fenced CAS are doing exactly what they promise and neither promise is about the
 external call.
 
-\paragraph{A durable log is not enough --- and this is the sharpest statement
-available} B4 has a write-ahead record, acknowledged durable by the same
-\texttt{WAITAOF} barrier AEP uses. It is not ablated on durability. It
-duplicates at $0.9500$ --- the highest rate of any system here --- on the one
-capability class for which it was collected.
-% source: per-cell-metrics.csv, system=B4_DURABLE_WORKFLOW,
-% regime=(session-3), response_class=AUTHORITATIVE_READBACK: 19/20.
-% B4's tier-2 and tier-3 cells are in the plan and were not collected; see
-% the coverage paragraph in Section 8. n=20 is thin and the interval is wide.
-The record is necessary and it is not sufficient, because the record cannot
-contain the fact that matters --- whether the provider applied the effect. What separates
-B3 and AEP-full from B4 is not durability but the \emph{absence of an edge back
-into the dispatching state}: the transition table has no path that re-enters
-\textsc{about-to-fire}, checked inside the atomic script
-(\cref{fig:statemachine}).
+\paragraph{A durable log is not enough, and the two configurations of one
+engine land on two different corners} B4 has a write-ahead record,
+acknowledged durable by the same \texttt{WAITAOF} barrier AEP uses. It is not
+ablated on durability. It duplicates at \BfourDupPosOnly{} on
+\textsc{pos-only} and \BfourDupNoReadback{} on \textsc{none}
+(\BfourExecPosOnly{} and \BfourExecNoReadback{} executions), and at $0.9500$
+on \textsc{auth}, where its cell is $n=20$ and its interval correspondingly
+wide.
+
+B4b is the same engine with Maximum Attempts set to $1$, and it is the cleaner
+half of the demonstration: over \BfourbExecPosOnly{} and
+\BfourbExecNoReadback{} executions it records \emph{zero} undetected
+duplicates on both classes and loses the effect in \BfourbLostPosOnly{} and
+\BfourbLostNoReadback{} of them instead. One configuration line moves
+the engine from one silent corner of \cref{sec:trilemma} to the other, and
+neither configuration reaches the third: B4 and B4b declare ambiguity in
+$0.0000$ of executions everywhere measured.
+
+That is the sharpest form of the argument the paper can make, because it is
+made against a system that has everything the write-ahead pattern is supposed
+to provide. The record is necessary and it is not sufficient, because the
+record cannot contain the fact that matters --- whether the provider applied
+the effect. What separates B3 and AEP-full from B4 is not durability but the
+\emph{absence of an edge back into the dispatching state}: the transition
+table has no path that re-enters \textsc{about-to-fire}, checked inside the
+atomic script (\cref{fig:statemachine}). What separates them from B4b is that
+declining to re-send is not the same as knowing whether to.
 
 \subsubsection{The residual is set by the endpoint, not the protocol}
 
@@ -523,10 +535,28 @@ scoring them zero or one, because both would be statements about a component
 that was not present.
 
 Within that scope: every AEP-full and B3 execution in the crashed regime
-reached a terminal classification, and \emph{zero} reconciliation
-disagreements were recorded across all runs --- every run's own event log
+reached a terminal classification, and across \RunsCollected{} runs exactly
+one recorded a reconciliation disagreement --- every other run's own event log
 agreed with its independently written oracle ledger.
 % source: analysis/coverage.json and the per-run reconcile step.
+
+That one is worth stating precisely, because the check exists to be believed.
+It was a B4b cell in which the system classified all ten executions
+\textsc{confirmed-applied} while the provider's ledger recorded two, eight
+disagreements of the form ``the system asserted the effect was applied and the
+ledger records none''. Both sibling runs of the same cell recorded ten, the
+provider logged no error, and its run-log held three lines against eleven for
+each sibling --- so the provider recorded almost nothing while answering the
+workers successfully. We could not determine the cause. A re-run of the
+identical cell, same seed and same configuration, agreed.
+
+We treat it as a \emph{void} run on the rule the durability probe uses: a
+trial whose measurement precondition failed says nothing about the system in
+either direction. Counting it would let a broken ground truth set a baseline's
+rate; discarding it quietly and keeping the re-run would be re-running until
+the number looks right. So the re-run is what \cref{tab:outcomes} contains,
+the voided attempt ships in the artifact under \texttt{results/voided/} with
+this explanation beside it, and the count above is one rather than zero.
 Recovery latency is not reported as an absolute figure: the E5 gate leaves too
 few gated crashed runs to support a distribution, and \cref{sec:threats}
 records this as a gap rather than filling it with ungated numbers.

@@ -70,8 +70,14 @@ echo
 echo "=== the numbers against the results ==="
 if command -v uv > /dev/null; then
   uv run --frozen python scripts/check_paper_numbers.py || failures=$((failures + 1))
+elif [ -x "${HOME}/.local/bin/uv" ]; then
+  "${HOME}/.local/bin/uv" run --frozen python scripts/check_paper_numbers.py \
+    || failures=$((failures + 1))
+elif command -v python3 > /dev/null; then
+  python3 scripts/check_paper_numbers.py || failures=$((failures + 1))
 else
-  python scripts/check_paper_numbers.py || failures=$((failures + 1))
+  echo "no uv and no python3: the numbers were NOT checked" >&2
+  failures=$((failures + 1))
 fi
 
 echo

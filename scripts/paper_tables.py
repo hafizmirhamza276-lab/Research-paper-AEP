@@ -742,6 +742,7 @@ def emit_numbers(
     comparisons: list[dict[str, str]],
     flakey: list[dict[str, Any]],
     always: list[dict[str, str]],
+    coverage: dict[str, Any],
     out: Path,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
@@ -936,6 +937,43 @@ def emit_numbers(
                 "the two barrier figures comparable",
             )
 
+    # --- G3: the durable-execution engine's two corners ------------------
+    # B4 and B4b are one design in two configurations, and the argument is
+    # that they land on *different* corners of the trilemma rather than on a
+    # better one. That only reads as a finding if both corners are quoted, so
+    # both are emitted for the two capability classes where each has a full
+    # cell.
+    for system, key, metric in (
+        ("B4_DURABLE_WORKFLOW", "Bfour", "undetected_duplicate_rate"),
+        ("B4B_DURABLE_WORKFLOW_AT_MOST_ONCE", "Bfourb", "lost_effect_rate"),
+    ):
+        for response, suffix in (
+            ("POSITIVE_ONLY_READBACK", "PosOnly"),
+            ("NO_READBACK", "NoReadback"),
+        ):
+            subset = [
+                r
+                for r in crashed
+                if r["system"] == system and r["response_class"] == response
+            ]
+            successes, total = totals(subset, metric)
+            if not total:
+                continue
+            tag = "Dup" if metric == "undetected_duplicate_rate" else "Lost"
+            macro(
+                f"{key}{tag}{suffix}",
+                rate(successes, total),
+                f"per-cell-metrics.csv | system={system} "
+                f"regime={CRASHED_REGIME} response_class={response}",
+                f"metric={metric} | sum(successes)/sum(total) "
+                f"= {successes}/{total}",
+            )
+            macro(
+                f"{key}Exec{suffix}",
+                str(total),
+                f"per-cell-metrics.csv | executions behind \\{key}{tag}{suffix}",
+            )
+
     # --- G1: the ablation's NULL result, on detection --------------------
     # The barrier is an ablation of AEP-full and it changes nothing that RQ1
     # measures. That is a finding, so it is generated rather than asserted:
@@ -1086,6 +1124,20 @@ def emit_numbers(
         for name, value, *why in flakey_macros(flakey):
             macro(name, value, *why)
 
+    # --- Coverage, from the analysis tool's own census -------------------
+    if coverage:
+        for name, key in (
+            ("RunsCollected", "runs"),
+            ("ExecutionsCollected", "executions"),
+            ("CellsCollected", "cells"),
+        ):
+            if key in coverage:
+                macro(
+                    name,
+                    f"{int(coverage[key]):,}".replace(",", r"\,"),
+                    f"analysis/coverage.json | {key}",
+                )
+
     # --- Implementation size, counted rather than remembered -------------
     # These were hand-written with a shell command in a comment beside them,
     # and the harness figure had drifted by 1,359 lines by the time anyone
@@ -1163,8 +1215,15 @@ def main() -> int:
     emit_latency_table(latency, arguments.out)
     if always:
         emit_deployment_choice(latency, always, arguments.out)
+    coverage_path = arguments.analysis / "coverage.json"
+    coverage = (
+        json.loads(coverage_path.read_text(encoding="utf-8"))
+        if coverage_path.is_file()
+        else {}
+    )
     emit_numbers(
-        per_cell, latency, kill, comparisons, flakey, always, arguments.out
+        per_cell, latency, kill, comparisons, flakey, always, coverage,
+        arguments.out,
     )
     for name in sorted(p.name for p in arguments.out.glob("*.tex")):
         print(f"wrote {arguments.out / name}")

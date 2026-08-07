@@ -223,20 +223,24 @@ of it. A deployment that needs a latency budget should measure its own, and
 the artifact's crash-free cells are the shortest thing in the plan to re-run.
 
 \paragraph{Coverage of the matrix is partial, and the gaps are named} The full
-plan is 1\,068 runs; we collected 326, comprising 2\,720 executions over 91
-cells, chosen to answer the research questions rather than to fill the grid.
+plan is 1\,068 runs; we collected \RunsCollected{}, comprising
+\ExecutionsCollected{} executions over \CellsCollected{} cells, chosen to
+answer the research questions rather than to fill the grid.
 % source: experiments/results/matrix/MANIFEST.md, which lists the run count
 % for every cell, and analysis/coverage.json.
 What that leaves uncovered, precisely:
 
 \begin{itemize}
-\item \textbf{B4 and B4b have only \textsc{auth} cells}, at $n=20$ and $n=30$
-      executions. Every other system in \cref{tab:outcomes} has all three
-      capability classes at $n=180$ or $n=150$. B4's $0.9500$ is a point
-      estimate on a thin row and its interval is correspondingly wide; B4b's
-      lost-effect rate comes from three crash-free runs. The three-way
-      duplicate/loss/ambiguity argument is confirmed in \emph{shape} and is
-      not powered.
+\item \textbf{B4's \textsc{auth} cell is $n=20$ and B4b has none.} Both now
+      have full \textsc{pos-only} and \textsc{none} cells at $n=180$, which is
+      where the duplicate-versus-loss contrast of \cref{tab:outcomes} is
+      drawn. What remains thin is the top-left corner: B4's $0.9500$ on
+      \textsc{auth} rests on twenty executions and its interval is wide, and
+      B4b was never collected on \textsc{auth} at all, so that cell is a dash
+      rather than a number. We do not need those cells for the argument --- a
+      system that duplicates on the two harder capability classes does not
+      become safe on the easiest one --- but the row is incomplete and the
+      table says so rather than interpolating.
 \item \textbf{The prevention result rests on one cell.} The hard-Redis-kill
       ablation of \cref{sec:eval-prevention} was collected on
       \textsc{no-readback} only, at one crash point, at
