@@ -245,19 +245,31 @@ coverage: recovery-latency distributions are not reported
 (\cref{sec:eval-rq4}), because the gated crashed runs are too few, and we
 prefer the gap to ungated numbers.
 
-\paragraph{Every timing number rests on three runs} Stated plainly because the
-gate above is what makes it true and because \cref{tab:deployment} is
-otherwise the most confident-looking table in the paper. Each cell behind it
-is three crash-free runs of ten executions --- thirty step latencies --- and
-the four medians in that table are what the barrier's cost and the factor of
-\BarrierCostRatio{} are computed from. Thirty executions is a reasonable
-sample for a median whose underlying distribution is dominated by a
-deterministic $2\,000$\,ms provider delay plus a scheduled fsync wait, and it
-is a thin one for the p95 column of \cref{tab:latency}, which is why the
-argument is made on medians. What we can say is bounded by that: the
-\emph{direction} and rough magnitude of the barrier's cost, not a distribution
-of it. A deployment that needs a latency budget should measure its own, and
-the artifact's crash-free cells are the shortest thing in the plan to re-run.
+\paragraph{Every timing number rests on three runs, and one of them does not
+survive its own interval} Stated plainly because the E5 gate above is what
+makes it true and because \cref{tab:deployment} is otherwise the most
+confident-looking table in the paper. Each cell behind it is three crash-free
+runs of ten executions, and the four medians in that table are what the
+barrier's cost is computed from.
+
+We report a cluster bootstrap over runs for both barrier figures
+(\cref{sec:eval-deployment}) and the result changes what can be claimed. Under
+\texttt{everysec} the barrier's cost is \BarrierCost{}\,ms with a 95\%
+interval of [\BarrierCostLow{}, \BarrierCostHigh{}] --- positive, but pinned
+only to within a factor of four. Under \texttt{always} the point estimate is
+\BarrierCostAlways{}\,ms and the interval is
+[\BarrierCostAlwaysLow{}, \BarrierCostAlwaysHigh{}], which spans zero: at
+three runs per arm we cannot show that the barrier costs anything under that
+policy. An earlier draft of this section quoted a factor between the two point
+estimates. That factor is not supported by these data and has been removed.
+
+The cause is the sample, not the metric: three clusters admit only ten
+distinct bootstrap multisets, and the \texttt{always} cell has a heavy upper
+tail (its p95 is $5\,067.8$\,ms against a $2\,063.4$\,ms median) that three
+clusters cannot resolve. Closing this needs more crash-free \emph{runs}, not
+more executions per run, and the crash-free cells are the shortest thing in
+the plan to re-run. A deployment that needs a latency budget should measure
+its own.
 
 \paragraph{Coverage of the matrix is partial, and the gaps are named} The full
 plan is 1\,068 runs; we collected \RunsCollected{}, comprising

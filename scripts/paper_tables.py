@@ -42,6 +42,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
+import statistics
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -420,6 +422,71 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
     )
 
 
+def cluster_bootstrap_median_difference(
+    treatment: dict[str, list[float]],
+    control: dict[str, list[float]],
+    *,
+    resamples: int = 10_000,
+    seed: int = 20260806,
+) -> tuple[float, float, float]:
+    """95% interval for (median treatment - median control), clustered by run.
+
+    The unit of independence is the *run*, not the execution: thirty step
+    latencies from three runs are not thirty independent draws, because a run
+    shares one provider process, one lease namespace and one worker-respawn
+    history. So the resample is over runs, and every execution of a resampled
+    run comes with it.
+
+    With three runs per arm this interval is coarse by construction -- there
+    are only ten distinct multisets of three runs -- and that coarseness is
+    the honest content of the number. It is reported rather than smoothed,
+    because the alternative on offer is a point estimate with no interval at
+    all, which is what this replaces.
+    """
+    rng = random.Random(seed)
+    treatment_runs = sorted(treatment)
+    control_runs = sorted(control)
+    if not treatment_runs or not control_runs:
+        return (0.0, 0.0, 0.0)
+
+    def draw(runs: list[str], data: dict[str, list[float]]) -> list[float]:
+        picked: list[float] = []
+        for _ in runs:
+            picked.extend(data[rng.choice(runs)])
+        return picked
+
+    point = statistics.median(
+        [v for run in treatment_runs for v in treatment[run]]
+    ) - statistics.median([v for run in control_runs for v in control[run]])
+
+    differences: list[float] = []
+    for _ in range(resamples):
+        differences.append(
+            statistics.median(draw(treatment_runs, treatment))
+            - statistics.median(draw(control_runs, control))
+        )
+    differences.sort()
+    low = differences[int(0.025 * len(differences))]
+    high = differences[min(len(differences) - 1, int(0.975 * len(differences)))]
+    return (point, low, high)
+
+
+def crash_free_latencies(path: Path, system: str) -> dict[str, list[float]]:
+    """Per-run step latencies for one system's crash-free executions."""
+    grouped: dict[str, list[float]] = defaultdict(list)
+    if not path.is_file():
+        return {}
+    for row in read_rows(path):
+        if row.get("regime") != CRASH_FREE_REGIME:
+            continue
+        if row.get("system") != system:
+            continue
+        value = row.get("step_latency_ms")
+        if value:
+            grouped[row["run_id"]].append(float(value))
+    return dict(grouped)
+
+
 def tex_p_value(value: float) -> str:
     """A p-value as LaTeX maths, in the form a reviewer can check.
 
@@ -746,6 +813,7 @@ def emit_numbers(
     flakey: list[dict[str, Any]],
     always: list[dict[str, str]],
     coverage: dict[str, Any],
+    execution_paths: dict[str, Path],
     out: Path,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
@@ -924,12 +992,12 @@ def emit_numbers(
                 "AEP-full median - B3 median, both under appendfsync=always",
                 f"= {aep_always:.1f} - {b3_always:.1f}",
             )
-            macro(
-                "BarrierCostRatio",
-                f"{(aep - b3) / (aep_always - b3_always):.0f}",
-                "\\BarrierCost / \\BarrierCostAlways -- what one line of "
-                "durability configuration is worth on this workload",
-            )
+            # No ratio macro. The obvious one -- \BarrierCost divided by
+            # \BarrierCostAlways -- was emitted and quoted until the cluster
+            # bootstrap showed the denominator's interval spans zero. A ratio
+            # whose denominator is not distinguishable from zero is not a
+            # measurement, and generating it would only invite it back into
+            # the prose.
             macro(
                 "BthreeAlwaysMedian",
                 tex_number(b3_always),
@@ -1144,6 +1212,36 @@ def emit_numbers(
         for name, value, *why in flakey_macros(flakey):
             macro(name, value, *why)
 
+    # --- The barrier's cost, with an interval rather than a point --------
+    # A difference of two medians from three runs each. Reported with a
+    # cluster bootstrap over runs, because the hostile read's sharpest
+    # surviving objection was that the headline cost figure carried no
+    # uncertainty at all.
+    for policy, tag in (("everysec", ""), ("always", "Always")):
+        path = execution_paths.get(policy)
+        if not path:
+            continue
+        treated = crash_free_latencies(path, "AEP_FULL")
+        ablated = crash_free_latencies(path, "B3_INTENT_NO_BARRIER")
+        if not treated or not ablated:
+            continue
+        point, low, high = cluster_bootstrap_median_difference(treated, ablated)
+        macro(
+            f"BarrierCost{tag}Low",
+            tex_number(low),
+            f"{path.parent.name}/per-execution.csv | cluster bootstrap over "
+            f"runs, 10000 resamples, seed 20260806, appendfsync={policy}",
+            f"2.5th percentile of (median AEP-full - median B3); "
+            f"point estimate {point:.1f} ms from "
+            f"{len(treated)} and {len(ablated)} runs",
+        )
+        macro(
+            f"BarrierCost{tag}High",
+            tex_number(high),
+            f"{path.parent.name}/per-execution.csv | 97.5th percentile of the "
+            f"same bootstrap, appendfsync={policy}",
+        )
+
     # --- Coverage, from the analysis tool's own census -------------------
     if coverage:
         for name, key in (
@@ -1241,9 +1339,14 @@ def main() -> int:
         if coverage_path.is_file()
         else {}
     )
+    execution_paths = {"everysec": arguments.analysis / "per-execution.csv"}
+    if arguments.fsync_analysis:
+        execution_paths["always"] = (
+            arguments.fsync_analysis / "per-execution.csv"
+        )
     emit_numbers(
         per_cell, latency, kill, comparisons, flakey, always, coverage,
-        arguments.out,
+        execution_paths, arguments.out,
     )
     for name in sorted(p.name for p in arguments.out.glob("*.tex")):
         print(f"wrote {arguments.out / name}")

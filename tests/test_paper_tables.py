@@ -234,6 +234,7 @@ def test_the_unwanted_applied_effect_rate_is_over_executions(
         flakey=[],
         always=ALWAYS,
         coverage={"runs": 398, "executions": 3440, "cells": 115},
+        execution_paths={},
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
@@ -243,7 +244,9 @@ def test_the_unwanted_applied_effect_rate_is_over_executions(
     assert "\\newcommand{\\UnwantedP}{1.9\\times10^{-6}}" in text
 
 
-def test_the_barrier_ratio_uses_the_within_policy_costs(tmp_path: Path) -> None:
+def test_the_barrier_costs_are_within_policy_and_no_ratio_is_emitted(
+    tmp_path: Path,
+) -> None:
     emit_numbers(
         per_cell=[],
         latency=EVERYSEC,
@@ -252,13 +255,18 @@ def test_the_barrier_ratio_uses_the_within_policy_costs(tmp_path: Path) -> None:
         flakey=[],
         always=ALWAYS,
         coverage={"runs": 398, "executions": 3440, "cells": 115},
+        execution_paths={},
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
     assert "\\newcommand{\\BarrierCost}{1\\,966.7}" in text
     assert "\\newcommand{\\BarrierCostAlways}{15.0}" in text
-    # 1966.7 / 15.0 = 131, not 1966.7 / 25.2 = 78 and not 2004.9 / 63.4 = 31.
-    assert "\\newcommand{\\BarrierCostRatio}{131}" in text
+    # No ratio macro. The obvious one -- 1966.7 / 15.0 = 131 -- was emitted
+    # and quoted until a cluster bootstrap showed the denominator's 95%
+    # interval spans zero. A ratio whose denominator is not distinguishable
+    # from zero is not a measurement, and generating it is what let it back
+    # into the prose the first time.
+    assert "BarrierCostRatio" not in text
 
 
 def test_every_emitted_macro_carries_a_provenance_comment(
@@ -273,6 +281,7 @@ def test_every_emitted_macro_carries_a_provenance_comment(
         flakey=[_payload(60, 60, 60, [_trial()] * 60)],
         always=ALWAYS,
         coverage={"runs": 398, "executions": 3440, "cells": 115},
+        execution_paths={},
         out=tmp_path,
     )
     lines = (tmp_path / "numbers.tex").read_text(encoding="utf-8").splitlines()

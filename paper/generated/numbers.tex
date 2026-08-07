@@ -90,9 +90,6 @@
 % = 2063.4 - 2048.4
 \newcommand{\BarrierCostAlways}{15.0}
 
-% \BarrierCost / \BarrierCostAlways -- what one line of durability configuration is worth on this workload
-\newcommand{\BarrierCostRatio}{131}
-
 % fsync-always/analysis/latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER, appendfsync=always
 % against 2038.2 ms under everysec: the ablated protocol's own cost is nearly policy-independent, which is what makes the two barrier figures comparable
 \newcommand{\BthreeAlwaysMedian}{2\,048.4}
@@ -230,6 +227,20 @@
 % reports/raw/e1-durability-window.txt (0/10 lost under docker kill -s KILL) vs experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % Fisher exact two-tailed across the two fault classes
 \newcommand{\FlakeyVsProcessKillP}{5.8\times10^{-14}}
+
+% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% 2.5th percentile of (median AEP-full - median B3); point estimate 1968.1 ms from 3 and 3 runs
+\newcommand{\BarrierCostLow}{477.9}
+
+% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=everysec
+\newcommand{\BarrierCostHigh}{1\,978.8}
+
+% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=always
+% 2.5th percentile of (median AEP-full - median B3); point estimate 16.5 ms from 3 and 3 runs
+\newcommand{\BarrierCostAlwaysLow}{-1\,474.6}
+
+% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=always
+\newcommand{\BarrierCostAlwaysHigh}{22.7}
 
 % analysis/coverage.json | runs
 \newcommand{\RunsCollected}{398}

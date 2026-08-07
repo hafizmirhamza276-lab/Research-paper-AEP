@@ -491,10 +491,9 @@ whose only changed line is \texttt{appendfsync always}.
 % source: reports/raw/f0iii-appendfsync-always.txt and the G2 re-run that
 % added the B3 arm; both refuse to proceed unless CONFIG GET appendfsync
 % reads back 'always' on the live server.
-The barrier's cost falls from \BarrierCost{}\,ms to \BarrierCostAlways{}\,ms
---- a factor of \BarrierCostRatio{} --- for one line of configuration, because
-under \texttt{always} the fsync has already happened by the time the write
-returns, so \texttt{WAITAOF} has nothing left to wait for.
+The barrier's cost falls from \BarrierCost{}\,ms to \BarrierCostAlways{}\,ms,
+because under \texttt{always} the fsync has already happened by the time the
+write returns, so \texttt{WAITAOF} has nothing left to wait for.
 
 Both figures are ablation differences \emph{within} one policy, which required
 collecting the barrier-less arm twice. It would have been easier to subtract
@@ -502,8 +501,38 @@ the \texttt{everysec} B3 median from the \texttt{always} AEP-full median, and
 that would have assumed the ablated protocol's own writes cost the same under
 both policies. They nearly do --- B3 is \BthreeStepMedian{}\,ms under
 \texttt{everysec} and \BthreeAlwaysMedian{}\,ms under \texttt{always} --- but
-``nearly'' is a measurement, and a factor of \BarrierCostRatio{} resting on an
+``nearly'' is a measurement, and an order-of-magnitude claim resting on an
 unmeasured premise is the kind of number this paper is trying not to publish.
+
+\paragraph{How precise these two figures are, which is: not very} Each is a
+difference of two medians over three runs per arm, and we report a cluster
+bootstrap over runs rather than over executions, because thirty step latencies
+from three runs are not thirty independent draws. The intervals are wide and
+one of them is uninformative:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\texttt{appendfsync} & barrier (ms) & 95\% CI \\
+\midrule
+\texttt{everysec} & \BarrierCost{} & [\BarrierCostLow{}, \BarrierCostHigh{}] \\
+\texttt{always} & \BarrierCostAlways{} & [\BarrierCostAlwaysLow{}, \BarrierCostAlwaysHigh{}] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Under \texttt{everysec} the barrier's cost is comfortably positive and its
+magnitude is pinned only to within a factor of four. Under \texttt{always} it
+is \emph{not separable from zero at this sample size} --- the interval spans
+zero and is dominated by a heavy upper tail that three clusters cannot
+resolve. So the honest form of the claim is directional and bounded, not a
+ratio: \textbf{under \texttt{everysec} the barrier costs hundreds to
+$\approx2\,000$\,ms per step, and under \texttt{always} we cannot show it costs
+anything at all.} That is enough for the deployment decision in this section,
+and it is less than the point estimates alone appear to say. Closing it needs
+more crash-free runs, not more executions per run, and
+\cref{sec:threats} says so.
 
 \paragraph{B3-mode: the barrier removed entirely} This row is not a baseline
 we are beating; it is a supported configuration of the same implementation, and
