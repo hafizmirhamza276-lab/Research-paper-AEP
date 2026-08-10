@@ -883,3 +883,46 @@ the weakest evidence supporting the paper's most novel mechanism.
 ## C.8 Final push and CI
 
 *(appended after the rest of the report, per §E.6)*
+
+Commits authored by this session:
+
+```
+50444fa Phase 5A: the session report, and the citations checked against the files
+b94eff1 Phase 5A G3-gap: complete the AUTH column, and correct a number it exposed
+8db9084 Phase 5A: commit the weekend prompt regime under its audit name
+07547df Merge origin/main: pick up CODEX_PROMPTS.md uploaded via GitHub web UI
+```
+
+Tree clean before the final push, and the push itself:
+
+```
+$ git status --short
+   (no output)
+
+$ git push origin main
+To https://github.com/hafizmirhamza276-lab/Research-paper-AEP.git
+   07547df..50444fa  main -> main
+push exit=0
+```
+
+GitHub Actions on the final head:
+
+```
+head_sha: 50444fa5dc197907f107fa6e8c37767f6f1919c9
+concl   : success
+updated : 2026-08-10T06:59:02Z
+
+  Citation ranges (docs/22)                      completed  success
+  WAITAOF durability (compose, phase2.conf)      completed  success
+  Suite (py3.13, Redis from compose)             completed  success
+```
+
+**Run URL:** https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31363928317
+
+All three jobs green on the final head. Rule 8 is discharged this session:
+committed, pushed, CI green — including the four backlog commits that Phase 4B
+could not push.
+
+*(This section was appended in a follow-up commit, so the run above is green on
+the head that contains everything except this paragraph; the appending commit's
+own run is recorded by the same workflow and is the repository's current head.)*
