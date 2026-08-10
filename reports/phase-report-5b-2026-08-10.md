@@ -1093,3 +1093,70 @@ the reference verification pass, and the Monday audit — not evidence.
 ## C.15 (continued) — the tag, the final push, and CI on head
 
 *(appended after the rest of the report was written)*
+
+The tag is annotated and points at the commit containing this report (§E.6):
+
+```
+$ git tag -a v1.0.0-rc1 -F <message>
+$ git rev-list -n1 v1.0.0-rc1
+31664ca9171935cbeb7718fbd5541b917203d3ee
+```
+
+Push of the branch and the tag, and confirmation from the remote:
+
+```
+$ git push origin main
+   9975dc1..31664ca  main -> main
+push exit=0
+
+$ git push origin v1.0.0-rc1
+ * [new tag]         v1.0.0-rc1 -> v1.0.0-rc1
+push exit=0
+
+$ git ls-remote origin main refs/tags/v1.0.0-rc1
+31664ca9171935cbeb7718fbd5541b917203d3ee	refs/heads/main
+6ad98c4d24d3c3f93ed5c6844e7280bf2b7a436f	refs/tags/v1.0.0-rc1
+
+$ git rev-list --left-right --count origin/main...main
+0	0
+```
+
+Both pushes printed `fatal: Cannot prompt because user interactivity has been
+disabled` to stderr before succeeding — Git Credential Manager attempting an
+interactive lookup it did not need, since the credential was already cached.
+The refspec lines and `exit=0` are the operative result, and the remote
+confirms both.
+
+GitHub Actions on `31664ca`. The tag push and the branch push each produced a
+run; **both green, all four jobs, including the gate this session added**:
+
+```
+run 31377551742   event=push  head=31664ca  success  2026-08-10T10:06:32Z
+   Citation ranges (docs/22)                            success
+   Numbers gate (manuscript vs frozen CSVs)             success
+   WAITAOF durability (compose, phase2.conf)            success
+   Suite (py3.13, Redis from compose)                   success
+
+run 31377556058   event=push  head=31664ca  success  2026-08-10T10:06:47Z
+   Numbers gate (manuscript vs frozen CSVs)             success
+   WAITAOF durability (compose, phase2.conf)            success
+   Suite (py3.13, Redis from compose)                   success
+   Citation ranges (docs/22)                            success
+```
+
+**Run URLs:**
+https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31377551742
+https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31377556058
+
+**Rule 9 discharge.** The only external interactions this session were
+`git fetch`, `git push` (branch and tag), GitHub Actions running by itself, and
+unauthenticated `GET` requests to `api.github.com` to read run status. Nothing
+was uploaded to Zenodo, arXiv, any DOI minter, any package registry, or a
+GitHub release. No account, token or draft was created anywhere. `v1.0.0-rc1`
+is a plain annotated git tag with no assets attached.
+
+*(As in previous sessions, this section is appended in a follow-up commit, so
+the two runs above are green on the head containing everything except these
+paragraphs. That commit's own run is recorded by the same workflow and is the
+repository's current head; the tag deliberately stays on `31664ca`, the state
+the artifact was verified in.)*
