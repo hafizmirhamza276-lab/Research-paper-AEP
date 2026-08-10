@@ -72,13 +72,19 @@
   year      = {2006}
 }
 
-% [URL] Redis distributed-locks pattern page, read 2026-08-07.
+% [URL] Redis distributed-locks pattern page, re-read 2026-08-10. The path
+% recorded on 2026-08-07 (.../develop/use-cases/patterns/distributed-locks/)
+% now returns HTTP 404 -- Redis moved the page from use-cases to clients
+% without a redirect. The URL below was fetched on 2026-08-10 and returned
+% HTTP 200 carrying the Redlock content this entry is cited for. This is the
+% only entry of the 25 whose recorded location had rotted; see
+% reports/phase-report-5c-2026-08-10.md section C.6.
 @misc{redis-locks,
   author       = {{Redis}},
   title        = {Distributed Locks with {Redis}},
-  howpublished = {\url{https://redis.io/docs/latest/develop/use-cases/patterns/distributed-locks/}},
+  howpublished = {\url{https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/}},
   year         = {2026},
-  note         = {Accessed 2026-08-07}
+  note         = {Accessed 2026-08-10}
 }
 
 % [URL] Kleppmann's critique of Redlock, read 2026-08-07. Cited for the

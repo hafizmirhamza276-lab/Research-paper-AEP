@@ -46,6 +46,7 @@ unnoticed.
 \paragraph{Reproducibility} The environment is locked (\texttt{uv.lock}), the
 Redis image is pinned by digest, and CI provisions Redis from the same compose
 file the experiments use, so no job can pass against a differently configured
-store. Continuous integration runs three jobs --- the full suite, the
-\texttt{WAITAOF} durability suite, and a citation-range check over the formal
-model --- and the build fails if any test is skipped.
+store. Continuous integration runs four jobs --- the full suite, the
+\texttt{WAITAOF} durability suite, a citation-range check over the formal
+model, and a gate that rebuilds the manuscript and re-derives every number in
+it from the frozen results --- and the build fails if any test is skipped.

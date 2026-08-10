@@ -80,7 +80,7 @@ the accounts.
 \item[\textbf{C3}] \textbf{An evaluation under real process kills} across six
       named crash points, three endpoint reconciliation capabilities and
       three collected fault regimes --- every execution crashed, none
-      crashed, and the coordinator hard-killed --- against five baseline
+      crashed, and Redis hard-killed --- against five baseline
       designs, one of them in two configurations.
       (Two further regimes are implemented and were not collected; they are
       named in \cref{sec:threats} rather than counted here.) AEP records no
@@ -97,8 +97,8 @@ the accounts.
       indistinguishable (\cref{sec:eval-detection}). The \emph{barrier} buys
       something else --- it withholds the external call when durability can no
       longer be confirmed --- which is invisible to the crash faults that
-      dominate this literature and large under the fault that targets the
-      coordinator (\cref{sec:eval-prevention}). Separating them changes what a
+      dominate this literature and large under the fault that targets
+      Redis (\cref{sec:eval-prevention}). Separating them changes what a
       deployment must pay for: detection is nearly free, prevention is where
       the fsync cost lives, and an operator can buy the first without the
       second (\cref{sec:eval-deployment}).

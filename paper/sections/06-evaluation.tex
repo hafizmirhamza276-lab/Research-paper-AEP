@@ -64,7 +64,8 @@ number, and none does.
 \subsection{RQ1 --- undetected duplicates and the shape of the residual}
 \label{sec:eval-rq1}
 
-\Cref{tab:outcomes} is the anchor result.
+\Cref{tab:outcomes} is the anchor result; \cref{fig:trade} shows the same
+executions pooled to one bar pair per system.
 
 \input{generated/table-outcomes}
 
@@ -89,7 +90,7 @@ is significant at $p = \BaselineDupMaxP{}$ by Fisher's exact test.
 % p-value source: analysis/comparisons-vs-aep-full.csv, crashed regime.
 The gap between B1/B2 and B0 is small and that is the finding: a lease and a
 fenced CAS are doing exactly what they promise and neither promise is about the
-external call.
+external call (\cref{fig:bycrashpoint}).
 
 \paragraph{A durable log is not enough, and the two configurations of one
 engine land on two different corners} B4 has a write-ahead record,
@@ -298,7 +299,7 @@ If detection does not need the barrier, what does the barrier do? It withholds
 the external call when the durability of the intent can no longer be confirmed.
 That is a different guarantee, it is worth stating in its own metric, and no
 worker-crash fault can exercise it --- which is why \cref{sec:eval-detection}
-returns a null. The fault that exercises it is loss of the coordinator itself.
+returns a null. The fault that exercises it is loss of Redis itself.
 
 We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
 boundary between the intent CAS and the acknowledgement. AEP-full is inside
@@ -367,7 +368,7 @@ actually test it}
 
 There remains a third thing the barrier is supposed to do, and it is the one
 most readers assume it does first: protect the write-ahead record from being
-lost when the coordinator dies. We tested that premise before building on it,
+lost when Redis dies. We tested that premise before building on it,
 and for the fault everyone reaches for first, it is false.
 
 \ProcessKillTrials{} trials, each phase-aligning the \texttt{everysec} timer
@@ -556,17 +557,17 @@ we are beating; it is a supported configuration of the same implementation, and
 \ProtocolMinusBarrier{}\,ms over a system with no protocol at all, and it
 delivers the entire detection guarantee of \cref{tab:outcomes} --- every rate
 in that table, on every capability class, statistically indistinguishable from
-AEP-full's. What it forfeits is \cref{sec:eval-prevention}: under coordinator
-loss it will put an effect on the wire that AEP-full withholds, at
+AEP-full's. What it forfeits is \cref{sec:eval-prevention}: under a hard Redis
+kill it will put an effect on the wire that AEP-full withholds, at
 \BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will
 not survive a host-level write loss (\cref{sec:eval-durability}).
 
 \textbf{So the question a deployment answers is not ``can we afford AEP'' but
-``do we need prevention, and at which fsync policy''.} If the coordinator is
-the fault to worry about --- a Redis on the same host as the workers, an
+``do we need prevention, and at which fsync policy''.} If losing Redis is
+the fault to worry about --- an instance on the same host as the workers, an
 unreplicated instance, a VM that can vanish --- the barrier is the point of the
 protocol and \texttt{always} makes it nearly free at this workload's shape. If
-the coordinator is well protected and worker crashes are the fault of concern,
+Redis is well protected and worker crashes are the fault of concern,
 B3-mode gives the paper's headline result for \ProtocolMinusBarrier{}\,ms.
 
 \textbf{One measurement this table does not support.} It says nothing about

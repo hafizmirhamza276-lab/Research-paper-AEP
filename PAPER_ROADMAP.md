@@ -7,6 +7,36 @@
 
 ---
 
+## CURRENT PHASE: Monday audit
+
+The manuscript, the artifact and the submission package are prepared and **nothing has been submitted anywhere**. The next step is an independent adversarial audit by a different reviewer, per the prompt at the end of `WEEKEND_CODEX_PROMPTS.md`. The submit/hold decision is that audit's output, not this roadmap's.
+
+**Phase status, each with the report that closed it:**
+
+| Phase | Status | Report |
+|---|---|---|
+| 1A Formal model | ✅ complete | `reports/phase-report-1A-2026-08-05.md` |
+| 1B Correctness fixes | ✅ complete | `reports/phase-report-1b-2026-08-05.md` |
+| 2A CI / artifact hardening | ✅ complete | `docs/23-ci-hardening-report.md` |
+| 2B-1 Mock provider + oracle | ✅ complete | `reports/phase-report-2b-session1-2026-08-05.md` |
+| 2B-2 Crash-point harness | ✅ complete | `reports/phase-report-2b-session2-2026-08-05.md` |
+| 2B-3 Baselines + matrix | ✅ complete | `reports/phase-report-2b-session3-2026-08-06.md` |
+| 2B-3B Capability cells, Redis kill, RQ3 | ✅ complete | `reports/phase-report-2b-session3b-2026-08-07.md` |
+| 4 Manuscript, first draft | ✅ complete | `reports/phase-report-4-session1-2026-08-07.md` |
+| 4B Closeout + hostile pass (G3, G4) | ✅ complete | `reports/phase-report-4b-2026-08-07.md` |
+| 5A Adjudicate the hostile pass | ✅ complete | `reports/phase-report-5a-2026-08-10.md` |
+| P Numbers gate into CI | ✅ complete | `reports/phase-report-5b-2026-08-10.md` |
+| 5B Reproducibility artifact package | ✅ complete | `reports/phase-report-5b-2026-08-10.md` |
+| Q Portable byte guarantee (`.gitattributes`) | ✅ complete | `reports/phase-report-5c-2026-08-10.md` |
+| 5C Submission-ready, not submitted | ✅ complete | `reports/phase-report-5c-2026-08-10.md` |
+| 3A TLA+/property layer | ⬜ optional, not started | — |
+| 3B Second workload | ⬜ optional, not started | — |
+| 3C LLM-driven workload | ⬜ optional, not started | — |
+
+Release tag `v1.0.0-rc1`. Artifact entry point: `ARTIFACT.md`. Open findings for the audit are in section G of the 5C report.
+
+---
+
 
 ## 0. Where the project stands today (honest baseline)
 
@@ -104,7 +134,7 @@ Run the full suite against real Redis 7.2 in Docker and paste the raw output int
 
 ---
 
-## 3. CURRENT PHASE: Phase 2B — The evaluation harness (this is the heart of the paper)
+## 3. Phase 2B — COMPLETE. The evaluation harness (this is the heart of the paper)
 
 > **Session 1 is COMPLETE** — report:
 > `reports/phase-report-2b-session1-2026-08-05.md`. `experiments/mock_api/`

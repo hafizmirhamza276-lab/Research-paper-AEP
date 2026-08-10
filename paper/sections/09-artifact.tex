@@ -10,8 +10,9 @@ systems, the analysis pipeline and the raw results are available at
 the matrix records a seed per run and emits its full plan, cost estimate and
 platform fingerprint \emph{before} launching. Continuous integration
 provisions Redis from the same compose file the experiments use, runs the full
-suite, the \texttt{WAITAOF} durability suite and a citation-range check over
-the formal model, and fails if any test is skipped.
+suite, the \texttt{WAITAOF} durability suite, a citation-range check over
+the formal model and the numbers gate described below, and fails if any test is
+skipped.
 
 \paragraph{What can be reproduced, and at what cost} The matrix is resumable
 and its cells are independent. The full plan is 1\,068 runs at an estimated

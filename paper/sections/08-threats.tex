@@ -209,7 +209,7 @@ was collecting against was replaced underneath it.
 
 Runs that \emph{fail} are harmless --- they write no summary, and the
 resumption logic re-runs them. The runs that \emph{completed} during that
-window are the hazard, because a coordinator blip makes a re-executing
+window are the hazard, because a Redis blip makes a re-executing
 baseline retry, a baseline that retries more produces more duplicates, and
 that bias points toward our own hypothesis. They are also indistinguishable
 from clean runs in every artifact the analysis reads. Every B4/B4b run
@@ -220,7 +220,7 @@ the discarded runs contributes a number here.
 
 Two rules follow, and the artifact enforces both rather than documenting them:
 the runner refuses to start beside a host-level fault injector, and it now
-records the coordinator's \texttt{run\_id} with every run so that a restart
+records the server's \texttt{run\_id} with every run so that a restart
 during collection is visible in the results rather than inferred from a
 connection error that happened to be logged. We report the episode because the
 generalisation is not ``be careful'': it is that a fault-injection harness and
