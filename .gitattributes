@@ -1,0 +1,20 @@
+# Frozen experimental results are byte-exact evidence, not source text.
+#
+# `check_paper_numbers.py` reads these files, and `experiments/results/matrix/SHA256SUMS`
+# is the manifest a reader uses to prove the committed bytes are the measured bytes.
+# Any line-ending conversion — in either direction — breaks that proof.
+#
+# Without this rule, a clone made with `core.autocrlf=true` (the Git for Windows
+# installer's default) rewrites every pure-LF file in this tree at CHECKOUT. Measured
+# on this repository: 5 of the 13 tracked files are corrupted that way, including
+# `analysis/coverage.json` (a gate input) and `SHA256SUMS` itself, whose mangled
+# filenames make `sha256sum -c` fail to open all 17 manifest entries. The eight CSVs
+# survive only by accident — Python's `csv` writer already emits CRLF, so git's
+# LF-to-CRLF smudge finds no lone LF to convert. That accident is not a guarantee.
+#
+# `-text` disables the conversion on both the checkout and the check-in path, making
+# the frozen bytes a property of the repository rather than of one clone's config.
+# See reports/phase-report-5b-2026-08-10.md §E.2 and §G.1 for the incident that
+# prompted this rule.
+
+experiments/results/** -text
