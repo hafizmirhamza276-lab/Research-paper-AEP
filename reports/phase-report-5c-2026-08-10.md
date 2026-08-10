@@ -867,6 +867,86 @@ diff is in §B's stat line and contains no other hunk.
 
 *(appended after the rest of the report, as in previous sessions)*
 
+The 5C commit, and the push:
+
+```
+$ git log --oneline -3
+0e80297 Phase 5C: the submission package, and three findings the proofread could not fix
+30f68e9 Phase Q T2: adjudicate the line-482 word-number, and start the 5C report
+ef1460f Phase Q T1: make the frozen-results byte guarantee a property of the repo
+
+$ git push origin main
+fatal: Cannot prompt because user interactivity has been disabled.
+To https://github.com/hafizmirhamza276-lab/Research-paper-AEP.git
+   30f68e9..0e80297  main -> main
+push exit=0
+
+$ git ls-remote origin main
+0e80297883d903797174eeca672d622edb3dc2a7	refs/heads/main
+
+$ git rev-list --left-right --count origin/main...main
+0	0
+
+$ git status --porcelain
+                                        # clean
+```
+
+**An authentication detour worth recording, because I caused it and then
+misdiagnosed it.** The first two push attempts hung (Git Credential Manager
+opening an interactive dialog nobody answered). I then retried with
+`GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never GIT_ASKPASS=echo`, which failed
+hard:
+
+```
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/.../Research-paper-AEP.git/'
+push exit=128
+```
+
+I read that as an expired credential and reported the push as blocked. It was
+not: **`GIT_ASKPASS=echo` was my own doing**, and it makes git call `echo` as its
+askpass helper, which returns an empty password — so git authenticated with
+nothing and GitHub correctly rejected it. Dropping that one variable and keeping
+the other two pushed successfully on the next attempt, exit 0. The `fatal:
+Cannot prompt` line above is the same harmless GCM noise 5B recorded in its
+§C.15: an interactive lookup GCM did not need, printed to stderr before the
+cached credential succeeded. No credential was created, rotated or stored.
+
+**GitHub Actions on `0e80297` — all four jobs green, the numbers gate
+included:**
+
+```
+$ curl -s .../actions/runs/31384936846
+completed success
+
+$ curl -s .../actions/runs/31384936846/jobs
+Suite (py3.13, Redis from compose)                      completed    success
+Numbers gate (manuscript vs frozen CSVs)                completed    success
+Citation ranges (docs/22)                               completed    success
+WAITAOF durability (compose, phase2.conf)               completed    success
+```
+
+**Run URL:** https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31384936846
+
+The numbers gate is green on a head that contains every proofreading edit, the
+repointed bibliography entry, the committed PDF and the updated roadmap — which
+is the checklist's "no number drifted during proofreading", verified by CI on the
+final state rather than only locally.
+
+**Rule 9, final discharge.** The only external interactions this session were
+`git fetch`, `git push`, GitHub Actions running by itself, unauthenticated
+`GET`s to `api.github.com` for run status, and the read-only `GET`s to
+`doi.org`, `dblp.org`, `redis.io`, `docs.temporal.io` and
+`martin.kleppmann.com` that T5 explicitly permits. **Nothing was submitted or
+uploaded anywhere. No arXiv or journal account, draft or submission exists.** No
+tag was created this session; `v1.0.0-rc1` remains where 5B left it, on
+`31664ca`.
+
+*(As in previous sessions, this section is appended in a follow-up commit, so the
+run above is green on the head containing everything except these paragraphs.
+That commit's own run is recorded by the same workflow and is the repository's
+current head.)*
+
 ---
 
 ## D. EXPECTED RESULTS checklist
@@ -1014,6 +1094,17 @@ rule existed and then pulled forward, or a checkout on a filesystem that
 normalises independently. The 5B incident was a *write*-path failure and this is
 a *read*-path fix; I have not proved the write path is closed, only that
 `-text` disables conversion in both directions by definition.
+
+**F.9 — I reported the push as blocked on an expired credential when I had
+broken it myself.** Detail in §C.9. I added `GIT_ASKPASS=echo` to a push
+command, got `Invalid username or token`, and attributed it to GitHub-side
+credential expiry — a confident diagnosis of an external cause for a failure my
+own flag had produced. Removing the flag fixed it immediately. Nothing in the
+repository was affected, but the episode is a live example of the failure mode
+this whole report regime exists to catch: a plausible explanation, asserted
+before the cheaper hypothesis ("what did I just change?") was tested. It is
+recorded rather than quietly corrected because the earlier claim was already
+made.
 
 **F.8 — Every check in this report was written and run by me, in the same
 session as the thing it checks.** Same structural criticism as 5B §F.8, and it
