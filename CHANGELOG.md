@@ -8,6 +8,55 @@ Every test count in this file is a figure that was actually observed, with the
 raw output recorded in the phase report named alongside it. Unverified numbers
 do not belong in a changelog for an artifact-evaluation package.
 
+## [1.0.0-rc1] — 2026-08-10
+
+The research artifact, prepared for submission. Nothing has been published,
+uploaded or submitted anywhere; this tag marks the state a reviewer would be
+pointed at.
+
+Full reports: `reports/phase-report-5a-2026-08-10.md` and
+`reports/phase-report-5b-2026-08-10.md`. 1729 → 1734 tests, coverage 91.18%.
+
+### Added
+
+- **`ARTIFACT.md`** — the claims-to-evidence map. Every quantitative claim in
+  the manuscript resolves to a macro in `paper/generated/numbers.tex`, whose
+  provenance comment names the file, the filter and the arithmetic behind it;
+  the 89 macros draw on eight files and nothing else. Includes requirements,
+  runtimes, the frozen-archive layout and how to verify it.
+- **`Makefile`** — `reproduce-figures` regenerates every table and macro from
+  the frozen CSVs and byte-compares them against what is committed;
+  `reproduce-smoke` provisions Redis, collects one tier-1 cell for each of the
+  seven systems under real `SIGKILL`, analyses it and prints a row per system.
+  Both write only under `.scratch/`; neither can touch the frozen results.
+- **The numbers gate now runs in CI.** The analysis products
+  `scripts/check_paper_numbers.py` reads are tracked by name — 13 files, at
+  their frozen content, verified against `SHA256SUMS` — and a `paper-numbers`
+  job builds the manuscript and runs the gate on every push. Phase 5A had
+  recorded this as the one checklist item it could not discharge.
+
+### Fixed
+
+- **34 hand-typed measurements in the manuscript** became generated macros or
+  pointers to the generated table that carries them. Phase 5A found one of
+  them, `0.9500`, was wrong by a factor of 1.8; it had survived a green gate
+  and a hostile-reviewer pass because the gate checks generated tables against
+  the CSVs and says nothing about a numeral typed into prose. Of the 34, four
+  were also wrong or unverifiable: a third barrier costed at "roughly a 50%
+  latency increase" is 24.6% of the step (50% is the increase in the barrier
+  bill alone); a `400`–`1 000` ms kill latency had no source and is 419–992 ms
+  in the probe that measured it; `p < 10^{-100}` was true but ungenerated
+  (2.1×10⁻¹⁸³); and "two executions in six hundred" was a measurement spelled
+  out in words, which no digit-based check can see.
+- **A generated caption its own table falsified.** `table-outcomes.tex` read
+  "AEP-full is the only system with a nonzero declared-ambiguity column, and
+  the only one whose other two columns are zero everywhere" while the B3 row
+  above it showed 0.0000/0.3667/0.7167 and zeros elsewhere. Both halves were
+  false, and of the paper's own central finding.
+- **`paper_tables.py` emits B4 and B4b macros for all three capability
+  classes.** The loop listed two, which is what left the prose with no macro to
+  quote and `0.9500` in its place.
+
 ## [Unreleased]
 
 ### Phase 2B Session 3 — baselines, the matrix, and the analysis
