@@ -479,11 +479,14 @@ detection guarantee in full. The \BarrierCost{}\,ms buys the prevention
 guarantee of \cref{sec:eval-prevention} and nothing else.
 
 That figure is also a property of a \emph{configuration}, not of AEP. Under
-\texttt{appendfsync everysec} a write must wait for the next scheduled fsync,
-and those are one second apart; a mean wait of half a second per barrier, twice,
-is precisely what we measure. B4 and B4b landing on the same figure with their
-own two acknowledged appends is independent confirmation that the cost is the
-barrier and not anything AEP does around it.
+\texttt{appendfsync everysec} an acknowledgement cannot return until the next
+scheduled fsync, and those are one second apart, so a barrier costs up to a
+second and the protocol pays that twice. What we measure is
+\BarrierCostEach{}\,ms per barrier, which sits near the top of that range
+rather than in the middle of it; we did not measure why, and we do not claim a
+mechanism for it here. B4 and B4b landing on the same figure with their own two
+acknowledged appends is independent confirmation that the cost is the barrier
+and not anything AEP does around it.
 
 \subsubsection{The barrier is a deployment choice, with three measured points}
 \label{sec:eval-deployment}

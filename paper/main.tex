@@ -58,6 +58,44 @@
 % arithmetic that produced it. Do not hand-edit; regenerate.
 \input{generated/numbers}
 
+% =====================================================================
+% ANONYMITY TOGGLE (Monday audit, fix F2).
+%
+% The manuscript shipped `Anonymous Author(s)` and a URL naming a personal
+% GitHub account at the same time: under double-anonymous review the URL
+% defeats the anonymisation, and without it the author block is unfinished.
+% Rather than pick one, the source now builds both from identical text:
+%
+%   public build      bash scripts/build_paper.sh              -> main.pdf
+%   anonymous build   bash scripts/build_paper.sh --anonymous  -> main-anon.pdf
+%
+% The flag defines \ANONYMOUS before this file is read, so neither build has
+% any prose of its own and the two cannot drift apart.
+\newif\ifanonymous
+\anonymousfalse
+\ifdefined\ANONYMOUS \anonymoustrue \fi
+
+% The artifact pointer lives here, once. Every place that cites the artifact
+% uses one of these two macros, so there is exactly one block to audit for a
+% leak. Two forms because the two sites need different grammar: \artifacturl
+% is a bare pointer after a colon, \artifactavail completes "... are ...".
+% The public build renders exactly as it did before this toggle existed.
+\ifanonymous
+  \newcommand{\artifacturl}{available via the submission system}
+  \newcommand{\artifactavail}{available via the submission system}
+  % The identifying string must not survive in the document properties either,
+  % which is where an anonymised PDF usually leaks. Set empty explicitly rather
+  % than relying on them happening to be unset.
+  \hypersetup{pdfauthor={},pdftitle={},pdfsubject={},pdfkeywords={},
+              pdfcreator={},pdfproducer={}}
+\else
+  \newcommand{\artifacturl}{%
+    \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
+  \newcommand{\artifactavail}{available at%
+    \ \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
+\fi
+% =====================================================================
+
 \begin{document}
 
 \title{Declared Ambiguity: The Agent Execution Protocol (AEP) for\\
@@ -65,8 +103,7 @@ Autonomous Agents Calling Non-Idempotent Legacy APIs}
 
 \author{%
   \IEEEauthorblockN{Anonymous Author(s)}%
-  \thanks{Manuscript prepared \today. Artifact:
-  \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}.}%
+  \thanks{Manuscript prepared \today. Artifact: \artifacturl.}%
 }
 
 \markboth{IEEE Transactions on Software Engineering}%

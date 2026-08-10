@@ -504,4 +504,216 @@ claim, which the substance freeze forbids. They are referred to the human below.
 ---
 
 *Part 1 complete. Verdict is FIX FIRST, so Part 2 proceeds under its stated
-scope bounds; the fix log is appended below.*
+scope bounds; the fix log follows.*
+
+---
+---
+
+# Part 2 — post-audit fixes (fix log)
+
+**Scope bounds observed:** `paper/**`; `scripts/build_paper.sh` **only** to add
+an anonymous-build flag; this report. Everything else read-only. Substance
+freeze respected: no quantitative claim changed beyond F1's sentence, no new
+results, no framing changes.
+
+**Files changed — the full list:**
+
+| File | A/M | Why |
+|---|---|---|
+| `paper/sections/06-evaluation.tex` | M | F1 — the sentence, 6 lines → 9 |
+| `paper/main.tex` | M | F2 — `\ifanonymous` toggle + artifact-pointer macros; `\thanks` now uses the macro |
+| `paper/sections/09-artifact.tex` | M | F2 — artifact pointer via macro |
+| `scripts/build_paper.sh` | M | F2 — `--anonymous` flag only; default path behaviour unchanged |
+| `paper/main.pdf` | M | rebuilt (public) |
+| `paper/main-anon.pdf` | A | new (anonymous), `git add -f` past `.gitignore:102` |
+| `reports/audit-report-2026-08-10.md` | M | this fix log |
+
+Nothing under `aep_core/**`, `experiments/**`, `scripts/**` (other than
+`build_paper.sh`), `tests/**`, `docs/**`, `.github/**` or any other `scripts/`
+file was touched.
+
+## F1 — the §G.1 sentence
+
+**Before** (`06-evaluation.tex:481–486`):
+
+> Under `appendfsync everysec` a write must wait for the next scheduled fsync,
+> and those are one second apart; **a mean wait of half a second per barrier,
+> twice, is precisely what we measure.**
+
+**After:**
+
+> Under `appendfsync everysec` an acknowledgement cannot return until the next
+> scheduled fsync, and those are one second apart, so a barrier costs **up to** a
+> second and the protocol pays that twice. What we measure is
+> `\BarrierCostEach{}`\,ms per barrier, which sits near the top of that range
+> rather than in the middle of it; **we did not measure why, and we do not claim
+> a mechanism for it here.**
+
+"Half a second" and "precisely what we measure" are both gone. The claim is now
+the bound the data supports — the same bound the paper already states correctly
+twenty lines later at `:501` ("up to a second away, and the protocol waits
+twice"), so the manuscript no longer contradicts itself. The measured figure is
+quoted from the macro rather than typed, so it cannot drift.
+
+**On the mechanism:** I chose the "not at all" branch. The 5C hypothesis
+(`WAITAOF` waiting a further period for offset propagation) is plausible and
+unmeasured; the observation that 983.3 ms sits near 1 000 ms rather than near
+500 ms is stated as an observation about two numbers, and the sentence then says
+explicitly that no mechanism is being claimed. No gate can check a mechanism, so
+none is asserted.
+
+**Macros:** unchanged. `\BarrierCostEach` was already used at `:192` and `:469`,
+so no macro gained or lost a use.
+
+## F2 — the anonymity conflict
+
+**Design.** One source, two builds, no duplicated prose:
+
+- `main.tex` gains `\newif\ifanonymous`, defaulting false, set true when
+  `\ANONYMOUS` is defined before the file is read.
+- The artifact pointer lives in exactly one block, as two macros —
+  `\artifacturl` (bare, for the `\thanks` footnote) and `\artifactavail`
+  (completes "… are …", for §9). Two forms because the two sites need different
+  grammar; one block, so there is a single place to audit for a leak.
+- Under `\ifanonymous`, `\hypersetup` blanks `pdfauthor`, `pdftitle`,
+  `pdfsubject`, `pdfkeywords`, `pdfcreator` and `pdfproducer` explicitly rather
+  than relying on them happening to be empty.
+- `build_paper.sh --anonymous` builds with `-jobname=main-anon`, so the two
+  builds cannot overwrite each other's `.aux`/`.bbl`/`.log`/`.pdf` and the public
+  build's artifacts stay on disk. **The default (no-flag) path is behaviourally
+  unchanged.** The anonymous build skips `check_paper_numbers.py` — that gate
+  opens `main.bbl`/`main.log` by name, so running it there would report a verdict
+  about a different PDF; its bibliography and undefined-reference properties are
+  checked against `main-anon.blg`/`main-anon.log` by the script's own steps
+  immediately above, and the public build gates the numbers. **No gate was
+  weakened.**
+
+**Both PDFs built and verified:**
+
+| Check | `main.pdf` (public) | `main-anon.pdf` (anonymous) |
+|---|---|---|
+| Pages | 18 | 18 |
+| Identifying strings in text | 6 (expected) | **0** |
+| URI link annotations, total / identifying | 15 / 4 (expected) | **11 / 0** |
+| `/Author`, `/Title` metadata | empty | empty |
+| Footnote renders | `Artifact: https://github.com/…` | `Artifact: available via the submission system.` |
+| §9 renders | `…raw results are available at https://github.com/…` | `…raw results are available via the submission system.` |
+
+The 4 identifying **link annotations** are the part a text-only check misses;
+they are gone in the anonymous build (15 → 11, leaving only the legitimate
+Redis/Temporal/Kleppmann reference URLs).
+
+**The public build is unchanged apart from F1.** I extracted the text of the
+committed `HEAD:paper/main.pdf` and diffed it word-wise against the rebuilt one:
+the only content differences are the six regions of F1's sentence. Every other
+reported region is running-header/body extraction-order reflow caused by the
+sentence being three words longer, and the page count is still 18.
+
+**No anonymised mirror was created, and no external account, upload or draft was
+made anywhere.** That remains on the human residual checklist.
+
+## F3 — recorded, not acted on
+
+**Register finding 9** — the 5C §E.2 change from "three jobs" to "four" is a
+**human-accepted stale-fact correction, not substantive drift.** Recorded here as
+instructed. **Not reverted**, and independently confirmed still in place:
+`05-implementation.tex` and `09-artifact.tex` describe four CI jobs, and CI on
+head does run exactly four (citations, test suite, numbers gate, WAITAOF
+durability).
+
+## One new defect found during Part 2 — recorded, not fixed
+
+**D12 (MEDIUM, portability).** On a Windows clone, `scripts/*.sh` are smudged to
+CRLF, and `bash scripts/build_paper.sh` then dies immediately with
+`set: pipefail: invalid option name`. I hit this building the PDFs and worked
+around it with a CR-stripped copy; the repository was not modified.
+
+The **committed blobs are pure LF** — `build_paper.sh` and
+`fsync_always_benchmark.sh` both show 0 CRLF in git — so this is a checkout
+defect, not a content defect, and CI is unaffected because Linux runners do not
+smudge. But it breaks the exact path an artifact evaluator on Windows takes
+(clone → WSL/Docker → run the build script), and it is the same failure family
+as the CRLF finding the sessions already fixed: the `.gitattributes` remedy was
+scoped to `experiments/results/**` and stops there.
+
+**The fix is one line** — `*.sh text eol=lf` in `.gitattributes` — but
+`.gitattributes` is outside Part 2's scope bounds, so I did not make it. It is
+added to the human residual checklist.
+
+## Close — raw verdicts
+
+`bash scripts/build_paper.sh` (public), in a container with the exact TeX Live
+package set CI installs:
+
+```
+=== bibtex parse errors (a blank bibliography compiles clean) ===
+  none
+=== undefined references and citations (warnings, not errors) ===
+  none
+=== \todoitem markers left in the sections ===
+  none
+=== output ===
+Output written on main.pdf (18 pages
+overfull boxes: 10
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  appendfsync=always analysis is present
+  PASS  G2 write-loss results is present
+  PASS  paper_tables.py runs
+  PASS  numbers.tex matches the CSVs
+  PASS  table-ablation.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-deployment-choice.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  PASS  bibliography has entries
+  PASS  no empty bibliography entries
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+----------------------------------------------------------------------
+18 passed, 0 failed
+build clean.
+```
+
+`bash scripts/build_paper.sh --anonymous`: `Output written on main-anon.pdf (18
+pages`, `overfull boxes: 10`, bibtex/undefined/todo all `none`, numbers gate
+`SKIPPED` by design, `build clean (main-anon)`.
+
+Ten overfull boxes in both, unchanged — that is 5C §G.4, untouched here because
+four of the six offending tables are generator-produced and fixing them means
+editing `paper_tables.py`, which is out of bounds.
+
+---
+
+## Updated verdict — what remains before the human may submit
+
+**Both pre-authorised fixes are complete and verified. The anonymity blocker
+(D-A) is closed in the sense that an anonymous PDF now exists and is provably
+clean; what remains is a policy decision, not an engineering one.**
+
+Nothing now blocks submission on the repository's side. What remains is the
+human's:
+
+1. **Decide the anonymity policy and the arXiv-vs-TSE ordering** — then submit
+   `main-anon.pdf` or `main.pdf` accordingly. A public arXiv preprint makes an
+   anonymised TSE submission moot, so this ordering is decided once, first.
+2. **Fill in the author block** in `main.tex` for the non-anonymous build
+   (it still reads `Anonymous Author(s)`).
+3. **Publish the raw results archive** so the two analysis figures become
+   reproducible (D4), and — if anonymous review applies — host an anonymised
+   artifact mirror and point the submission system at it.
+4. **Apply the one-line `.gitattributes` fix** for D12 (`*.sh text eol=lf`).
+5. **Decide D6** ("two orders of magnitude" vs the measured 70×) and **D11**
+   (whether `tab:outcomes` should disclose the 5-vs-6 crash-point difference) —
+   both are quantitative-claim changes the substance freeze put out of my reach.
+6. Optionally close the low-severity tail: D3, D5, D7, D1, D2.
+
+Verdict unchanged in kind and improved in degree: **the evidence held up under
+independent re-derivation, and the two defects that stood between it and
+submission are fixed.** The remaining items are decisions and publication steps
+that only the human can take.
