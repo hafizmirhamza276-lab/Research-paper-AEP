@@ -106,3 +106,42 @@ paper/*.fdb_latexmk
 
 # Session scratch: staging for scripts copied into the WSL measurement tree.
 .scratch/
+
+# --- The inputs scripts/check_paper_numbers.py opens --------------------------
+# `experiments/results/` above stays ignored: raw run directories are the
+# evaluation and are published as an archive, not committed. But the gate that
+# proves the manuscript still matches its results cannot run in CI unless the
+# files it *reads* are in the checkout, and a gate that only ever runs on the
+# author's laptop is not a gate. So exactly those inputs are re-included here,
+# by name, at their frozen content -- analysis products only, never a run
+# directory, never a sqlite ledger, never a log.
+#
+# Git will not re-include a file whose parent directory is excluded, so each
+# level is re-opened and then re-closed with a `*` before the next one. Adding
+# a file to this list means committing a result: verify it against
+# experiments/results/matrix/SHA256SUMS first.
+!experiments/results/
+experiments/results/*
+!experiments/results/g2-flakey-write-loss.json
+!experiments/results/g2-flakey-write-loss-rep2.json
+!experiments/results/g2-flakey-write-loss-rep3.json
+
+!experiments/results/matrix/
+experiments/results/matrix/*
+!experiments/results/matrix/MANIFEST.csv
+!experiments/results/matrix/SHA256SUMS
+!experiments/results/matrix/analysis/
+experiments/results/matrix/analysis/*
+!experiments/results/matrix/analysis/comparisons-vs-aep-full.csv
+!experiments/results/matrix/analysis/coverage.json
+!experiments/results/matrix/analysis/latency-and-throughput.csv
+!experiments/results/matrix/analysis/per-cell-metrics.csv
+!experiments/results/matrix/analysis/per-execution.csv
+!experiments/results/matrix/analysis/redis-kill-ablation.csv
+
+!experiments/results/fsync-always/
+experiments/results/fsync-always/*
+!experiments/results/fsync-always/analysis/
+experiments/results/fsync-always/analysis/*
+!experiments/results/fsync-always/analysis/latency-and-throughput.csv
+!experiments/results/fsync-always/analysis/per-execution.csv
