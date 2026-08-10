@@ -65,7 +65,7 @@ most worthwhile extension to the evaluation, and the paper says so.
 ## B2. Replicate the prevention result beyond one cell
 
 **Source:** hostile-pass item 2, §F.5.
-**Paper location of the admission:** `paper/sections/08-threats.tex:293-303`.
+**Paper location of the admission:** `paper/sections/08-threats.tex:325-335`.
 
 The barrier's entire measured case is one cell: `redis-kill-preack`,
 `NO_READBACK`, one crash point, 30 runs per arm, one host — with an effect size
@@ -98,7 +98,7 @@ this file except B1.
 ## B3. More crash-free runs, so the barrier's cost under `always` has an interval that means something
 
 **Source:** hostile-pass item 4, §F.5.
-**Paper location of the admission:** `paper/sections/08-threats.tex:248-272`.
+**Paper location of the admission:** `paper/sections/08-threats.tex:268-292`.
 
 The cluster bootstrap over runs reports the barrier's cost under `appendfsync
 always` as a point estimate whose 95% interval spans zero. The paper says so
@@ -144,7 +144,7 @@ and would be entirely routine outside it.
 ## B4. Evaluate declared ambiguity as an operational outcome
 
 **Source:** hostile-pass item 6, §F.5.
-**Paper location of the admission:** `paper/sections/08-threats.tex:121-131`.
+**Paper location of the admission:** `paper/sections/08-threats.tex:141-151`.
 
 This is the largest gap between what the paper measures and what it argues, and
 it is unchanged since Session 1. The paper measures how often AEP declares
@@ -171,7 +171,7 @@ subjective preference. Pre-register the analysis; the honest null is that
 declared ambiguity costs operator time without improving final-state accuracy,
 and the study should be able to return it.
 
-**A prerequisite the artifact does not have.** `paper/sections/08-threats.tex:129-131`
+**A prerequisite the artifact does not have.** `paper/sections/08-threats.tex:149-151`
 records that reaching the terminal state pauses the execution and alerts
 nobody — there is no escalation mechanism. A study of how operators handle a
 queue needs the queue to exist, so building a minimal escalation surface is
