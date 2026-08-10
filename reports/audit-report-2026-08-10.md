@@ -717,3 +717,30 @@ Verdict unchanged in kind and improved in degree: **the evidence held up under
 independent re-derivation, and the two defects that stood between it and
 submission are fixed.** The remaining items are decisions and publication steps
 that only the human can take.
+
+---
+
+## CI record
+
+| Commit | What | Run | Jobs | Result |
+|---|---|---|---|---|
+| `e8c3568` | Part 1, the audit report | [31389265176](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31389265176) | 4/4 | `success` |
+| `06188d1` | Part 2, F1 + F2 + both PDFs | [31392549075](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31392549075) | 4/4 | `success` |
+
+The second run is the one that matters for F2: the **Numbers gate (manuscript vs
+frozen CSVs)** job builds the manuscript by invoking `scripts/build_paper.sh`
+with no arguments, so a green result there is independent confirmation that the
+`--anonymous` flag did not disturb the default path, and that the gate still
+reports 18/18 on a Linux runner from a clean checkout.
+
+As in every previous session, this paragraph is appended in a follow-up commit,
+so the run recorded above is green on the head containing everything except
+these lines. That commit's own run is produced by the same workflow and is the
+repository's current head.
+
+**External actions taken by this audit: `git clone`, `git push`, unauthenticated
+`GET` to `api.github.com` to read run status, and public `GET`s to
+`api.crossref.org`, `export.arxiv.org` and two documentation sites for reference
+verification. Nothing was uploaded, submitted or published; no account, token,
+release, release asset or draft was created anywhere; no tag was created or
+moved.**
