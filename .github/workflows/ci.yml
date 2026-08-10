@@ -261,3 +261,82 @@ jobs:
             junit-waitaof.xml
             pytest-waitaof.txt
           if-no-files-found: warn
+
+  # =========================================================================
+  # Gate (v). The manuscript against the results it claims to report.
+  #
+  # scripts/check_paper_numbers.py re-derives every generated table and scalar
+  # from the frozen CSVs and diffs them against what is committed, so a number
+  # cannot quietly survive a change to the CSV under it. Until Phase P it had
+  # never run anywhere but the author's machine: experiments/results/ is
+  # ignored by design, so a checkout did not contain the CSVs the gate reads.
+  # Phase 5A recorded that as the one checklist item it could not discharge
+  # (reports/phase-report-5a-2026-08-10.md section D item 5). The gate's inputs
+  # are now tracked by name -- see the tail of .gitignore -- and this job is
+  # the other half: it makes the gate's verdict a property of the repository
+  # rather than of one laptop.
+  #
+  # Two of the gate's inputs are not tracked and must not be: main.bbl and
+  # main.log are LaTeX build products (.gitignore:98,100). They are *derived*
+  # from tracked sources, so this job builds the manuscript first rather than
+  # committing them. That is also what makes the two checks reading them --
+  # "no empty bibliography entries" and "no undefined references" -- mean
+  # anything here: they inspect a bibliography and a log this job just
+  # produced, not ones an author uploaded.
+  #
+  # No Redis and no services: this job reads CSVs and runs pdflatex.
+  # =========================================================================
+  paper-numbers:
+    name: Numbers gate (manuscript vs frozen CSVs)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        # The state-machine check imports the implementation, so the project
+        # itself has to be installed. No extras: the gate reads CSVs and
+        # regenerates .tex, and pulls in nothing else.
+        run: uv sync --frozen
+
+      - name: Install TeX Live
+        # Exactly the set that builds this manuscript, verified against the
+        # measurement host: IEEEtran lives in texlive-publishers, cleveref and
+        # multirow in texlive-latex-extra, tikz/pgf in texlive-pictures.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-base \
+            texlive-bibtex-extra \
+            texlive-binaries \
+            texlive-fonts-recommended \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-latex-recommended \
+            texlive-pictures \
+            texlive-publishers
+
+      - name: Build the manuscript
+        # The committed build recipe, not a re-spelling of it here. It fails
+        # on a blank bibliography and on undefined references, both of which
+        # LaTeX itself reports as warnings while exiting 0.
+        run: bash scripts/build_paper.sh
+
+      - name: Gate -- the manuscript's numbers against the frozen CSVs
+        # build_paper.sh ends by running this too. It is repeated as its own
+        # step so the verdict is a named, separately-reported result rather
+        # than the tail of a build log -- and so that a later edit to the
+        # build script cannot quietly remove the check.
+        run: uv run --frozen python scripts/check_paper_numbers.py
+
+      - name: Upload the built PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manuscript
+          path: paper/main.pdf
+          if-no-files-found: warn
