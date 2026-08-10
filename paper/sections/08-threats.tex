@@ -66,7 +66,8 @@ Stated separately because it is the more surprising half and it is the half a
 reader is most likely to have assumed the other way. \texttt{appendfsync
 everysec} defers the \texttt{fsync(2)} and not the \texttt{write(2)}, so a
 \texttt{SIGKILL} of Redis loses nothing that \texttt{appendonly yes} was not
-already keeping ($0/10$, and $n{=}60$ canaries in the ablation cells). The
+already keeping ($\ProcessKillUnackLost{}$, and $n{=}\KillCanaryN{}$ canaries
+in the ablation cells). The
 consequence for the claims is explicit: \textbf{under a process fault the
 barrier's contribution is prevention (\cref{sec:eval-prevention},
 $p=\UnwantedP{}$) and not durability}, and any reading of the barrier as
@@ -285,7 +286,8 @@ estimates. That factor is not supported by these data and has been removed.
 
 The cause is the sample, not the metric: three clusters admit only ten
 distinct bootstrap multisets, and the \texttt{always} cell has a heavy upper
-tail (its p95 is $5\,067.8$\,ms against a $2\,063.4$\,ms median) that three
+tail (its p95 is \AepAlwaysPninetyfive{}\,ms against a
+\AepAlwaysMedian{}\,ms median) that three
 clusters cannot resolve. Closing this needs more crash-free \emph{runs}, not
 more executions per run, and the crash-free cells are the shortest thing in
 the plan to re-run. A deployment that needs a latency budget should measure
@@ -303,7 +305,8 @@ What that leaves uncovered, precisely:
 \item \textbf{B4's and B4b's \textsc{auth} cells were incomplete and are now
       collected --- and completing them corrected the value.} In the previous
       draft B4's \textsc{auth} cell held twenty executions and B4b had none,
-      so that cell printed as a dash. Both are now $n=180$ over all six crash
+      so that cell printed as a dash. Both are now $n=\BfourExecAuth{}$ and
+      $n=\BfourbExecAuth{}$ over all six crash
       points, the same shape as every other cell in \cref{tab:outcomes}, and
       the whole table is free of dashes. We record what the completion
       changed, because it is a caution about partial cells generally and not
@@ -311,8 +314,9 @@ What that leaves uncovered, precisely:
       \emph{single} crash point, so the figure that draft quoted was not a
       wide interval around the value the full cell reports --- it was one
       crash point standing in for six, and the six differ enough that none of
-      them represents the pooled rate. The full cell moves B4's \textsc{auth}
-      duplicate rate substantially, and into line with its other two classes.
+      them represents the pooled rate. The full cell puts B4's \textsc{auth}
+      duplicate rate at \BfourDupAuth{}, in line with its other two classes
+      and far from the figure the partial cell suggested.
       The direction of the argument is unchanged, which is why we could
       describe the gap as non-essential before collecting it, but the number
       we quoted for it was wrong, and a partial cell being unrepresentative

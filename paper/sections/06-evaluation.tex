@@ -45,7 +45,8 @@ that parses the analysis modules fails the build if they import anything that
 could reach live protocol state.
 
 \paragraph{Statistics} Rates are over executions, with cluster-aware bootstrap
-95\% confidence intervals (10\,000 resamples, seeded) and Fisher's exact test
+95\% confidence intervals (\BootstrapResamples{} resamples, seeded) and
+Fisher's exact test
 for rate comparisons. Seeds and repetition counts are recorded per run.
 
 \paragraph{Two reporting rules we hold ourselves to} First, \emph{no pooled
@@ -81,8 +82,8 @@ become the paper's primary result. It did not occur.
 
 \paragraph{The baselines without a pre-dispatch record duplicate in most
 crashed executions} B0, B1 and B2 sit between \BaselineDupLow{} and
-\BaselineDupHigh{}, and the comparison against AEP-full is significant at
-$p < 10^{-100}$ by Fisher's exact test.
+\BaselineDupHigh{}, and the weakest of the three comparisons against AEP-full
+is significant at $p = \BaselineDupMaxP{}$ by Fisher's exact test.
 % \BaselineDupLow / \BaselineDupHigh: generated/numbers.tex, from
 % per-cell-metrics.csv over {B0,B1,B2} x all collected response classes.
 % p-value source: analysis/comparisons-vs-aep-full.csv, crashed regime.
@@ -96,8 +97,8 @@ acknowledged durable by the same \texttt{WAITAOF} barrier AEP uses. It is not
 ablated on durability. It duplicates at \BfourDupPosOnly{} on
 \textsc{pos-only} and \BfourDupNoReadback{} on \textsc{none}
 (\BfourExecPosOnly{} and \BfourExecNoReadback{} executions), and it duplicates
-on \textsc{auth} as well: that cell is now collected at the same size as the
-other two and is reported in \cref{tab:outcomes}. The endpoint's
+on \textsc{auth} as well, at \BfourDupAuth{} over \BfourExecAuth{}
+executions. The endpoint's
 reconciliation capability does not rescue it, which is the point --- a
 read-back tells a recovering workflow what the provider currently holds, and
 B4's duplicate is a second application it chose to make, not a fact it failed
@@ -107,10 +108,12 @@ B4b is the same engine with Maximum Attempts set to $1$, and it is the cleaner
 half of the demonstration: over \BfourbExecPosOnly{} and
 \BfourbExecNoReadback{} executions it records \emph{zero} undetected
 duplicates on both classes and loses the effect in \BfourbLostPosOnly{} and
-\BfourbLostNoReadback{} of them instead. One configuration line moves
+\BfourbLostNoReadback{} of them instead, and \BfourbLostAuth{} over
+\BfourbExecAuth{} on \textsc{auth}. One configuration line moves
 the engine from one silent corner of \cref{sec:trilemma} to the other, and
-neither configuration reaches the third: B4 and B4b declare ambiguity in
-$0.0000$ of executions everywhere measured.
+neither configuration reaches the third: across all \BfourFamilyAmbCells{}
+B4 and B4b cells the declared-ambiguity rate never exceeds
+\BfourFamilyAmbMax{}.
 
 That is the sharpest form of the argument the paper can make, because it is
 made against a system that has everything the write-ahead pattern is supposed
@@ -153,7 +156,7 @@ protocol's conservatism becomes visible.
 \input{generated/table-ambiguity-by-crashpoint}
 
 Two cells carry the argument. At \texttt{before\_intent\_write} the rate is
-$0$ in every capability class: the crash precedes the intent, nothing was
+zero in every capability class: the crash precedes the intent, nothing was
 promised, and there is nothing to be ambiguous about. At
 \texttt{after\_barrier\_before\_dispatch} it is at its maximum --- and that is
 the crash point at which \emph{no effect can possibly exist}, because the
@@ -185,9 +188,10 @@ closed, which is the correct behaviour given what it can observe.
 Closing the gap is possible and we did not do it: a third durable barrier
 immediately before transmission would split the two cases and let recovery
 refute the earlier one. The measured price of a barrier on this configuration
-is \BarrierCostEach{}\,ms (\cref{sec:eval-rq3}), so that is roughly a 50\%
-latency increase to convert one crash point's declared ambiguities into
-confirmed non-events --- and it narrows rather than closes the window, since a
+is \BarrierCostEach{}\,ms (\cref{sec:eval-rq3}), so that is a
+\ThirdBarrierStepPct{}\% increase in step latency to convert one crash point's
+declared ambiguities into confirmed non-events --- and it narrows rather than
+closes the window, since a
 crash between that barrier and the socket write returns the same ambiguity.
 We record the trade rather than take it, and note that its value depends
 entirely on the deployment's ratio of crash points, which our uniform matrix
@@ -245,15 +249,17 @@ survives the barrier's removal intact.
 
 Over \BthreeVsAepN{} crashed executions per arm, B3 and AEP-full behave the
 same on every metric the trilemma is defined in terms of. Both record an
-undetected-duplicate rate of $0$ and a lost-effect rate of $0$; declared
-ambiguity differs by two executions in six hundred
+undetected-duplicate count of $\BthreeVsAepDupCount{}$ and a lost-effect count
+of $\BthreeVsAepLostCount{}$; declared ambiguity differs by
+$\BthreeVsAepAmbDelta{}$ executions in \BthreeVsAepN{}
 ($p = \BthreeVsAepAmbP{}$), and per capability class the two systems track
 each other: \BthreeAmbAuth{} against \AepAmbAuth{} on \textsc{auth},
 \BthreeAmbPosOnly{} against \AepAmbPosOnly{} on \textsc{pos-only},
 \BthreeAmbNoReadback{} against \AepAmbNoReadback{} on \textsc{none}.
 
 \textbf{A word on what the zeros can and cannot support.} Fisher's exact test
-on $0/\BthreeVsAepN{}$ against $0/\BthreeVsAepN{}$ returns
+on $\BthreeVsAepDupCount{}/\BthreeVsAepN{}$ against
+$\BthreeVsAepDupCount{}/\BthreeVsAepN{}$ returns
 $p = \BthreeVsAepDupP{}$ for duplicates and $p = \BthreeVsAepLostP{}$ for lost
 effects, and both numbers are worth nothing: a test between two zero counts
 has no power, and failing to distinguish them is not evidence that they are
@@ -266,7 +272,8 @@ provably changes nothing, but that whatever it changes about \emph{detection}
 is smaller than \AblationZeroUpper{} percentage points, against baselines that
 differ from both by \BaselineDupLow{}--\BaselineDupHigh{}. A barrier
 contributing less than \AblationZeroUpper{}\% to a quantity where the
-alternative mechanisms contribute $77$--$83$\% is, for the purposes of the
+alternative mechanisms contribute \BaselineDupLowPct{}--\BaselineDupHighPct{}\%
+is, for the purposes of the
 design decision in \cref{sec:eval-deployment}, contributing nothing.
 
 \textbf{We report this as a finding rather than as a limitation, because it
@@ -334,8 +341,10 @@ under which the two systems diverge. Everywhere else they differ by at most
 two executions in six hundred (\cref{tab:ablation}).
 
 Two honest qualifications. First, \emph{AEP-full still applied
-\AepKillApplied{}}. The kill is asynchronous and takes $400$--$1\,000$\,ms to
-land, so in roughly a third of runs \texttt{WAITAOF} completed before Redis
+\AepKillApplied{}}. The kill is asynchronous --- the same \texttt{docker kill}
+mechanism took \ProcessKillWindowMin{}--\ProcessKillWindowMax{}\,ms to land on
+this host when we timed it directly (\cref{sec:eval-durability}) --- so in
+roughly a third of runs \texttt{WAITAOF} completed before Redis
 died and AEP-full held a genuine acknowledgement and dispatched correctly. That
 is the race the fault creates, not a protocol failure, and we report it as it
 came out rather than widening the window until it looks better. Second, and for
@@ -361,13 +370,15 @@ most readers assume it does first: protect the write-ahead record from being
 lost when the coordinator dies. We tested that premise before building on it,
 and for the fault everyone reaches for first, it is false.
 
-Ten trials, each phase-aligning the \texttt{everysec} timer with a
-\texttt{WAITAOF} so the window under test is as wide as it can be, writing a
-key \emph{without} waiting for it, hard-killing the container with
+\ProcessKillTrials{} trials, each phase-aligning the \texttt{everysec} timer
+with a \texttt{WAITAOF} so the window under test is as wide as it can be,
+writing a key \emph{without} waiting for it, hard-killing the container with
 \texttt{docker kill -s KILL}, restarting, and reading back. Every kill landed
-(\texttt{uptime} $=0$\,s afterwards in all ten) and every kill landed inside the
-window (write-to-death $419$--$992$\,ms against a $1\,000$\,ms fsync period).
-\textbf{Not one unfsynced write was lost: $0/10$.}
+(every container came back with its \texttt{uptime} at zero) and every kill
+landed inside the window (write-to-death
+\ProcessKillWindowMin{}--\ProcessKillWindowMax{}\,ms against a $1\,000$\,ms
+fsync period).
+\textbf{Not one unfsynced write was lost: $\ProcessKillUnackLost{}$.}
 % source: reports/raw/e1-durability-window.txt; Session 3B section C.2.
 
 The mechanism is not subtle once seen. \texttt{appendfsync everysec} defers the
@@ -375,7 +386,7 @@ The mechanism is not subtle once seen. \texttt{appendfsync everysec} defers the
 buffer to the operating system on every event-loop iteration. A
 \texttt{SIGKILL} destroys the \emph{process}; the kernel and its page cache are
 untouched, and a kernel that is still running flushes those bytes to disk. The
-same result reappears at $n{=}60$ inside the ablation cells above, where a
+same result reappears at $n{=}\KillCanaryN{}$ inside the ablation cells above, where a
 canary write made immediately before each kill survived in \AepKillCanary{} and
 \BthreeKillCanary{} runs.
 
@@ -410,7 +421,7 @@ independent replications, each rebuilding the device and the filesystem from
 scratch, the acknowledged record survived \FlakeyAckSurvived{} and the
 unacknowledged one was destroyed \FlakeyUnackLost{}
 ($p = \FlakeyBarrierP{}$). Against the same two keys under a process kill ---
-$0/10$ lost --- the fault classes separate at
+$\ProcessKillUnackLost{}$ lost --- the fault classes separate at
 $p = \FlakeyVsProcessKillP{}$. The filesystem was mounted
 \texttt{ext4 rw,relatime} with its journal enabled and no \texttt{nobarrier},
 and the server's \texttt{appendfsync} was read back as \texttt{everysec} from
@@ -434,7 +445,8 @@ has just reset. \FlakeyUnackLost{} is therefore the loss probability for a
 power cut placed where it does the most damage, not the rate a uniformly-timed
 one would produce; that rate is bounded above by it and approaches it as the
 write approaches the start of the period. The design is deliberate and it is
-the same design that made the process-kill probe's $0/10$ strong: both probes
+the same design that made the process-kill probe's $\ProcessKillUnackLost{}$
+strong: both probes
 give the loss hypothesis its best case, and only one of them finds loss.
 
 \subsection{RQ3 --- cost, and how much of it is optional}
@@ -564,7 +576,8 @@ safe''~\cite{redis-persistence}, and that judgement is about write throughput,
 which our workload cannot exercise: two workers, a two-second provider delay,
 and a handful of writes per step leave the system latency-bound and nowhere
 near an fsync-rate limit. Our throughput figure is in fact \emph{higher} under
-\texttt{always} ($0.42$ versus $0.33$ executions/s), which is a statement about
+\texttt{always} ($\AepThroughputAlways{}$ versus $\AepThroughputEverysec{}$
+executions/s), which is a statement about
 this workload's shape and not about Redis. A write-heavy deployment would land
 somewhere else on the curve entirely, and finding where is not something this
 evaluation attempted.

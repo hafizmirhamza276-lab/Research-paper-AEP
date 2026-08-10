@@ -57,6 +57,16 @@
 % regime=(session-3) | 9 cells
 \newcommand{\BaselineDupHigh}{0.83}
 
+% \BaselineDupLow as a percentage, for comparison against \AblationZeroUpper
+\newcommand{\BaselineDupLowPct}{77}
+
+% \BaselineDupHigh as a percentage, for comparison against \AblationZeroUpper
+\newcommand{\BaselineDupHighPct}{83}
+
+% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL
+% 3 comparisons; the other 2 are smaller
+\newcommand{\BaselineDupMaxP}{2.1\times10^{-183}}
+
 % latency-and-throughput.csv | system=AEP_FULL
 % step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
 % E5 gate: runs without a declared suspend-disabled host contribute NO timing
@@ -86,6 +96,10 @@
 % half of \BarrierCost -- the protocol runs exactly two barriers per step
 \newcommand{\BarrierCostEach}{983.3}
 
+% = \BarrierCostEach / \AepStepMedian x 100
+% = 983.3 / 4004.9 x 100; the end-to-end cost of adding one more barrier to the step, not the increase in the barrier bill alone
+\newcommand{\ThirdBarrierStepPct}{24.6}
+
 % fsync-always/analysis/latency-and-throughput.csv | AEP-full median - B3 median, both under appendfsync=always
 % = 2063.4 - 2048.4
 \newcommand{\BarrierCostAlways}{15.0}
@@ -93,6 +107,29 @@
 % fsync-always/analysis/latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER, appendfsync=always
 % against 2038.2 ms under everysec: the ablated protocol's own cost is nearly policy-independent, which is what makes the two barrier figures comparable
 \newcommand{\BthreeAlwaysMedian}{2\,048.4}
+
+% fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
+% step_latency_ms_median; quoted in the threats section against the p95 below, to show the tail the three-run interval is drawn from
+\newcommand{\AepAlwaysMedian}{2\,063.4}
+
+% fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
+% step_latency_ms_p95
+\newcommand{\AepAlwaysPninetyfive}{5\,067.8}
+
+% fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
+% executions_per_second
+\newcommand{\AepThroughputAlways}{0.42}
+
+% latency-and-throughput.csv | system=AEP_FULL, appendfsync=everysec
+% executions_per_second; the everysec matrix collected more runs per cell, so wall time per execution is not comparable as a benchmark -- it is quoted only against the always arm
+\newcommand{\AepThroughputEverysec}{0.33}
+
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 95/180
+\newcommand{\BfourDupAuth}{0.5278}
+
+% per-cell-metrics.csv | executions behind \BfourDupAuth
+\newcommand{\BfourExecAuth}{180}
 
 % per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=POSITIVE_ONLY_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 106/180
@@ -108,6 +145,13 @@
 % per-cell-metrics.csv | executions behind \BfourDupNoReadback
 \newcommand{\BfourExecNoReadback}{180}
 
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% metric=lost_effect_rate | sum(successes)/sum(total) = 98/180
+\newcommand{\BfourbLostAuth}{0.5444}
+
+% per-cell-metrics.csv | executions behind \BfourbLostAuth
+\newcommand{\BfourbExecAuth}{180}
+
 % per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=POSITIVE_ONLY_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 91/180
 \newcommand{\BfourbLostPosOnly}{0.5056}
@@ -121,6 +165,14 @@
 
 % per-cell-metrics.csv | executions behind \BfourbLostNoReadback
 \newcommand{\BfourbExecNoReadback}{180}
+
+% per-cell-metrics.csv | max known_ambiguity_rate over {B4,B4b} x {all capability classes} x {all crash points}
+% regime=(session-3) | 36 cells
+% the durable-execution engine never declares ambiguity; that is the corner of the trilemma it cannot reach
+\newcommand{\BfourFamilyAmbMax}{0.0000}
+
+% per-cell-metrics.csv | cells behind \BfourFamilyAmbMax
+\newcommand{\BfourFamilyAmbCells}{36}
 
 % per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=(session-3) response_class=AUTHORITATIVE_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 0/180
@@ -155,6 +207,18 @@
 % Wilson 95% upper limit on 0/600, as a percentage
 % the largest undetected-duplicate or lost-effect rate either system could have and still record zero; the difference between them is bounded by it
 \newcommand{\AblationZeroUpper}{0.64}
+
+% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, the larger of the two arms' numerators
+% B3 0/600 vs AEP-full 0/600
+\newcommand{\BthreeVsAepDupCount}{0}
+
+% comparisons-vs-aep-full.csv | metric=lost_effect_rate, the larger of the two arms' numerators
+% B3 0/600 vs AEP-full 0/600
+\newcommand{\BthreeVsAepLostCount}{0}
+
+% comparisons-vs-aep-full.csv | metric=known_ambiguity_rate, |B3 successes - AEP-full successes|
+% |225 - 223| over 600 executions per arm
+\newcommand{\BthreeVsAepAmbDelta}{2}
 
 % redis-kill-ablation.csv | regime=redis-kill-preack system=AEP_FULL response_class=NO_READBACK
 % executions_with_an_applied_effect
@@ -195,6 +259,10 @@
 % redis-kill-ablation.csv | Fisher exact two-tailed on [[10, 20], [28, 2]]
 % AEP-full vs B3 on the unwanted-applied-effect rate
 \newcommand{\UnwantedP}{1.9\times10^{-6}}
+
+% redis-kill-ablation.csv | canary_survived + canary_lost, summed over AEP_FULL and B3_INTENT_NO_BARRIER
+% un-acknowledged writes made immediately before a hard Redis kill, inside the ablation cells
+\newcommand{\KillCanaryN}{60}
 
 % experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
 % independent runs of the probe, each rebuilding the device stack and the filesystem from scratch
@@ -250,6 +318,23 @@
 
 % analysis/coverage.json | cells
 \newcommand{\CellsCollected}{126}
+
+% analysis/coverage.json | bootstrap_resamples
+\newcommand{\BootstrapResamples}{10\,000}
+
+% reports/raw/e1-durability-window.txt | un-acknowledged writes lost to `docker kill -s KILL` under appendfsync=everysec
+% everysec defers the fsync, not the write; a still-running kernel flushes the page cache
+\newcommand{\ProcessKillUnackLost}{0/10}
+
+% reports/raw/e1-durability-window.txt | usable trials
+\newcommand{\ProcessKillTrials}{10}
+
+% reports/raw/e1-durability-window.txt | min write->death over 10 trials, ms
+\newcommand{\ProcessKillWindowMin}{419}
+
+% reports/raw/e1-durability-window.txt | max write->death over 10 trials, ms
+% every kill landed inside the 1000 ms fsync period, which is what makes the zero above a measurement rather than a miss
+\newcommand{\ProcessKillWindowMax}{992}
 
 % lines of Python under aep_core/, excluding __pycache__
 % 14 files; regenerated on every run of this script

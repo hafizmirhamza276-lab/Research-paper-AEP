@@ -8,7 +8,7 @@
 % Each cell = sum(successes)/sum(total) over the six crash points.
 \begin{table*}[t]
 \centering
-\caption{The trilemma, measured. Every execution in every cell was killed at one of the six crash points of \cref{tab:crashpoints}; rates are over executions, pooled across crash points within one endpoint capability. \textsc{auth}/\textsc{pos-only}/\textsc{none} are the reconciliation capabilities of \cref{tab:capabilities}. AEP-full is the only system with a nonzero declared-ambiguity column, and the only one whose other two columns are zero everywhere. Source: \texttt{per-cell-metrics.csv}, crashed regime only.}
+\caption{The trilemma, measured. Every execution in every cell was killed at one of the six crash points of \cref{tab:crashpoints}; rates are over executions, pooled across crash points within one endpoint capability. \textsc{auth}/\textsc{pos-only}/\textsc{none} are the reconciliation capabilities of \cref{tab:capabilities}. AEP-full and B3 --- the same protocol with and without the durability barrier --- are the only systems that record any declared ambiguity, and the only two whose undetected-duplicate and lost-effect columns are zero throughout. That the two are indistinguishable here is this paper's ablation result, not an accident of this table. Source: \texttt{per-cell-metrics.csv}, crashed regime only.}
 \label{tab:outcomes}
 \small
 \begin{tabular}{@{}lccccccccc@{}}

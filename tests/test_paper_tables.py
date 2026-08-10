@@ -1,11 +1,12 @@
 """Tests for the manuscript's number generator (scripts/paper_tables.py).
 
-``scripts/check_paper_numbers.py`` is the gate that keeps the paper honest,
-and it cannot run in CI: it needs the frozen results tree, which is published
-as an archive rather than committed. So the gate is exercised locally against
-real CSVs, and *this* file exercises the arithmetic and the formatting in CI
-against synthetic ones. Between them the failure mode "the generator was wrong
-and every downstream check agreed with it" needs two independent mistakes.
+``scripts/check_paper_numbers.py`` is the gate that keeps the paper honest.
+It runs in CI as of Phase P -- the analysis products it reads are tracked by
+name (see the tail of ``.gitignore``) and the ``paper-numbers`` job builds the
+manuscript and runs it. It checks the generator's *output* against the real
+CSVs; *this* file checks the generator's arithmetic and formatting against
+synthetic ones. Between them the failure mode "the generator was wrong and
+every downstream check agreed with it" needs two independent mistakes.
 
 Four things are pinned here, each because getting it wrong produces a
 plausible-looking number rather than an error:
@@ -31,10 +32,40 @@ from pathlib import Path
 import pytest
 
 from scripts.paper_tables import (
+    CRASHED_REGIME,
     emit_deployment_choice,
     emit_numbers,
+    emit_outcomes_table,
     flakey_macros,
     tex_p_value,
+)
+
+
+def _cell(
+    metric: str,
+    system: str,
+    response: str,
+    successes: int,
+    total: int = 180,
+    crash_point: str = "mid_dispatch",
+) -> dict[str, str]:
+    return {
+        "metric": metric,
+        "regime": CRASHED_REGIME,
+        "system": system,
+        "crash_point": crash_point,
+        "response_class": response,
+        "readback_keying": "CALLER_REFERENCE",
+        "successes": str(successes),
+        "total": str(total),
+        "runs": "18",
+    }
+
+
+RESPONSES = (
+    "AUTHORITATIVE_READBACK",
+    "POSITIVE_ONLY_READBACK",
+    "NO_READBACK",
 )
 
 
@@ -290,3 +321,192 @@ def test_every_emitted_macro_carries_a_provenance_comment(
             assert index > 0 and lines[index - 1].startswith("%"), (
                 f"{line} has no provenance comment above it"
             )
+
+
+# ------------------------------------------------- the capability classes
+
+
+def test_the_engine_macros_cover_every_capability_class(
+    tmp_path: Path,
+) -> None:
+    """The omission that cost the paper a wrong number.
+
+    B4's and B4b's macro loop listed two of the three capability classes
+    while the third was still being collected. When that cell landed, the
+    prose that wanted to quote it had no macro to quote and quoted a
+    hand-written 0.9500 instead -- which the completed cell then contradicted
+    by a factor of 1.8 (phase report 5A, sections E.5 and G.1). A class
+    missing here is a number the manuscript types by hand, so the coverage is
+    pinned rather than trusted.
+    """
+    per_cell = []
+    for response in RESPONSES:
+        per_cell.append(
+            _cell("undetected_duplicate_rate", "B4_DURABLE_WORKFLOW", response, 95)
+        )
+        per_cell.append(
+            _cell(
+                "lost_effect_rate",
+                "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+                response,
+                98,
+            )
+        )
+    emit_numbers(
+        per_cell=per_cell,
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    for suffix in ("Auth", "PosOnly", "NoReadback"):
+        assert f"\\newcommand{{\\BfourDup{suffix}}}" in text
+        assert f"\\newcommand{{\\BfourExec{suffix}}}" in text
+        assert f"\\newcommand{{\\BfourbLost{suffix}}}" in text
+        assert f"\\newcommand{{\\BfourbExec{suffix}}}" in text
+
+
+def test_the_engine_ambiguity_ceiling_is_a_max_not_a_pooled_rate(
+    tmp_path: Path,
+) -> None:
+    """One nonzero cell must move the number the manuscript quotes.
+
+    The claim built on this macro is "never above this", so a mean would let
+    a single declaring cell hide behind thirty-five silent ones.
+    """
+    per_cell = [
+        _cell("known_ambiguity_rate", "B4_DURABLE_WORKFLOW", r, 0)
+        for r in RESPONSES
+    ]
+    per_cell.append(
+        _cell(
+            "known_ambiguity_rate",
+            "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+            "NO_READBACK",
+            18,
+        )
+    )
+    emit_numbers(
+        per_cell=per_cell,
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    assert "\\newcommand{\\BfourFamilyAmbMax}{0.1000}" in text
+    assert "\\newcommand{\\BfourFamilyAmbCells}{4}" in text
+
+
+# ------------------------------------------------------------- the caption
+
+
+def test_the_outcomes_caption_names_every_system_it_claims_is_unique(
+    tmp_path: Path,
+) -> None:
+    """The caption must be derivable from the table underneath it.
+
+    It read "AEP-full is the only system with a nonzero declared-ambiguity
+    column, and the only one whose other two columns are zero everywhere"
+    while the B3 row directly above the caption's own numbers falsified both
+    halves. Rather than pin the replacement wording, this derives the set of
+    systems the claim is about from the rows and requires the caption to name
+    all of them.
+    """
+    per_cell = []
+    for response in RESPONSES:
+        # B3 and AEP-full: ambiguity only. B0: duplicates only.
+        per_cell.append(
+            _cell("known_ambiguity_rate", "B3_INTENT_NO_BARRIER", response, 66)
+        )
+        per_cell.append(_cell("known_ambiguity_rate", "AEP_FULL", response, 63))
+        per_cell.append(_cell("known_ambiguity_rate", "B0_NAIVE_RETRY", response, 0))
+        for metric in ("undetected_duplicate_rate", "lost_effect_rate"):
+            per_cell.append(_cell(metric, "B3_INTENT_NO_BARRIER", response, 0))
+            per_cell.append(_cell(metric, "AEP_FULL", response, 0))
+        per_cell.append(
+            _cell("undetected_duplicate_rate", "B0_NAIVE_RETRY", response, 147)
+        )
+        per_cell.append(_cell("lost_effect_rate", "B0_NAIVE_RETRY", response, 2))
+
+    emit_outcomes_table(per_cell, tmp_path)
+    caption = next(
+        line
+        for line in (tmp_path / "table-outcomes.tex")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.startswith("\\caption{")
+    )
+    # Every system that reaches the third corner has to appear in a caption
+    # that says which systems reach it. Two systems do here, so a caption
+    # attributing it to one -- "AEP-full is the only system ..." -- is the
+    # defect, and the singular is what identifies it.
+    assert "B3" in caption
+    assert "AEP-full" in caption
+    assert "is the only system " not in caption
+
+
+# --------------------------------------------- the process-kill probe file
+
+
+def test_the_process_kill_macros_come_from_the_tracked_probe_report(
+    tmp_path: Path,
+) -> None:
+    """Three sections quoted this probe; nothing generated it.
+
+    The values are asserted against the committed raw report rather than a
+    fixture, because the point of the macros is that the report is the
+    source. If the file moves or its format changes, this fails rather than
+    silently dropping four numbers out of the manuscript -- which the
+    "every generated number is used" gate would not catch, since a macro that
+    is never emitted is never orphaned.
+    """
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    assert "\\newcommand{\\ProcessKillUnackLost}{0/10}" in text
+    assert "\\newcommand{\\ProcessKillTrials}{10}" in text
+    assert "\\newcommand{\\ProcessKillWindowMin}{419}" in text
+    assert "\\newcommand{\\ProcessKillWindowMax}{992}" in text
+
+
+def test_the_third_barrier_cost_is_a_share_of_the_step_not_the_barrier_bill(
+    tmp_path: Path,
+) -> None:
+    """The distinction the prose got wrong.
+
+    One more barrier is 50% more *barrier*, and the section costed it that
+    way -- "roughly a 50% latency increase". Against the step a reader is
+    actually timing it is half that. 983.35 / 4004.9 = 24.6%.
+    """
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    assert "\\newcommand{\\ThirdBarrierStepPct}{24.6}" in text

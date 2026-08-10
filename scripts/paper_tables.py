@@ -43,6 +43,7 @@ import argparse
 import csv
 import json
 import random
+import re
 import statistics
 import sys
 from collections import defaultdict
@@ -166,10 +167,13 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
         r"rates are over executions, pooled across crash points within one "
         r"endpoint capability. \textsc{auth}/\textsc{pos-only}/\textsc{none} "
         r"are the reconciliation capabilities of \cref{tab:capabilities}. "
-        r"AEP-full is the only system with a nonzero declared-ambiguity "
-        r"column, and the only one whose other two columns are zero "
-        r"everywhere. Source: \texttt{per-cell-metrics.csv}, crashed regime "
-        r"only.}"
+        r"AEP-full and B3 --- the same protocol with and without the "
+        r"durability barrier --- are the only systems that record any "
+        r"declared ambiguity, and the only two whose undetected-duplicate "
+        r"and lost-effect columns are zero throughout. That the two are "
+        r"indistinguishable here is this paper's ablation result, not an "
+        r"accident of this table. Source: \texttt{per-cell-metrics.csv}, "
+        r"crashed regime only.}"
     )
     lines.append(r"\label{tab:outcomes}")
     lines.append(r"\small")
@@ -908,6 +912,45 @@ def emit_numbers(
             "{B0,B1,B2} x {all collected response classes}",
             f"regime={CRASHED_REGIME} | {len(baseline_rates)} cells",
         )
+        # The same two numbers as percentages. The equivalence argument in
+        # section 6 compares them against \AblationZeroUpper, which is a
+        # percentage, and the comparison was written with the rates converted
+        # by hand -- "77--83%" typed beside the macros that hold 0.77 and 0.83.
+        # Two representations of one measurement, only one of them generated,
+        # is how the two drift apart.
+        macro(
+            "BaselineDupLowPct",
+            f"{min(baseline_rates) * 100:.0f}",
+            "\\BaselineDupLow as a percentage, for comparison against "
+            "\\AblationZeroUpper",
+        )
+        macro(
+            "BaselineDupHighPct",
+            f"{max(baseline_rates) * 100:.0f}",
+            "\\BaselineDupHigh as a percentage, for comparison against "
+            "\\AblationZeroUpper",
+        )
+    # The significance of that gap. The manuscript asserted a bound --
+    # "p < 10^{-100}" -- which is true but is a number nothing generated and
+    # nobody can check without recomputing it. The weakest of the three
+    # comparisons is the honest figure to quote: if the least significant one
+    # is this small, all three are.
+    baseline_dup_p = [
+        float(row["fisher_p_value"])
+        for row in comparisons
+        if row["metric"] == "undetected_duplicate_rate"
+        and row["system"] in ("B0_NAIVE_RETRY", "B1_LEASE_ONLY", "B2_CAS_ONLY")
+        and row["reference"] == "AEP_FULL"
+    ]
+    if baseline_dup_p:
+        macro(
+            "BaselineDupMaxP",
+            tex_p_value(max(baseline_dup_p)),
+            "comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, "
+            "largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL",
+            f"{len(baseline_dup_p)} comparisons; the other "
+            f"{len(baseline_dup_p) - 1} are smaller",
+        )
 
     # --- RQ3: latency, E5-gated only ------------------------------------
     # Only the three systems the cost decomposition is built from get a
@@ -973,6 +1016,21 @@ def emit_numbers(
             "half of \\BarrierCost -- the protocol runs exactly two barriers "
             "per step",
         )
+        # What a *third* barrier would cost, as a share of the step a reader
+        # is timing. Section 6 costed the unresolved-crash-point fix at
+        # "roughly a 50% latency increase", which is what one more barrier
+        # does to the barrier bill (983.3 on top of 1966.7) and not what it
+        # does to the step: against AEP-full's own median the increase is half
+        # that. Both readings are arithmetic on the same two macros, which is
+        # exactly why the sentence should quote a generated one.
+        macro(
+            "ThirdBarrierStepPct",
+            f"{(aep - b3) / 2 / aep * 100:.1f}",
+            "= \\BarrierCostEach / \\AepStepMedian x 100",
+            f"= {(aep - b3) / 2:.1f} / {aep:.1f} x 100; the end-to-end cost of "
+            "adding one more barrier to the step, not the increase in the "
+            "barrier bill alone",
+        )
 
     # The same subtraction under the other durability policy. Both arms are
     # collected under that policy; see emit_deployment_choice.
@@ -1007,18 +1065,76 @@ def emit_numbers(
                 "own cost is nearly policy-independent, which is what makes "
                 "the two barrier figures comparable",
             )
+            macro(
+                "AepAlwaysMedian",
+                tex_number(aep_always),
+                "fsync-always/analysis/latency-and-throughput.csv | "
+                "system=AEP_FULL, appendfsync=always",
+                "step_latency_ms_median; quoted in the threats section "
+                "against the p95 below, to show the tail the three-run "
+                "interval is drawn from",
+            )
+
+        # The tail and the throughput of the `always` arm. Threats-to-validity
+        # quotes both to argue the interval is wide because the distribution
+        # is skewed rather than because the estimate is unstable, and section 6
+        # quotes the throughput pair. All four were typed by hand.
+        # `.get` rather than indexing: these two columns arrived with the
+        # throughput reporting and a caller holding an older row shape should
+        # lose a macro, not crash the generator. The "every generated number
+        # is used" gate catches the loss from the other side.
+        always_rows = {row["system"]: row for row in always}
+        aep_always_row = always_rows.get("AEP_FULL", {})
+        aep_everysec_row = next(
+            (row for row in latency if row["system"] == "AEP_FULL"), {}
+        )
+        if aep_always_row.get("step_latency_ms_p95"):
+            macro(
+                "AepAlwaysPninetyfive",
+                tex_number(float(aep_always_row["step_latency_ms_p95"])),
+                "fsync-always/analysis/latency-and-throughput.csv | "
+                "system=AEP_FULL, appendfsync=always",
+                "step_latency_ms_p95",
+            )
+        if aep_always_row.get("executions_per_second"):
+            macro(
+                "AepThroughputAlways",
+                f"{float(aep_always_row['executions_per_second']):.2f}",
+                "fsync-always/analysis/latency-and-throughput.csv | "
+                "system=AEP_FULL, appendfsync=always",
+                "executions_per_second",
+            )
+        if aep_everysec_row.get("executions_per_second"):
+            macro(
+                "AepThroughputEverysec",
+                f"{float(aep_everysec_row['executions_per_second']):.2f}",
+                "latency-and-throughput.csv | system=AEP_FULL, "
+                "appendfsync=everysec",
+                "executions_per_second; the everysec matrix collected more "
+                "runs per cell, so wall time per execution is not comparable "
+                "as a benchmark -- it is quoted only against the always arm",
+            )
 
     # --- G3: the durable-execution engine's two corners ------------------
     # B4 and B4b are one design in two configurations, and the argument is
     # that they land on *different* corners of the trilemma rather than on a
     # better one. That only reads as a finding if both corners are quoted, so
-    # both are emitted for the two capability classes where each has a full
-    # cell.
+    # both are emitted for every capability class.
+    #
+    # This loop listed two classes until Phase P. AUTHORITATIVE_READBACK was
+    # left out while those cells were still partial, and the omission outlived
+    # the reason for it: Phase 5A completed both cells to 180 executions, and
+    # the prose that wanted to quote them had no macro to quote, so it quoted
+    # a hand-written 0.9500 that the completed cell then contradicted
+    # (reports/phase-report-5a-2026-08-10.md sections E.5 and G.1). A
+    # capability class missing from this tuple is a number the manuscript will
+    # end up typing by hand.
     for system, key, metric in (
         ("B4_DURABLE_WORKFLOW", "Bfour", "undetected_duplicate_rate"),
         ("B4B_DURABLE_WORKFLOW_AT_MOST_ONCE", "Bfourb", "lost_effect_rate"),
     ):
         for response, suffix in (
+            ("AUTHORITATIVE_READBACK", "Auth"),
             ("POSITIVE_ONLY_READBACK", "PosOnly"),
             ("NO_READBACK", "NoReadback"),
         ):
@@ -1044,6 +1160,40 @@ def emit_numbers(
                 str(total),
                 f"per-cell-metrics.csv | executions behind \\{key}{tag}{suffix}",
             )
+
+    # The third corner is the one neither configuration reaches, and the
+    # manuscript needs to say so without typing a zero. A ceiling over every
+    # B4/B4b cell says it in the one form that stays true if a cell ever moves:
+    # the claim is "never above this", not "exactly zero everywhere", so a
+    # future nonzero cell changes the number instead of silently falsifying a
+    # sentence.
+    family_amb: list[float] = []
+    for row in crashed:
+        if row["system"] not in (
+            "B4_DURABLE_WORKFLOW",
+            "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+        ):
+            continue
+        if row["metric"] != "known_ambiguity_rate":
+            continue
+        total = int(row["total"])
+        if total:
+            family_amb.append(int(row["successes"]) / total)
+    if family_amb:
+        macro(
+            "BfourFamilyAmbMax",
+            f"{max(family_amb):.4f}",
+            "per-cell-metrics.csv | max known_ambiguity_rate over "
+            "{B4,B4b} x {all capability classes} x {all crash points}",
+            f"regime={CRASHED_REGIME} | {len(family_amb)} cells",
+            "the durable-execution engine never declares ambiguity; that is "
+            "the corner of the trilemma it cannot reach",
+        )
+        macro(
+            "BfourFamilyAmbCells",
+            str(len(family_amb)),
+            "per-cell-metrics.csv | cells behind \\BfourFamilyAmbMax",
+        )
 
     # --- G1: the ablation's NULL result, on detection --------------------
     # The barrier is an ablation of AEP-full and it changes nothing that RQ1
@@ -1128,6 +1278,66 @@ def emit_numbers(
             "system could have and still record zero; the difference between "
             "them is bounded by it",
         )
+        # The numerators themselves. "a rate of 0" was written as a bare
+        # numeral in four places, which made the paper's most load-bearing
+        # zero the one number no gate looked at. Emitted as the larger of the
+        # two arms so the sentence built on it -- "neither system records more
+        # than this" -- cannot become false without this number moving.
+        for metric, tag in (
+            ("undetected_duplicate_rate", "Dup"),
+            ("lost_effect_rate", "Lost"),
+        ):
+            row = next(
+                (
+                    r
+                    for r in comparisons
+                    if r["system"] == "B3_INTENT_NO_BARRIER"
+                    and r["metric"] == metric
+                ),
+                None,
+            )
+            if not row:
+                continue
+            worst = max(
+                int(row["system_successes"]), int(row["reference_successes"])
+            )
+            macro(
+                f"BthreeVsAep{tag}Count",
+                str(worst),
+                f"comparisons-vs-aep-full.csv | metric={metric}, the larger "
+                "of the two arms' numerators",
+                f"B3 {row['system_successes']}/{row['system_total']} vs "
+                f"AEP-full {row['reference_successes']}/"
+                f"{row['reference_total']}",
+            )
+        # The one metric on which the two systems are not identical, as a
+        # count. Both the abstract and section 6 described it in words -- "two
+        # executions in six hundred" -- which is a measurement spelled out,
+        # and a spelled-out measurement is invisible to every check that looks
+        # for digits. It is a difference of counts, so it is emitted as one.
+        amb = next(
+            (
+                r
+                for r in comparisons
+                if r["system"] == "B3_INTENT_NO_BARRIER"
+                and r["metric"] == "known_ambiguity_rate"
+            ),
+            None,
+        )
+        if amb:
+            macro(
+                "BthreeVsAepAmbDelta",
+                str(
+                    abs(
+                        int(amb["system_successes"])
+                        - int(amb["reference_successes"])
+                    )
+                ),
+                "comparisons-vs-aep-full.csv | metric=known_ambiguity_rate, "
+                "|B3 successes - AEP-full successes|",
+                f"|{amb['system_successes']} - {amb['reference_successes']}| "
+                f"over {amb['system_total']} executions per arm",
+            )
 
     # --- G1/RQ2: the hard-Redis-kill ablation ---------------------------
     # The barrier's own metric. Named `Unwanted` rather than `Applied`
@@ -1206,6 +1416,22 @@ def emit_numbers(
             f"[{b3_applied}, {b3_n - b3_applied}]]",
             "AEP-full vs B3 on the unwanted-applied-effect rate",
         )
+        # The canary total across both arms. Sections 6 and 8 both cite it as
+        # "n=60" -- the second, independent replication of the process-kill
+        # result -- and both typed it, which is one addition nobody re-checked
+        # after the cells were recollected.
+        canaries = sum(
+            int(row["canary_survived"]) + int(row["canary_lost"])
+            for row in (aep_row, b3_row)
+        )
+        macro(
+            "KillCanaryN",
+            str(canaries),
+            "redis-kill-ablation.csv | canary_survived + canary_lost, summed "
+            "over AEP_FULL and B3_INTENT_NO_BARRIER",
+            "un-acknowledged writes made immediately before a hard Redis "
+            "kill, inside the ablation cells",
+        )
 
     # --- G2: the fault class the barrier's durability claim names --------
     if flakey:
@@ -1248,6 +1474,13 @@ def emit_numbers(
             ("RunsCollected", "runs"),
             ("ExecutionsCollected", "executions"),
             ("CellsCollected", "cells"),
+            # Not a measurement -- a parameter of the method. It is generated
+            # anyway because analyze.py records it, which means it can change
+            # without the sentence that states it changing: every interval in
+            # the paper would move and "10,000 resamples" would still read
+            # true. A constant that lives in the results is a constant that
+            # can drift.
+            ("BootstrapResamples", "bootstrap_resamples"),
         ):
             if key in coverage:
                 macro(
@@ -1255,6 +1488,49 @@ def emit_numbers(
                     f"{int(coverage[key]):,}".replace(",", r"\,"),
                     f"analysis/coverage.json | {key}",
                 )
+
+    # --- E1: what a hard process kill actually loses ---------------------
+    # The probe that found the barrier does nothing against a SIGKILL. Its
+    # numbers -- ten trials, zero unacknowledged writes lost, and the window
+    # each kill landed inside -- were typed into three sections by hand,
+    # because the probe writes a raw report rather than a CSV and nothing here
+    # read it. It is tracked, so it can be read: a number quoted in three
+    # places and generated in none is three chances to update two of them.
+    probe = ROOT / "reports" / "raw" / "e1-durability-window.txt"
+    if probe.is_file():
+        text = probe.read_text(encoding="utf-8", errors="replace")
+        windows = [int(m) for m in re.findall(r"write->death=\s*(\d+)ms", text)]
+        lost = re.search(
+            r"unacknowledged write lost in (\d+)/(\d+) usable trials", text
+        )
+        if windows and lost:
+            macro(
+                "ProcessKillUnackLost",
+                f"{lost.group(1)}/{lost.group(2)}",
+                f"reports/raw/{probe.name} | un-acknowledged writes lost to "
+                "`docker kill -s KILL` under appendfsync=everysec",
+                "everysec defers the fsync, not the write; a still-running "
+                "kernel flushes the page cache",
+            )
+            macro(
+                "ProcessKillTrials",
+                lost.group(2),
+                f"reports/raw/{probe.name} | usable trials",
+            )
+            macro(
+                "ProcessKillWindowMin",
+                str(min(windows)),
+                f"reports/raw/{probe.name} | min write->death over "
+                f"{len(windows)} trials, ms",
+            )
+            macro(
+                "ProcessKillWindowMax",
+                str(max(windows)),
+                f"reports/raw/{probe.name} | max write->death over "
+                f"{len(windows)} trials, ms",
+                "every kill landed inside the 1000 ms fsync period, which is "
+                "what makes the zero above a measurement rather than a miss",
+            )
 
     # --- Implementation size, counted rather than remembered -------------
     # These were hand-written with a shell command in a comment beside them,
