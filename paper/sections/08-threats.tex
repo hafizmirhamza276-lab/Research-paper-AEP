@@ -94,6 +94,26 @@ that the expensive half is optional. But a reviewer weighing novelty should
 weigh it against that, not against the impression the introduction gives if
 C2 and C3 are read without \cref{sec:eval-detection} in between.
 
+\paragraph{The detection finding has no referent outside this artifact} The
+decomposition above is established by an ablation --- AEP-full against itself
+with the barrier removed --- and an ablation is internal by construction. That
+is the right instrument for \emph{attributing} an effect to a mechanism, and
+we would choose it again for that purpose, but it cannot corroborate the
+resulting claim from outside. Nothing external to this artifact establishes
+that a durable pre-dispatch record without an fsync barrier is sufficient for
+detection: the proposition is supported by two systems we wrote, measured by a
+harness we wrote, against a provider we wrote. The oracle is independent of the
+systems under test --- rates are counted from the provider's separately written
+ledger and a parsed source gate prevents the analysis from reading live
+protocol state (\cref{sec:threats}, internal validity) --- which addresses
+whether we counted correctly, and does not address whether the finding
+generalises beyond our implementation of the pattern. A reviewer who distrusts
+the harness has no independent purchase on this result, and we know of no way
+to supply one short of re-implementation by someone else. That is the
+structural cost of the instrument, it applies to the paper's most load-bearing
+empirical claim, and we prefer to state it here than to let the ablation's
+internal consistency read as external support.
+
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
 with a configurable delay, timeout and error distribution, and a
 transactionally written ground-truth ledger. It is realistic in the dimension
@@ -280,16 +300,28 @@ answer the research questions rather than to fill the grid.
 What that leaves uncovered, precisely:
 
 \begin{itemize}
-\item \textbf{B4's \textsc{auth} cell is $n=20$ and B4b has none.} Both now
-      have full \textsc{pos-only} and \textsc{none} cells at $n=180$, which is
-      where the duplicate-versus-loss contrast of \cref{tab:outcomes} is
-      drawn. What remains thin is the top-left corner: B4's $0.9500$ on
-      \textsc{auth} rests on twenty executions and its interval is wide, and
-      B4b was never collected on \textsc{auth} at all, so that cell is a dash
-      rather than a number. We do not need those cells for the argument --- a
-      system that duplicates on the two harder capability classes does not
-      become safe on the easiest one --- but the row is incomplete and the
-      table says so rather than interpolating.
+\item \textbf{B4's and B4b's \textsc{auth} cells were incomplete and are now
+      collected --- and completing them corrected the value.} In the previous
+      draft B4's \textsc{auth} cell held twenty executions and B4b had none,
+      so that cell printed as a dash. Both are now $n=180$ over all six crash
+      points, the same shape as every other cell in \cref{tab:outcomes}, and
+      the whole table is free of dashes. We record what the completion
+      changed, because it is a caution about partial cells generally and not
+      only about this one: the earlier twenty executions came from a
+      \emph{single} crash point, so the figure that draft quoted was not a
+      wide interval around the value the full cell reports --- it was one
+      crash point standing in for six, and the six differ enough that none of
+      them represents the pooled rate. The full cell moves B4's \textsc{auth}
+      duplicate rate substantially, and into line with its other two classes.
+      The direction of the argument is unchanged, which is why we could
+      describe the gap as non-essential before collecting it, but the number
+      we quoted for it was wrong, and a partial cell being unrepresentative
+      rather than merely imprecise is the more general lesson. Every other
+      cell in \cref{tab:outcomes} spans all the crash points that apply to its
+      system: six for the systems that run \texttt{aep\_core}'s workflow, and
+      five for B0--B2, which have no window between writing a record and
+      acknowledging it durable because they write no record
+      (\cref{tab:crashpoints}).
 \item \textbf{The prevention result rests on one cell.} The hard-Redis-kill
       ablation of \cref{sec:eval-prevention} was collected on
       \textsc{no-readback} only, at one crash point, at

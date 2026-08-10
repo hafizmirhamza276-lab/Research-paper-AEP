@@ -20,8 +20,8 @@ system & \textsc{auth} & \textsc{pos-only} & \textsc{none} & \textsc{auth} & \te
 B0 naive retry & 0.8200 & 0.8000 & 0.7733 & 0.0133 & 0.0133 & 0.0067 & 0.0000 & 0.0000 & 0.0000\\
 B1 lease-only & 0.8133 & 0.8067 & 0.8267 & 0.0000 & 0.0067 & 0.0067 & 0.0000 & 0.0000 & 0.0000\\
 B2 CAS-only & 0.8067 & 0.7933 & 0.7800 & 0.0067 & 0.0067 & 0.0000 & 0.0000 & 0.0000 & 0.0000\\
-B4 durable, $\infty$ attempts & 0.9500 & 0.5889 & 0.5611 & 0.0000 & 0.0000 & 0.0111 & 0.0000 & 0.0000 & 0.0000\\
-B4b durable, 1 attempt & --- & 0.0000 & 0.0000 & --- & 0.5056 & 0.5167 & --- & 0.0000 & 0.0000\\
+B4 durable, $\infty$ attempts & 0.5278 & 0.5889 & 0.5611 & 0.0111 & 0.0000 & 0.0111 & 0.0000 & 0.0000 & 0.0000\\
+B4b durable, 1 attempt & 0.0000 & 0.0000 & 0.0000 & 0.5444 & 0.5056 & 0.5167 & 0.0000 & 0.0000 & 0.0000\\
 B3 intent, no barrier & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.3667 & 0.7167\\
 \textbf{AEP-full} & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.3500 & 0.7222\\
 \bottomrule
@@ -38,9 +38,10 @@ B3 intent, no barrier & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 0.
 %   B2_CAS_ONLY                        AUTHORITATIVE_READBACK   executions=150   runs=15   crash_points=5
 %   B2_CAS_ONLY                        POSITIVE_ONLY_READBACK   executions=150   runs=15   crash_points=5
 %   B2_CAS_ONLY                        NO_READBACK              executions=150   runs=15   crash_points=5
-%   B4_DURABLE_WORKFLOW                AUTHORITATIVE_READBACK   executions=20    runs=2    crash_points=1
+%   B4_DURABLE_WORKFLOW                AUTHORITATIVE_READBACK   executions=180   runs=18   crash_points=6
 %   B4_DURABLE_WORKFLOW                POSITIVE_ONLY_READBACK   executions=180   runs=18   crash_points=6
 %   B4_DURABLE_WORKFLOW                NO_READBACK              executions=180   runs=18   crash_points=6
+%   B4B_DURABLE_WORKFLOW_AT_MOST_ONCE  AUTHORITATIVE_READBACK   executions=180   runs=18   crash_points=6
 %   B4B_DURABLE_WORKFLOW_AT_MOST_ONCE  POSITIVE_ONLY_READBACK   executions=180   runs=18   crash_points=6
 %   B4B_DURABLE_WORKFLOW_AT_MOST_ONCE  NO_READBACK              executions=180   runs=18   crash_points=6
 %   B3_INTENT_NO_BARRIER               AUTHORITATIVE_READBACK   executions=180   runs=18   crash_points=6

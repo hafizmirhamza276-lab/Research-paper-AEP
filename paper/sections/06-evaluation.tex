@@ -95,9 +95,13 @@ engine land on two different corners} B4 has a write-ahead record,
 acknowledged durable by the same \texttt{WAITAOF} barrier AEP uses. It is not
 ablated on durability. It duplicates at \BfourDupPosOnly{} on
 \textsc{pos-only} and \BfourDupNoReadback{} on \textsc{none}
-(\BfourExecPosOnly{} and \BfourExecNoReadback{} executions), and at $0.9500$
-on \textsc{auth}, where its cell is $n=20$ and its interval correspondingly
-wide.
+(\BfourExecPosOnly{} and \BfourExecNoReadback{} executions), and it duplicates
+on \textsc{auth} as well: that cell is now collected at the same size as the
+other two and is reported in \cref{tab:outcomes}. The endpoint's
+reconciliation capability does not rescue it, which is the point --- a
+read-back tells a recovering workflow what the provider currently holds, and
+B4's duplicate is a second application it chose to make, not a fact it failed
+to look up.
 
 B4b is the same engine with Maximum Attempts set to $1$, and it is the cleaner
 half of the demonstration: over \BfourbExecPosOnly{} and
