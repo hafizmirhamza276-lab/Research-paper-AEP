@@ -1304,3 +1304,28 @@ Repository work is complete. In order of value:
 3. Then the human residual checklist: TSE review policy on ScholarOne, arXiv
    upload, TSE submission, raw-archive publication (D4), and the optional
    low-tail items (D1/D2/D3/D5/D7).
+
+## R.I CI record, resume
+
+| Commit | What | Run | Jobs | Result |
+|---|---|---|---|---|
+| `bf68440` | T1 author block + the §F.1 clause + both PDFs | [31486243170](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31486243170) | 4/4 | `success` |
+
+```
+head bf68440 -- jobs: 4
+  success    Suite (py3.13, Redis from compose)
+  success    WAITAOF durability (compose, phase2.conf)
+  success    Citation ranges (docs/22)
+  success    Numbers gate (manuscript vs frozen CSVs)
+```
+
+The numbers-gate job is the one that matters here: it builds the manuscript
+through `scripts/build_paper.sh` with no arguments, on a clean Linux checkout,
+with the CI TeX Live package set. Green means the author block compiles and the
+two new interval macros are generated, used and consistent with the frozen CSVs
+somewhere other than the machine that wrote them. **It does not build or check
+`main-anon.pdf`** -- see §F.8, which is why that gap is worth closing.
+
+**External actions, resume: `git push` and read-only `GET`s to `api.github.com`.
+Nothing uploaded, submitted or published; no account, token, release, asset,
+draft or tag created or moved. arXiv and TSE submission remain the human's.**
