@@ -55,7 +55,7 @@ class DurabilityBarrier(Protocol):
 
 
 # ---------------------------------------------------------------------------
-# Durability acknowledgement capability
+# Durability acknowledgement in-process dispatch guard
 # ---------------------------------------------------------------------------
 
 
@@ -73,12 +73,17 @@ def dispatch_scope(
 
 @dataclass(frozen=True, repr=False, init=False, eq=False)
 class DurabilityAck:
-    """Proof that a barrier reported the preceding write durable.
+    """Opaque guard carried between the supported barrier and dispatch APIs.
 
-    Cannot be constructed, subclassed, or copied by callers: the only way to
-    obtain one is :func:`confirm_durable_ack`, which mints it solely when the
-    barrier returned ``True``.  It is single-use and bound to one
-    :func:`dispatch_scope`.
+    Ordinary callers cannot construct, subclass, or copy this type through
+    its public interface. :func:`confirm_durable_ack` issues it only after the
+    supplied barrier returns ``True``; consumption is single-use and bound to
+    one :func:`dispatch_scope`.
+
+    This is an in-process control-flow guard under a trusted-code assumption,
+    not a cryptographic capability. Arbitrary code in the same Python process
+    can reach module internals or bypass the supported runner entirely; Python
+    underscore naming and closure state are not security boundaries.
     """
 
     scope: str
@@ -86,7 +91,7 @@ class DurabilityAck:
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         raise DurabilityBarrierError(
-            "a durability acknowledgement can only be minted by a barrier"
+            "obtain durability acknowledgements through the supported barrier API"
         )
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -103,6 +108,10 @@ class DurabilityAck:
 
 
 def _build_ack_boundary():
+    # The secret and registry detect accidental construction, mutation, reuse,
+    # and scope mismatch inside supported control flow. They do not defend
+    # against arbitrary code executing in this interpreter: that code can call
+    # the module-internal issuer or bypass this API altogether.
     secret = secrets.token_bytes(32)
     records: dict[int, tuple[weakref.ReferenceType, bytes, str]] = {}
     record_lock = threading.Lock()
@@ -135,7 +144,8 @@ def _build_ack_boundary():
     def consume(ack: Any, *, scope: str) -> None:
         if type(ack) is not DurabilityAck:
             raise DurabilityBarrierError(
-                "dispatch authorization requires a real durability acknowledgement"
+                "dispatch authorization requires a valid in-process "
+                "durability acknowledgement"
             )
         with record_lock:
             record = records.pop(id(ack), None)
@@ -161,11 +171,13 @@ del _build_ack_boundary
 async def confirm_durable_ack(
     barrier: Any, connection: Any, timeout_ms: int, *, scope: str
 ) -> DurabilityAck:
-    """Run the barrier and mint an acknowledgement only if it reported durable.
+    """Run the barrier and issue a guard only if it reported durable.
 
-    This is the sole mint point.  ``authorize_dispatch`` consumes the returned
-    object, so a dispatch authorization cannot be recorded in Redis without a
-    barrier having returned ``True`` first in this process.
+    This is the sole supported issuance point. ``authorize_dispatch`` consumes
+    the returned object, so ordinary control flow through the supported APIs
+    cannot record a dispatch authorization unless a barrier first returned
+    ``True`` in this process. This is not protection against arbitrary
+    same-process code.
     """
 
     durable = await barrier.confirm_durable(connection, timeout_ms)

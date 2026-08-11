@@ -35,7 +35,8 @@ import math
 import random
 from dataclasses import dataclass
 from math import comb
-from typing import Any, Sequence
+from statistics import NormalDist
+from typing import Any, Mapping, Sequence
 
 #: Bootstrap resamples. 10 000 is the usual floor for a percentile interval
 #: reported to two decimal places.
@@ -80,9 +81,9 @@ def proportion(successes: int, total: int) -> float:
 
 
 def wilson_interval(
-    successes: int, total: int, *, z: float = 1.959963984540054
+    successes: int, total: int, *, confidence: float = 0.95
 ) -> tuple[float, float]:
-    """A 95% Wilson score interval on a pooled proportion.
+    """A two-sided Wilson score interval on a pooled proportion.
 
     This exists for the *figures* and nowhere else. Every interval in the CSVs
     is a cluster bootstrap over runs, because executions within one run are
@@ -100,6 +101,11 @@ def wilson_interval(
     """
     if total <= 0:
         return (0.0, 0.0)
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be strictly between zero and one")
+    if successes < 0 or successes > total:
+        raise ValueError("successes must be between zero and total")
+    z = NormalDist().inv_cdf((1.0 + confidence) / 2.0)
     phat = successes / total
     denominator = 1.0 + z * z / total
     centre = (phat + z * z / (2 * total)) / denominator
@@ -108,7 +114,137 @@ def wilson_interval(
         * math.sqrt(phat * (1.0 - phat) / total + z * z / (4 * total * total))
         / denominator
     )
-    return (max(0.0, centre - spread), min(1.0, centre + spread))
+    # Avoid exposing floating-point cancellation as a nonzero lower endpoint
+    # at exactly zero (and symmetrically below one at exactly total). These are
+    # mathematical boundary values, not numerical approximations.
+    low = 0.0 if successes == 0 else max(0.0, centre - spread)
+    high = 1.0 if successes == total else min(1.0, centre + spread)
+    return (low, high)
+
+
+def wilson_upper_bound(
+    successes: int, total: int, *, confidence: float = 0.95
+) -> float:
+    """A genuinely one-sided Wilson upper confidence bound.
+
+    A one-sided 95% bound uses ``Phi^-1(0.95)``, not the 1.96 quantile used
+    by the upper endpoint of a two-sided 95% interval. Keeping this as a
+    separate function makes that distinction explicit at every call site.
+    """
+    if total <= 0:
+        return 0.0
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be strictly between zero and one")
+    if successes < 0 or successes > total:
+        raise ValueError("successes must be between zero and total")
+    z = NormalDist().inv_cdf(confidence)
+    phat = successes / total
+    denominator = 1.0 + z * z / total
+    centre = (phat + z * z / (2 * total)) / denominator
+    spread = (
+        z
+        * math.sqrt(phat * (1.0 - phat) / total + z * z / (4 * total * total))
+        / denominator
+    )
+    return min(1.0, centre + spread)
+
+
+@dataclass(frozen=True)
+class DifferenceInterval:
+    """A confidence interval for ``system rate - reference rate``."""
+
+    point: float
+    low: float
+    high: float
+    confidence: float
+    resamples: int
+    seed: int
+    system_clusters: int
+    reference_clusters: int
+    strata: int
+
+    def within(self, margin: float) -> bool:
+        """Whether the complete interval lies strictly inside ``+/-margin``."""
+        if margin <= 0.0:
+            raise ValueError("equivalence margin must be positive")
+        return self.low > -margin and self.high < margin
+
+
+def stratified_cluster_bootstrap_difference(
+    system: Mapping[str, Sequence[tuple[int, int]]],
+    reference: Mapping[str, Sequence[tuple[int, int]]],
+    *,
+    resamples: int = DEFAULT_RESAMPLES,
+    seed: int = DEFAULT_BOOTSTRAP_SEED,
+    confidence: float = 0.90,
+) -> DifferenceInterval:
+    """Bootstrap a rate difference by resampling runs within matched strata.
+
+    Each mapping value contains one ``(successes, total)`` pair per run. The
+    same stratum set must exist in both arms. Resampling within each stratum
+    preserves the experiment's fixed crash-point, endpoint-capability and
+    keying mix while treating a run, rather than an execution, as the
+    independent unit.
+    """
+    if set(system) != set(reference) or not system:
+        raise ValueError("system and reference must have the same non-empty strata")
+    if resamples <= 0:
+        raise ValueError("resamples must be positive")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be strictly between zero and one")
+
+    def validate(arm: Mapping[str, Sequence[tuple[int, int]]]) -> None:
+        for stratum, clusters in arm.items():
+            if not clusters:
+                raise ValueError(f"stratum {stratum!r} has no run clusters")
+            for successes, total in clusters:
+                if total <= 0 or successes < 0 or successes > total:
+                    raise ValueError("each run cluster must have 0 <= successes <= total")
+
+    validate(system)
+    validate(reference)
+
+    def pooled_rate(arm: Mapping[str, Sequence[tuple[int, int]]]) -> float:
+        successes = sum(pair[0] for clusters in arm.values() for pair in clusters)
+        total = sum(pair[1] for clusters in arm.values() for pair in clusters)
+        return proportion(successes, total)
+
+    point = pooled_rate(system) - pooled_rate(reference)
+    generator = random.Random(seed)
+    draws: list[float] = []
+    ordered_strata = sorted(system)
+    for _ in range(resamples):
+        arm_rates: list[float] = []
+        for arm in (system, reference):
+            successes = total = 0
+            for stratum in ordered_strata:
+                clusters = arm[stratum]
+                for _ in range(len(clusters)):
+                    chosen_successes, chosen_total = clusters[
+                        generator.randrange(len(clusters))
+                    ]
+                    successes += chosen_successes
+                    total += chosen_total
+            arm_rates.append(proportion(successes, total))
+        draws.append(arm_rates[0] - arm_rates[1])
+
+    draws.sort()
+    tail = (1.0 - confidence) / 2.0
+    low = draws[max(0, int(tail * resamples) - 1)]
+    high = draws[min(resamples - 1, int((1.0 - tail) * resamples))]
+    return DifferenceInterval(
+        point=point,
+        low=low,
+        high=high,
+        confidence=confidence,
+        resamples=resamples,
+        seed=seed,
+        system_clusters=sum(len(clusters) for clusters in system.values()),
+        reference_clusters=sum(
+            len(clusters) for clusters in reference.values()
+        ),
+        strata=len(system),
+    )
 
 
 def cluster_bootstrap_proportion(

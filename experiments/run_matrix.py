@@ -226,7 +226,7 @@ REGIME_CRASH_SOMETIMES = Regime(
 #: Amendment E1, the load-bearing variant. Redis is hard-killed in the window
 #: between the intent CAS and the barrier's acknowledgement -- the exact moment
 #: AEP-full waits and B3 does not. AEP-full's WAITAOF fails and its
-#: DurabilityAck is never minted, so it refuses to dispatch; B3 has already
+#: DurabilityAck is never issued, so it refuses to dispatch; B3 has already
 #: dispatched. No worker crash: the fault under study is Redis dying.
 REGIME_REDIS_KILL_PREACK = Regime(
     name="redis-kill-preack",

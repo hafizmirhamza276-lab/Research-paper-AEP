@@ -309,15 +309,15 @@ async def test_a_non_positive_lease_cap_is_refused(lock_manager_for_guard, cap):
 
 
 # ===========================================================================
-# durability.py -- the acknowledgement is unforgeable, uncopyable, single-use
+# durability.py -- the supported guard is uncopyable, single-use, scope-bound
 # ===========================================================================
 
 
 SCOPE = dispatch_scope(VALID_UUID4, "intent-1", 3)
 
 
-def test_a_durability_ack_cannot_be_constructed_directly():
-    with pytest.raises(DurabilityBarrierError, match="only be minted by a barrier"):
+def test_a_durability_ack_cannot_be_constructed_through_its_public_type():
+    with pytest.raises(DurabilityBarrierError, match="supported barrier API"):
         DurabilityAck()
 
 
@@ -376,10 +376,15 @@ async def test_an_ack_cannot_authorise_a_different_scope():
     with pytest.raises(DurabilityBarrierError, match="does not authorise"):
         consume_durability_ack(ack, scope=other_scope)
 
+    # A failed scope check consumes the guard as well: it cannot later be
+    # replayed with the correct scope.
+    with pytest.raises(DurabilityBarrierError, match="already consumed"):
+        consume_durability_ack(ack, scope=SCOPE)
+
 
 @pytest.mark.parametrize("impostor", [None, "ack", object(), 42])
 def test_only_a_real_ack_can_be_consumed(impostor):
-    with pytest.raises(DurabilityBarrierError, match="real durability acknowledgement"):
+    with pytest.raises(DurabilityBarrierError, match="valid in-process"):
         consume_durability_ack(impostor, scope=SCOPE)
 
 
@@ -391,7 +396,7 @@ async def test_an_ack_requires_a_non_empty_string_scope(scope):
         )
 
 
-async def test_no_ack_is_minted_when_the_barrier_declines():
+async def test_no_ack_is_issued_when_the_barrier_declines():
     class _DecliningBarrier:
         async def confirm_durable(self, connection, timeout_ms):
             return False

@@ -40,7 +40,7 @@ that class can separate it from B3 on the *durability* of the record.
 That leaves a second, independent mechanism by which the barrier changes
 behaviour, and this fault does exercise it: AEP-full *waits* at a moment where
 B3 does not. A Redis that dies inside that wait makes AEP-full's ``WAITAOF``
-fail, and its ``DurabilityAck`` is never minted, so it refuses to dispatch. B3,
+fail, and its ``DurabilityAck`` is never issued, so it refuses to dispatch. B3,
 which never waits, has already dispatched. Both systems then hold the same
 durable record; only one of them sent the mutation. Each run records which,
 and :data:`RedisKillRecord.canary` records whether the tail was lost as well,

@@ -72,12 +72,12 @@ def test_the_two_crash_free_regimes_do_not_merge_into_one_cell() -> None:
     )
 
 
-def test_session_threes_regime_is_labelled_rather_than_left_blank() -> None:
-    """``""`` is the right key and the wrong column value."""
+def test_crashed_regime_is_labelled_rather_than_left_blank() -> None:
+    """The legacy empty key is emitted as the explicit fault-regime name."""
     rows = build_per_cell(
         [_run("s3-r0", regime="", redis_kill_point=None)], resamples=10, seed=1
     )
-    assert {row["regime"] for row in rows} == {"(session-3)"}
+    assert {row["regime"] for row in rows} == {"crashed"}
 
 
 def test_regime_is_the_first_column_and_names_match_the_attributes() -> None:

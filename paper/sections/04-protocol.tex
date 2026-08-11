@@ -75,12 +75,12 @@ than a convention. In this protocol it is a checked precondition, in four
 links:
 
 \begin{enumerate}
-\item The barrier mints a \texttt{DurabilityAck} \emph{only} when
-      \texttt{WAITAOF} returned at least one local fsync.
-\item \texttt{DurabilityAck} cannot be constructed, subclassed or copied; it is
-      single-use and scope-bound by an HMAC provenance registry to
-      \texttt{execution:intent:prepared\_version}, so an ack for one attempt
-      cannot authorise another.
+\item Through the supported API, the barrier issues a \texttt{DurabilityAck}
+      only when \texttt{WAITAOF} returned at least one local fsync.
+\item Ordinary callers cannot construct, subclass or copy
+      \texttt{DurabilityAck}; the in-process registry detects reuse and binds
+      the guard to \texttt{execution:intent:prepared\_version}, so a guard for
+      one attempt cannot authorise another through the supported path.
 \item Authorizing dispatch \emph{consumes} the ack, then runs a script that
       re-checks lease, version, status and binding digest and writes an
       authorization key.
@@ -90,12 +90,16 @@ links:
 
 \paragraph{The irreducible gap, stated} Redis exposes no way for a Lua script
 to verify that a previous \texttt{WAITAOF} succeeded. A complete in-store proof
-is therefore impossible, and what the authorization proves is \emph{that a
-barrier ran in this process}, not that Redis fsynced. We state this rather
-than let the mechanism imply more than it delivers. Two consequences follow and
-are declared: a principal with direct Redis access can write the authorization
-key itself, and a caller inside the process could compose the binding service
-with a connector directly, bypassing the runner.
+is therefore impossible. Under trusted-code assumptions, an authorization
+records that the supported path received and consumed its ordinary barrier
+guard; it is not an independent proof that Redis fsynced. The HMAC and registry
+are mutation/reuse checks, not a cryptographic security boundary. Python
+underscore naming and closure placement do not prevent arbitrary same-process
+code from calling the module-internal issuer without running the barrier. A
+principal with direct Redis access can also write the authorization key, and a
+caller inside the process can compose the binding service with a connector
+directly, bypassing the runner. A stronger attacker model requires a separately
+enforced process or service boundary, which this implementation does not have.
 
 \paragraph{Recovery classification} For an eligible intent, under a freshly
 acquired lease and after re-validating status and version, the mapping from

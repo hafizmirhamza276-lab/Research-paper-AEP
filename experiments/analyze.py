@@ -88,6 +88,7 @@ from experiments.statistics import (
     cluster_bootstrap_proportion,
     compare_rates,
     proportion,
+    stratified_cluster_bootstrap_difference,
     summarise,
     wilson_interval,
 )
@@ -139,7 +140,15 @@ TIMING_SUSPENSION_TOLERANCE_SECONDS = 2.0
 #:
 #: ``""`` is Session 3's unnamed regime -- every execution killed at the cell's
 #: crash point -- which is the one the duplicate and ambiguity claims are about.
-FIGURE_REGIME = "(session-3)"
+#: Derived artifacts give that condition the explicit label ``crashed``.
+FIGURE_REGIME = "crashed"
+
+#: Revision-stage operational sensitivity threshold for the B3/AEP declared-
+#: ambiguity comparison. This was not preregistered. Five percentage points is
+#: 27 additional terminal escalations in the 540-execution crashed arm, which
+#: the paper treats as operationally material rather than negligible.
+AMBIGUITY_EQUIVALENCE_MARGIN = 0.05
+AMBIGUITY_DIFFERENCE_CONFIDENCE = 0.90
 
 #: The rate metrics, in the order the paper's tables use them.
 RATE_METRICS: tuple[str, ...] = (
@@ -373,7 +382,7 @@ class RunRecord:
         missing value rather than as the every-execution-crashed condition it
         denotes.
         """
-        return self.regime or "(session-3)"
+        return self.regime or "crashed"
 
 
 def load_run(directory: Path) -> RunRecord | None:
@@ -781,28 +790,58 @@ def build_table_one(
 def build_comparisons(
     runs: Sequence[RunRecord], *, resamples: int, seed: int
 ) -> list[dict[str, Any]]:
-    """Every baseline against AEP-full, on every rate metric."""
-    by_system = group_runs(runs, ["system"])
-    reference_runs = by_system.get((REFERENCE_SYSTEM,), [])
-    if not reference_runs:
-        return []
-    rows: list[dict[str, Any]] = []
-    for metric in RATE_METRICS:
-        reference = compute_metric(
-            metric,
-            reference_runs,
-            {"system": REFERENCE_SYSTEM},
-            resamples=resamples,
-            seed=seed,
-        )
-        for (system,), system_runs in sorted(by_system.items()):
-            if system == REFERENCE_SYSTEM:
+    """Every baseline against AEP-full, separately within each fault regime."""
+
+    def run_clusters_by_stratum(
+        selected: Sequence[RunRecord], metric: str
+    ) -> dict[str, list[tuple[int, int]]]:
+        strata: dict[str, list[tuple[int, int]]] = defaultdict(list)
+        for run in selected:
+            if metric == "recovery_success_rate" and not run.had_recovery_service:
                 continue
-            result = compute_metric(
-                metric, system_runs, {"system": system}, resamples=resamples, seed=seed
+            successes = sum(_numerator(metric, item) for item in run.executions)
+            total = sum(_denominator(metric, item) for item in run.executions)
+            if total:
+                key = "|".join(
+                    (run.crash_point, run.response_class, run.readback_keying)
+                )
+                strata[key].append((successes, total))
+        return dict(strata)
+
+    # ``regime_label`` is derived by ``load_run`` from crash probability and
+    # Redis-kill fields in the run's own schema. It is not a row-position or
+    # directory-name convention. Grouping it with system makes cross-regime
+    # pooling structurally impossible here.
+    grouped = group_runs(runs, ["regime_label", "system"])
+    rows: list[dict[str, Any]] = []
+    regimes = sorted({regime for regime, _system in grouped})
+    for regime in regimes:
+        reference_runs = grouped.get((regime, REFERENCE_SYSTEM), [])
+        if not reference_runs:
+            continue
+        systems = sorted(
+            system
+            for grouped_regime, system in grouped
+            if grouped_regime == regime and system != REFERENCE_SYSTEM
+        )
+        for metric in RATE_METRICS:
+            reference = compute_metric(
+                metric,
+                reference_runs,
+                {"regime": regime, "system": REFERENCE_SYSTEM},
+                resamples=resamples,
+                seed=seed,
             )
-            rows.append(
-                compare_rates(
+            for system in systems:
+                system_runs = grouped[(regime, system)]
+                result = compute_metric(
+                    metric,
+                    system_runs,
+                    {"regime": regime, "system": system},
+                    resamples=resamples,
+                    seed=seed,
+                )
+                comparison = compare_rates(
                     metric,
                     system=system,
                     reference=REFERENCE_SYSTEM,
@@ -810,8 +849,45 @@ def build_comparisons(
                     system_total=result.total,
                     reference_successes=reference.successes,
                     reference_total=reference.total,
-                ).echo()
-            )
+                )
+                row: dict[str, Any] = {
+                    "regime": regime,
+                    **comparison.echo(),
+                    "system_runs": result.runs,
+                    "reference_runs": reference.runs,
+                    "fisher_unit": "execution (cluster-unadjusted)",
+                }
+                if metric == "known_ambiguity_rate":
+                    system_strata = run_clusters_by_stratum(system_runs, metric)
+                    reference_strata = run_clusters_by_stratum(reference_runs, metric)
+                    if system_strata and set(system_strata) == set(reference_strata):
+                        interval = stratified_cluster_bootstrap_difference(
+                            system_strata,
+                            reference_strata,
+                            resamples=resamples,
+                            seed=seed,
+                            confidence=AMBIGUITY_DIFFERENCE_CONFIDENCE,
+                        )
+                        row.update(
+                            {
+                                "difference_rate": interval.point,
+                                "difference_ci_low": interval.low,
+                                "difference_ci_high": interval.high,
+                                "difference_confidence": interval.confidence,
+                                "difference_method": (
+                                    "stratified run-cluster percentile bootstrap"
+                                ),
+                                "difference_strata": interval.strata,
+                                "system_clusters": interval.system_clusters,
+                                "reference_clusters": interval.reference_clusters,
+                                "equivalence_margin": AMBIGUITY_EQUIVALENCE_MARGIN,
+                                "equivalent_within_margin": interval.within(
+                                    AMBIGUITY_EQUIVALENCE_MARGIN
+                                ),
+                                "equivalence_margin_preregistered": False,
+                            }
+                        )
+                rows.append(row)
     return rows
 
 
@@ -897,7 +973,7 @@ def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]
 
     ``applied_effects`` is the discriminator the ablation is *for*: under a
     kill placed between the intent CAS and the barrier acknowledgement,
-    AEP-full's ``WAITAOF`` fails and its ``DurabilityAck`` is never minted, so
+    AEP-full's ``WAITAOF`` fails and its ``DurabilityAck`` is never issued, so
     it must not have dispatched. B3, which does not wait, must have.
 
     ``canary`` is the *durability* question, and it is reported because the
@@ -1251,7 +1327,7 @@ def main(argv: list[str] | None = None) -> int:
         "response_classes": sorted({run.response_class for run in runs}),
         "readback_keyings": sorted({run.readback_keying for run in runs}),
         "cells": len({run.cell_key for run in runs}),
-        "regimes": sorted({run.regime or "(session-3)" for run in runs}),
+        "regimes": sorted({run.regime_label for run in runs}),
         "all_runs_used_real_sigkill": all(run.has_sigkill for run in runs),
         # Amendment E5. Three numbers, because they mean three things: how many
         # runs may contribute a duration at all, how many were caught

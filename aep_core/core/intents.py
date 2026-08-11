@@ -1105,8 +1105,9 @@ class IntentLedgerStore:
             raise IntentBindingError(
                 "pre-dispatch request binding is absent or invalid"
             )
-        # Raises DurabilityBarrierError when the acknowledgement is forged,
-        # reused, or issued for a different attempt.
+        # Raises DurabilityBarrierError when the acknowledgement is invalid,
+        # reused, or issued for a different attempt. This is a trusted-process
+        # control-flow guard, not a cryptographic capability.
         consume_durability_ack(
             ack,
             scope=durability_dispatch_scope(

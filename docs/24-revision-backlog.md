@@ -70,7 +70,7 @@ most worthwhile extension to the evaluation, and the paper says so.
 The barrier's entire measured case is one cell: `redis-kill-preack`,
 `NO_READBACK`, one crash point, 30 runs per arm, one host — with an effect size
 the paper itself attributes partly to that host's `docker kill` latency. The
-detection result has 600 executions per arm across three capability classes;
+detection result has 540 crashed-regime executions per arm across three capability classes;
 the prevention result, which is the barrier's only remaining claim after the
 ablation, has one.
 

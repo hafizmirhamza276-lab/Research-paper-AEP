@@ -207,6 +207,21 @@
 % Durable execution and stateful serverless
 % --------------------------------------------------------------------
 
+% [URL] Official USENIX OSDI 2016 proceedings page and BibTeX, verified
+% 2026-08-11. Pages 501-516; no DOI assigned by USENIX.
+@inproceedings{setty2016olive,
+  author    = {Srinath T. V. Setty and Chunzhi Su and Jacob R. Lorch and Lidong Zhou
+               and Hao Chen and Parveen Patel and Jinglei Ren},
+  title     = {Realizing the {Fault-Tolerance} Promise of Cloud Storage Using
+               Locks with Intent},
+  booktitle = {Proceedings of the 12th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {501--516},
+  year      = {2016},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi16/technical-sessions/presentation/setty}
+}
+
 % [DBLP] Zhang, Cardoza, Chen, Angel, Liu. OSDI 2020, pp. 1187-1204 (Beldi).
 @inproceedings{zhang2020beldi,
   author    = {Haoran Zhang and Adney Cardoza and Peter Baile Chen and
@@ -253,6 +268,57 @@
   pages     = {691--707},
   year      = {2021},
   doi       = {10.1145/3477132.3483541}
+}
+
+
+% --------------------------------------------------------------------
+% Crash-consistency testing lineage
+% --------------------------------------------------------------------
+
+% [URL] Official USENIX OSDI 2014 proceedings page and BibTeX, verified
+% 2026-08-11. This paper introduces ALICE.
+@inproceedings{pillai2014alice,
+  author    = {Thanumalayan Sankaranarayana Pillai and Vijay Chidambaram and
+               Ramnatthan Alagappan and Samer Al-Kiswany and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {All File Systems Are Not Created Equal: On the Complexity of
+               Crafting Crash-Consistent Applications},
+  booktitle = {Proceedings of the 11th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {433--448},
+  year      = {2014},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi14/technical-sessions/presentation/pillai}
+}
+
+% [URL] Official USENIX OSDI 2014 proceedings page and BibTeX, verified
+% 2026-08-11.
+@inproceedings{zheng2014torturing,
+  author    = {Mai Zheng and Joseph A. Tucek and Dachuan Huang and Feng Qin and
+               Mark Lillibridge and Elizabeth S. Yang and Bill W. Zhao and
+               Shashank Singh},
+  title     = {Torturing Databases for Fun and Profit},
+  booktitle = {Proceedings of the 11th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {449--464},
+  year      = {2014},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi14/technical-sessions/presentation/zheng_mai}
+}
+
+% [URL] Official USENIX OSDI 2018 proceedings page and BibTeX, verified
+% 2026-08-11. The implementations are CrashMonkey and Ace.
+@inproceedings{mohan2018crashmonkey,
+  author    = {Jayashree Mohan and Ashlie Martinez and Soujanya Ponnapalli and
+               Pandian Raju and Vijay Chidambaram},
+  title     = {Finding Crash-Consistency Bugs with Bounded Black-Box Crash
+               Testing},
+  booktitle = {Proceedings of the 13th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {33--50},
+  year      = {2018},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi18/presentation/mohan}
 }
 
 
@@ -305,6 +371,68 @@
   volume  = {abs/2603.20625},
   year    = {2026},
   doi     = {10.48550/arXiv.2603.20625}
+}
+
+% [arXiv] Original preprint pages and author metadata verified 2026-08-11.
+@article{mansoor2026verified,
+  author  = {Isham Kalappurackal Mansoor and Abhishek Phadke and Pratip Rana},
+  title   = {Verified Tool Calls Improve {LLM} Agent Reliability Under
+             Non-Atomic Failures},
+  journal = {CoRR},
+  volume  = {abs/2608.02645},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2608.02645}
+}
+
+@article{balakrishnan2026logact,
+  author  = {Mahesh Balakrishnan and Ashwin Bharambe and Davide Testuggine and
+             David Geraghty and David Mao and Vidhya Venkat and Ilya Mironov
+             and Rithesh Baradi and Gayathri Aiyer and Victoria Dudin},
+  title   = {{LogAct}: Enabling Agentic Reliability via Shared Logs},
+  journal = {CoRR},
+  volume  = {abs/2604.07988},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2604.07988}
+}
+
+@article{he2026seb,
+  author  = {Jun He and Deying Yu},
+  title   = {Sovereign Execution Broker: Enforcing Certificate-Bound Authority
+             in Agentic Control Planes},
+  journal = {CoRR},
+  volume  = {abs/2606.20520},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2606.20520}
+}
+
+
+% --------------------------------------------------------------------
+% Protocol and practitioner patterns
+% --------------------------------------------------------------------
+
+% [URL] IETF HTTPAPI working-group draft 07, published 2025-10-15 and expired
+% 2026-04-18. Verified on the official Datatracker page 2026-08-11; cited as
+% work in progress, not as an RFC or active standard.
+@techreport{jena2025idempotencykey,
+  author      = {Jayadeba Jena and Sanjay Dalal},
+  title       = {The {Idempotency-Key} {HTTP} Header Field},
+  institution = {Internet Engineering Task Force},
+  number      = {draft-ietf-httpapi-idempotency-key-header-07},
+  type        = {Internet-Draft},
+  year        = {2025},
+  month       = oct,
+  url         = {https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-07},
+  note        = {Work in progress; expired 2026-04-18}
+}
+
+% [URL] Original pattern catalogue maintained by Chris Richardson, read
+% 2026-08-11. The page explicitly documents relay re-publication after crash.
+@misc{richardson-transactional-outbox,
+  author       = {Chris Richardson},
+  title        = {Pattern: Transactional Outbox},
+  howpublished = {Microservices.io},
+  url          = {https://microservices.io/patterns/data/transactional-outbox.html},
+  note         = {Accessed 2026-08-11}
 }
 
 

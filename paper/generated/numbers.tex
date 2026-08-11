@@ -4,57 +4,57 @@
 %          experiments/results/g2-flakey-write-loss*.json
 % Each macro carries the file, filter and arithmetic behind it.
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepAmbAuth}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepDupAuth}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepLostAuth}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 63/180
 \newcommand{\AepAmbPosOnly}{0.3500}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepDupPosOnly}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepLostPosOnly}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=NO_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 130/180
 \newcommand{\AepAmbNoReadback}{0.7222}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=NO_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepDupNoReadback}{0.0000}
 
-% per-cell-metrics.csv | system=AEP_FULL regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed response_class=NO_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\AepLostNoReadback}{0.0000}
 
-% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=(session-3))
+% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=crashed)
 \newcommand{\AepExecAuth}{180}
 
-% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=(session-3))
+% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=crashed)
 \newcommand{\AepExecPosOnly}{180}
 
-% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=(session-3))
+% per-cell-metrics.csv | executions behind every AEP-full rate on this capability class (regime=crashed)
 \newcommand{\AepExecNoReadback}{180}
 
 % per-cell-metrics.csv | min undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
-% regime=(session-3) | 9 cells
+% regime=crashed | 9 cells
 \newcommand{\BaselineDupLow}{0.77}
 
 % per-cell-metrics.csv | max undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
-% regime=(session-3) | 9 cells
+% regime=crashed | 9 cells
 \newcommand{\BaselineDupHigh}{0.83}
 
 % \BaselineDupLow as a percentage, for comparison against \AblationZeroUpper
@@ -63,9 +63,9 @@
 % \BaselineDupHigh as a percentage, for comparison against \AblationZeroUpper
 \newcommand{\BaselineDupHighPct}{83}
 
-% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL
+% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, regime=crashed, largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL
 % 3 comparisons; the other 2 are smaller
-\newcommand{\BaselineDupMaxP}{2.1\times10^{-183}}
+\newcommand{\BaselineDupMaxP}{5.4\times10^{-182}}
 
 % latency-and-throughput.csv | system=AEP_FULL
 % step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
@@ -129,42 +129,42 @@
 % executions_per_second; the everysec matrix collected more runs per cell, so wall time per execution is not comparable as a benchmark -- it is quoted only against the always arm
 \newcommand{\AepThroughputEverysec}{0.33}
 
-% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 95/180
 \newcommand{\BfourDupAuth}{0.5278}
 
 % per-cell-metrics.csv | executions behind \BfourDupAuth
 \newcommand{\BfourExecAuth}{180}
 
-% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 106/180
 \newcommand{\BfourDupPosOnly}{0.5889}
 
 % per-cell-metrics.csv | executions behind \BfourDupPosOnly
 \newcommand{\BfourExecPosOnly}{180}
 
-% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=NO_READBACK
 % metric=undetected_duplicate_rate | sum(successes)/sum(total) = 101/180
 \newcommand{\BfourDupNoReadback}{0.5611}
 
 % per-cell-metrics.csv | executions behind \BfourDupNoReadback
 \newcommand{\BfourExecNoReadback}{180}
 
-% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 98/180
 \newcommand{\BfourbLostAuth}{0.5444}
 
 % per-cell-metrics.csv | executions behind \BfourbLostAuth
 \newcommand{\BfourbExecAuth}{180}
 
-% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 91/180
 \newcommand{\BfourbLostPosOnly}{0.5056}
 
 % per-cell-metrics.csv | executions behind \BfourbLostPosOnly
 \newcommand{\BfourbExecPosOnly}{180}
 
-% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=NO_READBACK
 % metric=lost_effect_rate | sum(successes)/sum(total) = 93/180
 \newcommand{\BfourbLostNoReadback}{0.5167}
 
@@ -172,58 +172,85 @@
 \newcommand{\BfourbExecNoReadback}{180}
 
 % per-cell-metrics.csv | max known_ambiguity_rate over {B4,B4b} x {all capability classes} x {all crash points}
-% regime=(session-3) | 36 cells
+% regime=crashed | 36 cells
 % the durable-execution engine never declares ambiguity; that is the corner of the trilemma it cannot reach
 \newcommand{\BfourFamilyAmbMax}{0.0000}
 
 % per-cell-metrics.csv | cells behind \BfourFamilyAmbMax
 \newcommand{\BfourFamilyAmbCells}{36}
 
-% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=(session-3) response_class=AUTHORITATIVE_READBACK
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 0/180
 \newcommand{\BthreeAmbAuth}{0.0000}
 
-% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=(session-3) response_class=POSITIVE_ONLY_READBACK
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed response_class=POSITIVE_ONLY_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 66/180
 \newcommand{\BthreeAmbPosOnly}{0.3667}
 
-% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=(session-3) response_class=NO_READBACK
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed response_class=NO_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 129/180
 \newcommand{\BthreeAmbNoReadback}{0.7167}
 
-% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate system=B3_INTENT_NO_BARRIER reference=AEP_FULL
-% B3 0/600 vs AEP-full 0/600
-% the ablation is indistinguishable from the full protocol here; that is the finding, not a caveat
+% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate regime=crashed system=B3_INTENT_NO_BARRIER reference=AEP_FULL
+% B3 0/540 vs AEP-full 0/540
+% execution-level Fisher value is descriptive only; the one-sided zero-event bound is the reported evidence
 \newcommand{\BthreeVsAepDupP}{1.00}
 
-% comparisons-vs-aep-full.csv | metric=lost_effect_rate system=B3_INTENT_NO_BARRIER reference=AEP_FULL
-% B3 0/600 vs AEP-full 0/600
-% the ablation is indistinguishable from the full protocol here; that is the finding, not a caveat
+% comparisons-vs-aep-full.csv | metric=lost_effect_rate regime=crashed system=B3_INTENT_NO_BARRIER reference=AEP_FULL
+% B3 0/540 vs AEP-full 0/540
+% execution-level Fisher value is descriptive only; the one-sided zero-event bound is the reported evidence
 \newcommand{\BthreeVsAepLostP}{1.00}
 
-% comparisons-vs-aep-full.csv | metric=known_ambiguity_rate system=B3_INTENT_NO_BARRIER reference=AEP_FULL
-% B3 225/600 vs AEP-full 223/600
-% the ablation is indistinguishable from the full protocol here; that is the finding, not a caveat
+% comparisons-vs-aep-full.csv | metric=known_ambiguity_rate regime=crashed system=B3_INTENT_NO_BARRIER reference=AEP_FULL
+% B3 195/540 vs AEP-full 193/540
+% execution-level Fisher value is descriptive only; the run-cluster difference interval is the ambiguity evidence
 \newcommand{\BthreeVsAepAmbP}{0.95}
 
 % comparisons-vs-aep-full.csv | executions per arm, identical across all three metrics
-\newcommand{\BthreeVsAepN}{600}
+\newcommand{\BthreeVsAepN}{540}
 
-% Wilson 95% upper limit on 0/600, as a percentage
-% the largest undetected-duplicate or lost-effect rate either system could have and still record zero; the difference between them is bounded by it
-\newcommand{\AblationZeroUpper}{0.64}
+% one-sided Wilson 95% upper bound on 0/540, percentage
+% uses z=Phi^-1(0.95); this differs from the upper endpoint of a two-sided 95% interval, which uses z=Phi^-1(0.975)
+\newcommand{\AblationZeroUpper}{0.50}
 
 % comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, the larger of the two arms' numerators
-% B3 0/600 vs AEP-full 0/600
+% B3 0/540 vs AEP-full 0/540
 \newcommand{\BthreeVsAepDupCount}{0}
 
 % comparisons-vs-aep-full.csv | metric=lost_effect_rate, the larger of the two arms' numerators
-% B3 0/600 vs AEP-full 0/600
+% B3 0/540 vs AEP-full 0/540
 \newcommand{\BthreeVsAepLostCount}{0}
 
+% comparisons-vs-aep-full.csv | crashed known_ambiguity_rate, B3 numerator
+\newcommand{\BthreeAmbCount}{195}
+
+% comparisons-vs-aep-full.csv | crashed known_ambiguity_rate, AEP-full numerator
+\newcommand{\AepAmbCount}{193}
+
 % comparisons-vs-aep-full.csv | metric=known_ambiguity_rate, |B3 successes - AEP-full successes|
-% |225 - 223| over 600 executions per arm
+% |195 - 193| over 540 executions per arm
 \newcommand{\BthreeVsAepAmbDelta}{2}
+
+% comparisons-vs-aep-full.csv | crashed known_ambiguity_rate, 100 * (B3 rate - AEP-full rate)
+\newcommand{\BthreeVsAepAmbDiffPP}{0.37}
+
+% comparisons-vs-aep-full.csv | lower endpoint of stratified run-cluster bootstrap difference interval, percentage points
+\newcommand{\BthreeVsAepAmbDiffLow}{-1.11}
+
+% comparisons-vs-aep-full.csv | upper endpoint of stratified run-cluster bootstrap difference interval, percentage points
+\newcommand{\BthreeVsAepAmbDiffHigh}{2.04}
+
+% comparisons-vs-aep-full.csv | confidence level of declared-ambiguity difference interval
+\newcommand{\BthreeVsAepAmbDiffConfidence}{90}
+
+% comparisons-vs-aep-full.csv | revision-stage operational equivalence margin, percentage points; not preregistered
+\newcommand{\BthreeVsAepAmbMargin}{5}
+
+% comparisons-vs-aep-full.csv | run clusters per arm in the declared-ambiguity interval
+\newcommand{\BthreeVsAepAmbClusters}{54}
+
+% comparisons-vs-aep-full.csv | matched crash-point x capability x keying strata
+\newcommand{\BthreeVsAepAmbStrata}{18}
 
 % redis-kill-ablation.csv | regime=redis-kill-preack system=AEP_FULL response_class=NO_READBACK
 % executions_with_an_applied_effect
@@ -351,9 +378,9 @@
 
 % lines of Python under aep_core/, excluding __pycache__
 % 14 files; regenerated on every run of this script
-\newcommand{\CoreLoc}{6\,849}
+\newcommand{\CoreLoc}{6\,862}
 
 % lines of Python under experiments/, excluding __pycache__
-% 85 files; regenerated on every run of this script
-\newcommand{\HarnessLoc}{21\,458}
+% 87 files; regenerated on every run of this script
+\newcommand{\HarnessLoc}{22\,180}
 

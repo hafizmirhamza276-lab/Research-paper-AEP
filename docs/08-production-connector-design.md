@@ -854,7 +854,7 @@ The decision MUST bind:
 - ticket and evidence references, duplicate-effect impact, reason, and scope;
 - whether the old intent is retained as permanently ambiguous or was separately
   resolved by conclusive evidence; and
-- a nonce and cryptographic signature or equivalent unforgeable service grant.
+- a nonce and cryptographic signature or equivalently authenticated service grant.
 
 The privileged creation CAS MUST atomically consume or validate a one-time grant
 and persist the full safe decision reference with the new `ABOUT_TO_FIRE`

@@ -44,10 +44,13 @@ two files per run --- the event log and the oracle ledger --- and a source gate
 that parses the analysis modules fails the build if they import anything that
 could reach live protocol state.
 
-\paragraph{Statistics} Rates are over executions, with cluster-aware bootstrap
-95\% confidence intervals (\BootstrapResamples{} resamples, seeded) and
-Fisher's exact test
-for rate comparisons. Seeds and repetition counts are recorded per run.
+\paragraph{Statistics} Rates are over executions. Per-cell rate intervals use
+a seeded run-cluster bootstrap (\BootstrapResamples{} resamples); the
+B3--AEP ambiguity difference uses a stratified run-cluster bootstrap that
+preserves crash-point, endpoint-capability, and keying strata. Fisher's exact
+tests compare execution counts and therefore do not adjust for run clustering;
+we report them descriptively, not as evidence of equivalence. Seeds and
+repetition counts are recorded per run.
 
 \paragraph{Two reporting rules we hold ourselves to} First, \emph{no pooled
 table}. A rate computed across fault regimes is a property of how many runs of
@@ -248,15 +251,30 @@ survives the barrier's removal intact.
 
 \input{generated/table-ablation}
 
-Over \BthreeVsAepN{} crashed executions per arm, B3 and AEP-full behave the
-same on every metric the trilemma is defined in terms of. Both record an
+Over \BthreeVsAepN{} crashed executions per arm, B3 and AEP-full show no
+observed difference in either silent-failure metric. Both record an
 undetected-duplicate count of $\BthreeVsAepDupCount{}$ and a lost-effect count
-of $\BthreeVsAepLostCount{}$; declared ambiguity differs by
-$\BthreeVsAepAmbDelta{}$ executions in \BthreeVsAepN{}
-($p = \BthreeVsAepAmbP{}$), and per capability class the two systems track
-each other: \BthreeAmbAuth{} against \AepAmbAuth{} on \textsc{auth},
+of $\BthreeVsAepLostCount{}$. Declared ambiguity is
+\BthreeAmbCount{}/\BthreeVsAepN{} for B3 and
+\AepAmbCount{}/\BthreeVsAepN{} for AEP-full; per capability class the two
+systems track each other: \BthreeAmbAuth{} against \AepAmbAuth{} on \textsc{auth},
 \BthreeAmbPosOnly{} against \AepAmbPosOnly{} on \textsc{pos-only},
 \BthreeAmbNoReadback{} against \AepAmbNoReadback{} on \textsc{none}.
+
+For ambiguity, B3 minus AEP-full is \BthreeVsAepAmbDiffPP{} percentage points.
+The stratified run-cluster \BthreeVsAepAmbDiffConfidence{}\% interval is
+[\BthreeVsAepAmbDiffLow{},\,\BthreeVsAepAmbDiffHigh{}] percentage points,
+which lies within a $\pm\BthreeVsAepAmbMargin{}$ percentage-point margin. We
+introduce that margin in this revision; it was not preregistered. Operationally,
+five percentage points corresponds to 27 additional terminal escalations per
+540 crashed executions, which we treat as the largest operationally immaterial
+difference for this workload. The result
+supports equivalence under that stated, post hoc margin, but only for this
+fixed design. Each arm has \BthreeVsAepAmbClusters{} run clusters distributed
+over \BthreeVsAepAmbStrata{} matched strata---three runs per stratum---so the
+cluster-aware interval is a sensitivity analysis, not a strong general
+equivalence result. The execution-level Fisher value
+($p = \BthreeVsAepAmbP{}$) is not used as equivalence evidence.
 
 \textbf{A word on what the zeros can and cannot support.} Fisher's exact test
 on $\BthreeVsAepDupCount{}/\BthreeVsAepN{}$ against
@@ -265,22 +283,23 @@ $p = \BthreeVsAepDupP{}$ for duplicates and $p = \BthreeVsAepLostP{}$ for lost
 effects, and both numbers are worth nothing: a test between two zero counts
 has no power, and failing to distinguish them is not evidence that they are
 the same. What two zeros do support is a \emph{bound}. The one-sided
-95\% Wilson limit on a zero numerator over \BthreeVsAepN{} executions is
-\AblationZeroUpper{}\%, so each system's true undetected-duplicate and
-lost-effect rate is below that, and the difference between the two systems is
-below it as well. That is the equivalence claim we make: not that the barrier
-provably changes nothing, but that whatever it changes about \emph{detection}
-is smaller than \AblationZeroUpper{} percentage points, against baselines that
-differ from both by \BaselineDupLow{}--\BaselineDupHigh{}. A barrier
-contributing less than \AblationZeroUpper{}\% to a quantity where the
-alternative mechanisms contribute \BaselineDupLowPct{}--\BaselineDupHighPct{}\%
-is, for the purposes of the
-design decision in \cref{sec:eval-deployment}, contributing nothing.
+95\% Wilson upper confidence bound on a zero numerator over
+\BthreeVsAepN{} executions is \AblationZeroUpper{}\%. This is a genuinely
+one-sided bound using the 95th normal quantile; it is not the upper endpoint of
+a two-sided 95\% Wilson interval, which uses the 97.5th quantile. Each system's
+rate is individually bounded this way. When the two system bounds are stated
+simultaneously, Bonferroni gives joint coverage of at least 90\%, not 95\%.
+Under that simultaneous event, both rates lie in
+$[0,\AblationZeroUpper{}\%]$, so their absolute difference is at most
+\AblationZeroUpper{} percentage points. This finite-sample bound is the support
+for ``no observed difference'' in the two zero-event metrics; the corresponding
+Fisher values are not evidence of equivalence. The baseline duplicate rates,
+by comparison, are \BaselineDupLowPct{}--\BaselineDupHighPct{}\%.
 
 \textbf{We report this as a finding rather than as a limitation, because it
 reassigns our own headline claim.} The property that distinguishes AEP from
 B0, B1 and B2 --- and the property the paper is named for --- is produced by
-the durable pre-dispatch record and by the transition table that refuses to
+the pre-dispatch record and by the transition table that refuses to
 re-enter \textsc{about-to-fire}. It is not produced by waiting for
 \texttt{fsync}. A reader who wants the detection guarantee and not the
 barrier's cost can have it, and \cref{sec:eval-deployment} prices that
@@ -301,7 +320,9 @@ That is a different guarantee, it is worth stating in its own metric, and no
 worker-crash fault can exercise it --- which is why \cref{sec:eval-detection}
 returns a null. The fault that exercises it is loss of Redis itself.
 
-We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
+The scope of this prevention result is one capability class
+(\textsc{no-readback}), one pre-acknowledgement crash point, and one host. We
+hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
 boundary between the intent CAS and the acknowledgement. AEP-full is inside
 \texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
 that round trip. One execution per run, \AepKillRuns{} runs per system, no
@@ -602,8 +623,11 @@ that was not present.
 
 Within that scope: every AEP-full and B3 execution in the crashed regime
 reached a terminal classification, and across \RunsCollected{} runs exactly
-one recorded a reconciliation disagreement --- every other run's own event log
-agreed with its independently written oracle ledger.
+one recorded a reconciliation disagreement --- every other completed run's
+event log agreed with its independently written oracle ledger. The harness
+performs this reconciliation after each completed run; it checks definitive
+applied/non-applied assertions, effect-count bounds, attribution, and duplicate
+predictions rather than trusting a line count.
 % source: analysis/coverage.json and the per-run reconcile step.
 
 That one is worth stating precisely, because the check exists to be believed.
@@ -621,8 +645,9 @@ trial whose measurement precondition failed says nothing about the system in
 either direction. Counting it would let a broken ground truth set a baseline's
 rate; discarding it quietly and keeping the re-run would be re-running until
 the number looks right. So the re-run is what \cref{tab:outcomes} contains,
-the voided attempt ships in the artifact under \texttt{results/voided/} with
-this explanation beside it, and the count above is one rather than zero.
+the voided attempt must ship in the external raw archive under
+\texttt{results/voided/} with this explanation beside it; it is not present in
+the current Git repository. The count above is one rather than zero.
 Recovery latency is not reported as an absolute figure: the E5 gate leaves too
 few gated crashed runs to support a distribution, and \cref{sec:threats}
 records this as a gap rather than filling it with ungated numbers.

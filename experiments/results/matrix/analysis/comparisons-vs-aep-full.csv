@@ -1,37 +1,79 @@
-metric,system,reference,system_successes,system_total,system_rate,reference_successes,reference_total,reference_rate,fisher_p_value
-undetected_duplicate_rate,B0_NAIVE_RETRY,AEP_FULL,362,480,0.7541666666666667,0,600,0.0,2.134163395580887e-183
-undetected_duplicate_rate,B1_LEASE_ONLY,AEP_FULL,372,480,0.775,0,600,0.0,2.2074468766786114e-191
-undetected_duplicate_rate,B2_CAS_ONLY,AEP_FULL,362,480,0.7541666666666667,0,600,0.0,2.134163395580887e-183
-undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,600,0.0,0,600,0.0,1.0
-undetected_duplicate_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,570,0.0,0,600,0.0,1.0
-undetected_duplicate_rate,B4_DURABLE_WORKFLOW,AEP_FULL,305,570,0.5350877192982456,0,600,0.0,3.3935425388855234e-121
-known_ambiguity_rate,B0_NAIVE_RETRY,AEP_FULL,0,480,0.0,223,600,0.37166666666666665,1.4171627112481779e-67
-known_ambiguity_rate,B1_LEASE_ONLY,AEP_FULL,0,480,0.0,223,600,0.37166666666666665,1.4171627112481779e-67
-known_ambiguity_rate,B2_CAS_ONLY,AEP_FULL,0,480,0.0,223,600,0.37166666666666665,1.4171627112481779e-67
-known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,225,600,0.375,223,600,0.37166666666666665,0.9524131997365775
-known_ambiguity_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,570,0.0,223,600,0.37166666666666665,3.2259520027724655e-76
-known_ambiguity_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,570,0.0,223,600,0.37166666666666665,3.2259520027724655e-76
-lost_effect_rate,B0_NAIVE_RETRY,AEP_FULL,6,480,0.0125,0,600,0.0,0.0075739631690607285
-lost_effect_rate,B1_LEASE_ONLY,AEP_FULL,3,480,0.00625,0,600,0.0,0.08748642827816666
-lost_effect_rate,B2_CAS_ONLY,AEP_FULL,2,480,0.004166666666666667,0,600,0.0,0.19730202862732985
-lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,600,0.0,0,600,0.0,1.0
-lost_effect_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,285,570,0.5,0,600,0.0,3.758885751248307e-111
-lost_effect_rate,B4_DURABLE_WORKFLOW,AEP_FULL,5,570,0.008771929824561403,0,600,0.0,0.02719708294114891
-unverified_failure_rate,B0_NAIVE_RETRY,AEP_FULL,6,480,0.0125,0,600,0.0,0.0075739631690607285
-unverified_failure_rate,B1_LEASE_ONLY,AEP_FULL,3,480,0.00625,0,600,0.0,0.08748642827816666
-unverified_failure_rate,B2_CAS_ONLY,AEP_FULL,1,480,0.0020833333333333333,0,600,0.0,0.4444444444444444
-unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,600,0.0,0,600,0.0,1.0
-unverified_failure_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,400,570,0.7017543859649122,0,600,0.0,4.618312440761573e-176
-unverified_failure_rate,B4_DURABLE_WORKFLOW,AEP_FULL,5,570,0.008771929824561403,0,600,0.0,0.02719708294114891
-state_corruption_rate,B0_NAIVE_RETRY,AEP_FULL,0,480,0.0,0,600,0.0,1.0
-state_corruption_rate,B1_LEASE_ONLY,AEP_FULL,0,480,0.0,0,600,0.0,1.0
-state_corruption_rate,B2_CAS_ONLY,AEP_FULL,0,480,0.0,0,600,0.0,1.0
-state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,600,0.0,0,600,0.0,1.0
-state_corruption_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,570,0.0,0,600,0.0,1.0
-state_corruption_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,570,0.0,0,600,0.0,1.0
-recovery_success_rate,B0_NAIVE_RETRY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0
-recovery_success_rate,B1_LEASE_ONLY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0
-recovery_success_rate,B2_CAS_ONLY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0
-recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,450,540,0.8333333333333334,450,540,0.8333333333333334,1.0
-recovery_success_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0
-recovery_success_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0
+regime,metric,system,reference,system_successes,system_total,system_rate,reference_successes,reference_total,reference_rate,fisher_p_value,system_runs,reference_runs,fisher_unit,difference_rate,difference_ci_low,difference_ci_high,difference_confidence,difference_method,difference_strata,system_clusters,reference_clusters,equivalence_margin,equivalent_within_margin,equivalence_margin_preregistered
+crashed,undetected_duplicate_rate,B0_NAIVE_RETRY,AEP_FULL,359,450,0.7977777777777778,0,540,0.0,1.152215442865763e-183,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,undetected_duplicate_rate,B1_LEASE_ONLY,AEP_FULL,367,450,0.8155555555555556,0,540,0.0,1.6425534430749812e-190,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,undetected_duplicate_rate,B2_CAS_ONLY,AEP_FULL,357,450,0.7933333333333333,0,540,0.0,5.387455600877813e-182,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,undetected_duplicate_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,undetected_duplicate_rate,B4_DURABLE_WORKFLOW,AEP_FULL,302,540,0.5592592592592592,0,540,0.0,2.287859443186654e-117,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,known_ambiguity_rate,B0_NAIVE_RETRY,AEP_FULL,0,450,0.0,193,540,0.3574074074074074,1.2421729240403721e-59,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,known_ambiguity_rate,B1_LEASE_ONLY,AEP_FULL,0,450,0.0,193,540,0.3574074074074074,1.2421729240403721e-59,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,known_ambiguity_rate,B2_CAS_ONLY,AEP_FULL,0,450,0.0,193,540,0.3574074074074074,1.2421729240403721e-59,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,195,540,0.3611111111111111,193,540,0.3574074074074074,0.949435370026429,54,54,execution (cluster-unadjusted),0.003703703703703709,-0.011111111111111127,0.020370370370370372,0.9,stratified run-cluster percentile bootstrap,18,54,54,0.05,True,False
+crashed,known_ambiguity_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,540,0.0,193,540,0.3574074074074074,1.1565901835252605e-67,54,54,execution (cluster-unadjusted),-0.3574074074074074,-0.37037037037037035,-0.34444444444444444,0.9,stratified run-cluster percentile bootstrap,18,54,54,0.05,False,False
+crashed,known_ambiguity_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,540,0.0,193,540,0.3574074074074074,1.1565901835252605e-67,54,54,execution (cluster-unadjusted),-0.3574074074074074,-0.37037037037037035,-0.34444444444444444,0.9,stratified run-cluster percentile bootstrap,18,54,54,0.05,False,False
+crashed,lost_effect_rate,B0_NAIVE_RETRY,AEP_FULL,5,450,0.011111111111111112,0,540,0.0,0.019168880599469904,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,lost_effect_rate,B1_LEASE_ONLY,AEP_FULL,2,450,0.0044444444444444444,0,540,0.0,0.2063608787572387,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,lost_effect_rate,B2_CAS_ONLY,AEP_FULL,2,450,0.0044444444444444444,0,540,0.0,0.2063608787572387,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,lost_effect_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,282,540,0.5222222222222223,0,540,0.0,2.460609606580116e-107,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,lost_effect_rate,B4_DURABLE_WORKFLOW,AEP_FULL,4,540,0.007407407407407408,0,540,0.0,0.12430523465191384,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B0_NAIVE_RETRY,AEP_FULL,5,450,0.011111111111111112,0,540,0.0,0.019168880599469904,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B1_LEASE_ONLY,AEP_FULL,2,450,0.0044444444444444444,0,540,0.0,0.2063608787572387,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B2_CAS_ONLY,AEP_FULL,1,450,0.0022222222222222222,0,540,0.0,0.45454545454545453,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,397,540,0.7351851851851852,0,540,0.0,3.8119955099860014e-173,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,unverified_failure_rate,B4_DURABLE_WORKFLOW,AEP_FULL,4,540,0.007407407407407408,0,540,0.0,0.12430523465191384,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B0_NAIVE_RETRY,AEP_FULL,0,450,0.0,0,540,0.0,1.0,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B1_LEASE_ONLY,AEP_FULL,0,450,0.0,0,540,0.0,1.0,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B2_CAS_ONLY,AEP_FULL,0,450,0.0,0,540,0.0,1.0,45,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,state_corruption_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,540,0.0,0,540,0.0,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B0_NAIVE_RETRY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0,0,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B1_LEASE_ONLY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0,0,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B2_CAS_ONLY,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0,0,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,450,540,0.8333333333333334,450,540,0.8333333333333334,1.0,54,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0,0,54,execution (cluster-unadjusted),,,,,,,,,,,
+crashed,recovery_success_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,0,0.0,450,540,0.8333333333333334,1.0,0,54,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B0_NAIVE_RETRY,AEP_FULL,3,30,0.1,0,30,0.0,0.23728813559322035,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B1_LEASE_ONLY,AEP_FULL,5,30,0.16666666666666666,0,30,0.0,0.052185548617305975,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B2_CAS_ONLY,AEP_FULL,5,30,0.16666666666666666,0,30,0.0,0.052185548617305975,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,undetected_duplicate_rate,B4_DURABLE_WORKFLOW,AEP_FULL,3,30,0.1,0,30,0.0,0.23728813559322035,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,known_ambiguity_rate,B0_NAIVE_RETRY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,known_ambiguity_rate,B1_LEASE_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,known_ambiguity_rate,B2_CAS_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,known_ambiguity_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,known_ambiguity_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,3,3,0.05,True,False
+p0,lost_effect_rate,B0_NAIVE_RETRY,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,lost_effect_rate,B1_LEASE_ONLY,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,lost_effect_rate,B2_CAS_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,lost_effect_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,3,30,0.1,0,30,0.0,0.23728813559322035,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,lost_effect_rate,B4_DURABLE_WORKFLOW,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B0_NAIVE_RETRY,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B1_LEASE_ONLY,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B2_CAS_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,3,30,0.1,0,30,0.0,0.23728813559322035,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,unverified_failure_rate,B4_DURABLE_WORKFLOW,AEP_FULL,1,30,0.03333333333333333,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B0_NAIVE_RETRY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B1_LEASE_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B2_CAS_ONLY,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,state_corruption_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,30,0.0,0,30,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B0_NAIVE_RETRY,AEP_FULL,0,0,0.0,0,0,0.0,1.0,0,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B1_LEASE_ONLY,AEP_FULL,0,0,0.0,0,0,0.0,1.0,0,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B2_CAS_ONLY,AEP_FULL,0,0,0.0,0,0,0.0,1.0,0,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,0,0.0,0,0,0.0,1.0,3,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,AEP_FULL,0,0,0.0,0,0,0.0,1.0,0,3,execution (cluster-unadjusted),,,,,,,,,,,
+p0,recovery_success_rate,B4_DURABLE_WORKFLOW,AEP_FULL,0,0,0.0,0,0,0.0,1.0,0,3,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,30,30,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,30,30,1.0,30,30,1.0,1.0,30,30,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,1,30,30,0.05,True,False
+redis-kill-preack,lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,30,30,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,30,30,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,30,0.0,0,30,0.0,1.0,30,30,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,0,0.0,0,0,0.0,1.0,30,30,execution (cluster-unadjusted),,,,,,,,,,,

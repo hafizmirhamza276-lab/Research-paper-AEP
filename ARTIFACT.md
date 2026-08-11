@@ -1,10 +1,10 @@
 # AEP artifact
 
-Everything behind *Declared Ambiguity: The Agent Execution Protocol (AEP) for
-Autonomous Agents Calling Non-Idempotent Legacy APIs*: the protocol
-implementation, the five baseline systems it is measured against, the fault
-injection harness, the frozen results, and the manuscript that is generated
-from them.
+The currently tracked artifact for *Declared Ambiguity: The Agent Execution
+Protocol (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs*: the
+protocol implementation, baseline systems, fault-injection harness, derived
+analysis products, and the manuscript generated from them. The raw run archive
+and immutable DOI remain external blockers (§5).
 
 This document is the map from **a claim in the paper** to **the command that
 reproduces it**. If a number in the manuscript is not reachable from this file,
@@ -70,19 +70,20 @@ the filter and the arithmetic that produced it. For example:
 ```
 
 That comment is the whole provenance: the file, the three filter keys, and the
-fraction. The 89 macros draw on eight files and nothing else.
+fraction. The generated `numbers.tex` currently defines 101 macros; the count
+and values are regenerated together rather than maintained by hand.
 
-| Source | Macros | What it supports |
-|---|---:|---|
-| `experiments/results/matrix/analysis/per-cell-metrics.csv` | 31 | Every outcome rate: the trilemma table, AEP's three columns, B3's ambiguity, B4/B4b's two corners, the baseline range |
-| `.../analysis/redis-kill-ablation.csv` | 11 | The prevention result — unwanted applied effects under a hard Redis kill, the canaries, Fisher's exact |
-| `.../analysis/latency-and-throughput.csv` (both fsync policies) | 11 | Every latency and throughput figure, and the barrier-cost decomposition |
-| `.../analysis/comparisons-vs-aep-full.csv` | 8 | Every system-vs-AEP-full p-value, the ablation's zero counts and its per-arm n |
-| `experiments/results/g2-flakey-write-loss*.json` | 7 | The block-level write-loss probe: the barrier's durability claim under the fault that can test it |
-| `reports/raw/e1-durability-window.txt` | 5 | The process-kill probe: trials, window, and the `0/10` that showed the barrier does *not* protect against `SIGKILL` |
-| `.../analysis/per-execution.csv` | 4 | The cluster-bootstrap intervals on the barrier's cost |
-| `.../analysis/coverage.json` | 4 | Runs, executions, cells collected, and the bootstrap resample count |
-| derived, or counted from the source tree | 8 | Percentages, differences and the two lines-of-code figures; each carries its arithmetic in its comment |
+| Source | What it supports |
+|---|---|
+| `experiments/results/matrix/analysis/per-cell-metrics.csv` | Every outcome rate: the trilemma table, AEP's three columns, B3's ambiguity, B4/B4b's two corners, the baseline range |
+| `.../analysis/redis-kill-ablation.csv` | The prevention result — unwanted applied effects under a hard Redis kill, the canaries, Fisher's exact |
+| `.../analysis/latency-and-throughput.csv` (both fsync policies) | Every latency and throughput figure, and the barrier-cost decomposition |
+| regime-labelled `.../analysis/comparisons-vs-aep-full.csv` | Every system-vs-AEP-full comparison, the crashed-only ablation denominators, one-sided zero-event bound, and run-cluster ambiguity difference interval |
+| `experiments/results/g2-flakey-write-loss*.json` | The block-level write-loss probe: the barrier's durability claim under the fault that can test it |
+| `reports/raw/e1-durability-window.txt` | The process-kill probe: trials, window, and the `0/10` that showed the barrier does *not* protect against `SIGKILL` |
+| `.../analysis/per-execution.csv` | Run-cluster intervals on the barrier's cost and the B3--AEP ambiguity difference |
+| `.../analysis/coverage.json` | Runs, executions, cells collected, and the bootstrap resample count |
+| derived, or counted from the source tree | Percentages, differences and the two lines-of-code figures; each carries its arithmetic in its comment |
 
 All of these are **tracked in this repository** except the raw run directories
 (§5). A clean clone can therefore regenerate every table and every macro with no
@@ -97,7 +98,7 @@ make reproduce-figures
 | Claim (paper §) | Macro / table | Evidence file | Command |
 |---|---|---|---|
 | AEP records **no** undetected duplicate and **no** lost effect under crashes, against baselines at 0.77–0.83 | `\AepDupAuth`, `\BaselineDupLow`, `\BaselineDupHigh`, `tab:outcomes` (§6.1) | `per-cell-metrics.csv` | `make reproduce-figures` |
-| **Detection is produced by the durable record, not by the barrier**: removing the barrier changes nothing detection measures over 600 executions per arm | `\BthreeVsAepDupCount`, `\BthreeVsAepN`, `\AblationZeroUpper`, `tab:ablation` (§6.2) | `per-cell-metrics.csv`, `comparisons-vs-aep-full.csv` | `make reproduce-figures` |
+| **Detection is produced by the pre-dispatch record plus no re-entry, not by the barrier**: the crashed-regime ablation shows no observed difference in duplicates or lost effects over 540 executions per arm; ambiguity has a separate run-cluster difference interval | `\BthreeVsAepDupCount`, `\BthreeVsAepN`, `\AblationZeroUpper`, `\BthreeVsAepAmbDiffLow`, `\BthreeVsAepAmbDiffHigh`, `tab:ablation` (§6.2) | `per-cell-metrics.csv`, regime-labelled `comparisons-vs-aep-full.csv` | `make reproduce-figures` |
 | **Prevention is what the barrier buys**: under a hard Redis kill it withholds 18 real effects B3 commits | `\UnwantedPrevented`, `\AepUnwantedRate`, `\BthreeUnwantedRate`, `\UnwantedP` (§6.2) | `redis-kill-ablation.csv` | `make reproduce-figures` |
 | The barrier's *durability* claim needs a fault that loses the page cache; a process kill loses nothing | `\ProcessKillUnackLost` (0/10), `\FlakeyAckSurvived` (90/90), `\FlakeyUnackLost` (90/90) (§6.2) | `reports/raw/e1-durability-window.txt`, `g2-flakey-write-loss*.json` | `make reproduce-figures` |
 
@@ -235,22 +236,30 @@ These 13 files are exactly the inputs `scripts/check_paper_numbers.py` opens.
 They are re-included by name at the tail of `.gitignore`; everything else under
 `experiments/results/` stays ignored.
 
-**Published as an archive** — the 432 raw run directories, each holding its
-run config, its ground-truth ledger, its merged log and its per-run summary.
-These are the inputs to `experiments/analyze.py`. They are not committed: they
-are ~1 GB of evidence that no gate reads directly, and a repository is the wrong
-container for them.
+**Not yet published externally** — the 432 raw run directories, each holding
+its run config, ground-truth ledger, merged log and per-run summary, are the
+inputs to `experiments/analyze.py`. They are not committed and no working DOI or
+archive URL exists as of 2026-08-11. The required archive must also contain
+`results/voided/`, including the excluded oracle-disagreement run and its
+explanation. Until that immutable archive is uploaded and verified, the GitHub
+repository supports regeneration from the tracked derived products but not a
+from-raw rerun of the analysis.
 
 ### Verifying
 
-`experiments/results/matrix/SHA256SUMS` digests the manifest and every analysis
-output — 17 files. From an unpacked archive:
+`experiments/results/matrix/SHA256SUMS` currently digests the manifest and every
+listed matrix output — 17 files. From a clone, only the tracked subset can be
+checked. After the external archive is assembled, its complete SHA-256 manifest
+must cover every raw directory, `results/voided/`, and all derived products;
+only then should the exact resolver URL and archive checksum be added here.
+
+The intended verification commands, once that archive exists, are:
 
 ```sh
 cd experiments/results/matrix && sha256sum -c SHA256SUMS
 ```
 
-From a clone, only the 7 tracked files it covers can be checked; the other 10
+From the current clone, only the 7 tracked files it covers can be checked; the other 10
 report as missing, which is expected and is the difference between the two
 layers above:
 
@@ -258,10 +267,10 @@ layers above:
 cd experiments/results/matrix && sha256sum -c SHA256SUMS 2>&1 | grep -v "No such file"
 ```
 
-`MANIFEST.md` (in the archive) lists the run count for every cell, keyed the way
-the paper quotes them — `(regime, system, crash point, response class,
-read-back keying)`. The regime is part of the key deliberately: pooling regimes
-is what disqualified `analysis/table-1.csv` as a source, and
+The pending archive must include `MANIFEST.md`, listing the run count for every
+cell keyed the way the paper quotes it — `(regime, system, crash point, response
+class, read-back keying)`. The regime is part of the key deliberately: pooling
+regimes is what disqualified `analysis/table-1.csv` as a source, and
 `check_paper_numbers.py` fails if any generated file draws from it.
 
 ---
@@ -306,5 +315,6 @@ sleeps mid-run contributes counts but no latency.
 
 ## 8. Licence and citation
 
-MIT (`LICENSE`). Citation metadata in `CITATION.cff`. The tag `v1.0.0-rc1`
-marks the state of the artifact at submission.
+MIT (`LICENSE`). Citation metadata is in `CITATION.cff`. No new immutable
+submission release or tag has been created for this revision; that is a human
+release blocker, not a state this document assumes.

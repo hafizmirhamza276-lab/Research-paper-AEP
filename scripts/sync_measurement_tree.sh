@@ -2,7 +2,8 @@
 # Bring the Linux measurement tree's *source* into line with the committed one.
 #
 # The measurement tree is not a git checkout: it holds the results, which are
-# gitignored and are published as an archive. That is fine until a number in
+# gitignored and are intended for a pending external archive. That is fine
+# until a number in
 # the paper is computed from the source rather than from a CSV -- the two LOC
 # figures in Section 5 are -- at which point a build on the measurement tree
 # describes a tree nobody can check out, and scripts/check_paper_numbers.py

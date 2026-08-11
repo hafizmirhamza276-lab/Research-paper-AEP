@@ -456,14 +456,15 @@ If the barrier fails, the runner makes one fenced attempt to record
 to leaving `ABOUT_TO_FIRE` for recovery. No bytes were sent, so
 `FAILED_CONFIRMED` is sound there.
 
-**B. The durability acknowledgement is now a checked precondition.** This is
-the Phase 1B change to P2. The chain is:
+**B. The durability acknowledgement is a checked precondition in the supported
+trusted-code path.** This is the Phase 1B change to P2. The chain is:
 
 1. `confirm_durable_ack` (`aep_core/core/durability.py:161-176`) runs the barrier
-   and mints a `DurabilityAck` **only** when it returned `True`.
-2. `DurabilityAck` (`aep_core/core/durability.py:75-102`) cannot be constructed
-   (`:87-90`), subclassed (`:92-93`), or copied (`:95-99`); it is single-use
-   and scope-bound via an HMAC provenance registry
+   and, through the supported API, issues a `DurabilityAck` only when it
+   returned `True`.
+2. Ordinary callers cannot construct, subclass, or copy `DurabilityAck`
+   (`aep_core/core/durability.py:75-102`); its registry detects reuse and binds
+   it to a scope
    (`aep_core/core/durability.py:105-155`). The scope is
    `execution_id:intent_id:prepared_state_version`
    (`aep_core/core/durability.py:62-72`), so an ack for one attempt cannot authorise
@@ -481,8 +482,9 @@ the Phase 1B change to P2. The chain is:
 
 Regression coverage: `tests/test_dispatch_authorization.py` — no authorization
 means no dispatch (`:94-113`), a forged value is rejected (`:262-288`), an ack
-is single-use (`:61-68`) and scope-bound (`:70-76`), and a barrier that returns
-`False` mints nothing (`:78-90`).
+is single-use (`:61-68`) and scope-bound (`:70-76`), the internal issuer's
+same-process reachability is documented, and a barrier that returns `False`
+issues nothing (`:78-90`).
 
 **C. Classification at the runner.** Declared success →`FIRED_CONFIRMED`;
 declared failure →`FAILED_CONFIRMED`; everything else, including every
@@ -562,9 +564,10 @@ isolated by A2.)*
 
 - **R2-1 — the pre-acknowledgement window.** Between the CAS reply and the
   `WAITAOF` acknowledgement the intent exists in memory but may not be on disk.
-  Because dispatch is gated on the barrier *and* on the authorization it mints
-  (§3.2 B), losing this write implies no dispatch occurred; the window costs a
-  lost record of a non-event, not an undetected effect.
+  In the supported trusted-code path, dispatch is gated on the barrier and the
+  authorization derived from its guard (§3.2 B), so losing this write implies
+  no dispatch occurred; the window costs a lost record of a non-event, not an
+  undetected effect.
 - **R2-2 — loss after fsync acknowledgement.** Catastrophic host or storage
   loss can destroy an acknowledged intent (`docs/06-phase2-design.md:292-294`).
 - **R2-3 — false-positive ambiguity is the price.** A crash after a durable
@@ -580,17 +583,23 @@ isolated by A2.)*
   but nothing verifies that a connector claiming `AUTHORITATIVE_READBACK`
   really can prove absence.
 - **R2-6 — `PERMANENTLY_AMBIGUOUS` is a state, not a notification** (§5.2).
-- **R2-7 — the authorization proves *a barrier ran in this process*, not that
-  Redis fsynced.** Redis exposes no way for a Lua script to verify that a
-  previous `WAITAOF` succeeded, so a complete proof is impossible. What is
-  enforced is: the authorization key is written by exactly one script
+- **R2-7 — the authorization is not an independent proof that a barrier ran or
+  that Redis fsynced.** Redis exposes no way for a Lua script to verify that a
+  previous `WAITAOF` succeeded, so a complete proof is impossible. Under the
+  trusted-code assumption, the supported path enforces that the authorization
+  key is written by exactly one script
   (`aep_core/core/intents.py:649-675`), that script is reachable only through
-  `authorize_dispatch`, and `authorize_dispatch` first consumes an
-  unforgeable, single-use, scope-bound `DurabilityAck`
-  (`aep_core/core/intents.py:1110-1115`). Two gaps remain and are declared:
+  `authorize_dispatch`, and `authorize_dispatch` first consumes an opaque,
+  non-copyable, single-use, scope-bound in-process `DurabilityAck`
+  (`aep_core/core/intents.py:1110-1115`). This is an ordinary control-flow
+  guard under trusted-code assumptions, not a cryptographic capability:
+  Python underscore naming and closure placement are not a security boundary.
+  Three gaps remain and are declared:
   1. a principal with direct Redis access can write the authorization key
      itself (the same trust-domain gap as R1-1);
-  2. a caller inside this process could compose `RequestBindingService.verify`
+  2. arbitrary code in this process can call the module-internal acknowledgement
+     issuer without running the barrier;
+  3. a caller inside this process could compose `RequestBindingService.verify`
      with a connector directly, bypassing the runner entirely — the capability
      object is derived from the persisted binding, not from the fsync ack
      (`aep_core/core/request_binding.py:1489-1503`).
@@ -751,7 +760,7 @@ in the suite, no partition test. Phase 1B added a real-crash *probe*
 | `aep_core/core/intents.py:649-675` | Dispatch-authorization script (Phase 1B) |
 | `aep_core/core/intents.py:1081-1162` | `authorize_dispatch`: consumes the ack, then writes the authorization |
 | `aep_core/core/intents.py:65-96`, `:449-461` | Exhaustive transition table, Python and Lua copies |
-| `aep_core/core/durability.py:62-176` | `dispatch_scope`, `DurabilityAck`, the provenance boundary, and the sole mint point |
+| `aep_core/core/durability.py:62-176` | `dispatch_scope`, `DurabilityAck`, the in-process guard registry, and its module-internal issuer |
 | `aep_core/core/durability.py:229-332` | WAITAOF capability validation and the fsync barrier |
 | `aep_core/core/connector_contract.py` | The production response-class contract and total classification |
 | `aep_core/core/intent_recovery.py:192-319` | Fault-isolated scan pass and surviving `run_forever` |

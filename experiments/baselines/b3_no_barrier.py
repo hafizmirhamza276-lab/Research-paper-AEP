@@ -19,7 +19,7 @@ removed as well, B3 would differ from AEP-full in the durability *configuration*
 as well as the barrier, and a difference in the results could not be attributed
 to either. What is ablated is one round trip per dispatch, and only that.
 
-**The acknowledgement is still minted.** ``confirm_durable_ack`` mints the
+**The acknowledgement is still issued.** ``confirm_durable_ack`` issues the
 single-use :class:`DurabilityAck` that ``authorize_dispatch`` consumes, so B3
 still records a Redis-visible dispatch authorisation and its preflight still
 re-checks it. Removing that would ablate the authorisation mechanism too. B3's

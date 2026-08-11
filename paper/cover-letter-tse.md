@@ -43,9 +43,11 @@ unbounded*.
    rather than assumed away.
 2. **A protocol and an implementation** in which a durably acknowledged
    write-ahead intent is a *checked precondition* of dispatch authority rather
-   than a matter of call ordering: the fsync acknowledgement mints an
-   unforgeable, single-use, scope-bound token, and the pre-dispatch script
-   refuses to proceed without it.
+   than a matter of call ordering: under trusted-code assumptions, the fsync
+   acknowledgement returns an opaque, non-copyable, single-use, scope-bound
+   in-process dispatch guard, and the pre-dispatch script refuses to proceed
+   without it. This guard is not a cryptographic capability and does not defend
+   against arbitrary code in the same Python process.
 3. **An evaluation under real process kills** across six named crash points,
    three endpoint reconciliation capabilities and three collected fault regimes,
    against five baseline designs, one of them in two configurations. AEP records
@@ -53,11 +55,14 @@ unbounded*.
    baselines without a pre-dispatch record duplicate in most crashed executions.
 4. **A decomposition, by ablation, that reassigns our own headline result.** The
    write-ahead pattern is normally presented as one mechanism delivering one
-   guarantee. It is two. The durable pre-dispatch record produces *detection*,
+   guarantee. It is two. The pre-dispatch record plus no re-entry produces
+   *detection*,
    and it does so *without* the durability barrier. The barrier buys something
    else — *prevention* — which is invisible to the crash faults that dominate
-   this literature. Detection is nearly free; prevention is where the fsync cost
-   lives; an operator can buy the first without the second.
+   this literature. The measured prevention evidence is one no-readback
+   capability class at one pre-acknowledgement Redis-kill point on one host.
+   Detection is nearly free in this workload; prevention is where the fsync
+   cost lives.
 
 ## Fit with TSE
 
@@ -112,17 +117,20 @@ version exists or is planned.
 
 ## Artifact availability
 
-The implementation, the evaluation harness, the mock provider, all baseline
-systems, the analysis pipeline, the frozen results and the manuscript source are
-in one repository, released at tag **`v1.0.0-rc1`**.
+The repository currently contains the implementation, evaluation harness, mock
+provider, baseline systems, analysis pipeline, manuscript source, and tracked
+derived analysis products. It does not yet contain the 432 raw run directories,
+`results/voided/`, or a complete raw-evidence SHA-256 manifest, and this revision
+does not yet have an immutable release/tag or external archive DOI. Those are
+explicit pre-submission blockers rather than availability claims.
 
 `ARTIFACT.md` at the repository root is the entry point. It carries a
 claims-to-evidence map in which every quantitative claim in the paper resolves,
 in one hop, to the exact command and CSV cell that produces it — the map is
 enumerable because every number in the manuscript is a generated macro whose
 provenance comment names its file, its filter and its arithmetic. It also states
-hardware and software requirements, estimated runtimes, and how to verify the
-frozen archive against its manifest of SHA-256 hashes.
+hardware and software requirements, estimated runtimes, the currently verifiable
+tracked subset, and the integration steps for a future immutable raw archive.
 
 Two unattended entry points are provided:
 

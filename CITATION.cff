@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use this software or its artifact, please cite it as below."
-title: "AEP: A Fail-Closed Execution Protocol for Autonomous Agents Calling Non-Idempotent Legacy APIs"
+message: "This metadata describes an unreleased revision; verify the final immutable release and DOI before citing it."
+title: "Declared Ambiguity: The Agent Execution Protocol (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs"
 abstract: >-
   AEP is a fail-closed execution protocol for autonomous agents that call
   non-idempotent legacy APIs. Rather than claiming exactly-once semantics,
@@ -11,14 +11,13 @@ abstract: >-
   honest guarantee on a single Redis instance is that corruption and
   contention are detectable and the system fails closed -- not absolute
   atomicity, not split-brain immunity, and not exactly-once delivery.
-  This release is the research artifact: the protocol, five baseline
-  systems, the fault-injection harness, the frozen results of a 432-run
-  evaluation under real SIGKILL, hard Redis kills and block-level write
-  loss, and the manuscript generated from them. ARTIFACT.md maps every
-  quantitative claim in the paper to the command that reproduces it.
+  This repository contains the protocol, baseline systems, fault-injection
+  harness, tracked derived analysis products from a 432-run evaluation under
+  real SIGKILL, hard Redis kills and block-level write loss, and the manuscript
+  generated from them. The raw run archive and immutable DOI are not yet
+  published. ARTIFACT.md maps every quantitative claim in the paper to its
+  currently available evidence and reproduction command.
 type: software
-version: 1.0.0-rc1
-date-released: "2026-08-10"
 license: MIT
 repository-code: "https://github.com/hafizmirhamza276-lab/Research-paper-AEP"
 authors:

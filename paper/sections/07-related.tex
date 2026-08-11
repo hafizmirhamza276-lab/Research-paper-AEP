@@ -1,98 +1,116 @@
 \section{Related Work}
 \label{sec:related}
 
-AEP sits at the intersection of three literatures, and its contribution is not
-a new mechanism in any of them. Every primitive it uses --- leases, fenced
-compare-and-swap, write-ahead logging, an fsync barrier --- is decades old. The
-contribution is the \emph{semantics they are composed to deliver}: declared
-ambiguity for non-cooperative endpoints, rather than exactly-once for
-cooperative ones.
+AEP composes established mechanisms: leases, fenced compare-and-swap,
+write-ahead logging, and an fsync barrier. We do not claim that durable intent
+plus locking is new. The contribution is a capability-specific recovery
+semantics for effects outside the coordinator's atomicity domain, and an
+evaluation that separates detection from prevention.
 
-\paragraph{Leases and fencing} Leases are Gray and Cheriton's time-bounded
-mutual exclusion under crash faults~\cite{gray1989leases}; Chubby made the
-pattern an infrastructural service~\cite{burrows2006chubby}, and the Redis
-lock pattern~\cite{redis-locks} is its commodity form. The well-known critique
-is that a lease alone is not sufficient, because a lease holder may stall past
-expiry and write afterwards; the remedy is a monotonic fencing
-token~\cite{kleppmann2016locking}. AEP implements exactly that remedy and adds
-the observation that it is not enough for our problem: a fencing token protects
-\emph{the store}. Our B1 and B2 baselines make this concrete --- both prevent
-state corruption and neither prevents a duplicate external effect
-(\cref{tab:outcomes}).
+\paragraph{Leases and fencing} Leases provide time-bounded mutual exclusion
+under crash faults~\cite{gray1989leases}; Chubby made the pattern an
+infrastructural service~\cite{burrows2006chubby}, and the Redis lock
+pattern~\cite{redis-locks} is a commodity form. A lease holder may stall past
+expiry and write afterwards, so a monotonic fencing token is also
+required~\cite{kleppmann2016locking}. AEP applies that standard remedy to its
+state store. B1 and B2 show its boundary: fencing protects the store, not an
+external endpoint that does not interpret the token (\cref{tab:outcomes}).
 
-\paragraph{Concurrency control, logging, and long-lived transactions} The
-expected-version CAS is optimistic concurrency control~\cite{kung1981optimistic}
-applied to a single document. The write-ahead intent is write-ahead logging in
-the sense of ARIES~\cite{mohan1992aries} --- record the intention durably
-before performing the action --- with the crucial difference that ARIES logs an
-action the same system will perform and can therefore undo or redo, while AEP
-logs an action a \emph{foreign} system will perform and can do neither. Sagas
-address long-lived transactions by pairing each step with a compensating
-action~\cite{garciamolina1987sagas}; that is the right answer where a
-compensation exists, and AEP's premise is the case where it does not, or where
-compensating requires first knowing whether the effect occurred --- which is
-the question. Helland's analysis of what survives when distributed transactions
-are unavailable~\cite{helland2007apostate}, and his treatment of idempotence as
-the property everything else is built on~\cite{helland2012idempotence}, are the
-closest conceptual antecedents; AEP can be read as asking what to do when the
-idempotence Helland requires cannot be obtained from the far side.
+\paragraph{Logging, outboxes, and long-lived transactions} The
+expected-version CAS is optimistic concurrency control~\cite{kung1981optimistic}.
+ARIES writes intent before an action that the same recovery domain can undo or
+redo~\cite{mohan1992aries}; AEP instead records an action performed by a
+foreign endpoint that may support neither operation. The transactional-outbox
+pattern likewise stores a message before a relay publishes it, but explicitly
+permits the relay to publish twice after a crash and therefore assumes an
+idempotent consumer~\cite{richardson-transactional-outbox}. B3 is structurally
+outbox-like, with a no-re-entry rule in the measured runner; it does not make
+the remote mutation transactional. Sagas are appropriate when a compensating
+action exists~\cite{garciamolina1987sagas}. AEP addresses the case in which no
+compensation exists, or deciding whether to compensate first requires the
+missing outcome.
 
-\paragraph{Why certainty is unavailable} That an outcome may be undecidable is
-not an engineering shortfall. Consensus is unsolvable in an asynchronous system
-with even one crash fault~\cite{fischer1985impossibility}, and what can be
-recovered depends on the failure-detection assumptions one is willing to
-make~\cite{chandra1996failuredetectors}; replicated state machines buy
-agreement between replicas~\cite{ongaro2014raft} but not agreement with a
-legacy endpoint that participates in no protocol. AEP takes the impossibility
-as given and makes the residual explicit and bounded rather than implicit and
-silent.
+The expired IETF HTTPAPI working-group draft for an \texttt{Idempotency-Key}
+header documents the cooperative alternative: a server can make non-idempotent
+\texttt{POST} and \texttt{PATCH} requests safely retryable by interpreting a
+client key~\cite{jena2025idempotencykey}. AEP's premise is precisely the
+endpoint that does not implement such a contract. Helland describes the
+broader consequences of operating without distributed transactions and the
+centrality of idempotence~\cite{helland2007apostate,helland2012idempotence}.
 
-\paragraph{Durable execution and stateful serverless} This is the closest
-active area and the one AEP must be distinguished from most carefully.
-Beldi~\cite{zhang2020beldi} provides fault-tolerant, transactional stateful
-serverless workflows with exactly-once semantics over its own data
-plane. Durable Functions~\cite{burckhardt2021durable} gives a formal semantics
-for stateful serverless in terms of replay over a durable history.
-Boki~\cite{jia2021boki} builds consistency and fault tolerance on shared logs.
-ExoFlow~\cite{zhuang2023exoflow} is the most direct comparison: it targets
-exactly-once DAGs and is explicit that the guarantee requires each step to be
-recoverable --- idempotent, transactional, or paired with a compensation.
+\paragraph{Locks with intent and durable execution} Olive is the closest
+mechanistic antecedent. Its locks with intent durably associate code with a
+lock and provide exactly-once execution despite client failures and concurrent
+duplicate executions~\cite{setty2016olive}. A write-ahead intent as a checked
+precondition of execution is therefore prior work, not AEP's novelty. Olive's
+guarantee is realized through operations made recoverable within its cloud
+storage abstraction. AEP starts where that atomicity scope ends: the effect is
+performed by a legacy endpoint, and in the \textsc{no-readback} class no
+participant can later establish whether it happened. AEP consequently offers
+no exactly-once claim; it terminates in declared ambiguity and prohibits
+automatic re-dispatch.
 
-Every one of these systems achieves its guarantee \emph{with the cooperation of
-the effectful endpoint}, whether by enrolling it in a transaction, by requiring
-idempotence, or by requiring a compensation. Our B4 baseline is an
-event-sourced engine of this family, using the same durability barrier as AEP,
-and it duplicates --- not because it is badly built, but because it is
-correctly implementing at-least-once activity execution against an endpoint
-that cannot absorb it.
+Beldi~\cite{zhang2020beldi}, Durable
+Functions~\cite{burckhardt2021durable}, Boki~\cite{jia2021boki}, and
+ExoFlow~\cite{zhuang2023exoflow} develop transactional or replay-based durable
+execution. Their guarantees are appropriate when an effect is idempotent,
+transactional, compensable, or otherwise recoverable. Temporal states the
+operational premise directly: activities should be idempotent because they may
+execute more than once~\cite{temporal-activity-definition}; setting Maximum
+Attempts to one selects the opposite retry policy~\cite{temporal-retry}. Our B4
+and B4b controls instantiate these two policies against the same
+non-cooperative endpoint. They are semantic controls, not claims about those
+products' complete implementations.
 
-That pairing is also where our decomposition (\cref{sec:eval-detection})
-lands relative to this literature. Durability of the log is the property these
-systems are engineered around, and it is the property our two systems on
-either side of the result do \emph{not} differ in the way one would expect:
-B4 has the durable acknowledged record and duplicates at the highest rate we
-measure, while B3 has an unacknowledged one and duplicates at zero. The
-variable that separates them is not how durable the record is but whether the
-recovery path may re-enter the dispatching state --- a property of the
-transition table rather than of the log. To our knowledge this attribution has
-not been isolated by ablation before; it is usually a design assumption, and
-where it is stated at all it is stated the other way round. Temporal states the precondition plainly: activities
-should be made idempotent, because they may be executed more than
-once~\cite{temporal-activity-definition}. B4b shows the documented alternative
---- Maximum Attempts of 1~\cite{temporal-retry} --- purchasing at-most-once and
-paying in lost effects. \textbf{The difference AEP claims is not a better
-guarantee than these systems provide; it is a different residual.} Where they
-must assume the precondition and are silent when it fails, AEP declines to
-decide and says so (\cref{tab:related}).
+The ablation supplies AEP's narrower empirical delta. B3 and AEP-full share
+the pre-dispatch record and no-re-entry transition but differ on the durability
+barrier. Their crashed-regime detection outcomes are statistically
+indistinguishable, while the Redis-kill experiment isolates a prevention
+effect. We found no prior evaluation that measures this detection/prevention
+decomposition with an independent external-effect ledger.
+
+\paragraph{Agent execution reliability} Three contemporaneous systems overlap
+substantially and delimit the claim. Verified Tool Calls formalizes non-atomic
+agent tool failures and uses postcondition verification, verify-before-retry,
+and idempotency keys in a simulated fault environment~\cite{mansoor2026verified}.
+Its verifier requires a queryable postcondition; without server-side
+idempotency, it characterizes the remaining race as best-effort. AEP evaluates
+the authoritative, positive-only, and absent-readback cases separately and
+uses terminal ambiguity for the last case.
+
+LogAct durably exposes intentions in a shared log before execution and supports
+recovery and policy voting for open-ended agent control flow
+~\cite{balakrishnan2026logact}. It is broader in agent-state-machine structure
+and isolation; AEP is narrower in studying what can be concluded about one
+non-idempotent external mutation after an interruption. The Sovereign Execution
+Broker (SEB) reserves certificate nonces before mutation, disallows retry after
+possible invocation unless durable or target-side evidence proves otherwise,
+and provides a mandatory broker boundary with cryptographic certificates
+~\cite{he2026seb}. That boundary is stronger than AEP's trusted-process guard.
+AEP's distinct evidence is the three endpoint-capability classes, terminal
+declared ambiguity, real \texttt{SIGKILL} and Redis durability faults, and the
+B3/AEP ablation. ACRFence addresses semantic rollback during agent
+checkpoint-restore~\cite{zheng2026acrfence}; it is adjacent rather than a basis
+for ranking which work is ``nearest.''
+
+\paragraph{Fault-injection lineage} AEP's named crash boundaries and
+independent oracle follow a mature crash-consistency methodology. ALICE
+constructs possible post-crash storage states and checks application
+invariants~\cite{pillai2014alice}; Torturing Databases combines controlled
+power-fault injection with record/replay and cross-layer diagnosis
+~\cite{zheng2014torturing}; and CrashMonkey/Ace exhaustively test bounded
+workloads at persistence boundaries~\cite{mohan2018crashmonkey}. AEP applies
+this lineage to an agent-to-endpoint protocol: real process kills at named
+instruction boundaries, a separately written provider ledger, and a
+\texttt{dm-flakey} write-loss probe. The harness is an evaluation instrument,
+not a claimed fault-injection contribution.
 
 \begin{table}[t]
 \centering
-\caption{Where AEP sits. ``Endpoint must cooperate'' means the guarantee
-requires something of the effectful callee --- idempotence, an idempotency key,
-transaction enrolment, or a compensation. ``Can report \emph{unknown}'' means
-the system has a terminal outcome class distinct from success and failure.
-AEP's row is not a stronger guarantee than the others; it is the only one whose
-residual is declared.}
+\caption{Selected design assumptions. ``Endpoint must cooperate'' denotes
+idempotence, an idempotency key, transaction enrolment, or compensation. The
+rows are not ordered by guarantee strength; they expose different residuals
+when their stated assumptions fail.}
 \label{tab:related}
 \small
 \begin{tabular}{@{}lccc@{}}
@@ -122,13 +140,11 @@ Temporal-style, 1 attempt~\cite{temporal-retry}
 \end{tabular}
 \end{table}
 
-\paragraph{Agents} Tool-using and reasoning-acting agents~\cite{yao2023react,
-schick2023toolformer} and agent operating systems~\cite{mei2024aios} have made
-the workload in this paper common: autonomous, nondeterministic planners
-invoking effectful enterprise APIs. The reliability literature for this setting
-is young. ACRFence~\cite{zheng2026acrfence} is the nearest work, addressing
-semantic rollback in agent checkpoint-restore --- an adjacent hazard from the
-same root cause, that an agent's durable record and the world can disagree
-after a fault. AEP addresses the forward direction of the same disagreement:
-not what a restored checkpoint wrongly believes, but what an interrupted
-dispatch cannot determine.
+\paragraph{Revised novelty position} AEP's claim is not the invention of
+write-ahead intent, locking, or fail-closed interposition. It is the measured
+composition for endpoints with authoritative, positive-only, or no readback:
+capability-specific recovery; a terminal declared-ambiguity outcome when no
+query can settle the effect; real process and durability-fault evaluation with
+an independent ground-truth ledger; and an ablation that assigns detection to
+the pre-dispatch record plus no re-entry, and prevention to the durability
+barrier.

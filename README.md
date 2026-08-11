@@ -2,8 +2,10 @@
 
 The research artifact for *Declared Ambiguity: The Agent Execution Protocol
 (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs* — a protocol,
-five baseline systems it is measured against, a fault-injection harness, the
-frozen results of a 432-run evaluation, and the manuscript generated from them.
+five baseline designs it is measured against, a fault-injection harness,
+tracked derived results from a 432-run evaluation, and the manuscript generated
+from them. The raw run archive and immutable DOI are pending (§5 of
+`ARTIFACT.md`).
 
 **Start at [`ARTIFACT.md`](ARTIFACT.md)** if you are here to check a number in
 the paper. It maps every quantitative claim to the command that reproduces it.
@@ -51,14 +53,15 @@ ablation:
 
 * **Detection** — no undetected duplicate and no lost effect, with a residual of
   declared ambiguity set by what the endpoint can be asked — is produced by the
-  durable pre-dispatch record **alone**. Removing the durability barrier and
-  changing nothing else leaves every detection metric unchanged over 600
-  executions per arm, against baselines that duplicate in 77–83% of crashed
-  executions.
+  pre-dispatch record plus a transition rule that prohibits re-entry into
+  dispatch. In the crashed regime, removing the durability barrier produces no
+  observed difference in those two metrics over 540 executions per arm; the
+  ambiguity difference is assessed separately with a run-cluster interval.
 * **Prevention** is what the barrier contributes, and it is a different quantity
-  against a different fault. Under a hard Redis kill placed between the intent
-  write and its acknowledgement, the barrier withholds 18 real non-idempotent
-  effects that the ablation commits.
+  against a different fault. In one no-readback capability class at one
+  pre-acknowledgement Redis-kill point, the barrier withholds 18 real
+  non-idempotent effects that the ablation commits (30 runs per system on one
+  host).
 
 The barrier's *durability* claim needs a fault that loses the page cache. A
 process kill loses nothing — `appendfsync everysec` defers the `fsync(2)`, not
@@ -72,14 +75,14 @@ writes instead.
 | `aep_core/core/storage.py` | Atomic CAS state persistence via Lua, schema migration, quarantine on corruption |
 | `aep_core/core/locks.py` | Distributed lease lock: acquire/release/renew plus a capped auto-renewing context manager |
 | `aep_core/core/intents.py` | Write-ahead intent ledger and its transition table |
-| `aep_core/core/durability.py` | WAITAOF barrier and the single-use dispatch authorization it mints |
+| `aep_core/core/durability.py` | WAITAOF barrier and its trusted-process, single-use, scope-bound in-process dispatch guard |
 | `aep_core/core/intent_workflow.py` | The runner: one external mutation per invocation, gated on the barrier ack |
 | `aep_core/core/intent_recovery.py` | Crash-recovery resolver; classifies effects as CONFIRMED / REFUTED / PERMANENTLY_AMBIGUOUS |
 | `aep_core/core/request_binding.py`, `request_vault.py` | Canonical request binding and the authenticated request vault |
 | `experiments/baselines/` | B0–B4b, and `B4_SEMANTICS.md` on what B4 shares with a real durable-execution engine |
 | `experiments/harness/`, `experiments/run_matrix.py` | Fault injection, the six crash points, the matrix orchestrator |
 | `experiments/analyze.py` | Runs → metrics, intervals, figures |
-| `experiments/results/` | The frozen evaluation. Analysis products are tracked; raw run directories ship as an archive (see `ARTIFACT.md` §5) |
+| `experiments/results/` | Tracked derived analysis products from the frozen evaluation; the raw run archive and DOI are pending external publication (see `ARTIFACT.md` §5) |
 | `paper/` | The manuscript. `paper/generated/` is machine-written and must never be hand-edited |
 | `scripts/` | The generators and the CI gates |
 | `docs/22-formal-model.md` | System model, failure model, properties P1–P3, declared residual windows, non-claims |

@@ -344,7 +344,7 @@ class WriteAheadRunner:
     async def _confirm_dispatch_barrier(
         self, connection: Any, *, scope: str
     ) -> DurabilityAck:
-        """Barrier the write-ahead intent and mint the dispatch-authorising ack."""
+        """Barrier the write-ahead intent and issue the in-process dispatch guard."""
 
         try:
             return await confirm_durable_ack(

@@ -46,6 +46,11 @@ QUERIES: tuple[str, ...] = (
     "AIOS LLM agent operating system",
     "Toolformer language models can teach themselves to use tools",
     "Unreliable failure detectors for reliable distributed systems",
+    "Realizing the Fault-Tolerance Promise of Cloud Storage Using Locks with Intent",
+    "All File Systems Are Not Created Equal crash consistent applications",
+    "Torturing Databases for Fun and Profit",
+    "Finding Crash-Consistency Bugs with Bounded Black-Box Crash Testing",
+    "ACRFence Preventing Semantic Rollback Attacks Agent Checkpoint Restore",
 )
 
 #: Sources with no DBLP record. Each must be verified by fetching the URL and
@@ -58,6 +63,11 @@ NON_DBLP_SOURCES: tuple[tuple[str, str], ...] = (
     ("Redis persistence (appendfsync)", "https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/"),
     ("Redis distributed locks / Redlock", "https://redis.io/docs/latest/develop/use-cases/patterns/distributed-locks/"),
     ("Kleppmann, How to do distributed locking", "https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"),
+    ("Verified Tool Calls", "https://arxiv.org/abs/2608.02645"),
+    ("LogAct", "https://arxiv.org/abs/2604.07988"),
+    ("Sovereign Execution Broker", "https://arxiv.org/abs/2606.20520"),
+    ("IETF Idempotency-Key draft 07", "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-07"),
+    ("Transactional Outbox pattern", "https://microservices.io/patterns/data/transactional-outbox.html"),
 )
 
 API = "https://dblp.org/search/publ/api"

@@ -75,11 +75,12 @@ protecting the record from a crashed Redis process is wrong.
 
 \paragraph{The decomposition weakens our own novelty claim, and we would
 rather say so than let a reader find it} \Cref{sec:eval-detection} attributes
-the detection guarantee to the durable pre-dispatch record and the
+the detection guarantee to the pre-dispatch record and the
 transition table's missing re-entry edge, and not to the barrier. Contribution
-C2 is the barrier machinery: an fsync acknowledgement minting an unforgeable,
-single-use, scope-bound token that the pre-dispatch script refuses to proceed
-without. Put those together and the uncomfortable reading is available: our
+C2 is the barrier machinery: an fsync acknowledgement returning an opaque,
+non-copyable, single-use, scope-bound in-process dispatch guard that the
+pre-dispatch script refuses to proceed without. Put those together and the
+uncomfortable reading is available: our
 most novel mechanism serves the claim with the \emph{weakest} evidence --- one
 cell, \AepKillRuns{} runs, one capability class, a host-dependent effect size
 --- while the claim with the strongest evidence rests on write-ahead logging,
@@ -101,7 +102,7 @@ with the barrier removed --- and an ablation is internal by construction. That
 is the right instrument for \emph{attributing} an effect to a mechanism, and
 we would choose it again for that purpose, but it cannot corroborate the
 resulting claim from outside. Nothing external to this artifact establishes
-that a durable pre-dispatch record without an fsync barrier is sufficient for
+that a pre-dispatch record without an fsync barrier is sufficient for
 detection: the proposition is supported by two systems we wrote, measured by a
 harness we wrote, against a provider we wrote. The oracle is independent of the
 systems under test --- rates are counted from the provider's separately written
@@ -114,6 +115,18 @@ to supply one short of re-implementation by someone else. That is the
 structural cost of the instrument, it applies to the paper's most load-bearing
 empirical claim, and we prefer to state it here than to let the ablation's
 internal consistency read as external support.
+
+\paragraph{The dispatch guard assumes trusted same-process code} The guard
+prevents accidental or ordinary control-flow bypass through the supported
+dispatch API, and its registry detects copying attempts, reuse, and scope
+mismatch. It is not a cryptographic capability. Python's underscore naming,
+object-construction checks, and closure placement are not security boundaries:
+malicious or arbitrary code running in the same interpreter can reach module
+internals, request a guard without executing the barrier, or bypass the API
+altogether. The implementation therefore enforces a protocol invariant only
+under a trusted-code assumption. A hostile-extension threat model would require
+a separately enforced process or service boundary, which this artifact does
+not provide.
 
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
 with a configurable delay, timeout and error distribution, and a
@@ -235,6 +248,16 @@ comparing the provider's independently written ledger against the system's
 records; the analysis is prevented by a parsed source gate from reading live
 protocol state.
 
+\paragraph{The oracle is independent, not infallible} The provider ledger is
+written outside the systems under test, and every completed run is reconciled
+against it, but the provider and ledger still share one implementation and one
+host. One voided run demonstrates that this oracle can fail: its event log and
+ledger disagreed while sibling and repeated runs agreed. The current repository
+retains the aggregate record of that exclusion, but the voided raw directory
+must be included in the external archive before submission. A second provider
+implementation or an external network/storage observer would reduce this
+common-mode doubt; neither is present.
+
 \subsection{External validity}
 
 \paragraph{Single node, single trust domain} One Redis instance, no replica, no
@@ -242,6 +265,15 @@ consensus. \Cref{tab:nonclaims} lists what this forecloses. One residual is
 worth repeating here because it interacts with the results: an AOF rewind can
 un-fence a lease, since lock keys are deliberately not barriered, and the fix
 is HA rather than anything local.
+
+\paragraph{Concurrency coverage is narrow} The harness exercises crash and
+takeover with two workers, so stale-owner and successor paths are covered, but
+it does not sustain live contention among many workers for the same execution
+or endpoint resource. The evaluation therefore supports fencing and recovery
+under the measured takeover schedule, not a scalability or fairness claim for
+high-contention deployments. Concurrent-claim rejection is exercised by the
+test suite; the fault-injection matrix supplies no contention-regime evidence
+for P1.
 
 \paragraph{Platform, and a development/measurement split} All measurements were
 collected on Ubuntu inside WSL2 on Windows~11, with Docker Desktop port

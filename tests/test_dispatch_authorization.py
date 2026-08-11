@@ -13,6 +13,8 @@ import uuid
 
 import pytest
 
+import aep_core.core.durability as durability_module
+
 from aep_core.core.durability import (
     DurabilityAck,
     DurabilityBarrierError,
@@ -51,6 +53,17 @@ def test_durability_ack_cannot_be_subclassed():
             pass
 
 
+def test_module_internal_issuer_is_reachable_without_running_the_barrier():
+    """Document the trusted-process boundary, not malicious-code resistance."""
+    scope = dispatch_scope("exec", "intent", 2)
+
+    ack = durability_module._issue_durability_ack(scope)
+
+    consume_durability_ack(ack, scope=scope)
+    with pytest.raises(DurabilityBarrierError, match="already consumed"):
+        consume_durability_ack(ack, scope=scope)
+
+
 @pytest.mark.asyncio
 async def test_durability_ack_is_single_use(redis_client):
     scope = dispatch_scope("exec", "intent", 2)
@@ -68,7 +81,7 @@ async def test_durability_ack_is_scope_bound(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_failed_barrier_mints_no_ack(redis_client):
+async def test_failed_barrier_issues_no_ack(redis_client):
     class _RefusingBarrier:
         test_only = True
 
