@@ -646,12 +646,54 @@ produced a false negative in my own verification.
 | 4 | Caption discloses 5-vs-6 with the reason; caption test passes; generator-produced | ✅ | §C.8; generator invoked with the Makefile's arguments; test asserts caption **and** census |
 | 5 | `06-evaluation.tex` untouched | ✅ | `git diff` empty — §C.9 |
 | 6 | Numbers gate passes; full suite passes with zero skips; both PDFs build clean | ✅ | 18/18 §C.11; 1737 passed / 0 skipped §C.12; both `build clean`, 18 pages §C.13 |
-| 7 | Committed, pushed, Actions green; nothing uploaded | ✅ | §C.16 below |
+| 7 | Committed, pushed, Actions green; nothing uploaded | ✅ | Run [31469984260](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31469984260), `success`, 4/4, numbers gate green — §C.16 |
 | 8 | Report ends with the specified single line | **⚠️ SUBSTITUTED** | The line asserts repository work is complete. T1 is not. §E.1, §H |
 
 ### C.16 Commit, push, CI
 
-*(Filled in after the push; see the CI record at the end of this report.)*
+```
+$ git log --oneline -3
+f4de834 D6 and D11: the factor the prose estimated, and the asymmetry the caption hid
+4b910d3 D12: shell scripts reach a POSIX shell as LF in every clone
+399e502 Audit: record the two green runs, and the external actions taken
+
+$ git push origin main
+To https://github.com/hafizmirhamza276-lab/Research-paper-AEP.git
+   399e502..f4de834  main -> main
+PUSH_EXIT=0
+
+$ git fetch origin && git rev-list --left-right --count origin/main...main
+0	0
+```
+
+CI on head `f4de834`, read via unauthenticated `GET` to `api.github.com`:
+
+```
+head_sha   f4de834ba455064c7703b9b9314275f546b5ba0b
+status     completed
+conclusion success
+url        https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31469984260
+
+jobs: 4
+  success    WAITAOF durability (compose, phase2.conf)
+  success    Suite (py3.13, Redis from compose)
+  success    Citation ranges (docs/22)
+  success    Numbers gate (manuscript vs frozen CSVs)
+```
+
+**Run [31469984260](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31469984260)
+— `success`, 4/4 jobs, and the "Numbers gate (manuscript vs frozen CSVs)" job is
+green.** That job installs the CI TeX Live package set, builds the manuscript
+through `scripts/build_paper.sh` from a clean Linux checkout, and then runs
+`check_paper_numbers.py` — which is what settles §E.4: the PDFs this session
+built under WSL are confirmed buildable under the package set CI actually uses,
+from a checkout that took the new `.gitattributes` rule.
+
+**One thing the run list does not show, stated so nobody looks for it later:**
+there is **no separate CI run for `4b910d3`**. Both commits went up in one push,
+and GitHub schedules the workflow on the pushed head only. The D12 commit is
+covered transitively — `f4de834` contains it, and the numbers-gate job checks
+out and builds from a tree that has the `*.sh` rule in force.
 
 ---
 
@@ -921,3 +963,24 @@ on human input and remains outstanding in `paper/main.tex`.** Everything else
 that remains is on the human residual checklist: confirm TSE's review policy on
 ScholarOne, arXiv upload, TSE submission, raw-archive publication (D4), and any
 optional low-tail items (D1/D2/D3/D5/D7).
+
+---
+
+## CI record
+
+| Commit | What | Run | Jobs | Result |
+|---|---|---|---|---|
+| `4b910d3` | T2 — D12, the `*.sh` line-ending rule | *(no separate run; pushed together with the head below)* | — | covered by `f4de834` |
+| `f4de834` | T3 + T4 + both PDFs + this report | [31469984260](https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31469984260) | 4/4 | `success` |
+
+As in every previous session, this paragraph is appended in a follow-up commit,
+so the run recorded above is green on the head containing everything except
+these lines. That commit's own run is produced by the same workflow and is the
+repository's current head.
+
+**External actions taken by this session: `git fetch`, two local `git clone`s
+into scratch directories (both deleted), `git push`, unauthenticated `GET`s to
+`api.github.com` to read run status, and `apt-get` traffic from two throwaway
+containers. Nothing was uploaded, submitted or published; no account, token,
+release, release asset or draft was created anywhere; no tag was created or
+moved. arXiv and TSE submission remain the human's.**
