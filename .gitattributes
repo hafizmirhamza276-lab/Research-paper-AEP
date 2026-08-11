@@ -18,3 +18,17 @@
 # prompted this rule.
 
 experiments/results/** -text
+
+# Shell scripts must reach a POSIX shell as LF, whatever the clone's config.
+#
+# The rule above was scoped to the frozen results and stopped there, so under
+# `core.autocrlf=true` a Windows clone still smudges `scripts/*.sh` to CRLF and
+# `bash scripts/build_paper.sh` dies on its own first lines with
+# `set: pipefail: invalid option name`. That is the exact path an artifact
+# evaluator takes (clone -> WSL/Docker -> run the build script). The committed
+# blobs are already pure LF, so this rule changes no content: it pins the
+# CHECKOUT so the property holds in every clone rather than in the ones whose
+# owners happened to configure git a particular way.
+# See the Monday audit's D12: reports/audit-report-2026-08-10.md.
+
+*.sh text eol=lf
