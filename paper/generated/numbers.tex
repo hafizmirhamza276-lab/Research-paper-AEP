@@ -100,6 +100,11 @@
 % = 983.3 / 4004.9 x 100; the end-to-end cost of adding one more barrier to the step, not the increase in the barrier bill alone
 \newcommand{\ThirdBarrierStepPct}{24.6}
 
+% latency-and-throughput.csv | \BarrierCost / \ProtocolMinusBarrier, both under appendfsync=everysec
+% = (4004.9 - 2038.2) / (2038.2 - 2010.2) = 1966.7 / 28.0 = 70.14, to two significant figures
+% how much more the two fsync barriers cost than everything else the protocol does
+\newcommand{\BarrierToProtocolRatio}{70}
+
 % fsync-always/analysis/latency-and-throughput.csv | AEP-full median - B3 median, both under appendfsync=always
 % = 2063.4 - 2048.4
 \newcommand{\BarrierCostAlways}{15.0}

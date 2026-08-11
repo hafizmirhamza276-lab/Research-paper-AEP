@@ -366,7 +366,7 @@ If the endpoint accepts an idempotency key, or can be enrolled in a
 transaction, or the effect can be made idempotent, then a durable-execution
 engine gives a strictly stronger guarantee at lower cost and AEP is the wrong
 tool. Its cost is real: two fsync barriers, which under \texttt{appendfsync
-everysec} dominate the protocol's latency by two orders of magnitude
-(\cref{tab:latency}). AEP is for the case where the precondition those systems
-require cannot be obtained, and its value is a declared residual rather than a
-better guarantee.
+everysec} dominate the protocol's latency by a factor of roughly
+\BarrierToProtocolRatio{} (\cref{tab:latency}). AEP is for the case where the
+precondition those systems require cannot be obtained, and its value is a
+declared residual rather than a better guarantee.

@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import random
 import re
 import statistics
@@ -165,7 +166,12 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
         r"\caption{The trilemma, measured. Every execution in every cell was "
         r"killed at one of the six crash points of \cref{tab:crashpoints}; "
         r"rates are over executions, pooled across crash points within one "
-        r"endpoint capability. \textsc{auth}/\textsc{pos-only}/\textsc{none} "
+        r"endpoint capability. B0--B2 pool over five of those six rather than "
+        r"all of them --- \texttt{after\_intent\_before\_barrier} cannot occur "
+        r"in a system that writes no intent, so for those three there is no "
+        r"such cell to pool --- and the per-crash-point rates behind every "
+        r"cell here are in \texttt{per-cell-metrics.csv}. "
+        r"\textsc{auth}/\textsc{pos-only}/\textsc{none} "
         r"are the reconciliation capabilities of \cref{tab:capabilities}. "
         r"AEP-full and B3 --- the same protocol with and without the "
         r"durability barrier --- are the only systems that record any "
@@ -337,6 +343,28 @@ def tex_number(value: float) -> str:
     no barrier". Formatting belongs to the number.
     """
     return f"{value:,.1f}".replace(",", r"\,")
+
+
+def tex_sigfigs(value: float, digits: int = 2) -> str:
+    """A magnitude, rounded to significant figures rather than to decimals.
+
+    ``tex_number`` fixes one decimal place, which is right for a millisecond
+    measurement and wrong for a ratio of two of them: printing ``70.1`` for a
+    quotient whose denominator is a three-run median difference claims a
+    precision the interval underneath it does not support. Significant figures
+    round to the scale of the number instead.
+
+    Formatted plainly rather than with ``%g``, which renders 100 as ``1e+02``
+    and would put an exponent in the middle of an English sentence.
+    """
+    if value == 0:
+        return "0"
+    # Negative for values of 100 and up, and it has to stay negative for the
+    # rounding: `round(1966.7, -2)` is 2000, while clamping to zero first gives
+    # 1967 -- four significant figures wearing the label of two. Only the
+    # *format* precision clamps.
+    decimals = digits - 1 - math.floor(math.log10(abs(value)))
+    return f"{round(value, decimals):,.{max(0, decimals)}f}".replace(",", r"\,")
 
 
 def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
@@ -1030,6 +1058,35 @@ def emit_numbers(
             f"= {(aep - b3) / 2:.1f} / {aep:.1f} x 100; the end-to-end cost of "
             "adding one more barrier to the step, not the increase in the "
             "barrier bill alone",
+        )
+
+    # --- D6: the factor the threats section was estimating in words ------
+    # `08-threats.tex` said the barriers "dominate the protocol's latency by
+    # two orders of magnitude". The two macros above put it at 70x, which is
+    # nearer one and a half orders; the Monday audit recorded the gap as D6.
+    # The sentence now quotes this macro, so the phrase and the measurement
+    # cannot drift apart again.
+    #
+    # This is a ratio of two median differences, which is the construction
+    # the `always` arm below refuses -- but the reason it refuses does not
+    # apply here. There, the denominator's cluster bootstrap spans zero, and a
+    # ratio through a denominator indistinguishable from zero is not a
+    # measurement. Here it does not: the same bootstrap over (B3 - B0) under
+    # everysec gives [27.1, 1524.6] ms, entirely positive, so the quotient is
+    # defined across the interval. It is still a point estimate of a wide one,
+    # which is why it is rounded to two significant figures and why the
+    # sentence quoting it says "roughly".
+    if b0 and b3 and aep:
+        macro(
+            "BarrierToProtocolRatio",
+            tex_sigfigs((aep - b3) / (b3 - b0)),
+            "latency-and-throughput.csv | \\BarrierCost / "
+            "\\ProtocolMinusBarrier, both under appendfsync=everysec",
+            f"= ({aep:.1f} - {b3:.1f}) / ({b3:.1f} - {b0:.1f}) "
+            f"= {aep - b3:.1f} / {b3 - b0:.1f} = {(aep - b3) / (b3 - b0):.2f}, "
+            "to two significant figures",
+            "how much more the two fsync barriers cost than everything else "
+            "the protocol does",
         )
 
     # The same subtraction under the other durability policy. Both arms are

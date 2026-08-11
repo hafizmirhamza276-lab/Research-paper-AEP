@@ -38,6 +38,7 @@ from scripts.paper_tables import (
     emit_outcomes_table,
     flakey_macros,
     tex_p_value,
+    tex_sigfigs,
 )
 
 
@@ -455,6 +456,69 @@ def test_the_outcomes_caption_names_every_system_it_claims_is_unique(
     assert "is the only system " not in caption
 
 
+def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
+    tmp_path: Path,
+) -> None:
+    """D11. The caption pooled five points and six under one sentence.
+
+    ``after_intent_before_barrier`` cannot occur in a system that never
+    writes an intent, so B0--B2 have five crash-point cells where the
+    intent-bearing systems have six. That is a semantic property of the
+    baselines rather than a sampling defect, but a caption reading "one of the
+    six crash points" and nothing more invites a reviewer to read the columns
+    as equally sampled.
+
+    The assertion is two-sided on purpose. It requires the caption to state
+    the asymmetry *and* requires the emitted denominator census underneath to
+    still show it -- so if the baselines ever gain the sixth point, the test
+    fails on the census rather than leaving a caption that has quietly become
+    false.
+    """
+    points_with_intent = (
+        "before_intent_write",
+        "after_intent_before_barrier",
+        "after_barrier_before_dispatch",
+        "mid_dispatch",
+        "after_response_before_resolution",
+        "after_resolution_before_barrier",
+    )
+    per_cell = []
+    for response in RESPONSES:
+        for point in points_with_intent:
+            for metric in (
+                "undetected_duplicate_rate",
+                "lost_effect_rate",
+                "known_ambiguity_rate",
+            ):
+                for system in ("AEP_FULL", "B3_INTENT_NO_BARRIER"):
+                    per_cell.append(
+                        _cell(metric, system, response, 0, 30, point)
+                    )
+                # The baseline never reaches the barrier point.
+                if point != "after_intent_before_barrier":
+                    per_cell.append(
+                        _cell(metric, "B0_NAIVE_RETRY", response, 0, 30, point)
+                    )
+
+    emit_outcomes_table(per_cell, tmp_path)
+    text = (tmp_path / "table-outcomes.tex").read_text(encoding="utf-8")
+    caption = next(
+        line for line in text.splitlines() if line.startswith("\\caption{")
+    )
+    # The claim.
+    assert "five" in caption
+    assert "after\\_intent\\_before\\_barrier" in caption
+    assert "per-cell-metrics.csv" in caption
+    # The data the claim is about, from the generator's own census.
+    census = [line for line in text.splitlines() if line.startswith("%   ")]
+    assert any(
+        "B0_NAIVE_RETRY" in line and "crash_points=5" in line for line in census
+    )
+    assert any(
+        "AEP_FULL" in line and "crash_points=6" in line for line in census
+    )
+
+
 # --------------------------------------------- the process-kill probe file
 
 
@@ -510,3 +574,49 @@ def test_the_third_barrier_cost_is_a_share_of_the_step_not_the_barrier_bill(
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
     assert "\\newcommand{\\ThirdBarrierStepPct}{24.6}" in text
+
+
+def test_the_barrier_to_protocol_ratio_is_the_two_macros_divided(
+    tmp_path: Path,
+) -> None:
+    """D6. The threats section called this "two orders of magnitude".
+
+    It is 70x, which is nearer one and a half. The macro exists so the phrase
+    cannot drift from the measurement again, and the arithmetic is asserted
+    here against the same fixture the two operand macros are asserted against:
+    (4004.9 - 2038.2) / (2038.2 - 2010.2) = 1966.7 / 28.0 = 70.2, which is 70
+    to two significant figures.
+    """
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    # The operands, so a change to either is caught here and not only
+    # downstream.
+    assert "\\newcommand{\\BarrierCost}{1\\,966.7}" in text
+    assert "\\newcommand{\\ProtocolMinusBarrier}{28.0}" in text
+    assert "\\newcommand{\\BarrierToProtocolRatio}{70}" in text
+    # Not a coincidence of this fixture: the quotient, recomputed.
+    assert round((4004.9 - 2038.2) / (2038.2 - 2010.2)) == 70
+
+
+def test_a_ratio_is_rounded_to_significant_figures_without_an_exponent() -> None:
+    """``%g`` would render 100 as ``1e+02``, mid-sentence.
+
+    Two significant figures on a magnitude means the decimals move with the
+    scale: 70.2 rounds to a whole number, 7.02 keeps one place. Both appear in
+    prose, so neither may carry an exponent.
+    """
+    assert tex_sigfigs(70.2392857142857) == "70"
+    assert tex_sigfigs(100.4) == "100"
+    assert tex_sigfigs(7.0239) == "7.0"
+    assert tex_sigfigs(1966.7) == "2\\,000"
+    assert tex_sigfigs(0.0) == "0"
