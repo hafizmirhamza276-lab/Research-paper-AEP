@@ -80,9 +80,18 @@
 % leak. Two forms because the two sites need different grammar: \artifacturl
 % is a bare pointer after a colon, \artifactavail completes "... are ...".
 % The public build renders exactly as it did before this toggle existed.
+% The author identity is gated by the SAME switch, and lives in the SAME
+% block, for the same reason: one place to audit for a leak rather than two.
+% The anonymous branch names nobody and adds no correspondence footnote, so
+% an identity added to the wrong branch cannot reach main-anon.pdf.
+% The address is set in \texttt rather than \url so it produces no link
+% annotation -- an annotation is a second surface an anonymity check has to
+% clear, and the Monday audit found four of them the text check had missed.
 \ifanonymous
   \newcommand{\artifacturl}{available via the submission system}
   \newcommand{\artifactavail}{available via the submission system}
+  \newcommand{\authorname}{Anonymous Author(s)}
+  \newcommand{\authorcontact}{}
   % The identifying string must not survive in the document properties either,
   % which is where an anonymised PDF usually leaks. Set empty explicitly rather
   % than relying on them happening to be unset.
@@ -93,6 +102,9 @@
     \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
   \newcommand{\artifactavail}{available at%
     \ \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
+  \newcommand{\authorname}{Hamza Khan}
+  \newcommand{\authorcontact}{%
+    \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.}}
 \fi
 % =====================================================================
 
@@ -102,8 +114,9 @@
 Autonomous Agents Calling Non-Idempotent Legacy APIs}
 
 \author{%
-  \IEEEauthorblockN{Anonymous Author(s)}%
+  \IEEEauthorblockN{\authorname}%
   \thanks{Manuscript prepared \today. Artifact: \artifacturl.}%
+  \authorcontact%
 }
 
 \markboth{IEEE Transactions on Software Engineering}%

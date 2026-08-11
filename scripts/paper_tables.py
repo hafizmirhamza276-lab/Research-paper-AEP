@@ -1525,6 +1525,43 @@ def emit_numbers(
             f"same bootstrap, appendfsync={policy}",
         )
 
+    # --- The same interval for the OTHER half of the decomposition -------
+    # \BarrierToProtocolRatio divides one median difference by another, and
+    # until now only the numerator carried an interval. The denominator is the
+    # weaker of the two: three runs per arm, and a spread wide enough that the
+    # ratio is pinned to about one order of magnitude rather than to a figure.
+    # Threats-to-validity quotes both endpoints so the ratio is read as a
+    # median-based estimate rather than as a measurement of "70".
+    #
+    # everysec only, deliberately. The `always` arm has no sentence quoting
+    # it, and the "every generated number is used" gate turns an unquoted
+    # macro into a build failure rather than into clutter.
+    everysec_path = execution_paths.get("everysec")
+    if everysec_path:
+        protocol = crash_free_latencies(everysec_path, "B3_INTENT_NO_BARRIER")
+        no_protocol = crash_free_latencies(everysec_path, "B0_NAIVE_RETRY")
+        if protocol and no_protocol:
+            point, low, high = cluster_bootstrap_median_difference(
+                protocol, no_protocol
+            )
+            macro(
+                "ProtocolMinusBarrierLow",
+                tex_number(low),
+                "analysis/per-execution.csv | cluster bootstrap over runs, "
+                "10000 resamples, seed 20260806, appendfsync=everysec",
+                f"2.5th percentile of (median B3 - median B0); point estimate "
+                f"{point:.1f} ms from {len(protocol)} and "
+                f"{len(no_protocol)} runs",
+            )
+            macro(
+                "ProtocolMinusBarrierHigh",
+                tex_number(high),
+                "analysis/per-execution.csv | 97.5th percentile of the same "
+                "bootstrap, appendfsync=everysec",
+                "the denominator of \\BarrierToProtocolRatio; its width is "
+                "why that factor is quoted as an estimate",
+            )
+
     # --- Coverage, from the analysis tool's own census -------------------
     if coverage:
         for name, key in (

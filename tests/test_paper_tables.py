@@ -27,6 +27,7 @@ plausible-looking number rather than an error:
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -606,6 +607,65 @@ def test_the_barrier_to_protocol_ratio_is_the_two_macros_divided(
     assert "\\newcommand{\\BarrierToProtocolRatio}{70}" in text
     # Not a coincidence of this fixture: the quotient, recomputed.
     assert round((4004.9 - 2038.2) / (2038.2 - 2010.2)) == 70
+
+
+def test_the_ratios_denominator_carries_its_own_interval(tmp_path: Path) -> None:
+    """The other half of the decomposition, which had no interval until now.
+
+    ``\\BarrierToProtocolRatio`` divides one median difference by another. The
+    numerator has been reported with a cluster bootstrap since the hostile
+    read asked for one; the denominator had a point estimate and nothing else,
+    which is what let the ratio read as a measurement rather than an estimate.
+
+    Asserted structurally rather than against fixed numbers: the bootstrap is
+    seeded, but pinning percentiles of a resample to four significant figures
+    would make this a test of the RNG. What must hold is that both macros are
+    emitted for ``everysec``, that they bracket the point estimate, and --
+    the property the sentence in Section VIII actually leans on -- that the
+    interval is not degenerate.
+    """
+    rows = ["regime,system,run_id,step_latency_ms"]
+    # Three runs per arm, ten executions each, B3 above B0 by ~28 ms with
+    # enough per-run spread that the resample has something to move.
+    for run in range(3):
+        for execution in range(10):
+            rows.append(
+                f"p0,B0_NAIVE_RETRY,b0-run{run},{2010 + run * 4 + execution}"
+            )
+            rows.append(
+                f"p0,B3_INTENT_NO_BARRIER,b3-run{run},"
+                f"{2038 + run * 9 + execution}"
+            )
+    path = tmp_path / "per-execution.csv"
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={"everysec": path},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+
+    def value(name: str) -> float:
+        match = re.search(
+            r"\\newcommand\{\\" + name + r"\}\{([^}]*)\}", text
+        )
+        assert match, f"{name} was not emitted"
+        return float(match.group(1).replace("\\,", ""))
+
+    low = value("ProtocolMinusBarrierLow")
+    high = value("ProtocolMinusBarrierHigh")
+    assert low <= high
+    assert low < high, "a degenerate interval would make the qualifier a lie"
+    # And it is the everysec arm only: an `always` twin would be orphaned,
+    # and the "every generated number is used" gate fails on orphans.
+    assert "ProtocolMinusBarrierAlwaysLow" not in text
 
 
 def test_a_ratio_is_rounded_to_significant_figures_without_an_exponent() -> None:

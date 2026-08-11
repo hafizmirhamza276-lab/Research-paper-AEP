@@ -367,6 +367,10 @@ transaction, or the effect can be made idempotent, then a durable-execution
 engine gives a strictly stronger guarantee at lower cost and AEP is the wrong
 tool. Its cost is real: two fsync barriers, which under \texttt{appendfsync
 everysec} dominate the protocol's latency by a factor of roughly
-\BarrierToProtocolRatio{} (\cref{tab:latency}). AEP is for the case where the
-precondition those systems require cannot be obtained, and its value is a
-declared residual rather than a better guarantee.
+\BarrierToProtocolRatio{} (\cref{tab:latency}) --- a ratio of medians, and one
+whose denominator is pinned only to
+[\ProtocolMinusBarrierLow{}, \ProtocolMinusBarrierHigh{}]\,ms at three runs per
+arm, so the factor is an estimate of an order of magnitude rather than of a
+figure. AEP is for the case where the precondition those systems
+require cannot be obtained, and its value is a declared residual rather than a
+better guarantee.

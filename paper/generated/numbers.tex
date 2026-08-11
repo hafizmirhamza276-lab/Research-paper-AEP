@@ -315,6 +315,14 @@
 % analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=always
 \newcommand{\BarrierCostAlwaysHigh}{22.7}
 
+% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% 2.5th percentile of (median B3 - median B0); point estimate 30.5 ms from 3 and 3 runs
+\newcommand{\ProtocolMinusBarrierLow}{27.1}
+
+% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=everysec
+% the denominator of \BarrierToProtocolRatio; its width is why that factor is quoted as an estimate
+\newcommand{\ProtocolMinusBarrierHigh}{1\,524.6}
+
 % analysis/coverage.json | runs
 \newcommand{\RunsCollected}{432}
 

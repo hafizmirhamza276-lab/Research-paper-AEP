@@ -5,15 +5,23 @@
 FIX FIRST, defect list §4.2, fix log for F1/F2/F3, human residual checklist §4.4)
 **Range:** `399e502` (audit head) → this session's head.
 
-**Headline:** T2 (D12), T3 (D6) and T4 (D11) are complete and verified. **T1 (the
-author block) is BLOCKED-INPUT and was not attempted**: the HUMAN INPUT block in
-the session prompt arrived with all four fields unfilled — literal underscores —
-and T1a instructs me to stop rather than guess in exactly that case. No name,
-affiliation, email or ORCID was invented, and `paper/main.tex` is unmodified.
+**Headline:** T2 (D12), T3 (D6) and T4 (D11) were completed in the first half of
+the session. T1 was BLOCKED-INPUT at that point — the HUMAN INPUT block arrived
+with all four fields as literal underscores — and was resumed later in the same
+session when the human supplied two of the four. **T1 is now complete for the
+fields supplied**, together with an authorised §F.1 follow-up that qualifies the
+D6 ratio with its propagated uncertainty.
 
-Because T1 is a repository-side item, **the closing line this prompt specified
-could not be written as given without asserting something false.** §E.1 records
-the substitution and §H states the true position.
+**One field is still absent, by the human's own hand rather than by mine:
+affiliation.** The resume message supplied `Author name(s)` and `Email(s)` and
+omitted the `Affiliation(s)` and `ORCID` lines entirely. ORCID is marked
+optional in the prompt, so its absence is in specification. Affiliation is not
+optional and **I did not invent one** — no institution, and not
+"Independent Researcher" either, which would be an invented affiliation wearing
+a generic label. The author block renders exactly the two fields given. §E.8
+records this and §H states what it costs.
+
+Everything below reflects the whole session, first half and resume.
 
 ---
 
@@ -34,9 +42,10 @@ this session and is noted in §G.4 as something the human may want to reconcile.
 `tests/test_paper_tables.py` (additions only), `paper/generated/**` (via the
 committed generator only), `paper/sections/08-threats.tex` (the one sentence),
 `paper/main.pdf` and `paper/main-anon.pdf` (rebuilds), and this report.
-`paper/main.tex` was in scope for T1 and is **unmodified** because T1 is
-blocked. `paper/sections/06-evaluation.tex` was forbidden and is untouched —
-proved in §C.9.
+`paper/main.tex` was in scope for T1: **unmodified through §C–§H below, then
+modified in the resume** once the human supplied the fields — author block only,
+diff in §R.B. `paper/sections/06-evaluation.tex` was forbidden and is untouched
+throughout — proved in §C.9 and re-proved after the resume.
 
 **Standing rules.** No history rewriting (two new commits, no amend, no rebase,
 no force). No edits to frozen results (`git log --diff-filter=DM --
@@ -64,10 +73,14 @@ published; no account, release, release asset, draft or tag created or moved.**
 
 **Not modified, and each for a stated reason:**
 
-- `paper/main.tex` — T1's target. Blocked on unfilled input (§E.1).
+- `paper/main.tex` — T1's target. Blocked on unfilled input at this point in the
+  session (§E.1); **modified in the resume**, author block only (§R.A, §R.B).
 - `paper/sections/06-evaluation.tex` — forbidden this session. `git diff` for it
-  is empty (§C.9).
+  is empty (§C.9), and still empty after the resume.
 - Everything else in the repository.
+
+*(The table above covers the first half of the session. The resume adds
+`paper/main.tex` and re-touches four of these files; its own full list is §R.A.)*
 
 Nothing under `aep_core/**`, `experiments/**`, `docs/**`, `.github/**`, or any
 `scripts/` file other than `paper_tables.py` was touched.
@@ -984,3 +997,310 @@ into scratch directories (both deleted), `git push`, unauthenticated `GET`s to
 containers. Nothing was uploaded, submitted or published; no account, token,
 release, release asset or draft was created anywhere; no tag was created or
 moved. arXiv and TSE submission remain the human's.**
+
+---
+---
+
+# Resume — T1 completed, and the §F.1 clause
+
+The human supplied two of the four author fields and authorised one additional
+sentence: the §F.1 qualifier on the D6 ratio. Same scope bounds, plus
+`paper/main.tex` (author block) and that one clause.
+
+## R.A What changed in the resume
+
+| File | A/M | Why |
+|---|---|---|
+| `paper/main.tex` | M | T1 — the author block, gated by `\ifanonymous` |
+| `scripts/paper_tables.py` | M | §F.1 — `\ProtocolMinusBarrierLow/High`, the denominator's bootstrap interval |
+| `tests/test_paper_tables.py` | M | §F.1 — one added test; additions only |
+| `paper/generated/numbers.tex` | M | generator output: +8 lines |
+| `paper/sections/08-threats.tex` | M | §F.1 — the authorised clause |
+| `paper/main.pdf`, `paper/main-anon.pdf` | M | rebuilds |
+| `reports/phase-report-final-2026-08-11.md` | M | this section |
+
+`paper/sections/06-evaluation.tex` remains untouched — `git diff` empty.
+
+## R.B T1 — the author block, and why T1b was the real work
+
+The audit's residual checklist called this "fill in the author block", which
+undersells it. `\author{}` sat **outside** the `\ifanonymous` block, which
+closes at `main.tex:96`. Substituting a name into it would have put that name
+in `main-anon.pdf` — the exact failure the toggle exists to prevent,
+reintroduced by the act of completing the checklist item.
+
+The fix follows F2's own design rather than inventing a second one: the identity
+lives in the **same block** as the artifact pointer, as two macros, so there is
+one place to audit for a leak instead of two.
+
+```latex
+\ifanonymous
+  \newcommand{\artifacturl}{available via the submission system}
+  \newcommand{\artifactavail}{available via the submission system}
+  \newcommand{\authorname}{Anonymous Author(s)}
+  \newcommand{\authorcontact}{}
+  \hypersetup{pdfauthor={},pdftitle={},...}
+\else
+  \newcommand{\artifacturl}{\url{https://github.com/...}}
+  \newcommand{\artifactavail}{available at \url{https://github.com/...}}
+  \newcommand{\authorname}{Hamza Khan}
+  \newcommand{\authorcontact}{%
+    \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.}}
+\fi
+...
+\author{%
+  \IEEEauthorblockN{\authorname}%
+  \thanks{Manuscript prepared \today. Artifact: \artifacturl.}%
+  \authorcontact%
+}
+```
+
+**One deliberate choice worth stating.** The address is set in `\texttt` rather
+than `\url`. A `\url` would have hyperref emit a link annotation carrying the
+address, and annotations are the surface the Monday audit found four leaks on
+that a text-only check had missed. Setting it as plain text means the anonymous
+build has one fewer surface to clear, and the public build's annotation count is
+unchanged at 15 — verified below, not assumed.
+
+`/Author` was left empty in the public build too. Populating it is conventional
+and was not asked for; an empty field cannot leak, and the audit recorded the
+empty state as a property worth keeping.
+
+## R.C The identity scan — all supplied strings, all three surfaces
+
+The check §F.7 said this session could not make. Needles are the two supplied
+fields plus every fragment they decompose into, because a check for the full
+string alone would miss a hyphenated or line-broken rendering. Matching is
+case-folded (§F.6's lesson) and covers rendered page text, URI link annotations,
+and the document information dictionary, with Flate streams decompressed first.
+
+**`main.pdf` (public):**
+
+```
+bytes 362455   pages 18   streams decoded 177
+
+-- URI link annotations: 15 total --
+   4x  https://github.com/hafizmirhamza276-lab/Research-paper-AEP
+   (plus the 11 legitimate reference URLs)
+
+-- document information dictionary --
+   /Author    ''
+   /Title     ''
+   /Creator   'LaTeX with hyperref'
+   /Producer  'pdfTeX-1.40.25'
+
+-- identity needles --
+   'Hamza Khan'                   page text 1    URI annots 0    raw+streams 0
+   'hafizmirhamza276@gmail.com'   page text 1    URI annots 0    raw+streams 1
+```
+
+The name renders once, the address renders once, and **neither adds a link
+annotation** — the count is 15, exactly what it was before this session.
+
+**`main-anon.pdf` (anonymous):**
+
+```
+bytes 361628   pages 18   streams decoded 177
+
+-- URI link annotations: 11 total --
+   (the six reference URLs only; no github.com entry)
+
+-- document information dictionary --
+   /Author    ''      /Title     ''      /Creator   ''
+   /Producer  ''      /Subject   ''      /Keywords  ''
+
+-- XMP metadata --
+   none
+
+-- identity needles, all three surfaces --
+   'Hamza Khan'                   page text 0    URI annots 0    raw+streams 0
+   'hafizmirhamza276@gmail.com'   page text 0    URI annots 0    raw+streams 0
+   'hafizmirhamza276'             page text 0    URI annots 0    raw+streams 0
+   'Hamza'                        page text 0    URI annots 0    raw+streams 0
+   'Khan'                         page text 0    URI annots 0    raw+streams 0
+   'gmail'                        page text 0    URI annots 0    raw+streams 0
+   'Correspondence'               page text 0    URI annots 0    raw+streams 0
+
+TOTAL needle hits across all surfaces: 0
+```
+
+**Zero, on every needle and every surface.** Including `Correspondence`, the
+footnote label itself — a reviewer cannot even tell a correspondence footnote
+was removed.
+
+What each build renders:
+
+```
+=== PUBLIC  main.pdf -- pages 18 ===
+  0x  'Anonymous Author(s)'
+  1x  'Hamza Khan'
+  1x  'hafizmirhamza276@gmail.com'
+  1x  'Correspondence:'
+  0x  'available via the submission system'
+  title area: '... Legacy APIs Hamza Khan Abstract--Autonomous software agents ...'
+
+=== ANON    main-anon.pdf -- pages 18 ===
+  1x  'Anonymous Author(s)'
+  0x  'Hamza Khan'
+  0x  'hafizmirhamza276@gmail.com'
+  0x  'Correspondence:'
+  2x  'available via the submission system'
+  title area: '... Legacy APIs Anonymous Author(s) Abstract--Autonomous software agents ...'
+```
+
+## R.D §F.1 — the ratio, qualified
+
+The authorisation was one clause naming the propagated uncertainty. Written to
+the project's numbers discipline rather than around it: **both endpoints are
+generated macros**, not typed, so the qualifier cannot drift from the bootstrap
+the way the phrase it replaces drifted from the measurement.
+
+```
+% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% 2.5th percentile of (median B3 - median B0); point estimate 30.5 ms from 3 and 3 runs
+\newcommand{\ProtocolMinusBarrierLow}{27.1}
+
+% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=everysec
+% the denominator of \BarrierToProtocolRatio; its width is why that factor is quoted as an estimate
+\newcommand{\ProtocolMinusBarrierHigh}{1\,524.6}
+```
+
+Emitted for `everysec` only. An `always` twin would have no sentence quoting it,
+and the "every generated number is used" gate turns an unquoted macro into a
+build failure — so the restriction is enforced, not merely intended.
+
+The sentence, as rendered in the PDF:
+
+> two fsync barriers, which under `appendfsync everysec` dominate the protocol's
+> latency by a factor of roughly 70 (Table X) — **a ratio of medians, and one
+> whose denominator is pinned only to [27.1, 1 524.6] ms at three runs per arm,
+> so the factor is an estimate of an order of magnitude rather than of a
+> figure.**
+
+**I chose to name the denominator's interval rather than the resulting ratio
+range**, which the authorisation permitted either way. The reason is worth
+recording, because the other choice looks more informative and is worse: a ratio
+range obtained by dividing the numerator's point estimate by the denominator's
+interval endpoints is not a confidence interval for the ratio. It is a crude
+bound that ignores the covariance between numerator and denominator — both are
+functions of the same B3 medians. Quoting "1.3x to 73x" would have put a number
+in the paper that looks like a bootstrap result and is not one. Deriving a real
+interval for the ratio means bootstrapping the ratio statistic itself, which is
+a new statistical method added to a frozen manuscript days before submission.
+Naming the denominator's interval says the same thing to a reviewer — the factor
+is loosely pinned, and here is why — using machinery the paper already validates
+and CI already gates.
+
+The new test asserts the interval structurally rather than numerically: that
+both macros are emitted for `everysec`, that they bracket the point estimate,
+that the interval is non-degenerate (a degenerate one would make the qualifier
+false), and that no `always` twin exists. Pinning resampled percentiles to four
+significant figures would have made it a test of the RNG.
+
+## R.E Gates, resume
+
+```
+$ uv run --frozen python -m pytest tests/test_paper_tables.py -q
+........................                                                 [100%]
+24 passed in 1.02s
+
+$ uv run --frozen python scripts/check_paper_numbers.py
+  ... PASS every generated number is used in the manuscript ...
+18 passed, 0 failed
+
+$ uv run --frozen pytest -q -ra --strict-markers --junitxml=junit.xml \
+    --cov=aep_core --cov-fail-under=90   (full CI environment)
+Required test coverage of 90% reached. Total coverage: 91.18%
+1738 passed, 3 warnings in 157.82s (0:02:37)
+
+$ uv run --frozen python scripts/check_pytest_gates.py \
+    --junit junit.xml --output pytest-output.txt --minimum-tests 1700
+OK: 1738 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed
+```
+
+Both builds:
+
+```
+PUBLIC:  Output written on main.pdf (18 pages       overfull boxes: 10
+         18 passed, 0 failed          build clean.          PUBLIC_EXIT=0
+ANON:    Output written on main-anon.pdf (18 pages  overfull boxes: 10
+         build clean (main-anon).                           ANON_EXIT=0
+```
+
+**18 pages and 10 overfull boxes on both, unchanged for the fourth build in a
+row.** The author block and the new clause cost no page and introduced no new
+overfull box.
+
+## R.F E.8 — the affiliation, absent and not invented
+
+The resume message supplied:
+
+```
+Author name(s):      Hamza Khan
+Email(s):            hafizmirhamza276@gmail.com
+```
+
+and omitted the `Affiliation(s)` and `ORCID` lines. ORCID is marked optional in
+the prompt's own block, so a blank one is in specification and the author block
+simply has none.
+
+**Affiliation is not optional and is absent.** T1a's stop-on-blank rule exists
+to stop me guessing, and I did not: the block renders a name and a
+correspondence address and no institution. I specifically did not write
+"Independent Researcher", which is the tempting move — it reads like a neutral
+default and is in fact an assertion about the author's employment status that
+nobody made.
+
+What this costs, stated plainly so it is not discovered at submission:
+
+- **TSE:** nothing structural. ScholarOne collects authors and affiliations in
+  its own form, and the audit's residual checklist §4.4 item 4 already assigns
+  the author block there. The PDF's block is not the record of authorship.
+- **arXiv:** more. arXiv takes the author list from the submission form, but the
+  PDF is what a reader sees, and an IEEE-formatted paper with a bare name and no
+  affiliation line looks unfinished rather than deliberately unaffiliated.
+- **The one-line fix:** add an `\IEEEauthorblockA{...}` after `\authorname` in
+  the `\else` branch, or extend the `\authorcontact` `\thanks`. Both are inside
+  the toggle already, so neither can leak into the anonymous build.
+
+## R.G What the resume adds to §F — hostile reading of the resume itself
+
+**F.8 The anonymous build is now protected by a convention, not by a check.**
+The toggle works, and the scan proves it works *today*. But nothing in CI runs
+that scan. If someone later adds an author line, a funding note or an
+acknowledgements section outside the `\ifanonymous` block — exactly the mistake
+this section had to fix — the anonymous build will leak and every gate will stay
+green. The numbers gate does not build `main-anon.pdf` at all. **A CI job that
+greps the anonymous PDF for a configured list of identity strings would close
+this permanently**, and it is the single highest-value thing left in the
+repository. It was not in scope this session.
+
+**F.9 The scan's needle list is hand-written.** I searched for the two supplied
+fields and five fragments. That is a judgement about what to look for, not a
+proof of absence — a leak in a form I did not think to search for would not
+appear. The `TOTAL needle hits: 0` line means "zero of the seven things I looked
+for", and should be read that way.
+
+**F.10 `\texttt` for the address is a trade, not a free win.** It removes the
+annotation surface, and it also removes the clickable `mailto:` a reader might
+expect in a published paper. For the anonymous submission that is strictly
+right. For the arXiv version it is a small loss of convenience, chosen
+deliberately.
+
+**F.11 The §F.1 clause makes an already-long sentence longer.** It now carries a
+factor, a bracketed interval, a run count and a hedge, in a subsection about when
+*not* to use the protocol. It is honest and it is denser than the prose around
+it. A copy-editor would probably split it in two; I did not, because the
+authorisation was one clause and "no other prose changes".
+
+## R.H Recommended next step, revised
+
+Repository work is complete. In order of value:
+
+1. **Decide whether the author block needs an affiliation** (§R.F). One line,
+   inside the toggle, cannot leak.
+2. **Consider the anonymity CI job** (§F.8). It is the only structural gap left,
+   and it protects a property the submission depends on.
+3. Then the human residual checklist: TSE review policy on ScholarOne, arXiv
+   upload, TSE submission, raw-archive publication (D4), and the optional
+   low-tail items (D1/D2/D3/D5/D7).
