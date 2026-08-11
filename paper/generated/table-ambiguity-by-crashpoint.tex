@@ -7,16 +7,17 @@
 \caption{AEP-full's declared-ambiguity rate, by crash point and endpoint capability. The rate is not a constant of the protocol: it is zero where the crash precedes the intent write (nothing was promised), zero throughout \textsc{auth} (absence is provable), and highest exactly where no effect can exist but the endpoint cannot say so. Undetected duplicates and lost effects are $0$ in every cell of this table.}
 \label{tab:ambiguity-by-crashpoint}
 \small
+\renewcommand{\arraystretch}{1.08}
 \begin{tabular}{@{}lccc@{}}
 \toprule
 crash point & \textsc{auth} & \textsc{pos-only} & \textsc{none}\\
 \midrule
 \texttt{before\_intent\_write} & 0/30 & 0/30 & 0/30\\
-\texttt{after\_intent\_before\_barrier} & 0/30 & 30/30 & 30/30\\
-\texttt{after\_barrier\_before\_dispatch} & 0/30 & 30/30 & 30/30\\
+\shortstack[l]{\texttt{after\_intent\_}\\\texttt{before\_barrier}} & 0/30 & 30/30 & 30/30\\
+\shortstack[l]{\texttt{after\_barrier\_}\\\texttt{before\_dispatch}} & 0/30 & 30/30 & 30/30\\
 \texttt{mid\_dispatch} & 0/30 & 0/30 & 30/30\\
-\texttt{after\_response\_before\_res.} & 0/30 & 1/30 & 30/30\\
-\texttt{after\_resolution\_before\_bar.} & 0/30 & 2/30 & 10/30\\
+\shortstack[l]{\texttt{after\_response\_}\\\texttt{before\_resolution}} & 0/30 & 1/30 & 30/30\\
+\shortstack[l]{\texttt{after\_resolution\_}\\\texttt{before\_barrier}} & 0/30 & 2/30 & 10/30\\
 \bottomrule
 \end{tabular}
 \end{table}

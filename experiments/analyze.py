@@ -1128,6 +1128,10 @@ def write_figures(
         import matplotlib
 
         matplotlib.use("Agg")
+        # Embed scalable TrueType outlines in the paper PDFs.  Matplotlib's
+        # default Type 3 output is readable but complicates print-quality and
+        # accessibility checks once these figures are included by LaTeX.
+        matplotlib.rcParams["pdf.fonttype"] = 42
         import matplotlib.pyplot as plt
     except ImportError:
         return []
@@ -1177,7 +1181,19 @@ def write_figures(
         lows.append(max(0.0, rate_here - low))
         highs.append(max(0.0, high - rate_here))
 
-    figure, axis = plt.subplots(figsize=(9, 4.2))
+    # Draw at the IEEE single-column width so LaTeX does not scale 8 pt labels
+    # down to roughly 3 pt. The system codes are defined in the paper and keep
+    # all seven groups legible without discarding any plotted series.
+    system_labels = {
+        "AEP_FULL": "AEP",
+        "B0_NAIVE_RETRY": "B0",
+        "B1_LEASE_ONLY": "B1",
+        "B2_CAS_ONLY": "B2",
+        "B3_INTENT_NO_BARRIER": "B3",
+        "B4_DURABLE_WORKFLOW": "B4",
+        "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE": "B4b",
+    }
+    figure, axis = plt.subplots(figsize=(3.5, 3.0))
     positions = range(len(systems))
     offset = 0.2
     axis.bar(
@@ -1186,25 +1202,26 @@ def write_figures(
         width=0.4,
         yerr=[lows, highs],
         capsize=3,
-        label="undetected duplicate rate",
+        label="undetected duplicate",
     )
     axis.bar(
         [position + offset for position in positions],
         ambiguities,
         width=0.4,
-        label="known ambiguity rate",
+        label="declared ambiguity",
     )
     axis.set_xticks(list(positions))
-    axis.set_xticklabels(systems, rotation=20, ha="right", fontsize=8)
-    axis.set_ylabel("rate per execution")
-    axis.set_title(
-        "Undetected duplicates versus declared ambiguity, by system\n"
-        f"regime {figure_regime} only; pooled over crash points and endpoint "
-        "capabilities, weighted by executions\n"
-        "(95% Wilson interval on the duplicate rate)",
-        fontsize=9,
+    axis.set_xticklabels(
+        [system_labels.get(system, system) for system in systems], fontsize=8
     )
-    axis.legend(fontsize=8)
+    axis.set_ylabel("rate per execution", fontsize=8)
+    axis.tick_params(axis="y", labelsize=8)
+    axis.legend(
+        fontsize=8,
+        ncol=1,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+    )
     axis.grid(axis="y", alpha=0.3)
     figure.tight_layout()
     path = destination / "figure-1-undetected-vs-ambiguity.pdf"
@@ -1244,7 +1261,10 @@ def write_figures(
     }
 
     if crash_points and by_system:
-        figure, axis = plt.subplots(figsize=(10, 4.6))
+        # This grouped plot carries seven systems over six long crash-point
+        # names, so it is a native IEEE two-column figure rather than a large
+        # canvas later shrunk into one column.
+        figure, axis = plt.subplots(figsize=(7.16, 3.2))
         width = 0.8 / max(1, len(by_system))
         for index, (system, values) in enumerate(sorted(by_system.items())):
             axis.bar(
@@ -1254,13 +1274,31 @@ def write_figures(
                 ],
                 [values.get(point, 0.0) for point in crash_points],
                 width=width,
-                label=system,
+                label=system_labels.get(system, system),
             )
         axis.set_xticks(list(range(len(crash_points))))
-        axis.set_xticklabels(crash_points, rotation=20, ha="right", fontsize=8)
-        axis.set_ylabel("undetected duplicate rate")
-        axis.set_title("Undetected duplicate rate by crash point", fontsize=10)
-        axis.legend(fontsize=7, ncol=3)
+        crash_point_labels = {
+            "before_intent_write": "before intent write",
+            "after_intent_before_barrier": "after intent / before barrier",
+            "after_barrier_before_dispatch": "after barrier / before dispatch",
+            "mid_dispatch": "mid-dispatch",
+            "after_response_before_resolution": "after response / before resolution",
+            "after_resolution_before_barrier": "after resolution / before barrier",
+        }
+        axis.set_xticklabels(
+            [crash_point_labels.get(point, point) for point in crash_points],
+            rotation=18,
+            ha="right",
+            fontsize=8,
+        )
+        axis.set_ylabel("undetected duplicate rate", fontsize=8)
+        axis.tick_params(axis="y", labelsize=8)
+        axis.legend(
+            fontsize=8,
+            ncol=4,
+            loc="lower center",
+            bbox_to_anchor=(0.5, 1.01),
+        )
         axis.grid(axis="y", alpha=0.3)
         figure.tight_layout()
         path = destination / "figure-2-duplicates-by-crash-point.pdf"

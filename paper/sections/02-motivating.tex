@@ -91,9 +91,12 @@ declared ambiguity (\cref{sec:eval-detection} measures the ablation), and
 \cref{sec:eval-prevention} isolates what it does buy.}
 \label{tab:trilemma}
 \small
-\begin{tabular}{@{}lccc@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xccc@{}}
 \toprule
- & \undetdup{} & \lostfx{} & \declamb{} \\
+ & \shortstack{\emph{undetected}\\\emph{duplicate}}
+ & \shortstack{\emph{lost}\\\emph{effect}}
+ & \shortstack{\emph{declared}\\\emph{ambiguity}} \\
 \midrule
 B0 naive retry            & \textbf{yes} & --- & no \\
 B1 lease-only             & \textbf{yes} & --- & no \\
@@ -101,10 +104,10 @@ B2 CAS-only               & \textbf{yes} & --- & no \\
 B4 durable, max attempts $\infty$  & \textbf{yes} & --- & no \\
 B4b durable, max attempts $=1$     & no & \textbf{yes} & no \\
 \midrule
-B3 AEP minus the barrier  & no & no & \textbf{yes, bounded} \\
-AEP-full                  & no & no & \textbf{yes, bounded} \\
+B3 AEP minus the barrier  & no & no & \shortstack{\textbf{yes,}\\\textbf{bounded}} \\
+AEP-full                  & no & no & \shortstack{\textbf{yes,}\\\textbf{bounded}} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \Cref{tab:trilemma} is the shape of the argument. At-most-once dispatch is

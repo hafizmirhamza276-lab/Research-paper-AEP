@@ -280,10 +280,10 @@ collected on Ubuntu inside WSL2 on Windows~11, with Docker Desktop port
 forwarding in the path, on mains power with sleep and hibernation disabled.
 Development and part of the test suite run on the Windows host; \emph{every}
 number in \cref{sec:evaluation} comes from the Linux tree against real Redis.
-The split is a threat and we manage it explicitly rather than eliding it: one
-known test failure is a \texttt{fakeredis} scan-batching artifact that occurs
-only on Windows and predates this work, and the Linux suite against real Redis
-is the one the artifact rests on. Absolute latency and throughput are
+The split is a threat and we manage it explicitly rather than eliding it: the
+locally runnable Windows suite and the artifact's Linux suite against real
+Redis are checked separately, while the Linux evidence is the one the
+measurements rest on. Absolute latency and throughput are
 platform-bound; only comparisons \emph{between} systems sharing this platform
 are meaningful, which is why \cref{tab:latency} is presented as increments over
 a common floor.

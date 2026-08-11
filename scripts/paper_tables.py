@@ -98,11 +98,19 @@ SYSTEM_LABEL = {
 }
 CRASH_POINT_LABEL = {
     "before_intent_write": r"\texttt{before\_intent\_write}",
-    "after_intent_before_barrier": r"\texttt{after\_intent\_before\_barrier}",
-    "after_barrier_before_dispatch": r"\texttt{after\_barrier\_before\_dispatch}",
+    "after_intent_before_barrier": (
+        r"\shortstack[l]{\texttt{after\_intent\_}\\\texttt{before\_barrier}}"
+    ),
+    "after_barrier_before_dispatch": (
+        r"\shortstack[l]{\texttt{after\_barrier\_}\\\texttt{before\_dispatch}}"
+    ),
     "mid_dispatch": r"\texttt{mid\_dispatch}",
-    "after_response_before_resolution": r"\texttt{after\_response\_before\_res.}",
-    "after_resolution_before_barrier": r"\texttt{after\_resolution\_before\_bar.}",
+    "after_response_before_resolution": (
+        r"\shortstack[l]{\texttt{after\_response\_}\\\texttt{before\_resolution}}"
+    ),
+    "after_resolution_before_barrier": (
+        r"\shortstack[l]{\texttt{after\_resolution\_}\\\texttt{before\_barrier}}"
+    ),
 }
 CRASH_POINT_ORDER = list(CRASH_POINT_LABEL)
 
@@ -299,6 +307,7 @@ def emit_ambiguity_by_crashpoint(rows: list[dict[str, str]], out: Path) -> None:
     )
     lines.append(r"\label{tab:ambiguity-by-crashpoint}")
     lines.append(r"\small")
+    lines.append(r"\renewcommand{\arraystretch}{1.08}")
     lines.append(r"\begin{tabular}{@{}lccc@{}}")
     lines.append(r"\toprule")
     lines.append(
@@ -430,9 +439,15 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
     )
     lines.append(r"\label{tab:latency}")
     lines.append(r"\small")
-    lines.append(r"\begin{tabular}{@{}lrrr@{}}")
+    lines.append(
+        r"\begin{tabularx}{\columnwidth}"
+        r"{@{}>{\raggedright\arraybackslash}Xrrr@{}}"
+    )
     lines.append(r"\toprule")
-    lines.append(r"system & runs & median step (ms) & over B0 (ms)\\")
+    lines.append(
+        r"system & runs & \shortstack{median step\\(ms)} & "
+        r"\shortstack{over B0\\(ms)}\\"
+    )
     lines.append(r"\midrule")
     for system, label in LATENCY_ORDER:
         row = by_system.get(system)
@@ -452,7 +467,7 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
             f"{label} & {crash_free} & {tex_number(median)} & {over}" + r"\\"
         )
     lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
+    lines.append(r"\end{tabularx}")
     lines.append(r"\end{table}")
     (out / "table-latency.tex").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
@@ -803,7 +818,7 @@ def emit_deployment_choice(
         "% changed. Never across policies: that would assume the ablated",
         "% protocol's own writes cost the same under both, which is exactly",
         "% what the two B3 numbers are here to establish rather than assume.",
-        r"\begin{table}[t]",
+        r"\begin{table*}[t]",
         r"\centering",
         r"\caption{The barrier is a deployment choice, not a fixed cost. All "
         r"three rows run the same pre-dispatch intent ledger and therefore "
@@ -814,10 +829,10 @@ def emit_deployment_choice(
         r"runs only, E5-gated, 2\,000\,ms provider floor.}",
         r"\label{tab:deployment}",
         r"\small",
-        r"\begin{tabular}{@{}lrrrcl@{}}",
+        r"\renewcommand{\arraystretch}{1.08}",
+        r"\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrrc>{\raggedright\arraybackslash}p{0.20\textwidth}@{}}",
         r"\toprule",
-        r"configuration & median & over & barrier & prev- & claim\\",
-        r" & (ms) & floor & (ms) & ents & \\",
+        r"configuration & \shortstack{median\\(ms)} & \shortstack{over\\floor} & \shortstack{barrier\\(ms)} & prevents & claim\\",
         r"\midrule",
     ]
     for label, median, barrier, prevents, claim in rows:
@@ -827,7 +842,7 @@ def emit_deployment_choice(
         )
     fragment += [
         r"\midrule",
-        r"\multicolumn{6}{@{}p{0.94\columnwidth}@{}}{\footnotesize "
+        r"\multicolumn{6}{@{}p{0.96\textwidth}@{}}{\footnotesize "
         r"The detection claim of \cref{tab:outcomes} shows no observed "
         r"difference down the "
         r"whole table: it is produced by the pre-dispatch record plus "
@@ -840,8 +855,8 @@ def emit_deployment_choice(
         f"{tex(b3 - b0)}"
         r"\,ms the protocol costs with the barrier already removed.}\\",
         r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
+        r"\end{tabularx}",
+        r"\end{table*}",
     ]
     (out / "table-deployment-choice.tex").write_text(
         "\n".join(fragment) + "\n", encoding="utf-8"

@@ -120,7 +120,7 @@ Validate the formal model's citations:
 uv run --frozen python scripts/validate_citations.py
 ```
 
-Expected: **374 citations, 0 invalid**.
+Expected: **371 citations, 0 invalid**.
 
 ## Test-instance safety
 

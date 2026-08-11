@@ -216,9 +216,9 @@ def check_state_machine(result: Result, paper: Path) -> None:
     )
 
 
-def check_bibliography(result: Result, paper: Path) -> None:
+def check_bibliography(result: Result, build_dir: Path) -> None:
     """A blank bibliography compiles clean. Check the artifact, not the log."""
-    bbl = paper / "main.bbl"
+    bbl = build_dir / "main.bbl"
     if not bbl.is_file():
         result.check(
             False, "main.bbl exists", f"missing {bbl}; run bibtex first"
@@ -238,7 +238,7 @@ def check_bibliography(result: Result, paper: Path) -> None:
         f"{len(empty)} empty: {empty[:5]}",
     )
 
-    blg = paper / "main.blg"
+    blg = build_dir / "main.blg"
     if blg.is_file():
         log = blg.read_text(encoding="utf-8", errors="replace")
         bad = [
@@ -253,8 +253,8 @@ def check_bibliography(result: Result, paper: Path) -> None:
         )
 
 
-def check_undefined_references(result: Result, paper: Path) -> None:
-    log = paper / "main.log"
+def check_undefined_references(result: Result, build_dir: Path) -> None:
+    log = build_dir / "main.log"
     if not log.is_file():
         result.check(False, "main.log exists", f"missing {log}")
         return
@@ -289,6 +289,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--paper", type=Path, default=ROOT / "paper")
     parser.add_argument(
+        "--build-dir",
+        type=Path,
+        help=(
+            "directory containing a freshly staged main.bbl/main.blg/main.log; "
+            "defaults to --paper for direct and legacy invocations"
+        ),
+    )
+    parser.add_argument(
         "--analysis",
         type=Path,
         default=ROOT / "experiments" / "results" / "matrix" / "analysis",
@@ -304,11 +312,13 @@ def main() -> int:
         default=ROOT / "experiments" / "results",
     )
     arguments = parser.parse_args()
+    build_dir = arguments.build_dir or arguments.paper
 
     print("=" * 70)
     print("check_paper_numbers.py -- the manuscript against its results")
     print("=" * 70)
     print(f"paper          {arguments.paper}")
+    print(f"build artifacts {build_dir}")
     print(f"analysis       {arguments.analysis}")
     print(f"fsync analysis {arguments.fsync_analysis}")
     print(f"flakey results {arguments.flakey}")
@@ -326,8 +336,8 @@ def main() -> int:
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
     check_state_machine(result, arguments.paper)
-    check_bibliography(result, arguments.paper)
-    check_undefined_references(result, arguments.paper)
+    check_bibliography(result, build_dir)
+    check_undefined_references(result, build_dir)
     check_todos(result, arguments.paper)
 
     print()

@@ -105,7 +105,7 @@ instruction boundaries, a separately written provider ledger, and a
 \texttt{dm-flakey} write-loss probe. The harness is an evaluation instrument,
 not a claimed fault-injection contribution.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Selected design assumptions. ``Endpoint must cooperate'' denotes
 idempotence, an idempotency key, transaction enrolment, or compensation. The
@@ -113,7 +113,8 @@ rows are not ordered by guarantee strength; they expose different residuals
 when their stated assumptions fail.}
 \label{tab:related}
 \small
-\begin{tabular}{@{}lccc@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.19\textwidth}c>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
  & endpoint must & can report & residual on \\
  & cooperate & \emph{unknown} & failure \\
@@ -137,8 +138,8 @@ Temporal-style, 1 attempt~\cite{temporal-retry}
 \midrule
 \textbf{AEP} & \textbf{no} & \textbf{yes} & \textbf{declared ambiguity} \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabularx}
+\end{table*}
 
 \paragraph{Revised novelty position} AEP's claim is not the invention of
 write-ahead intent, locking, or fail-closed interposition. It is the measured

@@ -61,7 +61,7 @@ NON_DBLP_SOURCES: tuple[tuple[str, str], ...] = (
     ("Temporal activity execution", "https://docs.temporal.io/activity-execution"),
     ("Redis WAITAOF command", "https://redis.io/docs/latest/commands/waitaof/"),
     ("Redis persistence (appendfsync)", "https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/"),
-    ("Redis distributed locks / Redlock", "https://redis.io/docs/latest/develop/use-cases/patterns/distributed-locks/"),
+    ("Redis distributed locks / Redlock", "https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/"),
     ("Kleppmann, How to do distributed locking", "https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"),
     ("Verified Tool Calls", "https://arxiv.org/abs/2608.02645"),
     ("LogAct", "https://arxiv.org/abs/2604.07988"),

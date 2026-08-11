@@ -61,6 +61,8 @@ _ALLOWED_REAL_REDIS_DATABASES = frozenset({15})
 #: Required on real Redis before any destructive operation. Never deleted
 #: by cleanup (see ``_delete_aep_test_keys``).
 TEST_INSTANCE_MARKER_KEY = "aep:test-instance-marker"
+_AEP_TEST_KEY_PATTERN = "aep:*"
+_CLEANUP_UNLINK_BATCH_SIZE = 500
 
 # Try to import a fakeredis async client only if we are not using real Redis.
 _FAKEREDIS_AVAILABLE = False
@@ -204,11 +206,21 @@ async def _assert_safe_cleanup_target(client) -> None:
     await _assert_test_instance_marker(client, db_index)
 
 
-def _is_test_instance_marker(key) -> bool:
-    """True for the marker key, whether the client decodes responses or not."""
+def _redis_key_text(key) -> str:
+    """Return a comparison-safe key for byte and decoded Redis clients."""
     if isinstance(key, bytes):
         key = key.decode("utf-8", errors="replace")
-    return key == TEST_INSTANCE_MARKER_KEY
+    return key if isinstance(key, str) else ""
+
+
+def _is_aep_test_key(key) -> bool:
+    """True only for keys in the AEP namespace, decoded or otherwise."""
+    return _redis_key_text(key).startswith("aep:")
+
+
+def _is_test_instance_marker(key) -> bool:
+    """True for the marker key, whether the client decodes responses or not."""
+    return _redis_key_text(key) == TEST_INSTANCE_MARKER_KEY
 
 
 async def _delete_aep_test_keys(client) -> None:
@@ -218,17 +230,27 @@ async def _delete_aep_test_keys(client) -> None:
     cannot stall the server the way DEL would. The marker key is preserved:
     deleting it would make the very next fixture re-derive the instance's
     disposability from DBSIZE instead of from the operator's assertion.
+
+    Scanning and deletion are deliberately separate phases. Mutating the
+    keyspace during a cursor traversal can make Redis-compatible backends skip
+    entries. The tradeoff is one in-memory reference per matching key until the
+    scan completes; that is acceptable here because the guarded fixture targets
+    only an explicitly marked disposable test instance. Deletion remains
+    chunked so UNLINK never receives an unbounded argument list.
     """
-    batch = []
-    async for key in client.scan_iter(match="aep:*", count=500):
-        if _is_test_instance_marker(key):
+    candidates = []
+    async for key in client.scan_iter(
+        match=_AEP_TEST_KEY_PATTERN,
+        count=_CLEANUP_UNLINK_BATCH_SIZE,
+    ):
+        # SCAN's MATCH is the primary namespace filter. Re-check it locally so
+        # even an unusual Redis-compatible client cannot widen the blast radius.
+        if not _is_aep_test_key(key) or _is_test_instance_marker(key):
             continue
-        batch.append(key)
-        if len(batch) == 500:
-            await client.unlink(*batch)
-            batch.clear()
-    if batch:
-        await client.unlink(*batch)
+        candidates.append(key)
+
+    for start in range(0, len(candidates), _CLEANUP_UNLINK_BATCH_SIZE):
+        await client.unlink(*candidates[start : start + _CLEANUP_UNLINK_BATCH_SIZE])
 
 
 @pytest_asyncio.fixture

@@ -14,9 +14,9 @@
 \caption{Median step latency, crash-free runs only, E5-gated. Increments are over B0, the no-protocol system on the same host and provider. The whole write-ahead protocol minus the barrier is the B3 row; the barrier is the difference between B3 and AEP-full.}
 \label{tab:latency}
 \small
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xrrr@{}}
 \toprule
-system & runs & median step (ms) & over B0 (ms)\\
+system & runs & \shortstack{median step\\(ms)} & \shortstack{over B0\\(ms)}\\
 \midrule
 B0 no protocol & 3 & 2\,010.2 & ---\\
 B1 $+$ lease & 3 & 2\,014.0 & 3.9\\
@@ -26,5 +26,5 @@ B3 full protocol, no barrier & 3 & 2\,038.2 & 28.0\\
 B4b durable, 1 attempt & 3 & 4\,013.4 & 2\,003.3\\
 B4 durable, $\infty$ attempts & 3 & 4\,015.7 & 2\,005.5\\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}

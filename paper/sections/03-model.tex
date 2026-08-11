@@ -120,18 +120,19 @@ right-hand column is why the declared-ambiguity rate in \cref{sec:eval-rq1} vari
 so sharply across them.}
 \label{tab:crashpoints}
 \small
-\begin{tabular}{@{}p{0.44\columnwidth}p{0.46\columnwidth}@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}p{0.46\columnwidth}>{\raggedright\arraybackslash}X@{}}
 \toprule
 Crash point & State when the worker dies \\
 \midrule
-\texttt{before\_intent\_write}            & no record, no effect \\
-\texttt{after\_intent\_before\_barrier}   & record in memory, maybe not on disk; no effect \\
-\texttt{after\_barrier\_before\_dispatch} & record durable; \textbf{no effect} \\
-\texttt{mid\_dispatch}                    & record durable; effect \textbf{likely} \\
-\texttt{after\_response\_before\_resolution} & record durable; effect known to the dead process only \\
-\texttt{after\_resolution\_before\_barrier}  & outcome written, not yet acknowledged \\
+\path{before_intent_write}            & no record, no effect \\
+\path{after_intent_before_barrier}     & record in memory, maybe not on disk; no effect \\
+\path{after_barrier_before_dispatch}   & record durable; \textbf{no effect} \\
+\path{mid_dispatch}                    & record durable; effect \textbf{likely} \\
+\path{after_response_before_resolution} & record durable; effect known to the dead process only \\
+\path{after_resolution_before_barrier} & outcome written, not yet acknowledged \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Non-claims}

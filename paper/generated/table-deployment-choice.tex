@@ -8,21 +8,21 @@
 % changed. Never across policies: that would assume the ablated
 % protocol's own writes cost the same under both, which is exactly
 % what the two B3 numbers are here to establish rather than assume.
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{The barrier is a deployment choice, not a fixed cost. All three rows run the same pre-dispatch intent ledger and therefore make the same detection claim; they differ in what they pay to also withhold dispatch when durability cannot be confirmed. The barrier column is each row's own median minus a B3 median collected under the same \texttt{appendfsync} policy. Crash-free runs only, E5-gated, 2\,000\,ms provider floor.}
 \label{tab:deployment}
 \small
-\begin{tabular}{@{}lrrrcl@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrrc>{\raggedright\arraybackslash}p{0.20\textwidth}@{}}
 \toprule
-configuration & median & over & barrier & prev- & claim\\
- & (ms) & floor & (ms) & ents & \\
+configuration & \shortstack{median\\(ms)} & \shortstack{over\\floor} & \shortstack{barrier\\(ms)} & prevents & claim\\
 \midrule
 AEP-full, \texttt{everysec} & 4\,004.9 & 2\,004.9 & 1\,966.7 & yes & detection + prevention\\
 AEP-full, \texttt{always} & 2\,063.4 & 63.4 & 15.0 & yes & detection + prevention\\
 B3-mode, \texttt{everysec} & 2\,038.2 & 38.2 & 0.0 & no & detection only\\
 \midrule
-\multicolumn{6}{@{}p{0.94\columnwidth}@{}}{\footnotesize The detection claim of \cref{tab:outcomes} shows no observed difference down the whole table: it is produced by the pre-dispatch record plus no re-entry, which all three rows have, and \cref{tab:ablation} is the ablation that shows it. What the barrier buys is the last column's second word, and \cref{tab:killablation} is what it is worth. `Over floor' is the same median less the provider's 2\,000\,ms delay, and so includes the 28.0\,ms the protocol costs with the barrier already removed.}\\
+\multicolumn{6}{@{}p{0.96\textwidth}@{}}{\footnotesize The detection claim of \cref{tab:outcomes} shows no observed difference down the whole table: it is produced by the pre-dispatch record plus no re-entry, which all three rows have, and \cref{tab:ablation} is the ablation that shows it. What the barrier buys is the last column's second word, and \cref{tab:killablation} is what it is worth. `Over floor' is the same median less the provider's 2\,000\,ms delay, and so includes the 28.0\,ms the protocol costs with the barrier already removed.}\\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabularx}
+\end{table*}

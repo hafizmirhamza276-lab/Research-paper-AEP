@@ -20,6 +20,7 @@ from tests.conftest import (
     TEST_INSTANCE_MARKER_KEY,
     _assert_test_instance_marker,
     _delete_aep_test_keys,
+    _is_aep_test_key,
     _is_test_instance_marker,
     _nonstandard_db_override_enabled,
 )
@@ -158,6 +159,56 @@ def test_marker_is_recognised_whether_or_not_responses_are_decoded(key):
 )
 def test_non_marker_keys_are_not_mistaken_for_the_marker(key):
     assert _is_test_instance_marker(key) is False
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        ("aep:execution:abc", True),
+        (b"aep:lock:abc", True),
+        ("not-aep:execution:abc", False),
+        (b"not-aep:lock:abc", False),
+        (object(), False),
+    ],
+)
+def test_aep_namespace_is_recognised_for_byte_and_decoded_responses(key, expected):
+    assert _is_aep_test_key(key) is expected
+
+
+class _RecordingScanClient:
+    """SCAN/UNLINK recorder that can return bytes or decoded strings."""
+
+    def __init__(self, keys):
+        self.keys = list(keys)
+        self.scan_calls = []
+        self.unlink_calls = []
+
+    async def scan_iter(self, *, match, count):
+        self.scan_calls.append((match, count))
+        for key in self.keys:
+            yield key
+
+    async def unlink(self, *keys):
+        self.unlink_calls.append(keys)
+
+
+@pytest.mark.parametrize("decoded", [True, False])
+async def test_cleanup_scans_first_then_unlinks_in_bounded_batches(decoded):
+    def response(value):
+        return value if decoded else value.encode()
+
+    matching = [response(f"aep:execution:recording-{index}") for index in range(1203)]
+    marker = response(TEST_INSTANCE_MARKER_KEY)
+    foreign = response("not-aep:recording-probe")
+    client = _RecordingScanClient([*matching, marker, foreign])
+
+    await _delete_aep_test_keys(client)
+
+    assert client.scan_calls == [("aep:*", 500)]
+    assert [len(batch) for batch in client.unlink_calls] == [500, 500, 203]
+    assert [key for batch in client.unlink_calls for key in batch] == matching
+    assert marker not in {key for batch in client.unlink_calls for key in batch}
+    assert foreign not in {key for batch in client.unlink_calls for key in batch}
 
 
 # ---------------------------------------------------------------------------
