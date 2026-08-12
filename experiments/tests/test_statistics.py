@@ -16,6 +16,7 @@ import pytest
 
 from experiments.statistics import (
     Interval,
+    cluster_bootstrap_median_difference,
     cluster_bootstrap_proportion,
     compare_rates,
     fisher_exact_two_tailed,
@@ -165,6 +166,19 @@ def test_an_all_zero_rate_stays_at_zero() -> None:
     """AEP-full's expected row. A bootstrap of zeros cannot manufacture a tail."""
     interval = cluster_bootstrap_proportion([(0, 10), (0, 10), (0, 10)], resamples=2000)
     assert (interval.point, interval.low, interval.high) == (0.0, 0.0, 0.0)
+
+
+def test_median_difference_resamples_run_clusters_not_executions() -> None:
+    treatment = {"t1": [10.0] * 10, "t2": [30.0] * 10}
+    control = {"c1": [5.0] * 10, "c2": [15.0] * 10}
+    interval = cluster_bootstrap_median_difference(
+        treatment, control, resamples=2_000, seed=9
+    )
+    assert interval.treatment_clusters == 2
+    assert interval.control_clusters == 2
+    assert interval.treatment_observations == 20
+    assert interval.control_observations == 20
+    assert interval.low <= interval.point <= interval.high
 
 
 def test_an_empty_cell_is_zero_and_says_so() -> None:

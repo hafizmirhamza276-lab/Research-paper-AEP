@@ -42,7 +42,7 @@ from experiments.mock_api.config import ReadbackKeying
 
 #: Bumping this is a statement that previously collected runs are not
 #: comparable to new ones.
-RUN_CONFIG_VERSION = "aep.harness.run-config/1"
+RUN_CONFIG_VERSION = "aep.harness.run-config/2"
 
 
 @dataclass(frozen=True)
@@ -58,6 +58,20 @@ class RunConfig:
     mock_api_base_url: str
     redis_url: str
     results_root: str
+
+    # -- Stage 3 provenance ------------------------------------------------
+    # These values are copied into the first, fsync-flushed event of every
+    # run.  They are deliberately part of the configuration digest whenever
+    # present: data collected under a different frozen plan, Git tree, Redis
+    # durability policy, or image is not the same experimental configuration.
+    # ``None`` remains a backward-compatibility seam for the Stage 1 raw
+    # archive, whose run-config/1 records predate these fields.
+    dataset_version: str | None = None
+    experiment_plan_sha256: str | None = None
+    git_sha: str | None = None
+    redis_durability: str | None = None
+    redis_version: str | None = None
+    redis_image: str | None = None
 
     # -- measurement decisions --------------------------------------------
     dispatch_mode: DispatchMode = DispatchMode.EVALUATION
@@ -285,6 +299,19 @@ class RunConfig:
             for key, value in self._body().items()
             if key not in excluded
         }
+        # A run-config/1 document did not contain the Stage 3 provenance
+        # fields.  Omitting only absent new fields preserves its historical
+        # digest, while a new run that supplies them is bound to them.
+        for key in (
+            "dataset_version",
+            "experiment_plan_sha256",
+            "git_sha",
+            "redis_durability",
+            "redis_version",
+            "redis_image",
+        ):
+            if body.get(key) is None:
+                body.pop(key, None)
         return hashlib.sha256(
             json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()

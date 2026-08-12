@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from experiments.harness.config import RunConfig
-from experiments.harness.runner import discard_stale_shards
+from experiments.harness.runner import RunAborted, discard_stale_shards
 
 
 def _config(tmp_path, **overrides) -> RunConfig:
@@ -37,7 +39,7 @@ def _config(tmp_path, **overrides) -> RunConfig:
     return RunConfig(**fields)
 
 
-def test_stale_shards_are_discarded_and_named(tmp_path) -> None:
+def test_stale_shards_are_refused_and_preserved(tmp_path) -> None:
     config = _config(tmp_path)
     config.results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -51,27 +53,23 @@ def test_stale_shards_are_discarded_and_named(tmp_path) -> None:
     )
     (config.results_dir / "events.jsonl").write_text("{}\n", encoding="utf-8")
 
-    discarded = discard_stale_shards(config)
-
-    assert sorted(discarded) == [
-        "events-runner.jsonl",
-        "events-worker-0-attempt-1.jsonl",
-        "events-worker-0-attempt-3.jsonl",
-        "events.jsonl",
-    ]
-    assert list(config.results_dir.glob("events*.jsonl")) == []
+    before = {path.name: path.read_bytes() for path in config.results_dir.iterdir()}
+    with pytest.raises(RunAborted, match="results/voided"):
+        discard_stale_shards(config)
+    assert {path.name: path.read_bytes() for path in config.results_dir.iterdir()} == before
 
 
-def test_a_stale_summary_is_discarded_too(tmp_path) -> None:
-    """Otherwise the *next* resume skips this run on a superseded result."""
+def test_a_stale_summary_is_refused_and_preserved_too(tmp_path) -> None:
     config = _config(tmp_path)
     config.results_dir.mkdir(parents=True, exist_ok=True)
     (config.results_dir / "summary.json").write_text(
         json.dumps({"agrees": True}), encoding="utf-8"
     )
 
-    assert discard_stale_shards(config) == ["summary.json"]
-    assert not (config.results_dir / "summary.json").exists()
+    original = (config.results_dir / "summary.json").read_bytes()
+    with pytest.raises(RunAborted, match="summary.json"):
+        discard_stale_shards(config)
+    assert (config.results_dir / "summary.json").read_bytes() == original
 
 
 def test_the_provider_ledger_and_config_are_not_touched(tmp_path) -> None:
@@ -87,7 +85,8 @@ def test_the_provider_ledger_and_config_are_not_touched(tmp_path) -> None:
         (config.results_dir / name).write_text("keep", encoding="utf-8")
     (config.results_dir / "events.jsonl").write_text("{}\n", encoding="utf-8")
 
-    discard_stale_shards(config)
+    with pytest.raises(RunAborted):
+        discard_stale_shards(config)
 
     for name in ("mock-api.yaml", "ground_truth.sqlite3", "run-config.json"):
         assert (config.results_dir / name).read_text(encoding="utf-8") == "keep"

@@ -30,9 +30,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from datetime import datetime, timezone
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -97,6 +99,58 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class RunAborted(RuntimeError):
     """The run could not proceed safely, so it did not proceed at all."""
+
+
+def _available_memory_bytes() -> int | None:
+    """Return Linux MemAvailable without adding an optional dependency."""
+    try:
+        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+            if line.startswith("MemAvailable:"):
+                return int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+def _filesystem_type(path: Path) -> str | None:
+    """Resolve the longest matching Linux mount for the result directory."""
+    try:
+        resolved = path.resolve().as_posix()
+        best: tuple[int, str] | None = None
+        for line in Path("/proc/mounts").read_text(encoding="utf-8").splitlines():
+            fields = line.split()
+            if len(fields) < 3:
+                continue
+            mount = fields[1].replace("\\040", " ")
+            if resolved == mount or resolved.startswith(mount.rstrip("/") + "/"):
+                candidate = (len(mount), fields[2])
+                if best is None or candidate[0] > best[0]:
+                    best = candidate
+        return best[1] if best else None
+    except OSError:
+        return None
+
+
+def host_environment_snapshot(results_dir: Path) -> dict[str, Any]:
+    """Capture time-varying host state with every independent run."""
+    disk = shutil.disk_usage(results_dir)
+    try:
+        load = list(os.getloadavg())
+    except (AttributeError, OSError):
+        load = []
+    return {
+        "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+        "platform": platform.platform(),
+        "python": sys.version.split()[0],
+        "cpu_count": os.cpu_count(),
+        "load_average_1m_5m_15m": load,
+        "memory_available_bytes": _available_memory_bytes(),
+        "results_disk_free_bytes": disk.free,
+        "results_disk_total_bytes": disk.total,
+        "results_filesystem": _filesystem_type(results_dir),
+        "has_sigkill": HAS_SIGKILL,
+        "kill_mechanism": "SIGKILL" if HAS_SIGKILL else "TerminateProcess",
+    }
 
 
 # ===========================================================================
@@ -387,7 +441,7 @@ async def wait_until_settled(
 
 
 def discard_stale_shards(config: RunConfig) -> list[str]:
-    """Remove event shards left by an earlier, interrupted attempt at this run.
+    """Refuse event evidence left by an earlier attempt at this run.
 
     Found by the matrix, not by reasoning. ``--resume`` re-runs any run without
     a parsing ``summary.json``, and such a run's directory still holds the
@@ -406,23 +460,29 @@ def discard_stale_shards(config: RunConfig) -> list[str]:
     digest check doing exactly what it exists to do. Had the two attempts run
     under the same harness version the merge would have been silent, and the
     run's counts would have been inflated by its own abandoned predecessor.
+
+    Stage 3 changes the recovery rule: abandoned bytes are scientific
+    provenance and may not be deleted.  The matrix orchestrator moves an
+    incomplete attempt into ``results/voided/`` before calling the harness.
+    A direct harness caller that has not done that is refused here.  The
+    historical function name remains so older callers fail safely rather than
+    importing a missing symbol.
     """
-    discarded: list[str] = []
-    for path in sorted(config.results_dir.glob("events*.jsonl")):
-        path.unlink()
-        discarded.append(path.name)
-    # A stale summary would make the *next* resume skip this run on the
-    # strength of a result this attempt is about to replace.
+    stale = [path.name for path in sorted(config.results_dir.glob("events*.jsonl"))]
     summary = config.results_dir / "summary.json"
     if summary.is_file():
-        summary.unlink()
-        discarded.append(summary.name)
-    return discarded
+        stale.append(summary.name)
+    if stale:
+        raise RunAborted(
+            "existing run evidence must be archived under results/voided "
+            f"before retrying {config.run_id}: {', '.join(stale)}"
+        )
+    return []
 
 
 async def execute_run(config: RunConfig) -> dict[str, Any]:
     config.results_dir.mkdir(parents=True, exist_ok=True)
-    discarded = discard_stale_shards(config)
+    discard_stale_shards(config)
     config_path = config.results_dir / "run-config.json"
     config_path.write_text(json.dumps(config.echo(), indent=2), encoding="utf-8")
 
@@ -458,9 +518,6 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
             toxiproxy.describe()  # raises if compose never declared it
             toxiproxy.heal()
 
-        if discarded:
-            log.emit("stale_shards_discarded", files=discarded)
-
         log.emit(
             "run_started",
             run_config=config.echo(),
@@ -475,12 +532,7 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
                 "crash_selected": sum(1 for item in plan if item.crash_selected),
                 "items": [item.echo() for item in plan],
             },
-            environment={
-                "platform": platform.platform(),
-                "python": sys.version.split()[0],
-                "has_sigkill": HAS_SIGKILL,
-                "kill_mechanism": "SIGKILL" if HAS_SIGKILL else "TerminateProcess",
-            },
+            environment=host_environment_snapshot(config.results_dir),
             crash_point_roadmap_name=(
                 roadmap_name_for(config.resolved_crash_point)
                 if config.resolved_crash_point

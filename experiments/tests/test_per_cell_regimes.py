@@ -82,10 +82,15 @@ def test_crashed_regime_is_labelled_rather_than_left_blank() -> None:
 
 def test_regime_is_the_first_column_and_names_match_the_attributes() -> None:
     """The two tuples are parallel; a rename of one must not silently pass."""
-    assert PER_CELL_GROUP_COLUMNS[0] == "regime"
-    assert PER_CELL_GROUP_ATTRIBUTES[0] == "regime_label"
+    assert PER_CELL_GROUP_COLUMNS[:3] == (
+        "dataset_version", "redis_durability", "regime"
+    )
+    assert PER_CELL_GROUP_ATTRIBUTES[:3] == (
+        "dataset_version", "redis_durability", "regime_label"
+    )
     assert len(PER_CELL_GROUP_ATTRIBUTES) == len(PER_CELL_GROUP_COLUMNS)
-    assert PER_CELL_GROUP_ATTRIBUTES[1:] == PER_CELL_GROUP_COLUMNS[1:]
+    assert PER_CELL_GROUP_ATTRIBUTES[:2] == PER_CELL_GROUP_COLUMNS[:2]
+    assert PER_CELL_GROUP_ATTRIBUTES[3:] == PER_CELL_GROUP_COLUMNS[3:]
 
 
 def test_every_per_cell_row_carries_the_regime() -> None:

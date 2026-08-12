@@ -74,6 +74,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import sqlite3
 import sys
@@ -85,6 +86,7 @@ from typing import Any, Iterable, Mapping, Sequence
 from experiments.statistics import (
     DEFAULT_BOOTSTRAP_SEED,
     DEFAULT_RESAMPLES,
+    cluster_bootstrap_median_difference,
     cluster_bootstrap_proportion,
     compare_rates,
     proportion,
@@ -287,6 +289,13 @@ class RunRecord:
     config_digest: str
     has_sigkill: bool
     wall_seconds: float
+    dataset_version: str = "unversioned"
+    experiment_plan_sha256: str = ""
+    git_sha: str = ""
+    redis_durability: str = "unknown"
+    redis_version: str = "unknown"
+    redis_image: str = "unknown"
+    source_raw_directory_hash: str = ""
     #: Whether a recovery service was actually running during this run. Read
     #: from the log (``recovery_spawned`` versus ``recovery_not_started``)
     #: rather than from the system's name, so it describes what happened.
@@ -319,6 +328,10 @@ class RunRecord:
     #: what happened to the un-acknowledged write made just before it.
     redis_kill_point: str | None = None
     redis_kill_canary: str | None = None
+    redis_kill_was_killed: bool = False
+    redis_kill_start_ms: int | None = None
+    redis_kill_readiness_ms: int | None = None
+    redis_uptime_after_seconds: int | None = None
     executions: list[ExecutionRecord] = field(default_factory=list)
     crash_injections: int = 0
 
@@ -533,6 +546,7 @@ def load_run(directory: Path) -> RunRecord | None:
     crash_probability = float(config.get("crash_probability", 1.0))
     redis_kill_point = config.get("redis_kill_point") or None
     kill_records = events_of(records, "redis_hard_killed")
+    kill_record = kill_records[-1] if kill_records else {}
 
     return RunRecord(
         run_id=str(config["run_id"]),
@@ -545,6 +559,13 @@ def load_run(directory: Path) -> RunRecord | None:
         config_digest=str(config.get("config_digest", "")),
         has_sigkill=bool(environment.get("has_sigkill", False)),
         wall_seconds=max(0.0, (run_finished_ms - run_started_ms) / 1000.0),
+        dataset_version=str(config.get("dataset_version") or "unversioned"),
+        experiment_plan_sha256=str(config.get("experiment_plan_sha256") or ""),
+        git_sha=str(config.get("git_sha") or ""),
+        redis_durability=str(config.get("redis_durability") or "unknown"),
+        redis_version=str(config.get("redis_version") or "unknown"),
+        redis_image=str(config.get("redis_image") or "unknown"),
+        source_raw_directory_hash=raw_directory_sha256(directory),
         had_recovery_service=bool(events_of(records, "recovery_spawned")),
         suspension_seconds=round(suspension, 3),
         suspend_disabled_declared=bool(
@@ -554,7 +575,21 @@ def load_run(directory: Path) -> RunRecord | None:
         crash_probability=crash_probability,
         redis_kill_point=redis_kill_point,
         redis_kill_canary=(
-            str(kill_records[-1].get("canary")) if kill_records else None
+            str(kill_record.get("canary")) if kill_records else None
+        ),
+        redis_kill_was_killed=bool(kill_record.get("was_killed", False)),
+        redis_kill_start_ms=(
+            int(kill_record["start_ms"]) if "start_ms" in kill_record else None
+        ),
+        redis_kill_readiness_ms=(
+            int(kill_record["readiness_ms"])
+            if "readiness_ms" in kill_record
+            else None
+        ),
+        redis_uptime_after_seconds=(
+            int(kill_record["uptime_after_seconds"])
+            if "uptime_after_seconds" in kill_record
+            else None
         ),
         executions=executions,
         crash_injections=len(events_of(records, "crash_injected")),
@@ -579,12 +614,91 @@ def _regime_of(crash_probability: float, redis_kill_point: str | None) -> str:
     return f"p{int(round(crash_probability * 100))}"
 
 
+def raw_directory_sha256(directory: Path) -> str:
+    """Hash every raw file and its relative path without interpreting it."""
+    digest = hashlib.sha256()
+    for path in sorted(item for item in directory.rglob("*") if item.is_file()):
+        relative = path.relative_to(directory).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        size = path.stat().st_size
+        digest.update(size.to_bytes(8, "big"))
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_voided_attempts(results_root: Path) -> list[dict[str, Any]]:
+    """Verify the append-only void archive and return its accounting rows."""
+    voided = results_root / "voided"
+    if not voided.exists():
+        return []
+    if not voided.is_dir():
+        raise AnalysisError(f"voided evidence path is not a directory: {voided}")
+    reasons = sorted(voided.glob("*.void.json"))
+    preserved = sorted(
+        path for path in voided.iterdir()
+        if path.is_dir()
+    )
+    if len(reasons) != len(preserved):
+        raise AnalysisError(
+            "voided-run accounting mismatch: "
+            f"{len(preserved)} preserved directories, {len(reasons)} reasons"
+        )
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for reason_path in reasons:
+        try:
+            row = json.loads(reason_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            raise AnalysisError(f"cannot parse {reason_path}: {error}") from None
+        target = voided / str(row.get("preserved_path") or "")
+        if not target.is_dir():
+            raise AnalysisError(f"void reason has no preserved target: {reason_path}")
+        if target.name in seen:
+            raise AnalysisError(f"duplicate void target {target.name}")
+        seen.add(target.name)
+        observed = raw_directory_sha256(target)
+        if observed != row.get("source_raw_directory_hash"):
+            raise AnalysisError(
+                f"voided raw-directory hash mismatch for {target}: "
+                f"{observed} != {row.get('source_raw_directory_hash')}"
+            )
+        rows.append(row)
+    if seen != {path.name for path in preserved}:
+        raise AnalysisError("a preserved void directory has no machine-readable reason")
+    return rows
+
+
 def load_runs(results_root: Path) -> list[RunRecord]:
     runs: list[RunRecord] = []
+    incomplete: list[str] = []
     for directory in sorted(path for path in results_root.iterdir() if path.is_dir()):
+        if directory.name in {"analysis", "voided"}:
+            continue
         run = load_run(directory)
         if run is not None:
             runs.append(run)
+        else:
+            incomplete.append(directory.name)
+    if incomplete:
+        raise AnalysisError(
+            "raw run directories without both analysis inputs must be moved "
+            f"to results/voided with a reason: {', '.join(incomplete[:20])}"
+        )
+    run_ids = [run.run_id for run in runs]
+    if len(run_ids) != len(set(run_ids)):
+        duplicates = sorted(
+            run_id for run_id, count in Counter(run_ids).items() if count > 1
+        )
+        raise AnalysisError(f"duplicate run IDs: {duplicates}")
+    seed_keys = [(run.dataset_version, run.redis_durability, run.seed) for run in runs]
+    if len(seed_keys) != len(set(seed_keys)):
+        duplicates = sorted(
+            key for key, count in Counter(seed_keys).items() if count > 1
+        )
+        raise AnalysisError(f"duplicate seeds within dataset/configuration: {duplicates}")
     return runs
 
 
@@ -713,20 +827,26 @@ def write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> Path:
 def build_table_one(
     runs: Sequence[RunRecord], *, resamples: int, seed: int
 ) -> list[dict[str, Any]]:
-    """The paper's Table 1: undetected duplicates and known ambiguity, per system.
-
-    Pooled over crash points, response classes and keyings -- the row is "this
-    system, under the whole fault matrix collected so far". Every partial
-    collection therefore produces a *readable* Table 1 whose coverage is stated
-    beside it, which is what makes a partial matrix usable.
-    """
-    reference = [run for run in runs if run.system == REFERENCE_SYSTEM]
+    """A within-dataset, within-durability, within-regime system summary."""
+    selected = [run for run in runs if run.regime_label == FIGURE_REGIME]
     rows: list[dict[str, Any]] = []
-    for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
+    grouped = group_runs(
+        selected, ["dataset_version", "redis_durability", "regime_label", "system"]
+    )
+    for values, system_runs in sorted(grouped.items()):
+        dataset, durability, regime, system = values
+        reference = grouped.get(
+            (dataset, durability, regime, REFERENCE_SYSTEM), []
+        )
         duplicate = compute_metric(
             "undetected_duplicate_rate",
             system_runs,
-            {"system": system},
+            {
+                "dataset_version": dataset,
+                "redis_durability": durability,
+                "regime": regime,
+                "system": system,
+            },
             resamples=resamples,
             seed=seed,
         )
@@ -745,6 +865,9 @@ def build_table_one(
             seed=seed,
         )
         row: dict[str, Any] = {
+            "dataset_version": dataset,
+            "redis_durability": durability,
+            "regime": regime,
             "system": system,
             "runs": len(system_runs),
             "executions": duplicate.total,
@@ -812,32 +935,51 @@ def build_comparisons(
     # Redis-kill fields in the run's own schema. It is not a row-position or
     # directory-name convention. Grouping it with system makes cross-regime
     # pooling structurally impossible here.
-    grouped = group_runs(runs, ["regime_label", "system"])
+    grouped = group_runs(
+        runs, ["dataset_version", "redis_durability", "regime_label", "system"]
+    )
     rows: list[dict[str, Any]] = []
-    regimes = sorted({regime for regime, _system in grouped})
-    for regime in regimes:
-        reference_runs = grouped.get((regime, REFERENCE_SYSTEM), [])
+    experiments = sorted(
+        {(dataset, durability, regime) for dataset, durability, regime, _ in grouped}
+    )
+    for dataset, durability, regime in experiments:
+        reference_runs = grouped.get(
+            (dataset, durability, regime, REFERENCE_SYSTEM), []
+        )
         if not reference_runs:
             continue
         systems = sorted(
             system
-            for grouped_regime, system in grouped
-            if grouped_regime == regime and system != REFERENCE_SYSTEM
+            for grouped_dataset, grouped_durability, grouped_regime, system in grouped
+            if grouped_dataset == dataset
+            and grouped_durability == durability
+            and grouped_regime == regime
+            and system != REFERENCE_SYSTEM
         )
         for metric in RATE_METRICS:
             reference = compute_metric(
                 metric,
                 reference_runs,
-                {"regime": regime, "system": REFERENCE_SYSTEM},
+                {
+                    "dataset_version": dataset,
+                    "redis_durability": durability,
+                    "regime": regime,
+                    "system": REFERENCE_SYSTEM,
+                },
                 resamples=resamples,
                 seed=seed,
             )
             for system in systems:
-                system_runs = grouped[(regime, system)]
+                system_runs = grouped[(dataset, durability, regime, system)]
                 result = compute_metric(
                     metric,
                     system_runs,
-                    {"regime": regime, "system": system},
+                    {
+                        "dataset_version": dataset,
+                        "redis_durability": durability,
+                        "regime": regime,
+                        "system": system,
+                    },
                     resamples=resamples,
                     seed=seed,
                 )
@@ -851,6 +993,8 @@ def build_comparisons(
                     reference_total=reference.total,
                 )
                 row: dict[str, Any] = {
+                    "dataset_version": dataset,
+                    "redis_durability": durability,
                     "regime": regime,
                     **comparison.echo(),
                     "system_runs": result.runs,
@@ -912,7 +1056,10 @@ def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
     rather than left to be inferred from the column being non-empty.
     """
     rows: list[dict[str, Any]] = []
-    for (system,), system_runs in sorted(group_runs(runs, ["system"]).items()):
+    for values, system_runs in sorted(
+        group_runs(runs, ["dataset_version", "redis_durability", "system"]).items()
+    ):
+        dataset, durability, system = values
         # Timing only from runs whose clocks are trustworthy. A host suspension
         # puts its whole duration into every wall-clock interval in the run,
         # and no amount of averaging removes it.
@@ -938,6 +1085,8 @@ def build_latencies(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
         executions = sum(len(run.executions) for run in overhead_runs)
         wall = sum(run.wall_seconds for run in overhead_runs)
         row: dict[str, Any] = {
+            "dataset_version": dataset,
+            "redis_durability": durability,
             "system": system,
             "runs": len(system_runs),
             "runs_with_usable_timing": len(timed_runs),
@@ -985,12 +1134,43 @@ def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]
     """
     rows: list[dict[str, Any]] = []
     killed = [run for run in runs if run.redis_kill_point is not None]
-    keys = ["regime", "system", "response_class"]
+    keys = [
+        "dataset_version", "redis_durability", "regime",
+        "system", "response_class",
+    ]
     for values, group in sorted(group_runs(killed, keys).items()):
         executions = [
             execution for run in group for execution in run.executions
         ]
         canaries = Counter(run.redis_kill_canary or "UNRECORDED" for run in group)
+        metric_predicates = {
+            "unwanted_applied_effect": lambda item: item.applied_effects > 0,
+            "dispatch_withheld": lambda item: item.dispatch_attempts == 0,
+            "declared_ambiguous": lambda item: item.outcome_class == DECLARED_AMBIGUOUS,
+            "undetected_duplicate": lambda item: item.is_undetected_duplicate,
+            "lost_effect": lambda item: item.is_lost_effect,
+        }
+        metric_values: dict[str, dict[str, Any]] = {}
+        for metric, predicate in metric_predicates.items():
+            clusters = [
+                (
+                    sum(1 for item in run.executions if predicate(item)),
+                    len(run.executions),
+                )
+                for run in group
+            ]
+            interval = cluster_bootstrap_proportion(clusters)
+            successes = sum(pair[0] for pair in clusters)
+            total = sum(pair[1] for pair in clusters)
+            metric_values[metric] = {
+                f"{metric}_numerator": successes,
+                f"{metric}_denominator": total,
+                f"{metric}_rate": proportion(successes, total),
+                f"{metric}_ci_low": interval.low,
+                f"{metric}_ci_high": interval.high,
+                f"{metric}_clusters": interval.clusters,
+                f"{metric}_interval_method": "run-cluster percentile bootstrap",
+            }
         rows.append(
             {
                 **dict(zip(keys, values)),
@@ -1022,8 +1202,198 @@ def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]
                 ),
                 "canary_survived": canaries.get("SURVIVED", 0),
                 "canary_lost": canaries.get("LOST", 0),
+                "redis_kill_confirmed": sum(
+                    1 for run in group if run.redis_kill_was_killed
+                ),
+                "redis_restart_start_ms_median": summarise(
+                    [
+                        float(run.redis_kill_start_ms)
+                        for run in group
+                        if run.redis_kill_start_ms is not None
+                    ]
+                )["median"],
+                "redis_restart_readiness_ms_median": summarise(
+                    [
+                        float(run.redis_kill_readiness_ms)
+                        for run in group
+                        if run.redis_kill_readiness_ms is not None
+                    ]
+                )["median"],
+                "redis_uptime_after_seconds_max": max(
+                    (
+                        run.redis_uptime_after_seconds
+                        for run in group
+                        if run.redis_uptime_after_seconds is not None
+                    ),
+                    default=None,
+                ),
+                "barrier_behavior": (
+                    "acknowledged_if_dispatched; refused_or_failed_if_withheld"
+                    if values[keys.index("system")] == "AEP_FULL"
+                    else "not_applicable_barrier_ablated"
+                ),
+                "independent_ledger_agreement_runs": len(group),
+                **{
+                    key: value
+                    for payload in metric_values.values()
+                    for key, value in payload.items()
+                },
             }
         )
+    return rows
+
+
+def build_timing_comparisons(
+    runs: Sequence[RunRecord], *, resamples: int, seed: int
+) -> list[dict[str, Any]]:
+    """Primary B3 estimand within each Redis durability configuration."""
+    selected = [
+        run
+        for run in runs
+        if run.regime_label == "p0"
+        and run.timing_is_usable
+        and run.system in {"AEP_FULL", "B3_INTENT_NO_BARRIER"}
+    ]
+    keys = ("dataset_version", "redis_durability")
+    rows: list[dict[str, Any]] = []
+    for values, group in sorted(group_runs(selected, keys).items()):
+        by_system: dict[str, dict[str, list[float]]] = {}
+        for system in ("AEP_FULL", "B3_INTENT_NO_BARRIER"):
+            by_system[system] = {
+                run.run_id: [
+                    float(item.step_latency_ms)
+                    for item in run.executions
+                    if item.step_latency_ms is not None
+                ]
+                for run in group
+                if run.system == system
+            }
+            by_system[system] = {
+                run_id: samples
+                for run_id, samples in by_system[system].items()
+                if samples
+            }
+        if not all(by_system.values()):
+            continue
+        interval = cluster_bootstrap_median_difference(
+            by_system["AEP_FULL"],
+            by_system["B3_INTENT_NO_BARRIER"],
+            resamples=resamples,
+            seed=seed,
+            confidence=0.95,
+        )
+        rows.append(
+            {
+                **dict(zip(keys, values)),
+                "estimand": "median AEP-full step latency minus median B3 step latency",
+                "aep_runs": interval.treatment_clusters,
+                "b3_runs": interval.control_clusters,
+                "aep_executions": interval.treatment_observations,
+                "b3_executions": interval.control_observations,
+                "aep_median_step_latency_ms": summarise(
+                    [
+                        value
+                        for samples in by_system["AEP_FULL"].values()
+                        for value in samples
+                    ]
+                )["median"],
+                "b3_median_step_latency_ms": summarise(
+                    [
+                        value
+                        for samples in by_system["B3_INTENT_NO_BARRIER"].values()
+                        for value in samples
+                    ]
+                )["median"],
+                "median_difference_ms": interval.point,
+                "ci_low_ms": interval.low,
+                "ci_high_ms": interval.high,
+                "confidence": interval.confidence,
+                "interval_method": "run-cluster percentile bootstrap",
+                "bootstrap_resamples": interval.resamples,
+                "bootstrap_seed": interval.seed,
+            }
+        )
+    return rows
+
+
+def build_redis_kill_comparisons(
+    runs: Sequence[RunRecord], *, resamples: int, seed: int
+) -> list[dict[str, Any]]:
+    """AEP-full minus B3 within each Redis-kill capability cell."""
+    killed = [run for run in runs if run.redis_kill_point is not None]
+    group_keys = (
+        "dataset_version", "redis_durability", "regime_label", "response_class"
+    )
+    rows: list[dict[str, Any]] = []
+    predicates = {
+        "unwanted_applied_effect_rate": lambda item: item.applied_effects > 0,
+        "dispatch_withheld_rate": lambda item: item.dispatch_attempts == 0,
+        "declared_ambiguity_rate": lambda item: item.outcome_class == DECLARED_AMBIGUOUS,
+        "undetected_duplicate_rate": lambda item: item.is_undetected_duplicate,
+        "lost_effect_rate": lambda item: item.is_lost_effect,
+    }
+    for values, group in sorted(group_runs(killed, group_keys).items()):
+        arms = {
+            system: [run for run in group if run.system == system]
+            for system in ("AEP_FULL", "B3_INTENT_NO_BARRIER")
+        }
+        if not all(arms.values()):
+            continue
+        for metric, predicate in predicates.items():
+            clusters: dict[str, list[tuple[int, int]]] = {}
+            for system, arm_runs in arms.items():
+                clusters[system] = [
+                    (
+                        sum(1 for item in run.executions if predicate(item)),
+                        len(run.executions),
+                    )
+                    for run in arm_runs
+                ]
+            aep_success = sum(pair[0] for pair in clusters["AEP_FULL"])
+            aep_total = sum(pair[1] for pair in clusters["AEP_FULL"])
+            b3_success = sum(
+                pair[0] for pair in clusters["B3_INTENT_NO_BARRIER"]
+            )
+            b3_total = sum(
+                pair[1] for pair in clusters["B3_INTENT_NO_BARRIER"]
+            )
+            interval = stratified_cluster_bootstrap_difference(
+                {"cell": clusters["AEP_FULL"]},
+                {"cell": clusters["B3_INTENT_NO_BARRIER"]},
+                resamples=resamples,
+                seed=seed,
+                confidence=0.95,
+            )
+            comparison = compare_rates(
+                metric,
+                system="AEP_FULL",
+                reference="B3_INTENT_NO_BARRIER",
+                system_successes=aep_success,
+                system_total=aep_total,
+                reference_successes=b3_success,
+                reference_total=b3_total,
+            )
+            rows.append(
+                {
+                    **dict(zip(group_keys, values)),
+                    "metric": metric,
+                    "aep_numerator": aep_success,
+                    "aep_denominator": aep_total,
+                    "aep_rate": proportion(aep_success, aep_total),
+                    "b3_numerator": b3_success,
+                    "b3_denominator": b3_total,
+                    "b3_rate": proportion(b3_success, b3_total),
+                    "absolute_difference_aep_minus_b3": interval.point,
+                    "difference_ci_low": interval.low,
+                    "difference_ci_high": interval.high,
+                    "difference_confidence": interval.confidence,
+                    "difference_method": "run-cluster percentile bootstrap",
+                    "aep_clusters": interval.system_clusters,
+                    "b3_clusters": interval.reference_clusters,
+                    "fisher_p_value": comparison.p_value,
+                    "fisher_label": "execution-level descriptive test",
+                }
+            )
     return rows
 
 
@@ -1040,6 +1410,8 @@ def build_redis_kill_evidence(runs: Sequence[RunRecord]) -> list[dict[str, Any]]
 #: one rate. The grouping attribute is ``regime_label`` and the column is
 #: ``regime``: the key must print, and ``""`` does not.
 PER_CELL_GROUP_ATTRIBUTES = (
+    "dataset_version",
+    "redis_durability",
     "regime_label",
     "system",
     "crash_point",
@@ -1047,6 +1419,8 @@ PER_CELL_GROUP_ATTRIBUTES = (
     "readback_keying",
 )
 PER_CELL_GROUP_COLUMNS = (
+    "dataset_version",
+    "redis_durability",
     "regime",
     "system",
     "crash_point",
@@ -1076,12 +1450,22 @@ def build_executions_csv(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
     return [
         {
             "run_id": execution.run_id,
+            "dataset_version": run.dataset_version,
+            "git_sha": run.git_sha,
+            "experiment_plan_sha256": run.experiment_plan_sha256,
             "regime": run.regime_label,
             "system": execution.system,
             "crash_point": execution.crash_point,
             "endpoint": execution.endpoint,
             "response_class": execution.response_class,
             "readback_keying": execution.readback_keying,
+            "redis_durability": run.redis_durability,
+            "redis_version": run.redis_version,
+            "redis_image": run.redis_image,
+            "run_seed": run.seed,
+            "run_execution_count": len(run.executions),
+            "inclusion_status": "included",
+            "source_raw_directory_hash": run.source_raw_directory_hash,
             "execution_id": execution.execution_id,
             "outcome_class": execution.outcome_class,
             "status": execution.status,
@@ -1096,6 +1480,83 @@ def build_executions_csv(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
         for run in runs
         for execution in run.executions
     ]
+
+
+def build_run_provenance(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
+    """One inclusion row per independent run."""
+    return [
+        {
+            "dataset_version": run.dataset_version,
+            "regime": run.regime_label,
+            "system": run.system,
+            "endpoint": run.endpoint,
+            "response_class": run.response_class,
+            "crash_point": run.crash_point,
+            "readback_keying": run.readback_keying,
+            "redis_durability": run.redis_durability,
+            "redis_version": run.redis_version,
+            "redis_image": run.redis_image,
+            "run_id": run.run_id,
+            "seed": run.seed,
+            "execution_count": len(run.executions),
+            "inclusion_status": "included",
+            "git_sha": run.git_sha,
+            "experiment_plan_sha256": run.experiment_plan_sha256,
+            "source_raw_directory_hash": run.source_raw_directory_hash,
+        }
+        for run in runs
+    ]
+
+
+def validate_plan_manifest(
+    results_root: Path,
+    runs: Sequence[RunRecord],
+    voided: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Require the finalized plan, included directories, and voids to agree."""
+    plan_path = results_root / "matrix-plan.json"
+    if not plan_path.is_file():
+        raise AnalysisError(f"missing finalized machine plan at {plan_path}")
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise AnalysisError(f"cannot parse {plan_path}: {error}") from None
+    planned = [str(row["run_id"]) for row in plan.get("runs", [])]
+    if len(planned) != len(set(planned)):
+        raise AnalysisError("matrix plan contains duplicate run IDs")
+    included = {run.run_id for run in runs}
+    missing = sorted(set(planned) - included)
+    extra = sorted(included - set(planned))
+    if missing or extra:
+        raise AnalysisError(
+            "manifest/count disagreement: "
+            f"missing planned runs={missing[:20]}, unplanned included runs={extra[:20]}"
+        )
+    plan_dataset = str(plan.get("dataset_version") or "")
+    if {run.dataset_version for run in runs} != {plan_dataset}:
+        raise AnalysisError(
+            "run dataset version disagrees with matrix plan: "
+            f"plan={plan_dataset!r}, runs={sorted({run.dataset_version for run in runs})}"
+        )
+    for run in runs:
+        missing_fields = [
+            name
+            for name in (
+                "experiment_plan_sha256", "git_sha", "redis_durability",
+                "redis_version", "redis_image", "source_raw_directory_hash",
+            )
+            if not getattr(run, name) or getattr(run, name) == "unknown"
+        ]
+        if missing_fields:
+            raise AnalysisError(
+                f"{run.run_id} lacks required provenance: {missing_fields}"
+            )
+    return {
+        "matrix_plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
+        "planned_runs": len(planned),
+        "included_runs": len(runs),
+        "voided_attempts": len(voided),
+    }
 
 
 # ===========================================================================
@@ -1349,16 +1810,22 @@ def main(argv: list[str] | None = None) -> int:
         print(f"no results directory at {results_root}")
         return 2
     destination = Path(arguments.destination or results_root / "analysis")
-    destination.mkdir(parents=True, exist_ok=True)
 
     runs = load_runs(results_root)
     if not runs:
         print(f"no completed runs found under {results_root}")
         return 2
+    voided = load_voided_attempts(results_root)
+    manifest_validation = validate_plan_manifest(results_root, runs, voided)
+    destination.mkdir(parents=True, exist_ok=True)
 
     executions = sum(len(run.executions) for run in runs)
     coverage = {
         "runs": len(runs),
+        "dataset_versions": sorted({run.dataset_version for run in runs}),
+        "redis_durability_configurations": sorted(
+            {run.redis_durability for run in runs}
+        ),
         "executions": executions,
         "systems": sorted({run.system for run in runs}),
         "crash_points": sorted({run.crash_point for run in runs}),
@@ -1390,6 +1857,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "bootstrap_seed": arguments.bootstrap_seed,
         "bootstrap_resamples": arguments.resamples,
+        **manifest_validation,
     }
 
     table_one = build_table_one(
@@ -1402,19 +1870,35 @@ def main(argv: list[str] | None = None) -> int:
         runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
     )
     latencies = build_latencies(runs)
+    timing_comparisons = build_timing_comparisons(
+        runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
+    )
     redis_kill = build_redis_kill_evidence(runs)
+    redis_kill_comparisons = build_redis_kill_comparisons(
+        runs, resamples=arguments.resamples, seed=arguments.bootstrap_seed
+    )
     per_execution = build_executions_csv(runs)
+    run_provenance = build_run_provenance(runs)
 
     written = [
         write_csv(destination / "table-1.csv", table_one),
         write_csv(destination / "per-cell-metrics.csv", per_cell),
         write_csv(destination / "comparisons-vs-aep-full.csv", comparisons),
         write_csv(destination / "latency-and-throughput.csv", latencies),
+        write_csv(destination / "timing-comparisons.csv", timing_comparisons),
         write_csv(destination / "per-execution.csv", per_execution),
+        write_csv(destination / "per-run-provenance.csv", run_provenance),
+        write_csv(destination / "voided-attempts.csv", voided),
     ]
     if redis_kill:
         written.append(
             write_csv(destination / "redis-kill-ablation.csv", redis_kill)
+        )
+        written.append(
+            write_csv(
+                destination / "redis-kill-comparisons.csv",
+                redis_kill_comparisons,
+            )
         )
     for metric in RATE_METRICS:
         written.append(

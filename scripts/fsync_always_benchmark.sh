@@ -32,7 +32,7 @@ set -euo pipefail
 IMAGE="redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"
 NAME="aep-fsync-always"
 PORT="6383"
-RESULTS_ROOT="experiments/results/fsync-always"
+RESULTS_ROOT="${AEP_FSYNC_RESULTS_ROOT:-experiments/results/stage3-2026-08-12/fsync-always}"
 
 # The config the container must actually load.
 #
@@ -71,7 +71,31 @@ CONF="${AEP_DOCKER_CONF:-${CONF_LOCAL}}"
 # same results root instead of replacing it.
 SYSTEMS="${AEP_FSYNC_SYSTEMS:-AEP_FULL}"
 MOCK_PORT="${AEP_FSYNC_MOCK_PORT:-8098}"
-CLEAN="${AEP_FSYNC_CLEAN:-1}"
+RUNS="${AEP_FSYNC_RUNS:-9}"
+CLEAN="${AEP_FSYNC_CLEAN:-0}"
+DATASET_VERSION="${AEP_FSYNC_DATASET_VERSION:-stage3-2026-08-12-b3-always}"
+PLAN_SHA256="${AEP_STAGE3_PLAN_SHA256:-}"
+GIT_SHA="${AEP_GIT_SHA:-$(git rev-parse HEAD)}"
+
+# Validate every operator-controlled value before Docker or the results root
+# is touched.  In particular, shell arithmetic accepts surprising strings;
+# the lexical gate is intentional.
+if ! [[ "${RUNS}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "AEP_FSYNC_RUNS must be a positive integer; got '${RUNS}'" >&2
+  exit 2
+fi
+if [ "${CLEAN}" != "0" ]; then
+  echo "AEP_FSYNC_CLEAN is no longer supported: Stage 3 never deletes prior runs" >&2
+  exit 2
+fi
+if ! [[ "${PLAN_SHA256}" =~ ^[0-9a-fA-F]{64}$ ]]; then
+  echo "AEP_STAGE3_PLAN_SHA256 must be the finalized 64-hex plan digest" >&2
+  exit 2
+fi
+if ! [[ "${GIT_SHA}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+  echo "AEP_GIT_SHA must be the exact 40-hex Git SHA" >&2
+  exit 2
+fi
 
 echo "=============================================================="
 echo "F0(iii)  barrier latency under appendfsync=always"
@@ -79,15 +103,28 @@ echo "=============================================================="
 echo
 
 # ---------------------------------------------------------------- teardown
+DISPOSABLE_VERIFIED=0
 cleanup() {
   echo
   echo "--- teardown ---"
-  docker rm -f "${NAME}" >/dev/null 2>&1 || true
-  echo "removed ${NAME}"
+  if [ "${DISPOSABLE_VERIFIED}" = "1" ]; then
+    MARKER="$(docker exec "${NAME}" redis-cli -n 15 GET aep:test-instance-marker 2>/dev/null | tr -d '\r' || true)"
+    if [ "${MARKER}" = "1" ]; then
+      docker rm -f "${NAME}" >/dev/null 2>&1 || true
+      echo "removed verified-disposable ${NAME}"
+    else
+      echo "REFUSED teardown: ${NAME} no longer advertises aep:test-instance-marker" >&2
+    fi
+  else
+    echo "left ${NAME} untouched because disposability was not verified"
+  fi
 }
 trap cleanup EXIT
 
-docker rm -f "${NAME}" >/dev/null 2>&1 || true
+if docker inspect "${NAME}" >/dev/null 2>&1; then
+  echo "REFUSED: container ${NAME} already exists; it will not be killed or replaced" >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------- the config file
 if [ ! -f "${CONF_LOCAL}" ]; then
@@ -146,18 +183,20 @@ echo
 echo "--- marking the throwaway instance disposable (Phase 2A guard) ---"
 echo '$ redis-cli -n 15 SET aep:test-instance-marker 1'
 docker exec "${NAME}" redis-cli -n 15 SET aep:test-instance-marker 1
+MARKER="$(docker exec "${NAME}" redis-cli -n 15 GET aep:test-instance-marker | tr -d '\r')"
+if [ "${MARKER}" != "1" ]; then
+  echo "REFUSING TO MEASURE: disposable marker verification failed" >&2
+  exit 1
+fi
+DISPOSABLE_VERIFIED=1
 echo
 
 # --------------------------------------------------------------- the cell
-echo "--- the cell: ${SYSTEMS}, crash-free (p0), payments, 3 runs x 10 exec ---"
+echo "--- the cell: ${SYSTEMS}, crash-free (p0), payments, ${RUNS} runs x 10 exec ---"
 echo "    identical to the everysec cells of the same systems"
 echo "    (same matrix seed, so the per-run seeds are the same)"
 echo
-if [ "${CLEAN}" = "1" ]; then
-  rm -rf "${RESULTS_ROOT}"
-else
-  echo "    appending to ${RESULTS_ROOT} (AEP_FSYNC_CLEAN=0)"
-fi
+echo "    resumably appending to ${RESULTS_ROOT}; no clean mode exists"
 SYSTEM_FLAGS=()
 for system in ${SYSTEMS}; do
   SYSTEM_FLAGS+=(--system "${system}")
@@ -167,6 +206,13 @@ uv run --frozen python -m experiments.run_matrix \
   --regime p0 \
   "${SYSTEM_FLAGS[@]}" \
   --endpoint payments \
+  --runs-per-cell "${RUNS}" \
+  --dataset-version "${DATASET_VERSION}" \
+  --run-order interleaved \
+  --expected-appendfsync always \
+  --experiment-plan-sha256 "${PLAN_SHA256}" \
+  --git-sha "${GIT_SHA}" \
+  --redis-image "${IMAGE}" \
   --redis-url "redis://127.0.0.1:${PORT}/15" \
   --results-root "${RESULTS_ROOT}" \
   --resume \

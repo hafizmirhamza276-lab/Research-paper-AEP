@@ -52,6 +52,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import sys
 import time
 import traceback
@@ -60,7 +61,10 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping, Sequence
 
-from redis.asyncio import Redis
+try:
+    from redis.asyncio import Redis
+except ModuleNotFoundError:  # plan-only mode intentionally has no runtime deps
+    Redis = None  # type: ignore[assignment]
 
 from experiments.baselines.contract import ResumePolicy, SystemId, descriptor_for
 from experiments.baselines.crash_points import (
@@ -70,7 +74,6 @@ from experiments.baselines.crash_points import (
 )
 from experiments.harness.crash_points import ROADMAP_CRASH_POINTS
 from experiments.harness.injector import HAS_SIGKILL
-from experiments.harness.orchestrate import run_once
 from experiments.mock_api.config import ReadbackKeying
 
 #: The matrix's own version. Bumping it is a statement that cells collected
@@ -240,13 +243,13 @@ REGIME_REDIS_KILL_PREACK = Regime(
     executions_per_run=1,
     workers=1,
     systems=ABLATION_SYSTEMS,
-    # Two endpoints, chosen because they are where the same mechanism has two
-    # different consequences. Under AUTHORITATIVE_READBACK a read-back can
-    # rescue a system that dispatched without an acknowledged intent, so the
-    # difference shows only in what was applied. Under NO_READBACK nothing can,
-    # so it shows in what the system is left able to say. Collecting the middle
-    # endpoint as well would cost 60 runs to interpolate between them.
-    endpoints=("payments", "ledger_postings"),
+    # Stage 1 collected NO_READBACK only.  Stage 3 adds the two missing
+    # capability classes rather than treating the middle class as an
+    # interpolation: whether endpoint read-back changes the *applied-effect*
+    # rate is now a falsifiable mechanism check.  CLI endpoint filters let a
+    # resumption select only the missing cells, so the completed NO_READBACK
+    # cell is never re-run merely to fill a table.
+    endpoints=("payments", "notifications", "ledger_postings"),
     keyings=(ReadbackKeying.CALLER_REFERENCE,),
 )
 
@@ -541,6 +544,9 @@ class MatrixPlan:
     results_root: str
     template: str
     redis_url: str
+    dataset_version: str
+    run_order: str
+    expected_appendfsync: str
     runs: list[dict[str, Any]] = field(default_factory=list)
 
     @property
@@ -567,11 +573,19 @@ class MatrixPlan:
             "matrix_seed": self.matrix_seed,
             "runs_per_cell": self.runs_per_cell,
             "executions_per_run": self.executions_per_run,
-            "repetitions_per_cell": self.runs_per_cell * self.executions_per_run,
+            "default_executions_per_cell": (
+                self.runs_per_cell * self.executions_per_run
+            ),
+            "executions_total": sum(
+                int(entry["executions_per_run"]) for entry in self.runs
+            ),
             "workers": self.workers,
             "results_root": self.results_root,
             "template": self.template,
             "redis_url": self.redis_url,
+            "dataset_version": self.dataset_version,
+            "run_order": self.run_order,
+            "expected_appendfsync": self.expected_appendfsync,
             "cells_total": len(self.cells),
             "cells_applicable": len(self.applicable_cells),
             "cells_not_applicable": len(self.cells) - len(self.applicable_cells),
@@ -651,6 +665,9 @@ def build_plan(arguments) -> MatrixPlan:
         results_root=arguments.results_root,
         template=str(arguments.template),
         redis_url=arguments.redis_url,
+        dataset_version=arguments.dataset_version,
+        run_order=arguments.run_order,
+        expected_appendfsync=arguments.expected_appendfsync,
     )
     for cell in cells:
         if not cell.applicable:
@@ -669,6 +686,7 @@ def build_plan(arguments) -> MatrixPlan:
             plan.runs.append(
                 {
                     "run_id": f"{cell.slug}-r{repetition}",
+                    "dataset_version": arguments.dataset_version,
                     "cell_key": cell.key,
                     "cell_slug": cell.slug,
                     "tier": cell.tier,
@@ -692,7 +710,27 @@ def build_plan(arguments) -> MatrixPlan:
                     ),
                 }
             )
-    plan.runs.sort(key=lambda entry: (entry["tier"], entry["cell_key"], entry["repetition"]))
+    if arguments.run_order == "interleaved":
+        # Fixed, seed-derived ordering within every repetition.  Sorting by
+        # repetition first prevents a long arm from being collected entirely
+        # before the next arm and therefore reduces temporal host confounding.
+        def order_key(entry: Mapping[str, Any]) -> tuple[int, int, str]:
+            material = (
+                f"{arguments.matrix_seed}|run-order|{entry['cell_key']}"
+            ).encode("utf-8")
+            return (
+                int(entry["tier"]),
+                int(entry["repetition"]),
+                hashlib.sha256(material).hexdigest(),
+            )
+
+        plan.runs.sort(key=order_key)
+    else:
+        plan.runs.sort(
+            key=lambda entry: (
+                entry["tier"], entry["cell_key"], entry["repetition"]
+            )
+        )
     return plan
 
 
@@ -709,13 +747,17 @@ def render_plan(plan: MatrixPlan) -> str:
         f"  suspend disabled     {echo['suspend_disabled_declared']}   "
         f"(E5: absolute timing is excluded from every run without this)",
         f"  matrix seed          {echo['matrix_seed']}",
-        f"  repetitions/cell     {echo['repetitions_per_cell']} "
-        f"({echo['runs_per_cell']} runs x {echo['executions_per_run']} executions)",
+        f"  dataset version      {echo['dataset_version']}",
+        f"  run order            {echo['run_order']}",
+        f"  appendfsync expected {echo['expected_appendfsync']}",
+        f"  default cell shape   {echo['runs_per_cell']} runs x "
+        f"{echo['executions_per_run']} executions (regime overrides below)",
         f"  workers per run      {echo['workers']}",
         f"  cells (total)        {echo['cells_total']}",
         f"  cells (applicable)   {echo['cells_applicable']}",
         f"  cells (not applic.)  {echo['cells_not_applicable']}",
         f"  runs planned         {echo['runs_total']}",
+        f"  executions planned   {echo['executions_total']}",
         f"  estimated wall time  {echo['estimated_hours']} h "
         f"({echo['estimated_seconds']} s)",
         "",
@@ -835,6 +877,49 @@ async def coordinator_run_id(redis_url: str) -> str | None:
             pass
 
 
+async def coordinator_snapshot(redis_url: str) -> dict[str, str] | None:
+    """Read the live coordinator identity, safety marker, and durability.
+
+    Collection is refused unless this succeeds.  A missing value is not
+    evidence that Redis retained its configuration; it is an infrastructure
+    failure that must be visible before the harness can kill or clean up the
+    instance.
+    """
+    redis_type = Redis
+    if redis_type is None:
+        from redis.asyncio import Redis as redis_type
+
+    client = redis_type.from_url(
+        redis_url, decode_responses=True, socket_connect_timeout=5,
+        socket_timeout=5,
+    )
+    try:
+        server = await client.info("server")
+        persistence = await client.info("persistence")
+        config: dict[str, Any] = {}
+        for name in ("appendonly", "appendfsync", "aof-use-rdb-preamble"):
+            config.update(await client.config_get(name))
+        marker = await client.get("aep:test-instance-marker")
+        return {
+            "run_id": str(server.get("run_id") or ""),
+            "redis_version": str(server.get("redis_version") or ""),
+            "appendonly": str(config.get("appendonly") or ""),
+            "appendfsync": str(config.get("appendfsync") or ""),
+            "aof_use_rdb_preamble": str(
+                config.get("aof-use-rdb-preamble") or ""
+            ),
+            "aof_enabled": str(persistence.get("aof_enabled") or ""),
+            "test_instance_marker": str(marker or ""),
+        }
+    except Exception:  # noqa: BLE001 -- unreachable is invalid, not clean
+        return None
+    finally:
+        try:
+            await client.aclose()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def host_level_fault_injector_running() -> str | None:
     """Name a conflicting fault injector alive on this host, if any.
 
@@ -865,6 +950,121 @@ def run_directory(results_root: str, entry: dict[str, Any]) -> Path:
     return Path(results_root) / entry["run_id"]
 
 
+def directory_sha256(directory: Path) -> str:
+    """Content hash of a raw run directory, including relative file names."""
+    digest = hashlib.sha256()
+    for path in sorted(item for item in directory.rglob("*") if item.is_file()):
+        relative = path.relative_to(directory).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        size = path.stat().st_size
+        digest.update(size.to_bytes(8, "big"))
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def inspect_run_attempt(
+    results_root: str, entry: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    """Classify an existing run path without modifying any byte."""
+    directory = run_directory(results_root, entry)
+    if not directory.exists():
+        return ("missing", {})
+    if not directory.is_dir():
+        return ("invalid-path", {"path": str(directory)})
+    if not any(directory.iterdir()):
+        return ("empty", {})
+
+    summary = directory / "summary.json"
+    config_path = directory / "run-config.json"
+    if not summary.is_file() or not config_path.is_file():
+        return (
+            "incomplete",
+            {
+                "summary_present": summary.is_file(),
+                "run_config_present": config_path.is_file(),
+            },
+        )
+    try:
+        json.loads(summary.read_text(encoding="utf-8"))
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as error:
+        return ("unparseable", {"error": f"{type(error).__name__}: {error}"})
+
+    expected = {
+        "run_id": entry["run_id"],
+        "seed": entry["seed"],
+        "system": entry["system"],
+        "endpoint": entry["endpoint"],
+        "readback_keying": entry["readback_keying"],
+        "crash_probability": entry["crash_probability"],
+        "redis_kill_point": entry["redis_kill_point"],
+        "redis_kill_delay_ms": entry["redis_kill_delay_ms"],
+        "redis_kill_executions": entry["redis_kill_executions"],
+        "dataset_version": entry["dataset_version"],
+    }
+    mismatches = {
+        key: {"expected": value, "observed": config.get(key)}
+        for key, value in expected.items()
+        if config.get(key) != value
+    }
+    observed_executions = int(config.get("workers", 0)) * int(
+        config.get("executions_per_worker", 0)
+    )
+    if observed_executions != int(entry["executions_per_run"]):
+        mismatches["executions_per_run"] = {
+            "expected": entry["executions_per_run"],
+            "observed": observed_executions,
+        }
+    if mismatches:
+        return ("configuration-mismatch", {"mismatches": mismatches})
+    return ("valid", {"source_raw_directory_hash": directory_sha256(directory)})
+
+
+def archive_voided_attempt(
+    results_root: str,
+    entry: dict[str, Any],
+    *,
+    reason_code: str,
+    reason: str,
+    details: Mapping[str, Any] | None = None,
+) -> Path | None:
+    """Move one attempt, byte-for-byte, into the append-only void archive."""
+    source = run_directory(results_root, entry)
+    if not source.is_dir():
+        return None
+    voided = Path(results_root) / "voided"
+    voided.mkdir(parents=True, exist_ok=True)
+    attempt = 1
+    while True:
+        destination = voided / f"{entry['run_id']}--attempt-{attempt:03d}"
+        reason_path = voided / f"{destination.name}.void.json"
+        if not destination.exists() and not reason_path.exists():
+            break
+        attempt += 1
+    source_hash = directory_sha256(source)
+    shutil.move(str(source), str(destination))
+    record = {
+        "dataset_version": entry["dataset_version"],
+        "run_id": entry["run_id"],
+        "seed": entry["seed"],
+        "reason_code": reason_code,
+        "reason": reason,
+        "details": dict(details or {}),
+        "source_raw_directory_hash": source_hash,
+        "preserved_path": destination.name,
+        "attempt": attempt,
+        "status": "void",
+    }
+    reason_path.write_text(
+        json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    _append(voided / "MANIFEST.jsonl", record)
+    return destination
+
+
 def already_collected(results_root: str, entry: dict[str, Any]) -> bool:
     """A run counts as collected when its own summary exists and parses.
 
@@ -872,17 +1072,36 @@ def already_collected(results_root: str, entry: dict[str, Any]) -> bool:
     directory full of shards and no summary, and resuming must re-run it
     rather than treat a partial collection as a result.
     """
-    summary = run_directory(results_root, entry) / "summary.json"
-    if not summary.is_file():
-        return False
-    try:
-        json.loads(summary.read_text(encoding="utf-8"))
-    except (ValueError, OSError):
-        return False
-    return True
+    state, _details = inspect_run_attempt(results_root, entry)
+    return state == "valid"
+
+
+def snapshot_problem(
+    snapshot: Mapping[str, str] | None, *, expected_appendfsync: str
+) -> str | None:
+    if snapshot is None:
+        return "Redis was unreachable while verifying the disposable instance"
+    expected = {
+        "test_instance_marker": "1",
+        "appendonly": "yes",
+        "appendfsync": expected_appendfsync,
+        "aof_enabled": "1",
+    }
+    mismatches = [
+        f"{key}={snapshot.get(key)!r} (expected {value!r})"
+        for key, value in expected.items()
+        if snapshot.get(key) != value
+    ]
+    if not snapshot.get("run_id"):
+        mismatches.append("run_id is empty")
+    if not snapshot.get("redis_version"):
+        mismatches.append("redis_version is empty")
+    return "; ".join(mismatches) if mismatches else None
 
 
 async def execute_plan(plan: MatrixPlan, arguments) -> int:
+    from experiments.harness.orchestrate import run_once
+
     results_root = plan.results_root
     Path(results_root).mkdir(parents=True, exist_ok=True)
     progress_path = Path(results_root) / "matrix-progress.jsonl"
@@ -894,9 +1113,37 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
     started_at = time.monotonic()
 
     for index, entry in enumerate(plan.runs, start=1):
-        if arguments.resume and already_collected(results_root, entry):
-            skipped += 1
-            continue
+        prior_state, prior_details = inspect_run_attempt(results_root, entry)
+        if prior_state == "valid":
+            if arguments.resume:
+                skipped += 1
+                continue
+            print(
+                "REFUSED: a valid run already exists and --resume was not "
+                f"specified: {entry['run_id']}",
+                flush=True,
+            )
+            return 2
+        if prior_state != "missing":
+            if not arguments.resume:
+                print(
+                    "REFUSED: existing run evidence would be overwritten; "
+                    f"use --resume to preserve it under results/voided first: "
+                    f"{entry['run_id']} ({prior_state})",
+                    flush=True,
+                )
+                return 2
+            preserved = archive_voided_attempt(
+                results_root,
+                entry,
+                reason_code=f"resume-{prior_state}",
+                reason=(
+                    "A prior attempt was not a valid completed run. It was "
+                    "preserved before the fixed-plan retry."
+                ),
+                details=prior_details,
+            )
+            print(f"  preserved prior attempt at {preserved}", flush=True)
         if arguments.max_runs and collected >= arguments.max_runs:
             print(
                 f"stopping after {collected} runs as instructed (--max-runs); "
@@ -911,11 +1158,22 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
         )
         print(label, flush=True)
         started = time.monotonic()
-        coordinator_before = await coordinator_run_id(plan.redis_url)
+        coordinator_before = await coordinator_snapshot(plan.redis_url)
+        preflight_problem = snapshot_problem(
+            coordinator_before,
+            expected_appendfsync=plan.expected_appendfsync,
+        )
+        if preflight_problem:
+            print(
+                "REFUSED before run: Redis safety/configuration gate failed: "
+                f"{preflight_problem}",
+                flush=True,
+            )
+            return 2
         record: dict[str, Any] = {
             **entry,
             "started_at": started,
-            "coordinator_run_id_before": coordinator_before,
+            "coordinator_environment_before": coordinator_before,
         }
         try:
             workers = int(entry.get("workers") or plan.workers)
@@ -951,6 +1209,12 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
                     "poisoned_executions": arguments.poisoned_executions,
                     "recovery_deadline_seconds": arguments.recovery_deadline_seconds,
                     "suspend_disabled_declared": suspend_disabled_declared(),
+                    "dataset_version": plan.dataset_version,
+                    "experiment_plan_sha256": arguments.experiment_plan_sha256,
+                    "git_sha": arguments.git_sha,
+                    "redis_durability": coordinator_before["appendfsync"],
+                    "redis_version": coordinator_before["redis_version"],
+                    "redis_image": arguments.redis_image,
                 },
                 template_path=plan.template,
                 port=arguments.port,
@@ -961,15 +1225,35 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
             # A run collected against a coordinator that was replaced
             # underneath it is not a slow run, it is a different experiment.
             # The regimes that kill Redis on purpose expect this and say so.
-            coordinator_after = await coordinator_run_id(plan.redis_url)
-            record["coordinator_run_id_after"] = coordinator_after
-            unexpected_restart = (
-                coordinator_before is not None
-                and coordinator_after is not None
-                and coordinator_before != coordinator_after
-                and not entry["redis_kill_point"]
+            coordinator_after = await coordinator_snapshot(plan.redis_url)
+            record["coordinator_environment_after"] = coordinator_after
+            postflight_problem = snapshot_problem(
+                coordinator_after,
+                expected_appendfsync=plan.expected_appendfsync,
+            )
+            if postflight_problem:
+                raise RuntimeError(
+                    "post-run Redis safety/configuration gate failed: "
+                    f"{postflight_problem}"
+                )
+            before_id = coordinator_before["run_id"]
+            after_id = coordinator_after["run_id"]
+            unexpected_restart = before_id != after_id and not entry["redis_kill_point"]
+            missing_expected_restart = (
+                before_id == after_id and bool(entry["redis_kill_point"])
             )
             record["coordinator_restarted_unexpectedly"] = unexpected_restart
+            record["coordinator_expected_restart_missing"] = missing_expected_restart
+            if unexpected_restart or missing_expected_restart:
+                kind = (
+                    "unexpected coordinator restart"
+                    if unexpected_restart
+                    else "the injected Redis kill did not produce a new run_id"
+                )
+                raise RuntimeError(
+                    f"infrastructure-invalid run: {kind} "
+                    f"({before_id[:12]} -> {after_id[:12]})"
+                )
             record.update(
                 {
                     "status": "collected",
@@ -985,22 +1269,12 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
                     "summary": outcome["summary"],
                 }
             )
-            collected += 1
             if not report.agrees:
-                failed.append(record)
-            if unexpected_restart:
-                # Loud, and in the results rather than only on the terminal:
-                # the whole point is that this run looks ordinary otherwise.
-                print(
-                    "  WARNING: the coordinator's run_id changed during this "
-                    f"run ({coordinator_before[:12]} -> "
-                    f"{coordinator_after[:12]}). Something restarted Redis "
-                    "while the matrix was collecting -- most likely the "
-                    "integration suite, which restarts the container by name "
-                    "and clears the aep:* namespace. This run is recorded "
-                    "with the flag set; do not report it.",
-                    flush=True,
+                raise RuntimeError(
+                    "infrastructure-invalid run: event log and independent "
+                    "ground-truth ledger did not reconcile"
                 )
+            collected += 1
             # D4: an undetected duplicate in AEP-full halts the matrix. It is
             # the session's primary result if it happens, and continuing would
             # only bury it under six hours of further runs.
@@ -1036,6 +1310,19 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
                 }
             )
             failed.append(record)
+            preserved = archive_voided_attempt(
+                results_root,
+                entry,
+                reason_code="infrastructure-invalid",
+                reason=(
+                    "The attempt failed a collection or reconciliation "
+                    "precondition. It is excluded from analysis, not treated "
+                    "as an unfavorable scientific outcome."
+                ),
+                details={"error": record["error"]},
+            )
+            if preserved is not None:
+                record["voided_path"] = str(preserved)
             print(f"  FAILED: {type(error).__name__}: {error}", flush=True)
         finally:
             record["wall_seconds"] = round(time.monotonic() - started, 2)
@@ -1082,6 +1369,51 @@ FAULTS = {
     "delay": {"distribution": "constant", "seconds": 2.0},
 }
 
+PINNED_REDIS_IMAGE = (
+    "redis:7.2.5-alpine@sha256:"
+    "6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"
+)
+
+
+def persist_plan(root: Path, plan: MatrixPlan, rendered: str) -> tuple[Path, Path]:
+    """Create a plan once, or verify an identical resumable plan.
+
+    A results root is an experiment identity.  Replacing its plan while runs
+    remain below it makes those runs uninterpretable, so a byte difference is
+    a refusal rather than an overwrite.
+    """
+    json_path = root / "matrix-plan.json"
+    text_path = root / "matrix-plan.txt"
+    json_bytes = (
+        json.dumps(plan.echo(), indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    text_bytes = (rendered + "\n").encode("utf-8")
+
+    existing = root.exists() and any(root.iterdir())
+    if json_path.exists() or text_path.exists():
+        if not json_path.is_file() or not text_path.is_file():
+            raise SystemExit(
+                f"REFUSED: incomplete plan lock under {root}; neither file "
+                "will be replaced"
+            )
+        if json_path.read_bytes() != json_bytes or text_path.read_bytes() != text_bytes:
+            raise SystemExit(
+                f"REFUSED: finalized plan under {root} differs from this "
+                "invocation; use a new versioned results root"
+            )
+        return (json_path, text_path)
+    if existing:
+        raise SystemExit(
+            f"REFUSED: non-empty results root {root} has no finalized plan; "
+            "use a new versioned root rather than adopting or overwriting it"
+        )
+    root.mkdir(parents=True, exist_ok=True)
+    with json_path.open("xb") as handle:
+        handle.write(json_bytes)
+    with text_path.open("xb") as handle:
+        handle.write(text_bytes)
+    return (json_path, text_path)
+
 
 def _systems(values: Iterable[str] | None) -> tuple[SystemId, ...] | None:
     if not values:
@@ -1104,6 +1436,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runs-per-cell", type=int, default=3)
     parser.add_argument("--executions-per-run", type=int, default=10)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--dataset-version", default="unversioned")
+    parser.add_argument(
+        "--run-order",
+        choices=("tier-cell", "interleaved"),
+        default="tier-cell",
+    )
+    parser.add_argument(
+        "--expected-appendfsync",
+        choices=("everysec", "always"),
+        default="everysec",
+    )
+    parser.add_argument(
+        "--experiment-plan-sha256",
+        default=None,
+        help="SHA-256 of the frozen Stage 3 machine-readable protocol plan",
+    )
+    parser.add_argument("--git-sha", default=None)
+    parser.add_argument("--redis-image", default=PINNED_REDIS_IMAGE)
     parser.add_argument(
         "--crash-probability",
         type=float,
@@ -1171,21 +1521,53 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     arguments = parser.parse_args(argv)
+    for name in ("runs_per_cell", "executions_per_run", "workers"):
+        if int(getattr(arguments, name)) <= 0:
+            parser.error(f"--{name.replace('_', '-')} must be a positive integer")
+    if arguments.max_runs < 0:
+        parser.error("--max-runs cannot be negative")
+    if arguments.crash_probability is not None and not (
+        0.0 <= arguments.crash_probability <= 1.0
+    ):
+        parser.error("--crash-probability must be between 0 and 1")
+    if not arguments.dataset_version.strip():
+        parser.error("--dataset-version cannot be blank")
+    if not arguments.plan_only:
+        if not arguments.git_sha or len(arguments.git_sha) != 40:
+            parser.error("collection requires --git-sha with the exact 40-hex Git SHA")
+        try:
+            int(arguments.git_sha, 16)
+        except ValueError:
+            parser.error("--git-sha must be hexadecimal")
+        if (
+            not arguments.experiment_plan_sha256
+            or len(arguments.experiment_plan_sha256) != 64
+        ):
+            parser.error(
+                "collection requires --experiment-plan-sha256 with the "
+                "frozen 64-hex plan digest"
+            )
+        try:
+            int(arguments.experiment_plan_sha256, 16)
+        except ValueError:
+            parser.error("--experiment-plan-sha256 must be hexadecimal")
     arguments.systems = _systems(arguments.systems)
     arguments.keyings = _keyings(arguments.keyings)
     arguments.crash_points = tuple(arguments.crash_points or ()) or None
 
     plan = build_plan(arguments)
+    for entry in plan.runs:
+        if int(entry["executions_per_run"]) % int(entry["workers"]):
+            parser.error(
+                "every planned executions-per-run value must be divisible by "
+                "its worker count"
+            )
     rendered = render_plan(plan)
     print(rendered)
 
     root = Path(arguments.results_root)
-    root.mkdir(parents=True, exist_ok=True)
-    (root / "matrix-plan.json").write_text(
-        json.dumps(plan.echo(), indent=2, sort_keys=True), encoding="utf-8"
-    )
-    (root / "matrix-plan.txt").write_text(rendered + "\n", encoding="utf-8")
-    print(f"plan written to {root / 'matrix-plan.json'} and matrix-plan.txt")
+    json_path, _text_path = persist_plan(root, plan, rendered)
+    print(f"plan locked at {json_path} and matrix-plan.txt")
 
     if arguments.plan_only:
         return 0

@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import math
 import random
+import statistics
 from dataclasses import dataclass
 from math import comb
 from statistics import NormalDist
@@ -168,6 +169,85 @@ class DifferenceInterval:
         if margin <= 0.0:
             raise ValueError("equivalence margin must be positive")
         return self.low > -margin and self.high < margin
+
+
+@dataclass(frozen=True)
+class MedianDifferenceInterval:
+    """Run-cluster interval for ``median(treatment) - median(control)``."""
+
+    point: float
+    low: float
+    high: float
+    confidence: float
+    resamples: int
+    seed: int
+    treatment_clusters: int
+    control_clusters: int
+    treatment_observations: int
+    control_observations: int
+
+
+def cluster_bootstrap_median_difference(
+    treatment: Mapping[str, Sequence[float]],
+    control: Mapping[str, Sequence[float]],
+    *,
+    resamples: int = DEFAULT_RESAMPLES,
+    seed: int = DEFAULT_BOOTSTRAP_SEED,
+    confidence: float = 0.95,
+) -> MedianDifferenceInterval:
+    """Resample whole runs for a difference of execution-level medians."""
+    if not treatment or not control:
+        raise ValueError("both treatment and control need at least one run cluster")
+    if resamples <= 0:
+        raise ValueError("resamples must be positive")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be strictly between zero and one")
+    if any(not values for values in treatment.values()) or any(
+        not values for values in control.values()
+    ):
+        raise ValueError("every run cluster needs at least one observation")
+
+    treatment_runs = sorted(treatment)
+    control_runs = sorted(control)
+
+    def flatten(data: Mapping[str, Sequence[float]], runs: Sequence[str]) -> list[float]:
+        return [value for run in runs for value in data[run]]
+
+    point = statistics.median(flatten(treatment, treatment_runs)) - statistics.median(
+        flatten(control, control_runs)
+    )
+    generator = random.Random(seed)
+    draws: list[float] = []
+    for _ in range(resamples):
+        treatment_draw = [
+            value
+            for _ in treatment_runs
+            for value in treatment[generator.choice(treatment_runs)]
+        ]
+        control_draw = [
+            value
+            for _ in control_runs
+            for value in control[generator.choice(control_runs)]
+        ]
+        draws.append(
+            statistics.median(treatment_draw) - statistics.median(control_draw)
+        )
+    draws.sort()
+    tail = (1.0 - confidence) / 2.0
+    low = draws[max(0, int(tail * resamples) - 1)]
+    high = draws[min(resamples - 1, int((1.0 - tail) * resamples))]
+    return MedianDifferenceInterval(
+        point=point,
+        low=low,
+        high=high,
+        confidence=confidence,
+        resamples=resamples,
+        seed=seed,
+        treatment_clusters=len(treatment_runs),
+        control_clusters=len(control_runs),
+        treatment_observations=sum(len(values) for values in treatment.values()),
+        control_observations=sum(len(values) for values in control.values()),
+    )
 
 
 def stratified_cluster_bootstrap_difference(

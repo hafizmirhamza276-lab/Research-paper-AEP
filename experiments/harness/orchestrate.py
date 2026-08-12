@@ -66,6 +66,11 @@ async def run_once(
             )
 
     results_dir = Path(overrides["results_root"]) / str(overrides["run_id"])
+    if results_dir.is_dir() and any(results_dir.iterdir()):
+        raise RuntimeError(
+            f"refusing to overwrite existing run evidence at {results_dir}; "
+            "archive the complete attempt under results/voided first"
+        )
     results_dir.mkdir(parents=True, exist_ok=True)
 
     config_path = render_config(

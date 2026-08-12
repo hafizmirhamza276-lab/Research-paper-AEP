@@ -43,9 +43,7 @@ import argparse
 import csv
 import json
 import math
-import random
 import re
-import statistics
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -59,6 +57,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from experiments.statistics import (  # noqa: E402
+    cluster_bootstrap_median_difference,
     fisher_exact_two_tailed,
     wilson_upper_bound,
 )
@@ -472,55 +471,6 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
     (out / "table-latency.tex").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
     )
-
-
-def cluster_bootstrap_median_difference(
-    treatment: dict[str, list[float]],
-    control: dict[str, list[float]],
-    *,
-    resamples: int = 10_000,
-    seed: int = 20260806,
-) -> tuple[float, float, float]:
-    """95% interval for (median treatment - median control), clustered by run.
-
-    The unit of independence is the *run*, not the execution: thirty step
-    latencies from three runs are not thirty independent draws, because a run
-    shares one provider process, one lease namespace and one worker-respawn
-    history. So the resample is over runs, and every execution of a resampled
-    run comes with it.
-
-    With three runs per arm this interval is coarse by construction -- there
-    are only ten distinct multisets of three runs -- and that coarseness is
-    the honest content of the number. It is reported rather than smoothed,
-    because the alternative on offer is a point estimate with no interval at
-    all, which is what this replaces.
-    """
-    rng = random.Random(seed)
-    treatment_runs = sorted(treatment)
-    control_runs = sorted(control)
-    if not treatment_runs or not control_runs:
-        return (0.0, 0.0, 0.0)
-
-    def draw(runs: list[str], data: dict[str, list[float]]) -> list[float]:
-        picked: list[float] = []
-        for _ in runs:
-            picked.extend(data[rng.choice(runs)])
-        return picked
-
-    point = statistics.median(
-        [v for run in treatment_runs for v in treatment[run]]
-    ) - statistics.median([v for run in control_runs for v in control[run]])
-
-    differences: list[float] = []
-    for _ in range(resamples):
-        differences.append(
-            statistics.median(draw(treatment_runs, treatment))
-            - statistics.median(draw(control_runs, control))
-        )
-    differences.sort()
-    low = differences[int(0.025 * len(differences))]
-    high = differences[min(len(differences) - 1, int(0.975 * len(differences)))]
-    return (point, low, high)
 
 
 def crash_free_latencies(path: Path, system: str) -> dict[str, list[float]]:
@@ -1599,7 +1549,8 @@ def emit_numbers(
         ablated = crash_free_latencies(path, "B3_INTENT_NO_BARRIER")
         if not treated or not ablated:
             continue
-        point, low, high = cluster_bootstrap_median_difference(treated, ablated)
+        interval = cluster_bootstrap_median_difference(treated, ablated)
+        point, low, high = interval.point, interval.low, interval.high
         macro(
             f"BarrierCost{tag}Low",
             tex_number(low),
@@ -1632,9 +1583,10 @@ def emit_numbers(
         protocol = crash_free_latencies(everysec_path, "B3_INTENT_NO_BARRIER")
         no_protocol = crash_free_latencies(everysec_path, "B0_NAIVE_RETRY")
         if protocol and no_protocol:
-            point, low, high = cluster_bootstrap_median_difference(
+            interval = cluster_bootstrap_median_difference(
                 protocol, no_protocol
             )
+            point, low, high = interval.point, interval.low, interval.high
             macro(
                 "ProtocolMinusBarrierLow",
                 tex_number(low),
