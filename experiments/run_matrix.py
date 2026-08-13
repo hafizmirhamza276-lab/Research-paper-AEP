@@ -564,6 +564,95 @@ def cell_seed(matrix_seed: int, cell: Cell, repetition: int) -> int:
     return int.from_bytes(digest[:4], "big") & 0x7FFFFFFF
 
 
+@dataclass(frozen=True)
+class CellSelection:
+    """The exact cell set a plan file declares, and the totals it declares.
+
+    The replication dataset is defined as 126 specific cells, and no
+    combination of this CLI's filters selects them: they are a subset at every
+    tier (78 of 84, 2 of 10, 7 of 42, 39 of 42) and within every regime. The
+    tightest filter their own value-sets imply admits 153. Rather than
+    approximate the set and hope, the collection reads it out of the immutable
+    plan whose SHA-256 is already recorded, so the shape collected and the
+    shape declared cannot drift apart.
+    """
+
+    path: Path
+    sha256: str
+    cell_keys: frozenset[str]
+    expected_cells: int
+    expected_runs: int
+
+
+def load_cell_selection(path: str | Path) -> CellSelection:
+    """Read a cell selection out of a machine-readable plan.
+
+    Every failure here is a refusal, not a warning. A selection that is
+    unreadable, malformed, duplicated, or internally inconsistent would
+    otherwise silently collect a different dataset than the one the plan
+    names, and the resulting runs would carry a plan hash that does not
+    describe them.
+    """
+    source = Path(path)
+    try:
+        raw = source.read_bytes()
+    except OSError as error:
+        raise SystemExit(f"--cells-from: cannot read {source}: {error}") from None
+    digest = hashlib.sha256(raw).hexdigest()
+    try:
+        document = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SystemExit(
+            f"--cells-from: {source} is not valid JSON: {error}"
+        ) from None
+    entries = document.get("cells")
+    if not isinstance(entries, list) or not entries:
+        raise SystemExit(f"--cells-from: {source} has no non-empty 'cells' array")
+
+    keys: list[str] = []
+    runs_declared_per_cell = 0
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not entry.get("cell_key"):
+            raise SystemExit(
+                f"--cells-from: {source} cell #{index} has no 'cell_key'"
+            )
+        keys.append(str(entry["cell_key"]))
+        runs_declared_per_cell += int(entry.get("runs", 0))
+
+    duplicates = sorted({key for key in keys if keys.count(key) > 1})
+    if duplicates:
+        raise SystemExit(
+            f"--cells-from: {source} repeats cell key(s) {duplicates}"
+        )
+
+    totals = document.get("planned_totals")
+    totals = totals if isinstance(totals, Mapping) else {}
+    declared_cells = int(totals.get("cells", len(keys)))
+    declared_runs = int(totals.get("runs", runs_declared_per_cell))
+
+    # Two independent statements of the same fact live in the plan: the
+    # per-cell run counts and the planned_totals block. They are required to
+    # agree, because a plan that contradicts itself cannot bind anything.
+    if declared_cells != len(keys):
+        raise SystemExit(
+            f"--cells-from: {source} declares {declared_cells} cells but "
+            f"lists {len(keys)}"
+        )
+    if runs_declared_per_cell and declared_runs != runs_declared_per_cell:
+        raise SystemExit(
+            f"--cells-from: {source} declares {declared_runs} runs but its "
+            f"cells sum to {runs_declared_per_cell}"
+        )
+
+    return CellSelection(
+        path=source,
+        sha256=digest,
+        cell_keys=frozenset(keys),
+        expected_cells=len(keys),
+        expected_runs=declared_runs,
+    )
+
+
 @dataclass
 class MatrixPlan:
     """Everything the matrix will do, decided before any of it is done."""
@@ -580,6 +669,7 @@ class MatrixPlan:
     run_order: str
     expected_appendfsync: str
     runs: list[dict[str, Any]] = field(default_factory=list)
+    cell_selection: CellSelection | None = None
 
     @property
     def applicable_cells(self) -> list[Cell]:
@@ -619,6 +709,16 @@ class MatrixPlan:
             "dataset_version": self.dataset_version,
             "run_order": self.run_order,
             "expected_appendfsync": self.expected_appendfsync,
+            "cells_from": (
+                None
+                if self.cell_selection is None
+                else {
+                    "path": str(self.cell_selection.path),
+                    "sha256": self.cell_selection.sha256,
+                    "declared_cells": self.cell_selection.expected_cells,
+                    "declared_runs": self.cell_selection.expected_runs,
+                }
+            ),
             "cells_total": len(self.cells),
             "cells_applicable": len(self.applicable_cells),
             "cells_not_applicable": len(self.cells) - len(self.applicable_cells),
@@ -689,6 +789,28 @@ def build_plan(arguments) -> MatrixPlan:
         keyings=arguments.keyings or tuple(ReadbackKeying),
         regimes=regimes,
     )
+    selection = None
+    if getattr(arguments, "cells_from", None):
+        selection = load_cell_selection(arguments.cells_from)
+        available = {cell.key for cell in cells}
+        missing = sorted(selection.cell_keys - available)
+        if missing:
+            # Either the plan names a cell this matrix definition does not
+            # have, or another filter on this command line has already
+            # excluded it. Both are fatal, and both are worth naming: a
+            # collection that quietly drops cells produces the wrong
+            # denominator everywhere downstream.
+            raise SystemExit(
+                f"--cells-from: {len(missing)} cell(s) named by "
+                f"{selection.path} are not available in this invocation; "
+                f"first: {missing[:3]}"
+            )
+        cells = tuple(cell for cell in cells if cell.key in selection.cell_keys)
+        if len(cells) != selection.expected_cells:
+            raise SystemExit(
+                f"--cells-from: selected {len(cells)} cells but "
+                f"{selection.path} declares {selection.expected_cells}"
+            )
     plan = MatrixPlan(
         cells=cells,
         runs_per_cell=arguments.runs_per_cell,
@@ -701,6 +823,7 @@ def build_plan(arguments) -> MatrixPlan:
         dataset_version=arguments.dataset_version,
         run_order=arguments.run_order,
         expected_appendfsync=arguments.expected_appendfsync,
+        cell_selection=selection,
     )
     for cell in cells:
         if not cell.applicable:
@@ -764,6 +887,15 @@ def build_plan(arguments) -> MatrixPlan:
                 entry["tier"], entry["cell_key"], entry["repetition"]
             )
         )
+    if selection is not None and len(plan.runs) != selection.expected_runs:
+        # Reached when a selected cell was dropped after selection -- by
+        # --max-tier, or by a regime shape that disagrees with the plan's
+        # per-cell run count. Selecting the right cells is not enough; the
+        # runs they expand into have to match what the plan promised too.
+        raise SystemExit(
+            f"--cells-from: planned {len(plan.runs)} runs but "
+            f"{selection.path} declares {selection.expected_runs}"
+        )
     return plan
 
 
@@ -782,6 +914,14 @@ def render_plan(plan: MatrixPlan) -> str:
         f"(E5: absolute timing is excluded from every run without this)",
         f"  matrix seed          {echo['matrix_seed']}",
         f"  dataset version      {echo['dataset_version']}",
+        *(
+            []
+            if echo["cells_from"] is None
+            else [
+                f"  cells from           {echo['cells_from']['path']}",
+                f"  cells-from sha256    {echo['cells_from']['sha256']}",
+            ]
+        ),
         f"  run order            {echo['run_order']}",
         f"  appendfsync expected {echo['expected_appendfsync']}",
         f"  default cell shape   {echo['runs_per_cell']} runs x "
@@ -1372,12 +1512,31 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
         for record in failed[:20]:
             print(f"  {record['run_id']}: {record.get('error') or 'agrees=False'}")
     print(f"progress: {progress_path}")
-    print(
-        "resume with: python -m experiments.run_matrix --resume "
-        f"--results-root {results_root}"
-    )
+    print("resume with: " + resume_command_line(results_root, arguments))
     print("=" * 78)
     return 1 if failed else 0
+
+
+def resume_command_line(results_root: str, arguments) -> str:
+    """The command that actually resumes this collection.
+
+    This is pasted by an operator, usually while recovering an interrupted
+    run, which is the worst possible moment to hand someone a command that
+    fails argument validation. It therefore carries everything collection
+    requires -- ``--git-sha`` and ``--experiment-plan-sha256`` are mandatory
+    for any non-``--plan-only`` invocation -- plus the cell selection, without
+    which a resume would silently widen back to the full matrix.
+    """
+    parts = [
+        "python -m experiments.run_matrix --resume",
+        f"--results-root {results_root}",
+        f"--dataset-version {arguments.dataset_version}",
+        f"--git-sha {arguments.git_sha}",
+        f"--experiment-plan-sha256 {arguments.experiment_plan_sha256}",
+    ]
+    if getattr(arguments, "cells_from", None):
+        parts.append(f"--cells-from {arguments.cells_from}")
+    return " ".join(parts)
 
 
 def _append(path: Path, record: dict[str, Any]) -> None:
@@ -1532,6 +1691,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--crash-point", dest="crash_points", action="append")
     parser.add_argument("--keying", dest="keyings", action="append")
+    parser.add_argument(
+        "--cells-from",
+        help=(
+            "collect exactly the cells named by this machine-readable "
+            "plan (its 'cells' array of cell_key values). Use this "
+            "rather than approximating a dataset with --regime/--tier "
+            "filters: the replication set is a subset at every tier and "
+            "within every regime, and no filter combination selects it."
+        ),
+    )
     parser.add_argument("--max-runs", type=int, default=0)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--plan-only", action="store_true")
