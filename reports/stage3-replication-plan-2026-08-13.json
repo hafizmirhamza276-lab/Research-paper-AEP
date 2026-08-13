@@ -1,10 +1,10 @@
 {
   "schema": "aep.stage3.replication-plan/1",
-  "finalized_at": "2026-08-13T08:58:21.402252+00:00",
+  "finalized_at": "2026-08-13T09:54:48.230983+00:00",
   "supersedes_nothing": "This plan is additive to reports/stage3-experiment-plan-2026-08-12.json, which covers B2 and B3 only and is not modified by it.",
   "dataset_version": "stage3-2026-08-13-replication-1",
   "dataset_identity": "A NEW replication dataset. It is not the historical 432-run raw dataset and must never be described as a recovery of it.",
-  "git_sha": "151450bb685ac241d17fd4580c149f7d70d58956",
+  "git_sha": "dc954af1a07d43470ddfdaf63206b96f18bfcd1e",
   "git_tree_clean": true,
   "git_tree_clean_scope": "all paths except reports/stage3-*.md and reports/stage3-replication-plan-2026-08-13.json; no path under experiments/, scripts/ or tests/ is excluded",
   "matrix_seed": 20260806,

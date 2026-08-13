@@ -84,8 +84,8 @@ Generated at `reports/stage3-replication-plan-2026-08-13.json`.
 | Dataset version | `stage3-2026-08-13-replication-1` |
 | Cells | 126 |
 | Runs | 432 |
-| Plan SHA-256 | `e416f076fcbcbf1d92d56a754fa48b9973d9c354de5acdbc186b4d7f5f4a643c` |
-| Bound Git SHA | `151450bb685ac241d17fd4580c149f7d70d58956` |
+| Plan SHA-256 | `ce36b784b54f312ba880c586df73ae47a27bcca6224a05b5560d52955c92e7a0` |
+| Bound Git SHA | `dc954af1a07d43470ddfdaf63206b96f18bfcd1e` |
 | Git tree clean | **true** |
 | Result root | `/var/tmp/aep-stage3-2026-08-13/replication` |
 | Matrix seed | **20260806 — the historical seed, deliberately** |
@@ -116,6 +116,42 @@ plan's `git_tree_clean_scope` field, and excludes nothing under
 `experiments/`, `scripts/` or `tests/`. The roadmap has no step that
 performs this commit, and the deviation taken is recorded in
 `reports/stage3-amendment-2026-08-13-collection-tree-binding.md`.
+
+### 3.1 Regeneration history
+
+The plan has been generated **three times**. It is regenerated whenever the
+commit it binds changes, because its whole purpose is to name the tree that
+will produce the runs; a plan naming any other tree is a false provenance
+record repeated 432 times.
+
+| # | SHA-256 | Bound commit | Tree clean | Why it was generated |
+|---|---|---|---|---|
+| 1 | `834bf00b…cfedf38d` | `4ea09fd` | **false** | Prompt 2's original. Bound to an uncommitted tree by instruction, and therefore to a tree nobody else could reconstruct. Never committed. |
+| 2 | `e416f076…f5f4a643c` | `151450b` | true | Regenerated once the Prompt 2 repairs were committed. Committed in `7dfd723`. |
+| 3 | `ce36b784…55c92e7a0` | `dc954af` | true | Regenerated once `--cells-from` existed. Operative. |
+
+Only generations 2 and 3 are regenerations in the strict sense; generation 1
+is the original. **Superseded hashes must not be used**: a run collected
+against `834bf00b…` or `e416f076…` would name a tree that lacks the cell
+selection the dataset is defined by.
+
+**The cause of the third generation** is worth stating plainly, because it was
+not foreseen by the roadmap. The Prompt 3 pilot established that the 126
+replication cells cannot be selected by any combination of the collection
+CLI's filters: they are a subset at every tier (78 of 84, 2 of 10, 7 of 42,
+39 of 42) and within every regime, and the tightest filter their own
+value-sets imply admits 153 cells -- 27 too many. A dataset defined as
+"exactly 126 cells" was therefore not collectable by the instrument that was
+supposed to collect it. `--cells-from` was added so the collection reads its
+cell set out of this plan rather than approximating it, which also means the
+plan is now an *input* to the collection and not merely a description of it.
+That code is commit `dc954af`, and binding to it is what required generation
+3.
+
+The cell selection is a filter and not a re-seed: every surviving cell keeps
+the seed it had in the unrestricted matrix, which is what preserves the
+comparison against the 84-run corroboration set. That property is pinned by
+`experiments/tests/test_stage3_cell_selection.py` rather than assumed.
 
 ## 4. What this amendment does not decide
 
