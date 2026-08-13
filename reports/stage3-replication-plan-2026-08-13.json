@@ -1,0 +1,1990 @@
+{
+  "schema": "aep.stage3.replication-plan/1",
+  "finalized_at": "2026-08-13T08:58:21.402252+00:00",
+  "supersedes_nothing": "This plan is additive to reports/stage3-experiment-plan-2026-08-12.json, which covers B2 and B3 only and is not modified by it.",
+  "dataset_version": "stage3-2026-08-13-replication-1",
+  "dataset_identity": "A NEW replication dataset. It is not the historical 432-run raw dataset and must never be described as a recovery of it.",
+  "git_sha": "151450bb685ac241d17fd4580c149f7d70d58956",
+  "git_tree_clean": true,
+  "git_tree_clean_scope": "all paths except reports/stage3-*.md and reports/stage3-replication-plan-2026-08-13.json; no path under experiments/, scripts/ or tests/ is excluded",
+  "matrix_seed": 20260806,
+  "matrix_seed_namespace": "aep.matrix/1",
+  "matrix_definition_version": "aep.matrix-definition/2",
+  "seed_policy": "Historical seeds, deliberately. The 84 surviving original runs are corroboration only; identical seeds make any discrepancy between them and the replication attributable to the environment rather than to a different workload.",
+  "result_root": "/var/tmp/aep-stage3-2026-08-13/replication",
+  "run_order": "interleaved-within-tier-and-repetition-by-sha256",
+  "collection_source_manifest": {
+    "path": "experiments/results/matrix/MANIFEST.csv",
+    "sha256": "f3f3d2e010e73d81ca7dfda44ccafa0a03efe0b1a12da30ead225b3efa16877e",
+    "cells": 126
+  },
+  "environment": {
+    "redis_image": "redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+    "redis_version": "7.2.5",
+    "redis_appendfsync": "everysec",
+    "redis_container": "aep-phase2-redis72",
+    "compose_file": "compose.phase2.yml",
+    "uv_lock_sha256": "9c27c416b5ab0bd25bd3be4260ab2936db79aa5c8bb40360fe0f2d936e342e74",
+    "python": "3.13.0"
+  },
+  "planned_totals": {
+    "cells": 126,
+    "runs": 432,
+    "executions_note": "executions per run are the regime's, not a plan-level constant; the matrix emits them per run at collection time"
+  },
+  "corroboration_set": {
+    "description": "Original raw runs that survive in the Research-paper-AEP tree. Read-only. Cross-checked against the replication; never pooled into it, and never counted in any denominator.",
+    "location": "D:/personal/AEP/Research-paper-AEP/experiments/results/matrix",
+    "runs_present": 84,
+    "runs_expected_by_manifest": 432,
+    "cells_complete": 28,
+    "per_run_digests_available": false,
+    "voided_evidence_present": false
+  },
+  "cells": [
+    {
+      "cell_key": "AEP_FULL|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_barrier_before_dispatch-payments-59673812",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        2109461321,
+        380243332,
+        1724199447
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1960949317,
+        161101836,
+        1783998331
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_barrier_before_dispatch-notifications-283a53b7",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        487175073,
+        133595717,
+        1573256709
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_intent_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_intent_before_barrier-payments-c509310b",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        380905799,
+        712258630,
+        2010768406
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_intent_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_intent_before_barrier-ledger_postings-f1b0f955",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        368247355,
+        694217576,
+        1692348031
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_intent_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_intent_before_barrier-notifications-5b685744",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1949179822,
+        1871547492,
+        1876883549
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_resolution_before_barrier-payments-8897ef4b",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1729808351,
+        728969499,
+        405459457
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1615171016,
+        1198971001,
+        244900174
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_resolution_before_barrier-notifications-44b2b53c",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1250057878,
+        2129527689,
+        1597677935
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_response_before_resolution-payments-30d5e000",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1689868394,
+        162301664,
+        2034099588
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_response_before_resolution-ledger_postings-9aa36b96",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        999325466,
+        402722595,
+        2049974027
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-after_response_before_resolution-notifications-5cc9d3a0",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1945043201,
+        797390967,
+        1086032137
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-before_intent_write-payments-a8a59205",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1664039926,
+        1711857376,
+        213511326
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-before_intent_write-ledger_postings-47da250f",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        421065479,
+        659445097,
+        532486131
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-before_intent_write-notifications-081eaf23",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1150127337,
+        1293508115,
+        265828416
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "aep_full-mid_dispatch-payments-71ad8739",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1033815468,
+        402024425,
+        1774296329
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "aep_full-mid_dispatch-ledger_postings-21d57516",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1902843605,
+        1292015593,
+        1571893214
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "aep_full-mid_dispatch-notifications-ea8836a3",
+      "regime": "(session-3)",
+      "system": "AEP_FULL",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1174872249,
+        1244684929,
+        875412508
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_barrier_before_dispatch-payments-3e961d07",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1999551654,
+        1934785266,
+        1400025386
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_barrier_before_dispatch-ledger_postings-73c409e9",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        2111204840,
+        192775760,
+        1591054379
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_barrier_before_dispatch-notifications-cd1bb046",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1696473365,
+        1440932718,
+        1154278814
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_resolution_before_barrier-payments-44c57139",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        822420605,
+        313368103,
+        731872166
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_resolution_before_barrier-ledger_postings-2dcedbd2",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1394501372,
+        1933578577,
+        1634750006
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_resolution_before_barrier-notifications-f062a7ca",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        461341658,
+        884495808,
+        884500860
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_response_before_resolution-payments-62a88538",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        345472688,
+        533971489,
+        1202443102
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_response_before_resolution-ledger_postings-657f6e05",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1162718690,
+        931523866,
+        1077549887
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-after_response_before_resolution-notifications-bb688140",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1489589949,
+        2019093338,
+        732104004
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-before_intent_write-payments-138013f4",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1411332552,
+        655411379,
+        649350482
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-before_intent_write-ledger_postings-84d5bb52",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        966843500,
+        1144014691,
+        173414475
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-before_intent_write-notifications-77100fff",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1840096794,
+        843323957,
+        511065796
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-mid_dispatch-payments-4aba1e66",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        508280364,
+        2100099796,
+        2077077334
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-mid_dispatch-ledger_postings-113a7e49",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1387997267,
+        2009850290,
+        1117241817
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b0_naive_retry-mid_dispatch-notifications-54dae940",
+      "regime": "(session-3)",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        4811467,
+        321273130,
+        1021728548
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_barrier_before_dispatch-payments-a73d77a9",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        19496853,
+        1048327749,
+        1154916661
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_barrier_before_dispatch-ledger_postings-761140e0",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        937115261,
+        1929694879,
+        1524780728
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_barrier_before_dispatch-notifications-c0ca6988",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1984288939,
+        1082289258,
+        1780794960
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_resolution_before_barrier-payments-93dc9f57",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1229989654,
+        1844464747,
+        786164254
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_resolution_before_barrier-ledger_postings-0a35c01d",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        959831306,
+        571954909,
+        1335872497
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_resolution_before_barrier-notifications-0c80bfa6",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1356090955,
+        786419433,
+        717607050
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_response_before_resolution-payments-c49153a8",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1380928466,
+        568957001,
+        872355363
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_response_before_resolution-ledger_postings-078e6a3d",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1018963656,
+        1746488112,
+        999655446
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-after_response_before_resolution-notifications-cb1ff91e",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1440883332,
+        1400831874,
+        1240007146
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-before_intent_write-payments-8203bc3c",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        568352626,
+        674169896,
+        602251334
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-before_intent_write-ledger_postings-37b70eaa",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1849315754,
+        388596787,
+        221262802
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-before_intent_write-notifications-4b37c7ea",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1491956544,
+        379298501,
+        1297497519
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-mid_dispatch-payments-a51aac15",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1957268456,
+        442021907,
+        1473118652
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-mid_dispatch-ledger_postings-ed094880",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1791873599,
+        1332823037,
+        1908811492
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b1_lease_only-mid_dispatch-notifications-ca6411f0",
+      "regime": "(session-3)",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1045195154,
+        426395107,
+        953695427
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_barrier_before_dispatch-payments-0e996445",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        543181137,
+        1458476512,
+        163111720
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_barrier_before_dispatch-ledger_postings-4e6c93b2",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        156682333,
+        1392914657,
+        514676600
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_barrier_before_dispatch-notifications-201c32b9",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        784398868,
+        123204309,
+        2129421098
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_resolution_before_barrier-payments-6f44b382",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1675512863,
+        1200965622,
+        1422250291
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_resolution_before_barrier-ledger_postings-92760b3e",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        499597056,
+        394783548,
+        1746908841
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_resolution_before_barrier-notifications-cd28d9a1",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        2111815156,
+        1222967405,
+        406177202
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_response_before_resolution-payments-879bc6b2",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        816690055,
+        255059909,
+        1389441640
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_response_before_resolution-ledger_postings-1a907194",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1735415870,
+        1476013958,
+        1433536167
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-after_response_before_resolution-notifications-048eb288",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1449986708,
+        437467084,
+        1658610108
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-before_intent_write-payments-a0635cb4",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        74075404,
+        1834222809,
+        1965498349
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-before_intent_write-ledger_postings-1930c0a9",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1873454486,
+        1633546339,
+        76963210
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-before_intent_write-notifications-dfb55a7d",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        214733151,
+        1603305659,
+        10323573
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-mid_dispatch-payments-cf6b9157",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        133076369,
+        1943766712,
+        975029973
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-mid_dispatch-ledger_postings-7f679244",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        234198058,
+        408803988,
+        1366736186
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b2_cas_only-mid_dispatch-notifications-acd2c44b",
+      "regime": "(session-3)",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1939008893,
+        361696425,
+        1414519498
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_barrier_before_dispatch-payments-d46fb584",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        379136077,
+        512494334,
+        1954052659
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_barrier_before_dispatch-ledger_postings-ba5154a1",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1021617177,
+        1754020300,
+        1444171353
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_barrier_before_dispatch-notifications-b92d94f8",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        357301026,
+        1368603577,
+        475608197
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_intent_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_intent_before_barrier-payments-d5765a7b",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1673979923,
+        348073713,
+        112488828
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_intent_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_intent_before_barrier-ledger_postings-139565cf",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1040423796,
+        159520079,
+        527546819
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_intent_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_intent_before_barrier-notifications-93be8078",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1585575757,
+        21657449,
+        2034429940
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_resolution_before_barrier-payments-492ba4b0",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1260061707,
+        327060529,
+        676859467
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_resolution_before_barrier-ledger_postings-27c18477",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1250234069,
+        1568006012,
+        522895276
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_resolution_before_barrier-notifications-c5760ad9",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        2014808961,
+        683093293,
+        924139947
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_response_before_resolution-payments-21a75840",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1817911119,
+        718928551,
+        1236261553
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_response_before_resolution-ledger_postings-cb7f68b8",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        830098220,
+        1773651795,
+        1065563419
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-after_response_before_resolution-notifications-1e4bcfa9",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        382344544,
+        334594734,
+        1861022273
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-before_intent_write-payments-49da3383",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        109259863,
+        682733281,
+        1844927208
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-before_intent_write-ledger_postings-9a40f08b",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        717180402,
+        436729705,
+        604407596
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-before_intent_write-notifications-ed6f2d89",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1194389966,
+        1275968891,
+        1841365046
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-mid_dispatch-payments-c3f36ba8",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        543489976,
+        2139789439,
+        191442805
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-mid_dispatch-ledger_postings-2c5b2532",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1993554205,
+        1295447497,
+        288417253
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b3_intent_no_barrier-mid_dispatch-notifications-6b8f707e",
+      "regime": "(session-3)",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        754523666,
+        1915289061,
+        1728022933
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_barrier_before_dispatch-payments-3edf93ea",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        14525690,
+        2144138673,
+        1769551276
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_barrier_before_dispatch-ledger_postings-813bf39f",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1923484010,
+        1729838420,
+        1364996384
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_barrier_before_dispatch-notifications-bdc2cacd",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        638911344,
+        1993284628,
+        1200671640
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_intent_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_intent_before_barrier-payments-990b871e",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1044232278,
+        130556721,
+        994052959
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_intent_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_intent_before_barrier-ledger_postings-3527c477",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1097365298,
+        384802837,
+        734760725
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_intent_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_intent_before_barrier-notifications-8304ec38",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1613063825,
+        1647830743,
+        1353750810
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_resolution_before_barrier-payments-f8c0cc29",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1887529693,
+        1664633816,
+        76214799
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_resolution_before_barrier-ledger_postings-d771b38e",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1500797731,
+        68085582,
+        1570326920
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_resolution_before_barrier-notifications-6f091ca6",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1823104821,
+        1979752326,
+        799059536
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_response_before_resolution-payments-5be43c2e",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1615592139,
+        1569162262,
+        62193689
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_response_before_resolution-ledger_postings-ad23306b",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1798236978,
+        324335240,
+        987175156
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-after_response_before_resolution-notifications-9e459483",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1296532383,
+        1199125081,
+        678204483
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-before_intent_write-payments-0585f6e9",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        353369856,
+        2016580923,
+        1529726888
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-before_intent_write-ledger_postings-2a281638",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1162318543,
+        327634392,
+        1560217237
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-before_intent_write-notifications-6451e4c7",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1679747610,
+        164529207,
+        1476899685
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-mid_dispatch-payments-03ce0615",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        143796124,
+        1518139571,
+        1177137087
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-mid_dispatch-ledger_postings-8e89ee00",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1643171618,
+        58953878,
+        294161983
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4b_durable_workflow_at_most_once-mid_dispatch-notifications-008c2c3e",
+      "regime": "(session-3)",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        408751222,
+        939847472,
+        559104733
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_barrier_before_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_barrier_before_dispatch-payments-11d6b7e1",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        2132319289,
+        243604778,
+        1364984291
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_barrier_before_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_barrier_before_dispatch-ledger_postings-5a1a38f0",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1060362507,
+        419100981,
+        1933004781
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_barrier_before_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_barrier_before_dispatch-notifications-b46b11fa",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_barrier_before_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1521630150,
+        1604716987,
+        2063027425
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_intent_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_intent_before_barrier-payments-5b5a2213",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        803231525,
+        2067377555,
+        489949169
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_intent_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_intent_before_barrier-ledger_postings-7cb1f1f7",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1971719917,
+        1185992689,
+        1747149783
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_intent_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_intent_before_barrier-notifications-4b75290a",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_intent_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1856364967,
+        203917622,
+        1918076454
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_resolution_before_barrier|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_resolution_before_barrier-payments-8fbcc4e9",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1401327188,
+        1983377535,
+        1669684475
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_resolution_before_barrier|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_resolution_before_barrier-ledger_postings-55de1140",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1493576680,
+        1419288621,
+        195228316
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_resolution_before_barrier|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_resolution_before_barrier-notifications-519ee2b8",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_resolution_before_barrier",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1974372822,
+        2007638226,
+        1397145425
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_response_before_resolution|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_response_before_resolution-payments-6192e658",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1709555635,
+        1733739571,
+        700389898
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_response_before_resolution|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_response_before_resolution-ledger_postings-8fce5e6d",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1837392823,
+        789725501,
+        329565655
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|after_response_before_resolution|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-after_response_before_resolution-notifications-3aa55d4f",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "after_response_before_resolution",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        774177310,
+        9687801,
+        1928980871
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|before_intent_write|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-before_intent_write-payments-0214887a",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "before_intent_write",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1143299796,
+        2051736634,
+        2040995269
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|before_intent_write|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-before_intent_write-ledger_postings-7a042aec",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "before_intent_write",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        79997021,
+        1686557562,
+        331119394
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|before_intent_write|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-before_intent_write-notifications-d699fd03",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "before_intent_write",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1456429807,
+        1537875433,
+        488413978
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|mid_dispatch|payments|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-mid_dispatch-payments-6a6a3d6c",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "mid_dispatch",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1821565630,
+        28797264,
+        1637564149
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|mid_dispatch|ledger_postings|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-mid_dispatch-ledger_postings-abf3683c",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "mid_dispatch",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        420151501,
+        1482830547,
+        2108770802
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|mid_dispatch|notifications|CALLER_REFERENCE",
+      "cell_slug": "b4_durable_workflow-mid_dispatch-notifications-d0007170",
+      "regime": "(session-3)",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "mid_dispatch",
+      "response_class": "POSITIVE_ONLY_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        557994255,
+        1973440026,
+        1768484269
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "aep_full-none-payments-e5e5c7dc",
+      "regime": "p0",
+      "system": "AEP_FULL",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        107492820,
+        1124011646,
+        830175505
+      ]
+    },
+    {
+      "cell_key": "B0_NAIVE_RETRY|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b0_naive_retry-none-payments-5e60d107",
+      "regime": "p0",
+      "system": "B0_NAIVE_RETRY",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1568309053,
+        1098120668,
+        1574114489
+      ]
+    },
+    {
+      "cell_key": "B1_LEASE_ONLY|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b1_lease_only-none-payments-0f0a2124",
+      "regime": "p0",
+      "system": "B1_LEASE_ONLY",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1362865684,
+        729056706,
+        1433793181
+      ]
+    },
+    {
+      "cell_key": "B2_CAS_ONLY|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b2_cas_only-none-payments-e0993c08",
+      "regime": "p0",
+      "system": "B2_CAS_ONLY",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1543242110,
+        988666742,
+        45147995
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b3_intent_no_barrier-none-payments-85b7630d",
+      "regime": "p0",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        238451556,
+        462163412,
+        1426991083
+      ]
+    },
+    {
+      "cell_key": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b4b_durable_workflow_at_most_once-none-payments-649b1800",
+      "regime": "p0",
+      "system": "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        858831320,
+        1902705978,
+        555272553
+      ]
+    },
+    {
+      "cell_key": "B4_DURABLE_WORKFLOW|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "b4_durable_workflow-none-payments-01e70659",
+      "regime": "p0",
+      "system": "B4_DURABLE_WORKFLOW",
+      "crash_point": "none",
+      "response_class": "AUTHORITATIVE_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 3,
+      "seeds": [
+        1363365785,
+        1673533014,
+        344140706
+      ]
+    },
+    {
+      "cell_key": "AEP_FULL|none|ledger_postings|CALLER_REFERENCE|redis-kill-preack",
+      "cell_slug": "aep_full-none-ledger_postings-8530cc0f",
+      "regime": "redis-kill-preack",
+      "system": "AEP_FULL",
+      "crash_point": "none",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 30,
+      "seeds": [
+        1325779346,
+        1392344195,
+        310586385,
+        279986071,
+        1964223528,
+        1580271097,
+        1371395916,
+        505020428,
+        20703014,
+        928851150,
+        450184919,
+        2131751838,
+        620200172,
+        979784459,
+        494157344,
+        1257282686,
+        1368065419,
+        1743339539,
+        484074073,
+        1054114556,
+        666227676,
+        2085509641,
+        2073319077,
+        690910316,
+        715407496,
+        512459511,
+        1830755936,
+        138705593,
+        2013044117,
+        1667250871
+      ]
+    },
+    {
+      "cell_key": "B3_INTENT_NO_BARRIER|none|ledger_postings|CALLER_REFERENCE|redis-kill-preack",
+      "cell_slug": "b3_intent_no_barrier-none-ledger_postings-99ac28be",
+      "regime": "redis-kill-preack",
+      "system": "B3_INTENT_NO_BARRIER",
+      "crash_point": "none",
+      "response_class": "NO_READBACK",
+      "readback_keying": "CALLER_REFERENCE",
+      "runs": 30,
+      "seeds": [
+        1719115020,
+        1258947145,
+        362659287,
+        201244370,
+        1236369244,
+        1866957805,
+        772931710,
+        1470789751,
+        1729230393,
+        834484516,
+        612179718,
+        798053973,
+        1252148684,
+        2004977328,
+        375340651,
+        999798709,
+        454620415,
+        415075093,
+        1446638630,
+        2036194771,
+        60869553,
+        2125704019,
+        1486140262,
+        895775065,
+        1884718094,
+        863002109,
+        1769344953,
+        1644914326,
+        1593074169,
+        845661886
+      ]
+    }
+  ]
+}
