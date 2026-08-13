@@ -71,7 +71,12 @@ CONF="${AEP_DOCKER_CONF:-${CONF_LOCAL}}"
 # same results root instead of replacing it.
 SYSTEMS="${AEP_FSYNC_SYSTEMS:-AEP_FULL}"
 MOCK_PORT="${AEP_FSYNC_MOCK_PORT:-8098}"
-RUNS="${AEP_FSYNC_RUNS:-9}"
+# ``-`` rather than ``:-``: an UNSET variable takes the default, an
+# explicitly EMPTY one does not. AEP_FSYNC_RUNS= is a typo, and a typo
+# that silently collects the default number of runs is a typo that
+# silently sets a denominator. It falls through to the lexical gate below
+# and is refused there, before any container or result root is touched.
+RUNS="${AEP_FSYNC_RUNS-9}"
 CLEAN="${AEP_FSYNC_CLEAN:-0}"
 DATASET_VERSION="${AEP_FSYNC_DATASET_VERSION:-stage3-2026-08-12-b3-always}"
 PLAN_SHA256="${AEP_STAGE3_PLAN_SHA256:-}"

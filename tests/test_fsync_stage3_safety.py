@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import shlex
+
+import pytest
 import shutil
 import subprocess
 from pathlib import Path
@@ -20,14 +22,39 @@ def _bash() -> str:
     )
 
 
-def test_invalid_fsync_run_count_fails_before_results_or_docker(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "runs",
+    [
+        "0",
+        "-1",
+        "3.5",
+        "abc",
+        "",
+        " ",
+        "1e3",
+        "0x9",
+        "09",
+        "9 ",
+    ],
+)
+def test_invalid_fsync_run_count_fails_before_results_or_docker(
+    tmp_path: Path, runs: str
+) -> None:
+    """Every non-positive-integer spelling is refused, and refused early.
+
+    The sentinel file is the assertion that matters: whatever the script
+    does with a bad run count, it must do it before it can touch a result
+    root. ``09`` and ``9 `` are here because a lexical gate and an
+    arithmetic one disagree about them, and the script deliberately uses
+    the lexical one.
+    """
     sentinel = tmp_path / "existing" / "keep.bin"
     sentinel.parent.mkdir()
     sentinel.write_bytes(b"keep exactly")
     environment = os.environ.copy()
     environment.update(
         {
-            "AEP_FSYNC_RUNS": "0",
+            "AEP_FSYNC_RUNS": runs,
             "AEP_FSYNC_RESULTS_ROOT": str(sentinel.parent),
             "AEP_STAGE3_PLAN_SHA256": "a" * 64,
             "AEP_GIT_SHA": "b" * 40,
@@ -42,7 +69,7 @@ def test_invalid_fsync_run_count_fails_before_results_or_docker(tmp_path: Path) 
 
         command = " ".join(
             [
-                "AEP_FSYNC_RUNS=0",
+                f"AEP_FSYNC_RUNS={shlex.quote(runs)}",
                 f"AEP_FSYNC_RESULTS_ROOT={shlex.quote(wsl_path(sentinel.parent))}",
                 f"AEP_STAGE3_PLAN_SHA256={'a' * 64}",
                 f"AEP_GIT_SHA={'b' * 40}",

@@ -76,9 +76,41 @@ from experiments.harness.crash_points import ROADMAP_CRASH_POINTS
 from experiments.harness.injector import HAS_SIGKILL
 from experiments.mock_api.config import ReadbackKeying
 
-#: The matrix's own version. Bumping it is a statement that cells collected
-#: under the previous one are not comparable to new ones.
-MATRIX_VERSION = "aep.matrix/1"
+#: The seed namespace, and it is FROZEN. This string is hashed into every
+#: cell seed (see cell_seed), so changing it silently re-seeds the entire
+#: matrix -- including the 252 session-3 cells a replication is supposed to
+#: reproduce. It therefore may never be bumped to record a change in *which*
+#: cells the matrix contains; that is what MATRIX_DEFINITION_VERSION below
+#: is for. The only reason to change this string would be a deliberate
+#: decision to re-seed everything, and that is a new dataset, not a version.
+MATRIX_SEED_NAMESPACE = "aep.matrix/1"
+
+#: Retained under its historical name because it is written into every plan
+#: and every run config already collected. It is an alias, not a second knob.
+MATRIX_VERSION = MATRIX_SEED_NAMESPACE
+
+#: The matrix *definition*: which cells the default plan contains. Bumping it
+#: is a statement that the default cell set changed, and it is recorded in the
+#: plan so a run collected under one definition can never be silently compared
+#: to a plan generated under another.
+#:
+#: aep.matrix-definition/1 -- 302 cells, 1,068 runs. Everything through
+#:     Stage 2, and the definition the frozen 2026-08-12 protocol describes.
+#: aep.matrix-definition/2 -- 304 cells, 1,128 runs. Stage 3 adds the two
+#:     notifications (POSITIVE_ONLY_READBACK) cells to the
+#:     redis-kill-preack regime so that B2 can measure the two capability
+#:     classes Stage 1 never collected. The change is additive: the seeds of
+#:     all 302 pre-existing cells are byte-identical across the two
+#:     definitions, which test_stage3_matrix_definition.py pins.
+MATRIX_DEFINITION_VERSION = "aep.matrix-definition/2"
+
+#: The default plan shape each definition produces, asserted by a test rather
+#: than remembered. A silent drift here is how 1,068 became 1,128 without any
+#: recorded statement that it had.
+MATRIX_DEFINITION_SHAPES = {
+    "aep.matrix-definition/1": {"cells": 302, "runs": 1068},
+    "aep.matrix-definition/2": {"cells": 304, "runs": 1128},
+}
 
 #: Amendment E5. Set to ``1`` by the operator on a host whose sleep, standby
 #: and hibernation have been disabled, on mains power. Recorded into every run
@@ -526,7 +558,7 @@ def cell_seed(matrix_seed: int, cell: Cell, repetition: int) -> int:
     before any of them is used, and a re-run of one cell reproduces exactly the
     workload and fault stream the first collection saw.
     """
-    material = f"{matrix_seed}|{MATRIX_VERSION}|{cell.key}|{repetition}"
+    material = f"{matrix_seed}|{MATRIX_SEED_NAMESPACE}|{cell.key}|{repetition}"
     digest = hashlib.sha256(material.encode("utf-8")).digest()
     # Kept inside 2**31 so it is representable everywhere a seed is echoed.
     return int.from_bytes(digest[:4], "big") & 0x7FFFFFFF
@@ -566,6 +598,7 @@ class MatrixPlan:
             bucket["estimated_seconds"] += entry["estimated_seconds"]
         return {
             "matrix_version": MATRIX_VERSION,
+            "matrix_definition_version": MATRIX_DEFINITION_VERSION,
             "platform": platform.platform(),
             "python": sys.version.split()[0],
             "has_sigkill": HAS_SIGKILL,
@@ -739,7 +772,8 @@ def render_plan(plan: MatrixPlan) -> str:
     echo = plan.echo()
     lines = [
         "=" * 78,
-        f"AEP evaluation matrix plan ({MATRIX_VERSION})",
+        f"AEP evaluation matrix plan ({MATRIX_VERSION}, "
+        f"{echo['matrix_definition_version']})",
         "=" * 78,
         f"  platform             {echo['platform']}",
         f"  python               {echo['python']}",
