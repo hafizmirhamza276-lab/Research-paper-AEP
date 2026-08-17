@@ -1,0 +1,31 @@
+{
+  "schema": "aep.stage3.operator-declaration/1",
+  "amendment": "E5",
+  "declared_at_utc": "2026-08-13T10:47:00Z",
+  "declared_by": "operator",
+  "declaration": "Windows power scheme set to High Performance; standby, monitor and hibernate timeouts all 0 on AC; machine on AC throughout the collection.",
+  "environment_variable": {
+    "name": "AEP_HARNESS_SUSPEND_DISABLED",
+    "value": "1",
+    "effect": "Recorded into every run config as suspend_disabled_declared=true. Amendment E5's gate in experiments/analyze.py admits a run to absolute-timing aggregates only when it is declared AND no suspension was detected in its own settling polls."
+  },
+  "independently_measured": {
+    "tool": "powercfg, run on the Windows host at declaration time",
+    "active_scheme": "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c (High performance, SCHEME_MIN)",
+    "STANDBYIDLE_ac_seconds": 0,
+    "HIBERNATEIDLE_ac_seconds": 0,
+    "VIDEOIDLE_ac_seconds": 0,
+    "ac_line_status": "PowerOnline=True (Win32 BatteryStatus)",
+    "note": "The measurement corroborates the declaration; it does not replace it. E5 exists because a host that merely was not idle long enough to suspend is indistinguishable from one that cannot."
+  },
+  "residual_risks_not_covered_by_the_declaration": [
+    "On battery the same scheme sets STANDBYIDLE and VIDEOIDLE to 240s; the protection is conditional on remaining on AC, which the declaration asserts.",
+    "The host reports one battery and supports S0 Low Power Idle, so it is a laptop. Lid-close action was not verifiable from powercfg output and is not covered by the timeout settings.",
+    "The declaration cannot be verified retrospectively. analyze.py's second gate, suspension_detected, is what catches a host that suspended anyway."
+  ],
+  "supersedes": {
+    "path": "/var/tmp/aep-stage3-2026-08-13/replication--superseded-20260813T1020Z-no-e5-declaration",
+    "runs_recorded": 22,
+    "reason": "Collection started 2026-08-13T10:20:28Z without the declaration; every run there records suspend_disabled_declared=false. Restarted rather than resumed, so that all 432 runs carry the same declaration and the timing denominator equals the count denominator."
+  }
+}

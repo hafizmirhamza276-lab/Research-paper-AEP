@@ -145,3 +145,39 @@ experiments/results/fsync-always/*
 experiments/results/fsync-always/analysis/*
 !experiments/results/fsync-always/analysis/latency-and-throughput.csv
 !experiments/results/fsync-always/analysis/per-execution.csv
+
+# The Stage 3 replication dataset (126 cells / 432 runs / 3,780 executions,
+# dataset_version stage3-2026-08-13-replication-1). Unlike the matrix block
+# above, every file listed in this dataset's SHA256SUMS is re-included, so
+# that digest list can be verified from the checkout alone. The 262 MB of raw
+# run directories stay out, as they do everywhere else in this file.
+!experiments/results/stage3-replication-2026-08-13/
+experiments/results/stage3-replication-2026-08-13/*
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.md
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.csv
+!experiments/results/stage3-replication-2026-08-13/SHA256SUMS
+!experiments/results/stage3-replication-2026-08-13/matrix-plan.json
+!experiments/results/stage3-replication-2026-08-13/matrix-progress.jsonl
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5.json
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5-correction.json
+!experiments/results/stage3-replication-2026-08-13/analysis/
+experiments/results/stage3-replication-2026-08-13/analysis/*
+!experiments/results/stage3-replication-2026-08-13/analysis/comparisons-vs-aep-full.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/coverage.json
+!experiments/results/stage3-replication-2026-08-13/analysis/figure-1-undetected-vs-ambiguity.pdf
+!experiments/results/stage3-replication-2026-08-13/analysis/figure-2-duplicates-by-crash-point.pdf
+!experiments/results/stage3-replication-2026-08-13/analysis/latency-and-throughput.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-lost-effect-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-recovery-success-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-state-corruption-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/metric-unverified-failure-rate.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/per-cell-metrics.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/per-execution.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/per-run-provenance.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/redis-kill-ablation.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/redis-kill-comparisons.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/table-1.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/timing-comparisons.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/voided-attempts.csv

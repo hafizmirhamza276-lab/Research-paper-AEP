@@ -1,0 +1,8 @@
+dataset_version,redis_durability,regime,system,runs,executions,crash_points_covered,response_classes_covered,undetected_duplicates,undetected_duplicate_rate,undetected_duplicate_ci_low,undetected_duplicate_ci_high,known_ambiguities,known_ambiguity_rate,known_ambiguity_ci_low,known_ambiguity_ci_high,lost_effects,lost_effect_rate,fisher_p_vs_aep_full
+stage3-2026-08-13-replication-1,everysec,crashed,AEP_FULL,54,540,6,3,0,0.0,0.0,0.0,193,0.3574074074074074,0.24074074074074073,0.48518518518518516,0,0.0,
+stage3-2026-08-13-replication-1,everysec,crashed,B0_NAIVE_RETRY,45,450,5,3,354,0.7866666666666666,0.6822222222222222,0.8822222222222222,0,0.0,0.0,0.0,5,0.011111111111111112,1.609092871905685e-179
+stage3-2026-08-13-replication-1,everysec,crashed,B1_LEASE_ONLY,45,450,5,3,366,0.8133333333333334,0.7177777777777777,0.9,0,0.0,0.0,0.0,2,0.0044444444444444444,1.2201825577128431e-189
+stage3-2026-08-13-replication-1,everysec,crashed,B2_CAS_ONLY,45,450,5,3,358,0.7955555555555556,0.6911111111111111,0.8911111111111111,0,0.0,0.0,0.0,1,0.0022222222222222222,7.915219129251763e-183
+stage3-2026-08-13-replication-1,everysec,crashed,B3_INTENT_NO_BARRIER,54,540,6,3,0,0.0,0.0,0.0,195,0.3611111111111111,0.2462962962962963,0.4888888888888889,0,0.0,1.0
+stage3-2026-08-13-replication-1,everysec,crashed,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,54,540,6,3,0,0.0,0.0,0.0,0,0.0,0.0,0.0,282,0.5222222222222223,1.0
+stage3-2026-08-13-replication-1,everysec,crashed,B4_DURABLE_WORKFLOW,54,540,6,3,296,0.5481481481481482,0.4351851851851852,0.6574074074074074,0,0.0,0.0,0.0,6,0.011111111111111112,2.6276006494496127e-114

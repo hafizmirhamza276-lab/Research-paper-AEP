@@ -1,0 +1,2 @@
+dataset_version,redis_durability,estimand,aep_runs,b3_runs,aep_executions,b3_executions,aep_median_step_latency_ms,b3_median_step_latency_ms,median_difference_ms,ci_low_ms,ci_high_ms,confidence,interval_method,bootstrap_resamples,bootstrap_seed
+stage3-2026-08-13-replication-1,everysec,median AEP-full step latency minus median B3 step latency,3,3,30,30,3981.668397,2035.427244,1956.756414,467.3157150000002,1985.7566280000005,0.95,run-cluster percentile bootstrap,10000,20260806
