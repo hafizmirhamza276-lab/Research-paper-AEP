@@ -204,6 +204,95 @@ plan"* is false for `POSITIVE_ONLY` and is corrected separately.
 
 ---
 
+## 6A. AMENDMENT — the stopping rule *(added before collection, still no data)*
+
+**P9-A as first written had no stopping rule.** n=30 was stated and nothing said
+what happens when a run fails, a container dies, or a cell comes back short.
+That gap is the one thing that would quietly destroy everything this
+pre-registration is for: **a session in which runs are added until the numbers
+settle, or a failed run is silently replaced, is no longer a pre-registered
+experiment — and no gate in this repository could detect it, because the
+resulting data would be internally consistent.**
+
+This amendment is committed **before** any collection, so the stopping rule
+precedes the data exactly as the prediction does.
+
+### 6A.1 n is fixed
+
+**n = 30 runs per arm per capability class. It is not raised, not lowered, and
+not topped up after any result is seen.** Four cells: {AEP-full, B3} ×
+{`NO_READBACK` control, `AUTHORITATIVE_READBACK`}. 120 runs attempted in total.
+`runs_per_cell=30` and `executions_per_run=1` are regime constants
+(`run_matrix.py:239-240`) and are **not** overridden on the command line.
+
+**If a different n were wanted, it had to be said here. It is not wanted.**
+
+### 6A.2 What may be replaced, and what may not
+
+A replacement run is permitted **only** for a failure whose cause is
+**infrastructural and checkable from a field independent of the run's outcome**.
+The exhaustive list, fixed now:
+
+| # | Qualifying cause | How it is checked, independent of the result |
+|---|---|---|
+| 1 | Redis container fails to start, or fails to come back after the kill | container `uptime` / `run_id` absent or unchanged |
+| 2 | Mock provider unreachable, port in use, or process died | provider health check / connection error before dispatch |
+| 3 | Docker daemon unavailable | command-level failure, no run artifacts |
+| 4 | Disk full, or results root unwritable | OS error, no `summary.json` |
+| 5 | Harness safety guard fires — test-instance marker absent, or a host-level fault injector detected beside the runner | the guard's own refusal message, exit before collection |
+| 6 | **E5 timing gate**: host suspended mid-run, wall-vs-monotonic divergence beyond tolerance | the per-run monotonic check |
+| 7 | **VOID: the injected kill did not land** — the fault under study never occurred | container `uptime` at zero / `run_id` change, a field that says nothing about what the system did |
+
+**Cause 7 is the only outcome-adjacent one and it is deliberately narrow.** It
+follows the void rule the paper already uses for the durability probe and the
+one disagreeing B4b run: *a trial whose measurement precondition failed says
+nothing about the system in either direction.* It is checkable from whether Redis
+actually died, which is independent of what the system did about it.
+
+**Never replaceable:** a run that **completed and produced a number**. Not
+because it is surprising, not because it is off-prediction, not because the cell
+aggregate is unwelcome. **There is no cause on this list that a result can
+satisfy.**
+
+### 6A.3 Replacement budget — a hard cap
+
+**At most 12 replacement runs across the entire phase** (10% of 120). If the cap
+is reached, **collection stops and the phase reports short cells with their
+actual n**, rather than continuing. A cell that cannot reach n=30 within the cap
+is reported at the n it reached, and its thresholds in §4 are recomputed at that
+n and marked as recomputed.
+
+This exists so "replace the voids until the cell fills" cannot become an
+unbounded loop that quietly selects a sample.
+
+### 6A.4 The denominator is attempted runs
+
+**Every run attempted is reported, including every discarded one, with its
+cause.** The report states:
+
+```
+attempted / completed / discarded (by cause) / analysed
+```
+
+**The report's denominator is attempted runs, not surviving runs.** A reader must
+be able to see the discard rate and judge it, which is impossible if only
+survivors are counted. If discards are concentrated in one arm or one class,
+**that asymmetry is itself a finding** and is reported as one — an
+infrastructural failure that correlates with the system under test is not
+infrastructural.
+
+### 6A.5 Order of collection, fixed
+
+1. **`NO_READBACK` control — both arms — collected FIRST.**
+2. Its verdict against §3's band is **read and written down** before AUTH numbers
+   are looked at.
+3. **`AUTHORITATIVE_READBACK` — both arms — collected second.**
+
+**Nothing enforces this but the author.** It is recorded here so that a
+deviation is visible as a deviation rather than invisible as a choice.
+
+---
+
 ## 7. Signed state
 
 | | |
