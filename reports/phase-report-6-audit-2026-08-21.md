@@ -533,3 +533,230 @@ paper 25.7x on its headline p-value, and the file regenerates byte-identically.
 pending a decision, and S2.3's evidence is what that decision should rest on.
 
 *End of S2.*
+
+---
+
+# S3 — A1a exhaustive, and the arithmetic sweep on `c2fffa6`
+
+> **Subject: `origin/main` @ `c2fffa6`.** S3 supersedes S2's provisional reading of
+> the pooling rule with an exhaustive one, then sweeps the current manuscript for
+> the §G.1 defect class: *a sentence asserts a relationship between two
+> correctly-generated numbers, and the relationship is false.*
+
+## S3.1 A1a exhaustive — every macro, old rule against new
+
+S2's case rested on two macros that happened to be checked. `numbers.tex` is
+byte-regenerable, so the case is now measured rather than sampled.
+
+Both revisions consume an **identical** `per-cell-metrics.csv` (757 rows, 702
+`(session-3)` + 42 `p0` + 12 `redis-kill-preack`). The only changed input is
+`comparisons-vs-aep-full.csv`, which at `a03985c` had **no regime column at all**
+and carried pre-pooled rows. Pooling the new regime-keyed file reproduces the old
+figures exactly:
+
+```
+$ awk -F, '$3=="B3_INTENT_NO_BARRIER" && $2=="known_ambiguity_rate" {s+=$5;t+=$6;rs+=$8;rt+=$9} END{...}'
+  B3 pooled: 225/600    AEP pooled: 223/600
+  old committed CSV:    B3 225/600, AEP 223/600     -> exact
+```
+
+**Full macro diff, old rule (`a03985c`) against new rule (`c2fffa6`):**
+
+```
+macros parsed:  old=89  new=101
+  identical value : 84
+  CHANGED value   :  5
+  removed in new  :  0
+  added in new    : 12
+```
+
+| Macro | Old (pooled) | New (crashed-only) | Direction for the paper |
+|---|---|---|---|
+| `BaselineDupMaxP` | `2.1e-183` | `5.4e-182` | **UNFAVOURABLE** — 25.7× weaker |
+| `BthreeVsAepN` | 600 | 540 | **UNFAVOURABLE** — smaller n |
+| `AblationZeroUpper` | 0.64 | 0.50 | favourable in isolation — **attributed below** |
+| `CoreLoc` | 6,849 | 6,862 | neutral — LOC recount, Stage-1 code change |
+| `HarnessLoc` | 21,458 | 22,218 | neutral — LOC recount |
+
+**Attributing the one favourable movement.** `AblationZeroUpper` changed for
+*two* reasons at once, and they pull in opposite directions. Wilson upper bound
+on a zero numerator is `z²/(n+z²)`:
+
+| | value | prints |
+|---|---|---|
+| committed OLD — n=600, two-sided z=1.960, **mislabelled** one-sided | 0.6362 | 0.64 |
+| **pooling rule ALONE** — n 600→540, old convention kept | **0.7064** | would print **0.71** |
+| label fix ALONE — n=600, correct one-sided z=1.645 | 0.4489 | would print 0.45 |
+| committed NEW — n=540, correct one-sided z=1.645 | 0.4985 | 0.50 |
+
+**The pooling rule on its own moves the bound 0.6362 → 0.7064 — looser, i.e.
+against the paper.** The tightening comes entirely from the Wilson *label*
+correction, which an external reviewer demanded and which is arithmetically
+correct.
+
+**The falsifiable question, answered:**
+
+| | count |
+|---|---|
+| headline claims that **gain significance** under the new rule | **0** |
+| headline claims that **change sign** | **0** |
+| headline claims that **cross a threshold** | **0** — both p-values ≪ 0.05 before and after |
+
+The pooling rule's isolated effect on **every one of 89 macros** is neutral or
+unfavourable. The twelve added macros are all self-limiting disclosures
+(`BarrierToProtocolRatio` replacing "two orders of magnitude";
+`ProtocolMinusBarrierLow/High` adding an interval the paper did not have;
+`BthreeVsAepAmbDiff*` adding an equivalence bound). None strengthens a claim.
+
+**Finding S2-A is therefore settled at MAJOR — and the 46-minute gap is not the
+finding.**
+
+**Finding S2-A · MAJOR · `NEW`.** `06-evaluation.tex` §VI-A(e) presents the
+no-pooling rule as a standing methodological commitment, in the same paragraph in
+which it discloses the E5 timing gate's retrospective adoption — *"Under this
+gate, **zero** runs collected before this rule existed contribute a timing
+number"* — two sentences later. The paper demonstrably knows how to disclose a
+retrospectively adopted rule and does not do it here, although the pooling rule
+entered `6cd6815` at 2026-08-07 12:51:39, forty-six minutes after `8446103` at
+12:05:28 committed the `redis-kill-preack` data it excludes.
+**Remedy: one sentence disclosing the rule's date and the reason for it, matching
+the E5 disclosure already two lines below.** No number changes; the audit above
+establishes that no number would.
+
+## S3.2 The arithmetic sweep
+
+Candidate enumeration on `c2fffa6`, keyed on relational connectives with
+word-numbers admitted as quantities (the keying that catches the original §G.1
+instance; a numeral/macro-only sweep does not):
+
+| File | candidates |
+|---|---|
+| `06-evaluation.tex` | 85 |
+| `08-threats.tex` | 39 |
+| **total** | **124** |
+
+Every candidate asserting a derivable relationship was re-derived by hand against
+`generated/numbers.tex` and the frozen CSVs. **20 formal derivations, plus the
+seven `tab:latency` increments, plus the prose relationships stated in words.**
+
+**Passing (selected, all re-derived here, not accepted):**
+
+```
+ProtocolMinusBarrier = B3med - B0med           28.0    = 2038.2 - 2010.2      PASS
+ProtocolMinusBarrierPct                         1.4    = 28.0/2010.2*100      PASS
+BarrierCost = AEPmed - B3med               1 966.7    = 4004.9 - 2038.2      PASS
+ThirdBarrierStepPct                            24.6    = 983.3/4004.9*100     PASS
+BarrierCostAlways                              15.0    = 2063.4 - 2048.4      PASS
+BarrierToProtocolRatio                           70    = 1966.7/28.0 = 70.24  PASS
+UnwantedPrevented                                18    = 28 - 10              PASS
+AepUnwantedRate / BthreeUnwantedRate    0.3333/0.9333  = 10/30, 28/30         PASS
+BthreeVsAepAmbDelta                               2    = |195 - 193|          PASS
+BthreeVsAepAmbDiffPP                           0.37    = 2/540*100            PASS
+AblationZeroUpper                              0.50    = one-sided 95% at 0/540 (0.4985)  PASS
+"five percentage points = 27 escalations per 540"      = 540*0.05 = 27        PASS
+"roughly a third of runs"                              = 10/30                PASS
+"three runs per stratum"                               = 54/18                PASS
+tab:latency, all seven "over B0" increments            re-derived from CSV    PASS
+```
+
+The equivalence block at `06:263-296` is correct throughout: the interval
+`[-1.11, 2.04]` pp does lie within `±5` pp; the Bonferroni statement (joint
+coverage ≥ 90%, not 95%) is right; and the explicit quantile sentence
+("*this is a genuinely one-sided bound using the 95th normal quantile; it is not
+the upper endpoint of a two-sided 95% Wilson interval, which uses the 97.5th
+quantile*") is both correct and exactly the repair the prior review demanded.
+
+### Finding S3-A · MINOR · `NEW` — the one genuine §G.1-class survivor
+
+`06-evaluation.tex:567` and `08-threats.tex:312`, the **same claim in two
+places**:
+
+> *"…positive, but pinned only to within a factor of four."*
+
+```
+BarrierCostLow  =   477.9        BarrierCostHigh = 1 978.8
+1978.8 / 477.9  =   4.1406
+```
+
+**The interval spans a factor of 4.14, not four.** The sentence claims marginally
+*more* precision than its own generated numbers support. This is the §G.1 defect
+class exactly — a relationship asserted between two correctly-generated numbers
+that does not hold — and it is live on the current head, in two locations, found
+by neither prior pass.
+
+Severity is MINOR and honestly so: the error is 3.5%, the direction is
+self-deprecating (the sentence exists to admit imprecision), and no conclusion
+moves. **Remedy: "a factor of about four", or "a factor of 4.1".**
+
+### Finding S3-B · MINOR · `NEW` — "independent confirmation" is not independent
+
+`06-evaluation.tex:508-510`:
+
+> *"B4 and B4b landing on the same figure with their own two acknowledged appends
+> is **independent confirmation** that the cost is the barrier and not anything
+> AEP does around it."*
+
+The **arithmetic is true**: AEP-full 4 004.9 ms, B4b 4 013.4 ms, B4 4 015.7 ms —
+within 0.27%. "The same figure" is fair.
+
+**"Independent" is not.** B4 runs on the same Redis, uses the *same* `WAITAOF`
+barrier (the paper says so at `06:98-100`), on the same host, in the same
+harness, written by the same author. It is a second arm of the same experiment,
+not an independent instrument. `08-threats.tex` §(h) already concedes B4 "is not
+Temporal" and that "the decision is our code", so the ingredients of the
+correction are in the paper; the word in this sentence contradicts them.
+**Remedy: "is corroboration within the same harness" or drop "independent".**
+Adjacent to, but distinct from, the prior review's R3.2(i), which objected to
+B4's latency row appearing in a table without the caveat.
+
+### Non-finding, recorded for completeness
+
+`\BarrierCostEach` prints `983.3` where `1966.7 / 2 = 983.35`. The generator
+emits `983.3` (binary float: 983.35 is stored as 983.3499…), the committed value
+matches what the generator produces, and `check_paper_numbers.py` passes on it.
+0.05 ms on a ~1 000 ms quantity. **Not a defect** — recorded so that a later
+reader re-running this arithmetic does not mistake it for one.
+
+## S3.3 Two collateral results the sweep produced
+
+**A3.1 does not trigger, and my Amendment-3 reasoning is vindicated.** I declined
+to promote A3 (the one-cell prevention result) into the top-two SUBMIT-BLOCKER
+candidates, on the argument that its blocker-shaped part was the abstract losing
+the scope. The abstract at `c2fffa6` now reads:
+
+> *"**Prevention** is what the barrier contributes, and the current evidence is
+> narrower: in one `no-readback` capability class, at one pre-acknowledgement
+> Redis-kill point, on one host…"*
+
+The scope is carried at first mention. The prior review's **R4.6** is closed, and
+A3 stands at **MAJOR** (thin but disclosed and correctly scoped), not
+SUBMIT-BLOCKER. The prediction recorded before execution was right for the
+reason given.
+
+**PR-1 is confirmed live on the current head, and the abstract is internally
+inconsistent about it.** `main.tex:146` (¶1) still states the five-baseline
+evaluation ran "under real `SIGKILL` process faults, hard Redis kills **and
+block-level write loss**", while `main.tex:173` (¶3) correctly describes the
+write-loss probe as measuring *records* — "acknowledged records survive … and
+unacknowledged ones are destroyed". Two paragraphs of the same abstract describe
+the same experiment at two different scopes. **Adjudicated in S4.**
+
+## S3 verdict
+
+| ID | Severity | Finding | Prior art |
+|---|---|---|---|
+| **S2-A** | **MAJOR** | §VI-A(e) presents the no-pooling rule as a standing commitment while disclosing E5's retrospective adoption two sentences later. Rule postdates its data by 46 min. Exhaustively established to change **no** claim's significance, sign or threshold. | `NEW` |
+| **S3-A** | MINOR | "pinned only to within a factor of four" (×2 locations); the interval spans 4.14. | `NEW` |
+| **S3-B** | MINOR | "independent confirmation" from B4/B4b, which share AEP's Redis, barrier, host and author. Arithmetic true, independence claim false. | `NEW` |
+
+**No SUBMIT-BLOCKER in S3.** The sweep's headline result is that the arithmetic
+of this manuscript is, on the current head, **sound**: 84 of 89 macros unchanged
+under an adversarial rule reconstruction, every derivable relationship in 124
+candidate sentences re-derived, and exactly one false relationship found — at
+3.5% magnitude, in a self-deprecating direction.
+
+That is a materially different manuscript from the one 5C §H warned about. The
+"assume there are more of these" premise was **correct in kind and wrong in
+degree**: there was one more, and it is trivial.
+
+*End of S3.*
