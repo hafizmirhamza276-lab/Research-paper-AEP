@@ -7,9 +7,19 @@
 
 ---
 
-## CURRENT PHASE: Monday audit
+## CURRENT PHASE: post-fix hold — the audit is done, its verdict was FIX FIRST, and the blocker is closed
 
-The manuscript, the artifact and the submission package are prepared and **nothing has been submitted anywhere**. The next step is an independent adversarial audit by a different reviewer, per the prompt at the end of `WEEKEND_CODEX_PROMPTS.md`. The submit/hold decision is that audit's output, not this roadmap's.
+**Nothing has been submitted anywhere.** The independent adversarial audit has happened. Its verdict was **FIX FIRST**, not SUBMIT: one SUBMIT-BLOCKER, seven MAJOR, five MINOR, nine of fourteen findings new (`reports/phase-report-6-audit-2026-08-21.md`). Phase 7 discharged the manuscript half of that list (`reports/phase-report-7-fixes-2026-08-21.md`).
+
+**The blocker is closed.** The abstract stated fault coverage the artifact does not have — write loss exercised 0 of 7 systems, hard Redis kills 2 of 7 at 1 of 3 capability classes. A repo-wide sweep found the same false claim in **three** files where the audit had found one; all four occurrences are corrected.
+
+**What remains before submission is a decision, not a defect:**
+
+1. **T6 — the framing.** "agent" occurs **0 times** across `03-model`, `04-protocol`, `05-implementation`, `06-evaluation` and `09-artifact`, and no LLM appears anywhere in `experiments/`. Either retitle around non-idempotent legacy APIs (~1 day, 0 experiments) or run 3C and make the framing load-bearing (days, new harness code). Costed both ways in the Phase 7 plan. **This one is the author's and is not taken.**
+2. **Publish the raw archive and cite a DOI.** `09-artifact.tex`'s availability sentence is false until then; the 432 run directories exist only on one root-owned path. Blocking for artifact badging anywhere.
+3. **Venue.** *Submit-ready* and *competitive at a top venue* are different. The audit's §S4.10 ranks what to build next against TSE / DSN / Middleware / TDSC; items 1–3 there cost ≈4 hours, and **B2** — prevention on the other two capability classes, ≈2 h, no code change — is the single highest-value hour in the project.
+
+**Still open from the audit, all recorded, none blocking:** the counts-only gate for `arxiv-metadata.md` (~40 lines, recommended), wiring `verify_refs.py --offline` into CI, and the four backlog experiments in `docs/24-revision-backlog.md`.
 
 **Phase status, each with the report that closed it:**
 
@@ -29,11 +39,15 @@ The manuscript, the artifact and the submission package are prepared and **nothi
 | 5B Reproducibility artifact package | ✅ complete | `reports/phase-report-5b-2026-08-10.md` |
 | Q Portable byte guarantee (`.gitattributes`) | ✅ complete | `reports/phase-report-5c-2026-08-10.md` |
 | 5C Submission-ready, not submitted | ✅ complete | `reports/phase-report-5c-2026-08-10.md` |
+| 6 Independent adversarial audit | ✅ complete — verdict **FIX FIRST** | `reports/phase-report-6-audit-2026-08-21.md` |
+| 7 Fix pass (blocker + 5 prose + the bibliography gate) | ✅ complete | `reports/phase-report-7-fixes-2026-08-21.md` |
 | 3A TLA+/property layer | ⬜ optional, not started | — |
 | 3B Second workload | ⬜ optional, not started | — |
-| 3C LLM-driven workload | ⬜ optional, not started | — |
+| 3C LLM-driven workload | ⬜ optional, not started — **and T6 turns on it** | — |
 
-Release tag `v1.0.0-rc1`. Artifact entry point: `ARTIFACT.md`. Open findings for the audit are in section G of the 5C report.
+Release tag `v1.0.0-rc1` (on `31664ca`, now well behind head). Artifact entry point: `ARTIFACT.md`.
+
+**Where the open findings live now.** 5C §G is superseded: its items were adjudicated by the Phase 6 audit and either closed or carried forward. Read `reports/phase-report-6-audit-2026-08-21.md` §S4.12 for the finding list and verdict, and `reports/phase-report-7-fixes-2026-08-21.md` for what Phase 7 closed and what it deliberately left.
 
 ---
 
