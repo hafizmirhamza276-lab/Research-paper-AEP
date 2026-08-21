@@ -168,13 +168,17 @@ in this file were both stale, by 29 and 17 characters respectively.
 ## Pre-submission checklist for the human
 
 - [ ] The independent audit has returned a SUBMIT verdict.
-- [ ] Decide the anonymity question first — see `reports/phase-report-5c-2026-08-10.md`
-      §G.2. The manuscript's author block currently reads *Anonymous Author(s)*
-      while `main.tex` and §9 carry a GitHub URL naming a personal account.
-      A public arXiv preprint and an anonymised TSE submission cannot both be
-      served by the same PDF; **choose the author block before either
-      submission**, and note that posting the preprint first is what makes the
-      anonymised submission moot.
+- [ ] Decide which build to submit. The contradiction 5C §G.2 warned about —
+      an *Anonymous Author(s)* block shipping alongside a GitHub URL naming a
+      personal account — **was closed by `bf68440`**, which put the author block
+      behind a switch. There are now two consistent builds: `main.pdf` names the
+      author and carries the artifact URL and a correspondence footnote;
+      `main-anon.pdf` carries neither, and is verified to contain no author
+      name, account, repository name, email or identifying link annotation.
+      Nothing here needs fixing. What remains is a *choice*: a public arXiv
+      preprint and an anonymised TSE submission cannot both be served by the
+      same PDF, and posting the preprint first is what makes the anonymised
+      submission moot. **Decide the ordering, then pick the build.**
 - [ ] Re-render the abstract from `paper/main.tex` if any number has been
       regenerated since 2026-08-10.
 - [ ] `wc -m` the short abstract against arXiv's 1 920-character limit.

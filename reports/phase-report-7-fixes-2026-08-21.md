@@ -143,6 +143,18 @@ another reason. This session swept it. Results:
 file's *self-descriptive* numbers — counts of its own text — which is exactly
 the class a counts-only gate closes.
 
+**The file is now fully swept, so six is a bounded set rather than a sample.**
+Every claim in it was checked on 2026-08-21: **all 15 data numerals across both
+abstracts match their generated macros with 0 mismatches**, *"3 figures, 12
+tables"* is correct against the manuscript's 3 `figure` and 12 `table`
+environments, and both category and ACM classification codes are well-formed.
+The six defects are therefore the complete set known to exist in this file, not
+the subset that happened to be looked at — which is the difference between "an
+unswept file with six known defects" and "a swept file with six found ones".
+Defects 1–5 are fixed; **defect 6 is fixed in this commit**, and it was the most
+dangerous of the six: a wrong character count misinforms, but a stale checklist
+item actively instructed a human to repair something already correct.
+
 ---
 
 ## F7-3 · MINOR · the 1 920 limit's provenance had never been checked, in any phase
@@ -224,6 +236,35 @@ any Redis trial until it has demonstrated on the bare device that an
 `fsync`-before-the-switch survives and an `fsync`-after does not. That pattern,
 applied to `verify_refs.py` and to any future metadata gate, is the fix.
 
+### F7-4 · forward correction, `8cb9f87` — the count above was wrong when written: it is **six**, not five
+
+*Recorded as a correction rather than an in-place edit. The heading and table
+above are left as first written, because a finding about instruments returning
+confident wrong answers should not quietly repair its own.*
+
+| # | Instrument | The confident wrong answer | What exposed it |
+|---|---|---|---|
+| 6 | `verify_refs.py`'s **replacement**, first live run (P7-C) | `FAILED` for **nine ACM DOIs** | The DOIs are valid; `dl.acm.org` answers non-browser agents with **HTTP 403**, and `https://doi.org/<doi>` redirects there. Re-requesting with `Accept: application/citeproc+json` — answered by the DOI registration agency rather than the publisher — resolved all nine |
+
+Instance 6 is the sharpest of the six, for three reasons.
+
+1. **It is the fix for instance 1.** The instrument written to stop a gate
+   returning a confident wrong answer returned a confident wrong answer on its
+   first live run. The pattern does not spare the code written to address it.
+2. **It fails in the opposite direction, and that is not safer.** Instances 1–5
+   were false *negatives* — a green that hid a problem. This was a false
+   *positive*: nine good entries reported broken. A gate that cries wolf gets
+   switched off, so it destroys the same assurance by the opposite route.
+3. **Only a control caught it.** Nothing in the code or its exit status was
+   wrong. It was caught because the sweep ran against a bibliography *already
+   established as sound* by the 2026-08-10 audit's independent Crossref and
+   arXiv spot-checks — so nine failures had to be instrument error, not data
+   error. That is the practice in §F7-4 working, on the first occasion it was
+   applied deliberately rather than in hindsight.
+
+**Six occurrences across five phases.** The count in the heading above is left
+uncorrected on purpose; this line is the correction.
+
 ---
 
 ## Status
@@ -231,7 +272,7 @@ applied to `verify_refs.py` and to any future metadata gate, is the fix.
 | Finding | Severity | Remedy | State |
 |---|---|---|---|
 | F7-1 | MAJOR | Sweep-then-fix; all four sites corrected | **closed** in `83cccdc` |
-| F7-2 | MAJOR | Counts-only gate (~40 lines), recommended not implemented; defect 6 open | **open** |
+| F7-2 | MAJOR | Defect 6 (the stale anonymity warning) fixed; file fully swept, six is a bounded set. Counts-only gate (~40 lines) **recommended, not implemented** | **partly closed** |
 | F7-3 | MINOR | Limit verified and cited; counting rule flagged unverified in the file | **closed** |
 | F7-4 | MAJOR | Positive control or second method before any tool output is quoted | **practice, adopted here** |
 
