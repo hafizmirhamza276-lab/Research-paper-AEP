@@ -62,7 +62,10 @@ host cannot suspend \emph{and} the run's wall-versus-monotonic divergence stays
 within tolerance. Both halves are necessary: a host that merely was not idle
 long enough to suspend is indistinguishable from one that cannot. Under this
 gate, \emph{zero} runs collected before this rule existed contribute a timing
-number, and none does.
+number, and none does. Both rules were adopted after the first collection ---
+the pooling rule when a mid-study review found the pooled summary table
+unusable as a source, the timing gate after a host suspension was discovered
+mid-run --- and every rate and duration below is reported under them.
 
 \subsection{RQ1 --- undetected duplicates and the shape of the residual}
 \label{sec:eval-rq1}
@@ -265,10 +268,11 @@ For ambiguity, B3 minus AEP-full is \BthreeVsAepAmbDiffPP{} percentage points.
 The stratified run-cluster \BthreeVsAepAmbDiffConfidence{}\% interval is
 [\BthreeVsAepAmbDiffLow{},\,\BthreeVsAepAmbDiffHigh{}] percentage points,
 which lies within a $\pm\BthreeVsAepAmbMargin{}$ percentage-point margin. We
-introduce that margin in this revision; it was not preregistered. Operationally,
-five percentage points corresponds to 27 additional terminal escalations per
-540 crashed executions, which we treat as the largest operationally immaterial
-difference for this workload. The result
+introduce that margin in this revision; it was not preregistered, and we state
+it as a stipulation rather than derive it. We do not claim it is immaterial to
+an operator: \cref{sec:threats} records that we have not evaluated declared
+ambiguity as an operational outcome, and that the artifact has no escalation
+mechanism, so we have no basis on which to price one. The result
 supports equivalence under that stated, post hoc margin, but only for this
 fixed design. Each arm has \BthreeVsAepAmbClusters{} run clusters distributed
 over \BthreeVsAepAmbStrata{} matched strata---three runs per stratum---so the
@@ -505,9 +509,7 @@ scheduled fsync, and those are one second apart, so a barrier costs up to a
 second and the protocol pays that twice. What we measure is
 \BarrierCostEach{}\,ms per barrier, which sits near the top of that range
 rather than in the middle of it; we did not measure why, and we do not claim a
-mechanism for it here. B4 and B4b landing on the same figure with their own two
-acknowledged appends is independent confirmation that the cost is the barrier
-and not anything AEP does around it.
+mechanism for it here.
 
 \subsubsection{The barrier is a deployment choice, with three measured points}
 \label{sec:eval-deployment}
@@ -564,7 +566,7 @@ one of them is uninformative:
 \end{center}
 
 Under \texttt{everysec} the barrier's cost is comfortably positive and its
-magnitude is pinned only to within a factor of four. Under \texttt{always} it
+magnitude is pinned only to within about a factor of four. Under \texttt{always} it
 is \emph{not separable from zero at this sample size} --- the interval spans
 zero and is dominated by a heavy upper tail that three clusters cannot
 resolve. So the honest form of the claim is directional and bounded, not a
