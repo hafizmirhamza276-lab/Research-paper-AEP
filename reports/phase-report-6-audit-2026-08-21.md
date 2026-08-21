@@ -4,14 +4,23 @@
 sessions, from the `audit-report-2026-08-10.md` auditor, and from the
 `paper-review-2026-08-11.md` reviewer.
 
-**Subject:** `Research-paper-AEP`, branch `main`, HEAD `a03985c` — the 5C
-submission candidate. Working tree clean apart from an untracked `CLAUDE.md`.
+**Subject — and it changes between sections, deliberately.**
 
-**Audited range:** `e1e815d` (4B handoff) → `a03985c` (head), 16 commits.
+- **S1** audits `Research-paper-AEP` at **`a03985c`**, the 5C submission
+  candidate, over the range `e1e815d..a03985c` (16 commits).
+- **S2 and S3** audit **`origin/main` @ `c2fffa6`**, the current head, which is
+  eleven commits further on. Retargeted on instruction once S1 established that
+  the 5C candidate's known defects are already closed upstream, making a sweep of
+  it archaeology. `a03985c` remains an ancestor of `c2fffa6`; no history was
+  rewritten.
+
+Each section states its own subject and range at its head. **Do not read a verdict
+in one section as covering the range of another.**
 
 **Structure.** Three sessions, each appended to this file: **S1** = bounds and
-git integrity; **S2** = the §G.1 defect class; **S3** = claims, manuscript,
-venue, and the diff against the prior audit. This section is S1.
+git integrity; **S2** = the denominator audit and the §G.1 defect class; **S3** =
+claims, manuscript, venue, the `a03985c..c2fffa6` bounds check, and the diff
+against the two prior passes.
 
 **Two prior passes exist and were read in full before this audit began** —
 `audit-clone/reports/audit-report-2026-08-10.md` (verdict FIX FIRST, with an
@@ -320,3 +329,207 @@ Carried to S3: the availability claim (S1.7), the `verify_refs.py` dead-path
 sweep (S1.6 → PR-2), and the missing `fsync-always/SHA256SUMS` (S1.4).
 
 *End of S1.*
+
+---
+
+# S2 — A1a: the denominator audit (SWEEP HALTED)
+
+> **Subject of S2 and S3: `origin/main` @ `c2fffa6`, the current head — not
+> `a03985c`.** Retargeted on instruction after S1 established that the 5C
+> candidate's known A1 targets (§G.1, the Wilson label, the regime pooling) are
+> all closed upstream. Auditing them there would have been archaeology.
+>
+> **A1a was mandated to run BEFORE the 47-sentence sweep and to be treated as
+> potentially terminal. It has returned a result that triggers its own stop
+> condition. The sweep has not been run.**
+
+`paper/generated/numbers.tex` changed `\BthreeVsAepN` from **600** to **540**
+between `a03985c` and `c2fffa6`. Sixty executions per arm left the denominator of
+the paper's central ablation. A1a establishes what left, under what rule, when
+that rule was written, whether it applied evenly, and whether the file
+regenerates.
+
+## S2.1 (i) — what left the denominator: nothing was deleted
+
+The change is a **re-keying, not a removal**. `comparisons-vs-aep-full.csv` at
+`c2fffa6` carries a `regime` column with three distinct values, and the macro now
+selects one:
+
+```
+$ awk -F, 'NR>1{print $1}' comparisons-vs-aep-full.csv | sort -u
+crashed
+p0
+redis-kill-preack
+
+crashed,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,195,540,...,193,540,...,0.949435
+p0,     known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,  0, 30,...,  0, 30,...,1.0
+```
+
+540 crashed + 30 `p0` + 30 `redis-kill-preack` = **600**, exactly the prior
+figure. The sixty executions are still in the file, as their own rows. The
+comment header moved from `regime=(session-3)` — a session label that was not a
+fault regime at all — to `regime=crashed`.
+
+**The decisive control: the per-cell denominators did not move.**
+
+```
+a03985c  \newcommand{\AepExecAuth}{180}       c2fffa6  \newcommand{\AepExecAuth}{180}
+a03985c  \newcommand{\BthreeVsAepN}{600}      c2fffa6  \newcommand{\BthreeVsAepN}{540}
+```
+
+Every rate the paper prints in `tab:outcomes` comes from `per-cell-metrics.csv` at
+180 executions per capability class, and **180 is unchanged before and after**.
+Only the cross-system comparison file moved. What the fix corrected was an
+*inconsistency between two files*: per-cell always said 180 x 3 = 540, while the
+comparison file said 600.
+
+## S2.2 (iii) — was the exclusion symmetric? Yes, and where it is not, the reason is structural
+
+Crashed-regime denominators, every system, from the committed CSV:
+
+| System | n | runs | vs AEP-full |
+|---|---|---|---|
+| AEP_FULL (reference) | 540 | 54 | — |
+| B3_INTENT_NO_BARRIER | **540** | 54 | **identical** |
+| B4_DURABLE_WORKFLOW | 540 | 54 | identical |
+| B4B_..._AT_MOST_ONCE | 540 | 54 | identical |
+| B0_NAIVE_RETRY | 450 | 45 | −90 |
+| B1_LEASE_ONLY | 450 | 45 | −90 |
+| B2_CAS_ONLY | 450 | 45 | −90 |
+
+**The ablation — the comparison that carries the paper's central structural
+result — is exactly symmetric: 540 against 540, 54 runs against 54.** B0–B2 sit
+at 450 because they run **five** crash points, not six: they have no
+`after_intent_before_barrier` because they write no intent record. 5 x 3 x 30 =
+450 against 6 x 3 x 30 = 540. That is the asymmetry the prior audit raised as
+**D11** and that `f4de834` says it disclosed in the caption. It is structural, and
+it is not an artifact of the regime filter.
+
+## S2.3 (ii) — the rule, and its date. **This is the finding.**
+
+**Finding S2-A · MINOR · `NEW` — the exclusion rule postdates the data it
+excludes by 46 minutes.**
+
+The rule is the manuscript's own §VI-A(e), still present verbatim at
+`06-evaluation.tex`:
+
+> *"First, **no pooled table**. A rate computed across fault regimes is a property
+> of how many runs of each kind were collected, not of any system; our own
+> analysis tool prints a warning whenever more than one regime is present, and
+> every number below names its regime."*
+
+Provenance, from git rather than from any report's prose:
+
+```
+rule text enters paper/sections/06-evaluation.tex  6cd6815  2026-08-07 12:51:39 +0500
+main.tex "BANNED as a source" banner               6cd6815  2026-08-07 12:51:39 +0500
+regime-keying gate, check_paper_numbers.py         6cd6815  2026-08-07 12:51:39 +0500
+                                                   ("Phase 4: manuscript draft, generated
+                                                     tables, and the numbers-drift gate")
+
+redis-kill-preack data committed                   8446103  2026-08-07 12:05:28 +0500
+                                                   ("Phase 2B Session 3B: E1-E6 amendments,
+                                                     hard Redis kill, graded ambiguity")
+```
+
+**The data landed at 12:05. The rule landed at 12:51. Strictly, the answer to
+"was the rule written down before the results it excludes were seen" is NO.**
+
+That is recorded as a finding and not softened. Three pieces of evidence bear on
+whether it is *outcome-motivated*, and all three point the same way:
+
+1. **The correction moved the headline number against the paper.**
+   `\BaselineDupMaxP` went from `2.1e-183` to `5.4e-182` — **25.7x weaker**. A
+   post-hoc rule invented to flatter a result does not make the flagship p-value
+   worse.
+2. **The result it was supposed to protect did not change.** B3 vs AEP-full
+   declared ambiguity differs by **2 executions** under the pooled figure and by
+   **2 executions** under the filtered one (195/540 vs 193/540, Fisher
+   p = 0.9494 against the previous 0.95). The ablation's conclusion is untouched
+   in both magnitude and sign.
+3. **The rule was identified by the session that collected the data**, not by a
+   later session reading an unfavourable number: Session 3B's own report records
+   that Table 1 "pools three fault regimes and is a coverage summary rather than a
+   result." Phase 4 wrote it into the manuscript 46 minutes later. The gate, the
+   banner and the prose all entered in **one commit**, which is what a rule being
+   adopted looks like rather than a rule being reached for.
+
+**What remains a real defect regardless of motive:** the manuscript's §VI-A(e)
+asserts the rule as a standing methodological commitment without recording that
+it was adopted after the first collection, and the same paragraph's *second* rule
+does exactly the opposite — it says plainly, "*zero* runs collected before this
+rule existed contribute a timing number." **The paper knows how to disclose a
+retrospectively-adopted rule, does it for the E5 timing gate one sentence later,
+and does not do it for the pooling rule.** One clause fixes it.
+
+## S2.4 (iv) — regenerability: PASS, and the frozen artifacts are intact
+
+`CLAUDE.md`'s Stage 3 rule 2 declares `numbers.tex` frozen at the `c2fffa6`
+baseline and instructs a STOP if it changed. It has not:
+
+```
+$ git diff --stat c2fffa6 -- paper/generated/
+   (empty)
+```
+
+The committed generator, run against the frozen results in the locked
+interpreter, reproduces every generated artifact byte-for-byte:
+
+```
+$ sudo ./.venv/bin/python scripts/check_paper_numbers.py
+  PASS  per-cell-metrics.csv is keyed by regime      PASS  table-latency.tex matches the CSVs
+  PASS  appendfsync=always analysis is present       PASS  table-outcomes.tex matches the CSVs
+  PASS  G2 write-loss results is present             PASS  no generated table draws from the banned pooled table
+  PASS  paper_tables.py runs                         PASS  generated tables declare their sources
+  PASS  numbers.tex matches the CSVs                 PASS  every generated number is used in the manuscript
+  PASS  table-ablation.tex matches the CSVs          PASS  state-machine figure matches the transition table
+  PASS  table-ambiguity-by-crashpoint.tex matches    PASS  bibliography has entries / no empty entries
+  PASS  table-deployment-choice.tex matches          PASS  bibtex no parse errors / no undefined refs
+----------------------------------------------------------------------
+18 passed, 0 failed
+```
+
+**`numbers.tex` at `c2fffa6` is regenerable. There is no SUBMIT-BLOCKER on
+regenerability.** Note what this does and does not establish: it proves the
+manuscript's numbers follow from the committed CSVs by the committed arithmetic.
+It does not prove the CSVs describe the runs — that is `SHA256SUMS` (S1.4,
+17/17) and the 432/432 measurement-tree match (S1.7).
+
+## S2.5 The bound arithmetic, re-derived independently
+
+Since the same commit changed `\AblationZeroUpper` from `0.64` to `0.50`, both
+values were re-derived here rather than accepted. The Wilson upper bound on a
+zero numerator is `z^2/(n+z^2)`:
+
+| n | one-sided 95% (z=1.645) | two-sided 95% upper (z=1.960) |
+|---|---|---|
+| 600 | 0.4489% | **0.6362%** |
+| 540 | **0.4985%** | 0.7064% |
+
+- `a03985c` committed **0.64** while the prose said "one-sided 95%" — that is the
+  **two-sided** upper at n=600. Mislabelled, exactly as the prior review's
+  Recomputation 3 found. ✅ `CONFIRMS`.
+- `c2fffa6` commits **0.50**, which is the one-sided 95% bound at n=540 to two
+  decimal places, and `06-evaluation.tex:285-289` now states the quantile choice
+  explicitly ("one-sided bound using the 95th normal quantile; it is not the upper
+  endpoint of a two-sided 95% Wilson interval, which uses the 97.5th quantile").
+  **The fix is CORRECT** — label and value now agree, and the bound is correctly
+  *looser* at the smaller n.
+
+This answers Amendment 1's question for this fix: not merely present, but right.
+
+## S2 verdict — sweep halted, one finding
+
+| ID | Severity | Finding | Prior art |
+|---|---|---|---|
+| **S2-A** | **MINOR** | The no-pooling rule that removes 60 executions per arm entered the repo 46 minutes **after** the data it excludes. Not outcome-motivated on three independent lines of evidence, but the manuscript asserts it as a standing commitment while disclosing the adjacent E5 rule's retrospective adoption one sentence later. | `NEW` |
+
+**Nothing terminal.** The denominator did not move "after the fact" in the sense
+the stop condition was guarding against: nothing was dropped, the ablation is
+symmetric at 540/540, the per-cell figures never moved, the correction cost the
+paper 25.7x on its headline p-value, and the file regenerates byte-identically.
+
+**The 47-sentence sweep has NOT been run.** Per the stop condition it is held
+pending a decision, and S2.3's evidence is what that decision should rest on.
+
+*End of S2.*
