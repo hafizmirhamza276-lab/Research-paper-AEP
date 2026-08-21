@@ -13,8 +13,9 @@ abstract: >-
   atomicity, not split-brain immunity, and not exactly-once delivery.
   This repository contains the protocol, baseline systems, fault-injection
   harness, tracked derived analysis products from a 432-run evaluation under
-  real SIGKILL, hard Redis kills and block-level write loss, and the manuscript
-  generated from them. The raw run archive and immutable DOI are not yet
+  real SIGKILL -- with a separate hard-Redis-kill ablation on one capability
+  class, and a block-level write-loss probe on durable records rather than on
+  protocol outcomes -- and the manuscript generated from them. The raw run archive and immutable DOI are not yet
   published. ARTIFACT.md maps every quantitative claim in the paper to its
   currently available evidence and reproduction command.
 type: software
