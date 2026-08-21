@@ -242,6 +242,22 @@ The exhaustive list, fixed now:
 | 5 | Harness safety guard fires — test-instance marker absent, or a host-level fault injector detected beside the runner | the guard's own refusal message, exit before collection |
 | 6 | **E5 timing gate**: host suspended mid-run, wall-vs-monotonic divergence beyond tolerance | the per-run monotonic check |
 | 7 | **VOID: the injected kill did not land** — the fault under study never occurred | container `uptime` at zero / `run_id` change, a field that says nothing about what the system did |
+| 8 | **The host was not quiescent for the duration** — unrelated container started, or load rose materially mid-session | `docker ps` and `loadavg`, recorded **before the control, between control and AUTH, and after the last run**; all three go in the report |
+
+**Cause 8, added before collection and after the environment was inspected.**
+This host is shared: at inspection it was running two unrelated
+`komserv-pg-race` Postgres containers, one started **a minute before** the
+check, and `loadavg` was `2.31 1.73 1.08` on 14 CPUs. §B2 asks for *"host time
+on an idle machine"*, and the audit's **A3** attributes part of this
+experiment's effect size to `docker kill` latency — so a control collected on a
+quiet host and an AUTH arm collected on a loaded one is **exactly the confound
+the control exists to catch, and it would be invisible without the three
+readings.** The cause qualifies under the rule already committed: it is
+outcome-independent and checkable from `loadavg`/`docker ps`, neither of which
+says anything about what the system under test did.
+
+**If load rises materially mid-session, collection STOPS and the phase reports
+what it has.** A short honest session beats a complete contaminated one.
 
 **Cause 7 is the only outcome-adjacent one and it is deliberately narrow.** It
 follows the void rule the paper already uses for the durability probe and the
@@ -280,6 +296,36 @@ survivors are counted. If discards are concentrated in one arm or one class,
 **that asymmetry is itself a finding** and is reported as one — an
 infrastructural failure that correlates with the system under test is not
 infrastructural.
+
+### 6A.4b The interpreter, and a host change that turned out to be unnecessary
+
+Recorded because the interpreter is part of the measurement.
+
+Collection runs as `sudo env "PATH=$PATH" ./.venv/bin/python` from a
+`hamzakhan` login shell. `sudo` supplies root, which is what makes the
+`uv`-managed interpreter under `/root` readable; `env "PATH=$PATH"` preserves
+the Windows PATH entries that resolve Docker Desktop's `docker.exe`, which
+`experiments/harness/redis_kill.py:99,127` shells out to for
+`docker kill -s KILL` and `docker start`. Verified in one process: `whoami`
+`root`, `Python 3.13.0`, `docker` `29.4.3`, and `subprocess` reaching `docker ps`
+with `rc=0` from inside that interpreter.
+
+**A `chmod` on `/root/.local/share/uv` was authorised and was NOT performed,
+because inspection showed it would have been a no-op.** The entire subtree is
+already `drwxr-xr-x` / `-rwxr-xr-x`; the only component denying traversal is
+`/root` itself at `drwx------`. The effective change would have been
+`chmod a+x /root`, which is broader than what was authorised and is unnecessary
+given the above. **No host permission was changed.**
+
+Unchanged and verified: `uv.lock` sha256 `9c27c416b5ab0bd25bd3be4260ab2936…`,
+`.python-version` `3.13.0`, interpreter `Python 3.13.0`, binary sha256
+`975d6ff9aab3edb6833646bd3ad4183b17326890…`.
+
+The venv **was** synced with `uv sync --frozen --extra dev --extra cov --extra
+experiments --extra analysis` — `--frozen`, so exactly what `uv.lock` pins, no
+resolution. Before that sync the harness could not import (`ModuleNotFoundError:
+yaml`). The P9-0 byte-identity gate was re-run afterwards and all six generated
+files remained byte-identical, so the added packages do not reach the generator.
 
 ### 6A.5 Order of collection, fixed
 
