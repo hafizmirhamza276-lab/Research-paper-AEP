@@ -243,17 +243,35 @@ def test_the_cross_fault_comparison_is_against_the_process_kill_probe() -> None:
 # ------------------------------------------- the barrier's own metric
 
 
-def _kill_row(system: str, applied: int) -> dict[str, str]:
+def _kill_row(
+    system: str, applied: int, response_class: str = "NO_READBACK"
+) -> dict[str, str]:
     return {
         "regime": "redis-kill-preack",
         "system": system,
-        "response_class": "NO_READBACK",
+        "response_class": response_class,
         "runs": "30",
         "executions": "30",
         "executions_with_an_applied_effect": str(applied),
         "canary_survived": "30",
         "canary_lost": "0",
     }
+
+
+def _numbers_from_kill(kill: list[dict[str, str]], out: Path) -> str:
+    out.mkdir(parents=True, exist_ok=True)
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=kill,
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={"runs": 398, "executions": 3440, "cells": 115},
+        execution_paths={},
+        out=out,
+    )
+    return (out / "numbers.tex").read_text(encoding="utf-8")
 
 
 def test_the_unwanted_applied_effect_rate_is_over_executions(
@@ -275,6 +293,120 @@ def test_the_unwanted_applied_effect_rate_is_over_executions(
     assert "\\newcommand{\\BthreeUnwantedRate}{0.9333}" in text
     assert "\\newcommand{\\UnwantedPrevented}{18}" in text
     assert "\\newcommand{\\UnwantedP}{1.9\\times10^{-6}}" in text
+
+
+# ------------------------ two capability classes must not collide (B2/C-2)
+#
+# `analyze.py` groups redis-kill evidence by ["regime", "system",
+# "response_class"], so collecting a second capability class makes
+# redis-kill-ablation.csv 2N rows. Keying the macros by system alone let the
+# last row win: \AepKillApplied and friends silently re-bound to whichever
+# class sorted last while section 6.2.2's prose named `no-readback`, and the
+# numbers gate passed over it because the macros still regenerated
+# byte-identically from the new CSV. These tests fail on that binding.
+
+
+def _four_rows() -> list[dict[str, str]]:
+    """Two systems x two capability classes, with deliberately distinct counts."""
+    return [
+        _kill_row("AEP_FULL", 10, "NO_READBACK"),
+        _kill_row("B3_INTENT_NO_BARRIER", 28, "NO_READBACK"),
+        _kill_row("AEP_FULL", 4, "AUTHORITATIVE_READBACK"),
+        _kill_row("B3_INTENT_NO_BARRIER", 25, "AUTHORITATIVE_READBACK"),
+    ]
+
+
+def test_two_capability_classes_bind_to_distinct_macros(tmp_path: Path) -> None:
+    text = _numbers_from_kill(_four_rows(), tmp_path)
+    # headline stays the class the manuscript's prose describes
+    assert "\\newcommand{\\AepKillApplied}{10}" in text
+    assert "\\newcommand{\\BthreeKillApplied}{28}" in text
+    # the second class gets its own names rather than overwriting them
+    assert "\\newcommand{\\AepAuthKillApplied}{4}" in text
+    assert "\\newcommand{\\BthreeAuthKillApplied}{25}" in text
+
+
+def test_the_headline_kill_macros_are_independent_of_row_order(
+    tmp_path: Path,
+) -> None:
+    """The exact silent-rebinding this fix exists to prevent.
+
+    Both orderings are asserted deliberately. Reversal alone is not a test:
+    it happens to place NO_READBACK last, which the broken binding also gets
+    right by luck. The forward order is the one that discriminates.
+    """
+    for name, rows in (("forward", _four_rows()),
+                       ("reversed", list(reversed(_four_rows())))):
+        text = _numbers_from_kill(rows, tmp_path / name)
+        # `in text` is not enough: the broken binding emitted the macro TWICE,
+        # once per class, so a substring check matches the first emission and
+        # passes while LaTeX would take the last. Assert the definition is
+        # unique and then assert its value.
+        defs = re.findall(r"\\newcommand\{\\AepKillApplied\}\{([^}]*)\}", text)
+        assert defs == ["10"], (
+            f"{name} order: \\AepKillApplied defined {len(defs)} time(s) as "
+            f"{defs}; it must be defined once, from the no-readback row that "
+            "the manuscript's prose describes"
+        )
+        b3 = re.findall(r"\\newcommand\{\\BthreeKillApplied\}\{([^}]*)\}", text)
+        assert b3 == ["28"], f"{name} order: {b3}"
+
+
+def test_the_cross_system_macros_come_from_the_headline_class_only(
+    tmp_path: Path,
+) -> None:
+    """UnwantedPrevented is 28-10, never 25-4."""
+    text = _numbers_from_kill(_four_rows(), tmp_path)
+    assert "\\newcommand{\\UnwantedPrevented}{18}" in text
+    assert "\\newcommand{\\UnwantedPrevented}{21}" not in text
+
+
+def _kill_macro_names(text: str) -> list[str]:
+    names = re.findall(r"\\newcommand\{\\(\w*Kill(?:Applied|Runs|Canary))\}", text)
+    return names + re.findall(r"\\newcommand\{\\(\w*UnwantedRate)\}", text)
+
+
+def test_the_kill_macro_count_is_exactly_what_the_rows_justify(
+    tmp_path: Path,
+) -> None:
+    """An explicit count, and -- the part that discriminates -- no duplicates.
+
+    The count alone does not catch the broken binding: it emitted one macro per
+    row either way. What it emitted for four rows was
+    ``\\newcommand{\\AepKillApplied}`` **twice**, which is a LaTeX redefinition
+    error and a silently different number depending on which won.
+    """
+    two = _kill_macro_names(_numbers_from_kill(_four_rows()[:2], tmp_path / "two"))
+    four = _kill_macro_names(_numbers_from_kill(_four_rows(), tmp_path / "four"))
+    assert len(two) == 8, "2 rows x 4 per-arm macros"
+    assert len(four) == 16, "4 rows x 4 per-arm macros"
+    assert len(set(two)) == len(two), "duplicate macro names for 2 rows"
+    assert len(set(four)) == len(four), (
+        "duplicate macro names: %s"
+        % sorted({n for n in four if four.count(n) > 1})
+    )
+
+
+def test_a_duplicate_system_and_class_pair_is_refused(tmp_path: Path) -> None:
+    rows = _four_rows() + [_kill_row("AEP_FULL", 99, "NO_READBACK")]
+    with pytest.raises(SystemExit, match="two rows"):
+        _numbers_from_kill(rows, tmp_path)
+
+
+def test_a_missing_headline_class_is_refused(tmp_path: Path) -> None:
+    """Refuse to bind the prevention macros to a class the prose does not name."""
+    rows = [
+        _kill_row("AEP_FULL", 4, "AUTHORITATIVE_READBACK"),
+        _kill_row("B3_INTENT_NO_BARRIER", 25, "AUTHORITATIVE_READBACK"),
+    ]
+    with pytest.raises(SystemExit, match="NO_READBACK"):
+        _numbers_from_kill(rows, tmp_path)
+
+
+def test_an_unknown_response_class_is_refused(tmp_path: Path) -> None:
+    rows = _four_rows() + [_kill_row("AEP_FULL", 7, "SOMETHING_NEW")]
+    with pytest.raises(SystemExit, match="no macro suffix"):
+        _numbers_from_kill(rows, tmp_path)
 
 
 def test_the_barrier_costs_are_within_policy_and_no_ratio_is_emitted(
