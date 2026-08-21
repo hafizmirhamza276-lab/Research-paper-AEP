@@ -760,3 +760,516 @@ That is a materially different manuscript from the one 5C §H warned about. The
 degree**: there was one more, and it is trivial.
 
 *End of S3.*
+
+---
+
+# S4 — claims, manuscript, venue, and the diff against the prior passes
+
+> **Subject: `origin/main` @ `c2fffa6`.** S4 covers A2–A7, adjudicates the sealed
+> pre-audit register, performs the `a03985c..c2fffa6` bounds check that S1 could
+> not see, checks whether the applied fixes are *correct* rather than present,
+> and asks the second question about that range: **did closing old findings open
+> new ones?**
+
+## S4.1 The `a03985c..c2fffa6` bounds check — the range no audit has covered
+
+Eleven commits, **58 files**. Two results matter.
+
+### Finding S4-A · MAJOR · `NEW` — `aep_core/**` changed, and both prior audits' certification does not cover it
+
+The prior audit certified, in bold: *"**`aep_core/**` is untouched across the
+entire range** — no implementation change could have moved a measured number."*
+That was true of `e1e815d..a03985c`. **It is not true of `a03985c..c2fffa6`:**
+
+```
+$ git diff --stat a03985c..c2fffa6 -- aep_core/
+ aep_core/core/durability.py      | ...
+ aep_core/core/intent_workflow.py | ...
+ aep_core/core/intents.py         |  5 +++--
+ 3 files changed, 28 insertions(+), 15 deletions(-)     [commit b9617e4]
+```
+
+**I read the whole diff. It is semantics-preserving:** docstrings, comments, and
+two exception *message* strings. No condition, no branch, no value, no control
+flow. The frozen results remain attributable to the code that produced them.
+
+**But its substance is a retraction, and that is the finding's real content.**
+`DurabilityAck` changed from *"Proof that a barrier reported the preceding write
+durable… cannot be constructed, subclassed, or copied"* to *"an in-process
+control-flow guard under a trusted-code assumption, **not a cryptographic
+capability**… Python underscore naming and closure state are not security
+boundaries."*
+
+**The manuscript followed, correctly and voluntarily.** C2 — the paper's most
+novel mechanism — was rewritten in the same commit:
+
+```diff
+-      the fsync acknowledgement mints an unforgeable, single-use, scope-bound token
++      under a trusted-code assumption, the fsync acknowledgement returns an opaque,
++      non-copyable, single-use, scope-bound in-process dispatch guard;
++      This is a control-flow invariant of the supported API, not a
++      cryptographic capability or a boundary against arbitrary code in the
++      same Python process.
+```
+
+"Unforgeable" now appears **nowhere** in the manuscript; `04-protocol.tex:96` and
+`08-threats.tex:122` carry matching disclosures. This is a project weakening its
+own headline novelty claim without being forced to. **Recorded as a finding
+because the certification gap is real and a reader inheriting the prior audit's
+"aep_core untouched" line would be misled — not because anything is wrong.**
+
+### Finding S4-B · MAJOR · `NEW` — the frozen-results invariant is broken, for the first time in the project's history
+
+Both prior audits verified this and both got an empty result:
+
+```
+$ git log --all --diff-filter=DM -- experiments/results     [at a03985c]
+   (no output)          -> "No tracked results file has ever been modified or deleted."
+```
+
+**It is no longer empty:**
+
+```
+$ git log --diff-filter=DM --name-only a03985c..c2fffa6 -- experiments/results
+b9617e4 Close Stage 1 scientific integrity and novelty issues
+  experiments/results/matrix/SHA256SUMS
+  experiments/results/matrix/analysis/comparisons-vs-aep-full.csv
+```
+
+The manifest hash for that one file was rewritten in the same commit:
+
+```diff
+-c2a4cd3d…  analysis/comparisons-vs-aep-full.csv
++a5310f3a…  analysis/comparisons-vs-aep-full.csv
+```
+
+**Mitigations, all verified here rather than assumed.** Exactly one derived file
+changed; `per-cell-metrics.csv`, `per-execution.csv`, `coverage.json`,
+`MANIFEST.csv` and `MANIFEST.md` retain their original hashes; the manifest was
+updated atomically in the same commit rather than left stale; the regeneration is
+performed by a committed, tested tool added in the same commit
+(`experiments/rebuild_comparisons.py`, `experiments/tests/test_regime_comparisons.py`);
+and **S3's exhaustive macro diff proves the change moved no claim in the paper's
+favour.**
+
+**Why it is still MAJOR.** The artifact's credibility rests on an invariant it
+states plainly and that two audits verified. That invariant now holds only with a
+qualification, and **nothing in the repository says so.** A reader who runs the
+prior audit's own command today gets a different answer and no explanation.
+**Remedy: a line in `ARTIFACT.md` and in the results manifest recording that
+`comparisons-vs-aep-full.csv` was regenerated at `b9617e4` to fix the
+regime-pooling defect, with the old hash, the new hash, and the tool that did
+it.** No number changes.
+
+Rule 10 is otherwise clean across the new range: **0** commits with
+author≠committer date, **0** deleted reports, **0** merges.
+
+## S4.2 Did closing old findings open new ones? Yes — one
+
+### Finding S4-C · MAJOR · `NEW` — the equivalence margin is justified in units the paper says it cannot measure
+
+The eleven commits added twelve macros. Eleven are self-limiting (an interval the
+paper did not have, a ratio replacing a rounder claim, cluster/strata counts).
+**One introduces a new claim: equivalence.**
+
+`06-evaluation.tex:263-276` now argues the ablation is *equivalent* within a
+stated margin, and justifies the margin operationally:
+
+> *"…which lies within a ±5 percentage-point margin. We introduce that margin in
+> this revision; it was not preregistered. **Operationally, five percentage points
+> corresponds to 27 additional terminal escalations per 540 crashed executions,
+> which we treat as the largest operationally immaterial difference for this
+> workload.**"*
+
+`08-threats.tex` §(i), unchanged, says:
+
+> *"Declared ambiguity **is not evaluated as an operational outcome**… That would
+> require an operator study — do teams resolve declared ambiguities, how long does
+> it take, what fraction are resolved correctly, and does the queue stay bounded?
+> — and **we have run none**. Relatedly, the artifact has no escalation
+> mechanism: reaching the terminal state pauses the execution and alerts nobody."*
+
+**The margin that licenses the equivalence claim is set in terminal escalations,
+and the paper states in terms that it has no evidence about what a terminal
+escalation costs anyone.** Twenty-seven escalations are declared immaterial by a
+paper that also says it does not know whether operators resolve escalations at
+all, and that nothing alerts them.
+
+The statistical framing is scrupulous — "post hoc", "not preregistered",
+"sensitivity analysis, not a strong general equivalence result", "only for this
+fixed design", "we treat as". **The circularity is not disclosed anywhere.**
+This is the paper's own backlog **B4** appearing as an unstated premise of a new
+claim rather than as an acknowledged gap.
+
+**Remedy: either justify the margin on non-operational grounds (e.g. as a
+fraction of the baseline effect the paper is contrasting against, 77–83 pp), or
+add one clause tying it to §VIII(i) as an explicitly unevidenced stipulation.**
+
+## S4.3 Are the applied fixes correct, not merely present? (Amendment 1)
+
+| Fix | Present? | **Correct?** |
+|---|---|---|
+| **F1** — the §G.1 sentence | yes | ✅ **Verified in S3.** 983.3 ≤ 1000; "near the top" = 98.3%; the mechanism disclaimer scopes *why the mean sits high*, not the bound, so it is coherent rather than self-contradictory as I suspected when planning. |
+| **F2** — anonymity | yes | ✅ **Largely.** `\ifanonymous` switch; the public build now names an author (`Hamza Khan`) and carries a correspondence footnote — the "unfinished block" half is closed too. Decompressing all 145 PDF streams: `main.pdf` carries the URL ×4 and the email ×1 as expected; **`main-anon.pdf` carries zero hits on every needle.** ⚠️ *Instrument limit:* my URI-annotation extraction found 0 annotations in **both** files, i.e. it does not work on this PDF's compressed object streams. **The prior audit's 15/4 → 11/0 annotation result is therefore not independently confirmed here.** |
+| **D6** — "two orders of magnitude" | yes | ✅ Now "a factor of roughly 70" (1966.7/28.0 = 70.24), **and** the sentence discloses that the denominator is pinned only to [27.1, 1524.6] ms, so "the factor is an estimate of an order of magnitude rather than of a figure". Stronger than the fix required. |
+| **Ten overfull boxes** | yes | ✅ **Verified by independent rebuild, not by report.** Fresh `pdflatex`/`bibtex` ×3 from `c2fffa6` sources into `/tmp` (`paper/` never written): **19 pages, 0 overfull, 0 undefined references, 0 undefined citations.** |
+| **Olive + the 2026 wave** (paper review's #1, its only Reject-capable finding) | yes | ✅ `refs.bib` 25 → **34** entries, now including Olive/Setty, ALICE/Pillai, CrashMonkey/Mohan, Torturing Databases, the IETF Idempotency-Key draft, the transactional-outbox pattern, LogAct, Sovereign Execution Broker and Verified Tool Calls. `07-related.tex` rewritten (202 lines changed). |
+
+## S4.4 PR-1 — adjudicated **SUBMIT-BLOCKER**
+
+`main.tex:146`:
+
+> *"We evaluate AEP against five baseline designs, one of them in two
+> configurations … **under real `SIGKILL` process faults, hard Redis kills and
+> block-level write loss, across three endpoint reconciliation capabilities**."*
+
+Measured coverage, from the frozen CSVs and the probe's imports:
+
+| Fault class named | Systems actually exercised | Capability classes |
+|---|---|---|
+| `SIGKILL` process faults | **7 of 7** ✅ | 3 ✅ |
+| Hard Redis kills | **2 of 7** (AEP-full, B3) | **1** (`no-readback`) |
+| Block-level write loss | **0 of 7** — two Redis keys | **0** |
+
+`experiments/flakey_write_loss.py` contains **zero** references to `aep_core`,
+**zero** to `experiments.harness`, **zero** to `baselines`.
+
+**Is `:146` defensible on its own terms? No, and I tried the charitable parse.**
+The generous reading detaches the fault list from the baseline comparison — "we
+evaluate AEP … under X, Y and Z" rather than "we evaluate AEP *against five
+baselines* under X, Y and Z". That reading still fails: **AEP itself was not
+evaluated under block-level write loss.** Nothing ran. No execution, no protocol
+outcome, no capability class. There is no parse under which the sentence is true.
+
+**Why the disclosure discount does not apply, stated explicitly rather than
+resolved by placement.** My own severity rule discounts a finding one step when
+the manuscript discloses the limit specifically — and `08-threats.tex` §(b) *does*
+("The write-loss probe tests `WAITAOF`, not AEP"). I am declining the discount on
+two grounds:
+
+1. **The abstract contradicts itself, twice, and self-contradiction is not cured
+   by disclosure fourteen pages later.** ¶1 says "hard Redis kills" without
+   qualification; ¶2 says the prevention evidence is "in one `no-readback`
+   capability class, at one pre-acknowledgement Redis-kill point, on one host".
+   ¶1 says "block-level write loss"; ¶3 correctly describes a *records* probe
+   ("acknowledged records survive … unacknowledged ones are destroyed"). The
+   correction the reader needs is already in the same abstract, which means the
+   authors knew the accurate scope while writing the inaccurate sentence.
+2. **The discount presumes the reader reaches the disclosure.** An editor
+   triaging on the abstract decides whether the claimed evidence exists before
+   §VIII is read, and there is no later point at which that decision is revisited.
+   A discount that assumes a reading which the defect's own location prevents is
+   not a discount.
+
+**The remedy is one clause** — delete "and block-level write loss" and qualify
+"hard Redis kills". That it is trivial is an argument for its severity, not
+against it: an easily-corrected false coverage claim in the abstract is exactly
+what converts a paper's candour from an asset into a liability.
+
+## S4.5 PR-2 / A2 — **MAJOR**, and now measured rather than argued
+
+**The gate cannot fail, and I made it fail 14 times while it reported success.**
+`scripts/verify_refs.py` run against the current head, this session:
+
+```
+queries printed  : 9  of 23
+zero-hit queries : 0
+LOOKUP FAILED    : 14        (HTTP 503 / HTTP 500 from DBLP, despite the 8 s sleep)
+VERIFY_REFS_EXIT = 0
+```
+
+**Sixty-one percent of the bibliography sweep failed and the script exited 0.**
+`main()` still ends in an unconditional `return 0`; a failed lookup only prints.
+This is 5C §G.3 and the prior audit's D7, reproduced live on the current head,
+after two commits touched this file. It is not a stale finding.
+
+**PR-2's three drifts, re-verified on `c2fffa6`: one fixed, two survive.**
+
+| `refs.bib` entry | Swept? |
+|---|---|
+| `redis-locks` → `…/develop/clients/patterns/…` | ✅ **FIXED** — now swept at the corrected path |
+| `temporal-activity-definition` → `docs.temporal.io/activity-definition` | ❌ **still not swept**; the script sweeps `…/activity-execution`, which matches **no** `refs.bib` entry |
+| `temporal-activity-failures` → `…/encyclopedia/detecting-activity-failures` | ❌ **still absent** from `NON_DBLP_SOURCES` |
+
+`refs.bib` now holds 34 entries against 23 `QUERIES`. `09-artifact.tex` still
+tells the reader *"Every bibliography entry was verified to exist before it was
+written… The raw output of that sweep ships with the artifact."* **The sweep that
+sentence points at exits 0 without verifying anything, on this host, today.**
+
+Severity MAJOR rather than SUBMIT-BLOCKER because the *bibliography itself is
+sound* — the prior audit spot-checked six entries against Crossref and arXiv
+including the most attackable (`zheng2026acrfence`, arXiv 2603.20625, real) and
+all six resolved. The defect is the assurance mechanism, not the references.
+
+## S4.6 PR-3 / A4 — **MAJOR**: the agent framing is decorative
+
+Occurrences of "agent" per file on `c2fffa6`, unchanged from `a03985c`:
+
+| file | count | | file | count |
+|---|---|---|---|---|
+| `main.tex` (title/abstract/keywords) | 8 | | `06-evaluation.tex` | **0** |
+| `01-introduction.tex` | 4 | | `07-related.tex` | 6 |
+| `02-motivating.tex` | 1 | | `08-threats.tex` | 2 |
+| `03-model.tex` | **0** | | `09-artifact.tex` | **0** |
+| `04-protocol.tex` | **0** | | `05-implementation.tex` | **0** |
+
+**Zero across the entire technical core** — model, protocol, implementation,
+evaluation, artifact. And
+`grep -rniE "\bllm\b|openai|anthropic|language model|gpt|planner" experiments/ --include=*.py -l`
+returns nothing. The workload is synthetic payments;
+`PAPER_ROADMAP.md` marks 3C (LLM-driven workload) not started.
+
+**Is the framing load-bearing?** Test: replace "autonomous agent" with "any
+client of a non-idempotent, non-cooperative endpoint" throughout. **No property
+(P1/P2/P3), no research question, no metric, no baseline and no number changes.**
+The framing is therefore decorative with respect to the evidence — the paper is a
+distributed-systems protocol paper wearing an agents title.
+
+That is not fatal and it is defensible as *motivation*: §VII now positions
+against three 2026 agent-reliability papers, so the problem is genuinely live in
+that literature. **The defect is the mismatch between the title's promise and the
+evaluation's content**, and a reviewer is entitled to ask why a paper titled
+"…for Autonomous Agents" contains no agent anywhere it measures anything.
+`08-threats.tex` does not list this among its threats.
+
+## S4.7 S3-B re-examined — upgraded to **MAJOR**, with the reasoning stated
+
+You directed me to start from: the sentence's function is to exclude a confound,
+and if B4 shares AEP's substrate the defence does not exist. **I examined it and
+I agree, with one correction that changes the remedy rather than the severity.**
+
+`06-evaluation.tex:508-510`: *"B4 and B4b landing on the same figure with their
+own two acknowledged appends is **independent confirmation** that the cost is the
+barrier and not anything AEP does around it."*
+
+- The arithmetic is true: AEP-full 4 004.9 ms, B4b 4 013.4 ms, B4 4 015.7 ms.
+- **The defence in that sentence does not exist.** B4 uses *the same `WAITAOF`
+  barrier* — the paper says so itself at `06:98-100` — on the same Redis, the
+  same `appendfsync everysec`, the same host, in the same harness, written by the
+  same author. If the ~2 s came from the shared substrate rather than from the
+  barrier, B4 would agree **for that reason**. The observation cannot discriminate
+  between the hypothesis and its confound, so it confirms nothing.
+
+**The correction: the paper is not left without a defence.** B3 supplies it, and
+supplies it properly — B3 *is* AEP with only the barrier removed, so
+AEP − B3 = 1 966.7 ms is attributable to the barrier by construction. The
+confound is excluded two paragraphs earlier by the actual ablation.
+
+**So the finding is precise: the sentence offers a non-existent defence for a
+confound that is separately and validly excluded.** That keeps it below
+SUBMIT-BLOCKER — no claim in the paper is left unsupported — and puts it well
+above a 3.5% overstatement, because it is a false assertion about the *class* of
+evidence held, in a paper whose principal asset is that its evidence claims can
+be trusted literally.
+
+**Remedy, recorded as you asked: delete the sentence.** An actually-independent
+experiment is *not* required, because B3 already excludes the confound; the
+sentence is evidentially redundant as well as wrong, so deleting it costs the
+paper nothing. The alternative — keeping it while disclosing that B4 shares the
+barrier — is self-defeating, since the disclosure destroys the sentence's only
+function. A word swap ("corroboration" for "independent") is **not** an adequate
+remedy: the problem is not the adjective, it is that a shared-substrate
+observation is offered as evidence at all.
+
+## S4.8 A gate weakness, and a correction to my own S3
+
+**Finding S4-D · MINOR · `NEW`.** `check_paper_numbers.py` reads two untracked
+build byproducts — `paper/main.bbl` (`check_bibliography`, :219-253) and
+`paper/main.log` (`check_undefined_references`, :256-273) — with **no freshness
+check**. On this machine:
+
+```
+paper/main.log   untracked   mtime 2026-08-10 16:04:43
+paper/main.bbl   untracked   mtime 2026-08-10 16:04:38
+HEAD (c2fffa6)   committed   2026-08-12 00:56:58
+```
+
+The artifacts predate the head by two days. In **CI** the gate is sound —
+`ci.yml:327` runs `build_paper.sh` before `:334` runs the gate. Run standalone,
+as the script's own docstring instructs (`uv run --frozen python
+scripts/check_paper_numbers.py`), it silently validates whichever build happens
+to be on disk.
+
+**Correction to S2.4/S3, owed and stated plainly:** the `18 passed, 0 failed` I
+reported included two checks that read those stale artifacts, so my evidence path
+for "no undefined references" and "bibliography sound" was weaker than I
+presented it. **The conclusion is unaffected** — the fresh rebuild in S4.3
+independently returns 0 undefined references and 0 undefined citations from
+`c2fffa6` sources — and the sixteen substantive checks, which regenerate the
+tables and byte-compare, never touched the stale files. But I stated 18/18
+without qualifying it, and the qualification belongs on the record.
+
+**Near-miss also recorded:** I read "10 overfull boxes" out of that same stale
+`main.log` and nearly reported the typesetting defect as open. It is closed. Two
+near-misses now, both from trusting an artifact instead of regenerating it —
+which is precisely the failure mode this repository built its gates to prevent.
+
+## S4.9 What held — findings with the same standing as the defects
+
+An audit that lists only defects misrepresents the artifact. These are results,
+established here by re-derivation, and they are the strongest available evidence
+that the numbers discipline works.
+
+| # | Result | How established |
+|---|---|---|
+| **H1** | **84 of 89 macros are unchanged** when `numbers.tex` is regenerated under the superseded pooling rule. Of the five that move, two are LOC recounts and two move **against** the paper; the one favourable move is attributable entirely to a Wilson *label* correction, not to the rule. | S3.1, full macro diff + isolation arithmetic |
+| **H2** | **`numbers.tex` is byte-regenerable.** The committed generator, run against the frozen CSVs in the locked interpreter, reproduces every generated artifact byte-for-byte. **18 passed, 0 failed** (16 substantive; see S4.8 for the two). | S2.4, executed |
+| **H3** | **124 relational claims re-derived; one false, at 3.5%.** Twenty formal derivations, seven `tab:latency` increments, and the word-stated relationships. The only failure is "within a factor of four" for a span of 4.14 — and it is self-deprecating. | S3.2 |
+| **H4** | **Frozen bytes verify 17/17, exit 0.** Stronger than the prior audit could reach (7/17 on a clone), because this tree carries the untracked archive layer. | S1.4 |
+| **H5** | **432 run directories exist and match `coverage.json` exactly**, in the WSL measurement tree, together with the `results/voided/` the paper cites. Independent provenance confirmation nothing else in this audit could supply. | S1.7 |
+| **H6** | **Rule 10 holds across the entire history.** Zero amended or rebased commits over 27 commits in two ranges, one deleted report ever (a pre-range scratch draft), one merge, and `a03985c` still an ancestor of the head. | S1.3, S4.1 |
+| **H7** | **The project retracted its own most novel claim unforced.** C2's "unforgeable token" became "an in-process guard, not a cryptographic capability", in code and manuscript together, with matching disclosures in two further sections. | S4.1 |
+| **H8** | **The typesetting defect is fully closed** — 10 overfull boxes → **0**, verified by independent rebuild rather than by report. | S4.3 |
+| **H9** | **The paper review's only Reject-capable finding is closed.** Olive, ALICE, CrashMonkey, Torturing Databases, the IETF draft, the outbox pattern and all three 2026 agent-reliability papers are now cited; `refs.bib` 25 → 34. | S4.3 |
+
+**H1–H3 together are the substantive answer to 5C §H's warning.** The class it
+named is real and one more instance existed; the discipline that was supposed to
+contain it does contain it.
+
+## S4.10 A7 — venue fit: submit-ready is not the same as competitive
+
+**The distinction, stated first.** *Submit-ready* means the manuscript's claims
+match its artifacts and nothing in it is false. On `c2fffa6` that is true except
+for **PR-1**, which is one clause. *Competitive at a top venue* means the evidence
+answers the question that venue's reviewers are trained to ask. **The paper is
+one clause from the first and materially short of the second at all four venues,
+for four different reasons.**
+
+| Venue | What it would demand that this paper does not have | Specific gap |
+|---|---|---|
+| **IEEE TSE** (current target) | Evidence that the *engineering claim* holds for engineers. TSE's question is whether declared ambiguity is better **in practice**, and the paper states it does not show that. Also open-science compliance and generality beyond one artifact. | **B4** (no operator study, and no escalation mechanism for one to study); §VIII(m) "the detection finding has no referent outside this artifact"; the raw archive is unpublished so `09-artifact.tex`'s availability sentence is false |
+| **DSN** | Fault-injection breadth and a second host. The *instrument* is already DSN-grade; the *coverage* is not. | **A3/B2** — the barrier's only surviving claim rests on one cell (`no-readback`, one crash point, n=30, one host); **B1** — no protocol outcome has ever been measured under write loss |
+| **Middleware** | Behaviour under load. The paper's cost story is its most decision-relevant artifact and rests on three crash-free runs per arm, with the `always` interval spanning zero. | **B3** (3 runs/arm); the paper's own admission that its workload "cannot exercise" write throughput; no concurrency cell, so P1 is never exercised under live contention |
+| **IEEE TDSC** | An adversary model. **Weakest fit, and `b9617e4` made it weaker**: the paper now states explicitly that its dispatch guard is "not a cryptographic capability", there is no Redis ACL, and the failure model is "crash-and-delay, not Byzantine". | `tab:nonclaims` forecloses the property TDSC exists to evaluate |
+
+### Ordered build list — what to build next, each tied to what it unlocks
+
+Ranked by *evidence bought ÷ effort*, not by ease.
+
+1. **B2 — prevention on `auth` and `pos-only`.** ≈2 h, **no code change** (the
+   regime exists: `run_matrix.py --regime redis-kill-preack`). Takes the barrier's
+   *only* remaining claim from one cell to three capability classes, with a
+   falsifiable prediction already written in the backlog. → **Unlocks DSN;
+   materially strengthens every venue.** This is the single highest-value hour in
+   the project.
+2. **Publish the raw archive and cite a DOI.** ≈1 h. Closes the `09-artifact.tex`
+   availability overclaim, makes the two analysis figures reproducible, makes
+   `SHA256SUMS` checkable on a clone, and makes `results/voided/` reachable. →
+   **Blocking for artifact badging anywhere; TSE open-science compliance.**
+3. **B3 — 9 crash-free runs per arm.** ≈1 h; the unblock is one line
+   (`AEP_FSYNC_RUNS` → `--runs-per-cell`). Makes the `always` interval mean
+   something instead of spanning zero. → **Middleware's cost story; removes the
+   paper's weakest interval.**
+4. **B1 — the protocol under write loss**, on a Linux host with a native Docker
+   daemon. ≈2.5 h plus host. Converts the barrier's durability case from
+   premise-plus-argument into a system-level result, and **retires PR-1 by making
+   the abstract's sentence true** instead of deleting it. → **DSN; and it is the
+   one item that turns a correction into a contribution.**
+5. **A concurrency / live-contention cell.** P1 and the fenced-CAS machinery are a
+   large fraction of the implementation and are never exercised with two live
+   claimants. → **Middleware and DSN; closes the reviewers' R3.1 residual.**
+6. **A write-heavy throughput workload.** → **Middleware only.** Skip unless
+   targeting it.
+7. **3C — an LLM-driven workload.** The only item that makes the *title* honest
+   and gives the technical core a reason to say "agent". → **Removes the A4
+   objection at every venue**; without it, retitling is the cheaper fix.
+8. **B4 — the operator study** (12–16 practitioners, pre-registered, within-subject).
+   Largest effort by far, and it is the TSE-shaped contribution. Requires building
+   the escalation surface first, since the artifact has none. → **The item that
+   makes TSE competitive rather than merely appropriate.**
+9. **3A — a formal layer** (TLA+ or Hypothesis against the real Lua). Optional
+   strengthener. → **TSE/TDSC polish; lowest priority given everything above.**
+
+**The honest summary of A7: items 1–3 cost about four hours and move the paper
+from "defensible" to "solid" at DSN and Middleware. Item 8 is what a top-tier TSE
+acceptance actually requires, and it is weeks, not hours.** Choosing the venue is
+therefore a decision about which of those two you are willing to fund.
+
+## S4.11 What this audit cannot see
+
+Stated because a reader who does not see it stated will assume coverage that does
+not exist.
+
+1. **Declared scope only.** The three prompt files the sessions ran under
+   (`COMBINED_PROMPT_*`) do not exist in the repository, in git history, or
+   anywhere on this host. Bounds were checked against each report's *declared*
+   scope, not against the prompt actually issued. **A session that widened its own
+   declared bounds to match what it did is invisible to this instrument — and to
+   the previous one.** Two independent audits now share this blind spot, and it
+   cannot be closed retrospectively.
+2. **No result was re-run.** Every rate in this paper is taken on the authority of
+   the frozen CSVs plus `SHA256SUMS` plus the 432/432 measurement-tree match. If
+   the harness mismeasured systematically, every check in this audit passes and
+   the paper is still wrong.
+3. **No code review of `aep_core`.** P1/P2/P3 are taken as stated. I read the
+   `a03985c..c2fffa6` diff for semantic effect only.
+4. **The full test suite was not run** (scope choice, not a blocker — Docker and
+   the locked interpreter are both available).
+5. **PDF link annotations are unverified.** My extractor found zero annotations in
+   both PDFs, i.e. it does not work here; the prior audit's 15/4 → 11/0 result
+   stands unconfirmed by me.
+6. **Reflog forensics are local.** A force-push from another clone before this one
+   existed leaves no trace. S1.3 establishes "no evidence of", not "did not
+   happen".
+7. **The auditor is the same model lineage** as the sessions audited. Mitigated
+   where cheap — every mechanism in PR-1, PR-2 and S4.1 was confirmed by reading
+   source or executing, not by trusting a report — but not eliminated.
+
+## S4.12 Verdict
+
+### Completeness: **97%**
+
+The 3% is **PR-1** (one clause), **S4-B** (one disclosure line), **S4-C** (one
+clause), plus the unpublished archive, which is a human action and not a defect.
+Nothing that remains is evidence.
+
+### Findings, all sessions
+
+| ID | Severity | Finding | Prior art |
+|---|---|---|---|
+| **PR-1** | **SUBMIT-BLOCKER** | `main.tex:146` states fault coverage the artifact does not have — write loss exercised **0 of 7** systems, hard Redis kills **2 of 7** — and the same abstract contradicts it twice. | `NEW` |
+| **PR-2 / A2** | MAJOR | `verify_refs.py` exited **0 after failing 14 of 23 lookups**, measured this session. Two of three `NON_DBLP_SOURCES` drifts survive. `09-artifact.tex` points readers at this sweep as assurance. | `NEW` (drifts) / `CONFIRMS` (hollow exit) |
+| **S4-A** | MAJOR | `aep_core/**` changed after the prior audit certified it untouched. Semantics-preserving, and the substance is a voluntary retraction — but the certification gap is real. | `NEW` |
+| **S4-B** | MAJOR | The frozen-results invariant is broken for the first time: `SHA256SUMS` and `comparisons-vs-aep-full.csv` modified at `b9617e4`, undisclosed. | `NEW` |
+| **S4-C** | MAJOR | The new equivalence margin is justified in terminal escalations, which §VIII(i) says the paper has no evidence about. | `NEW` |
+| **S2-A** | MAJOR | §VI-A(e) presents the no-pooling rule as a standing commitment while disclosing E5's retrospective adoption two sentences later. Exhaustively shown to change no claim. | `NEW` |
+| **S3-B** | MAJOR | "independent confirmation" from B4/B4b, which share AEP's barrier, Redis, host and author. Remedy: delete — B3 already excludes the confound. | `NEW` |
+| **PR-3 / A4** | MAJOR | Zero occurrences of "agent" across the entire technical core; no LLM anywhere in `experiments/`. The framing is decorative w.r.t. the evidence. | `NEW` |
+| **A3** | MAJOR | Prevention rests on one cell at n=30 — but the abstract now carries the scope at first mention, so it is disclosed, not hidden. | `CONFIRMS` |
+| **S3-A** | MINOR | "within a factor of four" for a span of 4.14, in two locations. | `NEW` |
+| **S1-C** | MINOR | 5B §B, declared "the FULL list", omits `31664ca`'s manuscript edit; the prior audit's ranges skip that commit. | `NEW` / `PRIOR-MISSED` |
+| **S4-D** | MINOR | `check_paper_numbers.py` reads untracked build byproducts with no freshness check; sound in CI, silently stale standalone. | `NEW` |
+| **S1-A** | MINOR | Issued prompts unavailable; bounds auditable against declared scope only. | `CONFIRMS` |
+| **S1-B** | MINOR | Phase P §B says 21 files; git shows 22. | `CONFIRMS` |
+
+**One SUBMIT-BLOCKER, seven MAJOR, five MINOR. Nine of fourteen are `NEW`.**
+
+### Verdict: **FIX FIRST**
+
+**S3's "no SUBMIT-BLOCKER" was true of S3 only and this verdict does not inherit
+it.** PR-1 was unadjudicated when S3 closed; it is adjudicated now, and it blocks.
+
+**Ordered, before submission anywhere:**
+
+1. **PR-1** — correct `main.tex:146`. Delete "and block-level write loss";
+   qualify "hard Redis kills" to the scope ¶2 already states. *One clause.*
+2. **S4-C** — tie the ±5 pp margin to §VIII(i), or rejustify it non-operationally.
+   *One clause.*
+3. **S3-B** — delete the "independent confirmation" sentence. *One sentence.*
+4. **S4-B** — record the `comparisons-vs-aep-full.csv` regeneration in
+   `ARTIFACT.md` with both hashes and the tool. *One line.*
+5. **S2-A** — disclose the pooling rule's adoption date, matching the E5
+   disclosure two lines below it. *One sentence.*
+6. **S3-A** — "a factor of about four", twice. *Two words.*
+7. **PR-2** — either fix `verify_refs.py`'s exit code and the two drifts, or
+   soften `09-artifact.tex`'s claim about what the sweep establishes.
+8. **PR-3 / A4** — decide: retitle, or run 3C. Do not ship the current title with
+   the current evaluation and no threat acknowledging the gap.
+
+Items 1–6 are **six edits totalling well under a page** and none changes a
+number. Item 7 is a script. Item 8 is a decision.
+
+**Then, and only then, the venue question — and A7's items 1–3 (≈4 hours) before
+submitting anywhere that will ask about the barrier's single cell.**
+
+*End of S4. Audit complete.*
