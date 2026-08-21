@@ -267,6 +267,43 @@ layers above:
 cd experiments/results/matrix && sha256sum -c SHA256SUMS 2>&1 | grep -v "No such file"
 ```
 
+### Provenance: one derived artifact was regenerated after the first freeze
+
+`analysis/comparisons-vs-aep-full.csv` is the **only** tracked results file that
+has been modified since the results were first committed, and its `SHA256SUMS`
+line was rewritten in the same commit. It is recorded here because a reader who
+compares this manifest against `reports/audit-report-2026-08-10.md` — which
+verified that no tracked results file had ever been modified — would otherwise
+find a discrepancy with no explanation.
+
+| | |
+|---|---|
+| **What** | `experiments/results/matrix/analysis/comparisons-vs-aep-full.csv` |
+| **When** | `b9617e4`, *"Close Stage 1 scientific integrity and novelty issues"* |
+| **Why** | The file pooled three fault regimes — `crashed`, `p0` and `redis-kill-preack` — into one set of comparison rows, which the manuscript's own reporting rule (§VI-A) forbids. It was regenerated regime-labelled. |
+| **By** | `experiments/rebuild_comparisons.py`, committed in the same commit together with `experiments/tests/test_regime_comparisons.py` |
+| **Old digest** | `c2a4cd3df667bb0878cf76b57cc7d13ef41a82a266a3893f4867dfd554c76a9a` |
+| **New digest** | `a5310f3abf3cecfe6b82ac58591f4ed6f548bad244c30687cc85e95bc423ee12` |
+
+**No measured data changed.** The inputs that regeneration reads —
+`analysis/per-cell-metrics.csv` and `analysis/per-execution.csv` — have exactly
+one commit and one blob each across the project's entire history and are
+byte-identical at every revision. The regeneration is reproducible from the
+tracked tree alone:
+
+```sh
+python -m experiments.rebuild_comparisons \
+  --analysis experiments/results/matrix/analysis \
+  --output /tmp/check.csv
+cmp /tmp/check.csv experiments/results/matrix/analysis/comparisons-vs-aep-full.csv
+sha256sum /tmp/check.csv          # == the new digest above
+```
+
+What the correction did to the manuscript is recorded in
+`reports/phase-report-6-audit-2026-08-21.md` §S3.1: of 89 generated macros, 84
+were unchanged, and of the five that moved, none moved in the paper's favour —
+the headline Fisher p-value became 25.7× weaker.
+
 The pending archive must include `MANIFEST.md`, listing the run count for every
 cell keyed the way the paper quotes it — `(regime, system, crash point, response
 class, read-back keying)`. The regime is part of the key deliberately: pooling
