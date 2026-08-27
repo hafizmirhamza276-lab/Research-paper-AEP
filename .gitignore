@@ -145,3 +145,71 @@ experiments/results/fsync-always/*
 experiments/results/fsync-always/analysis/*
 !experiments/results/fsync-always/analysis/latency-and-throughput.csv
 !experiments/results/fsync-always/analysis/per-execution.csv
+
+# --- Phase 9's replication of the redis-kill-preack cell (Phase 8.0) ----------
+# Five sessions of the same cell disagree: AEP-full recorded 10, 20, 12, 4 and
+# 7 applied effects out of 30 under an identical configuration
+# (reports/phase-report-9c-result-2026-08-21.md). Four of those five sessions
+# live in these roots, and until now they were untracked -- so the evidence for
+# 9C's central finding, and for the kill-latency mechanism that explains it,
+# existed on one host and nowhere else. That is a data-loss risk, not a
+# bookkeeping gap, which is why these are tracked ahead of any new collection.
+#
+# The frozen `matrix/` tree is NOT touched by this: these are separate results
+# roots and the paper's headline row still comes from the 2026-08-07 cell. They
+# are kept separate deliberately -- see reports/plan-phase-8-b2.md section 4.
+#
+# Same rule as above: analysis products and the manifest only, never a run
+# directory, never a sqlite ledger, never a log. Verify against each root's own
+# SHA256SUMS before adding anything here.
+!experiments/results/b2-2026-08-21/
+experiments/results/b2-2026-08-21/*
+!experiments/results/b2-2026-08-21/MANIFEST.csv
+!experiments/results/b2-2026-08-21/SHA256SUMS
+!experiments/results/b2-2026-08-21/analysis/
+experiments/results/b2-2026-08-21/analysis/*
+!experiments/results/b2-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-2026-08-21/analysis/coverage.json
+!experiments/results/b2-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s1-2026-08-21/
+experiments/results/b2-s1-2026-08-21/*
+!experiments/results/b2-s1-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s1-2026-08-21/SHA256SUMS
+!experiments/results/b2-s1-2026-08-21/analysis/
+experiments/results/b2-s1-2026-08-21/analysis/*
+!experiments/results/b2-s1-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s1-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s1-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s1-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s1-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s1-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s2-2026-08-21/
+experiments/results/b2-s2-2026-08-21/*
+!experiments/results/b2-s2-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s2-2026-08-21/SHA256SUMS
+!experiments/results/b2-s2-2026-08-21/analysis/
+experiments/results/b2-s2-2026-08-21/analysis/*
+!experiments/results/b2-s2-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s2-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s2-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s2-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s2-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s2-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s3-2026-08-21/
+experiments/results/b2-s3-2026-08-21/*
+!experiments/results/b2-s3-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s3-2026-08-21/SHA256SUMS
+!experiments/results/b2-s3-2026-08-21/analysis/
+experiments/results/b2-s3-2026-08-21/analysis/*
+!experiments/results/b2-s3-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s3-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s3-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s3-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s3-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s3-2026-08-21/analysis/redis-kill-ablation.csv
