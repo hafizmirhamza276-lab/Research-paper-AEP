@@ -181,3 +181,53 @@ part of this work rather than a precondition met elsewhere.
 `WEEKEND_CODEX_PROMPTS.md` and cannot be run by an agent in a weekend. It is
 recorded here so that the gap is tracked as work rather than absorbed as a
 permanent caveat.
+
+---
+
+## B5. `freeze_results.py` cannot produce a verifiable manifest on Windows
+
+**Deadline: before Phase 10.** Not deferred indefinitely like B1–B4 — this one
+has a date, because `SHA256SUMS` is the artifact's integrity mechanism for
+exactly the reviewers `ARTIFACT.md` is written for.
+
+**Source:** Phase 8.1, `reports/phase-report-8-1-0-2026-08-27.md` §F.1.
+
+`scripts/freeze_results.py` writes the manifest with two platform-dependent
+constructs, at lines 178–179:
+
+```python
+    sums = [f"{sha256(path)}  {path.relative_to(root)}" for path in digested]
+    (root / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8")
+```
+
+`Path.relative_to` renders `analysis\per-execution.csv` on Windows, and
+`write_text` translates `\n` to `\r\n`. The result is a `SHA256SUMS` whose every
+entry names a file that does not exist under that spelling and carries a
+trailing `\r`. Observed when freezing the four Phase 9 roots from Windows:
+
+```
+sha256sum: 'analysis\table-1.csv'$'\r': No such file or directory
+sha256sum: WARNING: 16 listed files could not be read
+```
+
+exit 1, on all four roots. The committed convention — set by
+`experiments/results/matrix/SHA256SUMS` — is forward slashes and LF.
+
+**Why this is not the same defect Phase Q fixed.** `.gitattributes` marks
+`experiments/results/** -text`, which pins the bytes on *checkout* so a clone
+cannot corrupt a manifest it received. It says nothing about *generation*: a
+manifest produced on Windows is already wrong before git sees it, and `-text`
+then faithfully preserves the wrongness.
+
+**The fix, two lines.** `path.relative_to(root).as_posix()`, and
+`newline="\n"` on the `write_text` call. `reports/raw/extract_kill_latency.py`
+already does the equivalent for its own output and says why in a comment.
+
+**A test that would have caught it.** Freeze a small fixture tree and assert the
+manifest contains no backslash and no `\r`. Cheap, and it fails today on Windows
+and passes on Linux, which is the whole point.
+
+**Worked around, not fixed, in Phase 8.0**: the four roots were frozen under WSL
+instead, after which all four verify 16/16 OK. That work-around is invisible to
+anyone who later runs the script on Windows and trusts its exit code, which is
+why this is tracked rather than left as a note.

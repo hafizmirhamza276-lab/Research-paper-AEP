@@ -34,10 +34,12 @@ import pytest
 
 from scripts.paper_tables import (
     CRASHED_REGIME,
+    ROOT,
     emit_deployment_choice,
     emit_numbers,
     emit_outcomes_table,
     flakey_macros,
+    mann_whitney_two_tailed,
     tex_p_value,
     tex_sigfigs,
 )
@@ -812,3 +814,58 @@ def test_a_ratio_is_rounded_to_significant_figures_without_an_exponent() -> None
     assert tex_sigfigs(7.0239) == "7.0"
     assert tex_sigfigs(1966.7) == "2\\,000"
     assert tex_sigfigs(0.0) == "0"
+
+
+def test_mann_whitney_separates_shifted_samples_and_not_identical_ones() -> None:
+    """The kill-latency test's engine, checked against cases with known answers.
+
+    Phase 8.1 uses this to say that the runs which applied an effect waited
+    longer for the kill than those which did not. That claim reaches the
+    manuscript as a p-value, so the implementation gets the same treatment as
+    the Fisher path: cases whose answers are known independently of the code.
+    """
+    # Complete separation of two samples of ten cannot arise by chance at
+    # anything near 0.05; the exact two-tailed p is 2/C(20,10) = 1.08e-5.
+    assert mann_whitney_two_tailed(list(range(10)), list(range(100, 110))) < 0.001
+    # The same sample against itself is the null in its purest form.
+    assert mann_whitney_two_tailed([1.0, 2.0, 3.0], [1.0, 2.0, 3.0]) == 1.0
+    # Symmetric in its arguments: the two-tailed answer cannot depend on which
+    # group was passed first.
+    left = mann_whitney_two_tailed([1.0, 4.0, 9.0, 16.0], [2.0, 3.0, 5.0, 8.0])
+    right = mann_whitney_two_tailed([2.0, 3.0, 5.0, 8.0], [1.0, 4.0, 9.0, 16.0])
+    assert left == right
+    # All ties is a zero-variance case; it must return the null rather than
+    # dividing by zero.
+    assert mann_whitney_two_tailed([5.0] * 6, [5.0] * 6) == 1.0
+    # An empty group has no location to compare, and must not raise.
+    assert mann_whitney_two_tailed([], [1.0, 2.0]) == 1.0
+
+
+def test_the_replication_macros_are_absent_when_the_roots_are(tmp_path) -> None:
+    """No replication roots must mean no macros, not zero-valued ones.
+
+    ``emit_numbers`` reads the four Phase 9 results roots by a fixed path. A
+    clone that has them emits nine ``Replication`` macros; a tree that does not
+    must emit none at all. Emitting them with placeholder values would put a
+    number in the manuscript that no measurement stands behind, and the
+    "every generated number is used" gate cannot tell the difference.
+    """
+    emit_numbers(
+        per_cell=[],
+        latency=EVERYSEC,
+        kill=[],
+        comparisons=[],
+        flakey=[],
+        always=ALWAYS,
+        coverage={},
+        execution_paths={},
+        out=tmp_path,
+    )
+    text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
+    if not (ROOT / "experiments" / "results" / "b2-2026-08-21").is_dir():
+        assert "ReplicationSessions" not in text
+    else:
+        # Present in this clone: then every one of them must carry a value,
+        # and the B3 range must be the flat 0 the finding rests on.
+        assert "\\newcommand{\\ReplicationSessions}{4}" in text
+        assert "\\newcommand{\\ReplicationBthreeRange}{0}" in text

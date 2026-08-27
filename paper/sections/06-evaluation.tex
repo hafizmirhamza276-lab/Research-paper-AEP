@@ -387,6 +387,42 @@ and both fail closed. The difference between them is not in what they
 already showed it does not depend on the barrier --- it is in what they did to
 the outside world before saying it.
 
+\paragraph{The magnitude was measured five times and moved; the direction did
+not} Because that second qualification is a limitation rather than a result, we
+tested it instead of asserting it. The cell was re-collected
+\ReplicationSessions{} further times under an identical configuration --- same
+cell identity hash, same per-run seed, same pinned Redis image --- for
+\ReplicationRuns{} executions per arm. AEP-full's unwanted-applied count ranged
+\ReplicationAepMin{}--\ReplicationAepMax{} out of \AepKillRuns{}. B3 recorded
+\ReplicationBthreeApplied{}/\AepKillRuns{} in every one of them, a range of
+\ReplicationBthreeRange{}. Taking the session rather than the execution as the
+unit, the barrier withheld \ReplicationPreventedMean{} effects on average, 95\%
+interval [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}], and the
+\UnwantedPrevented{} of \cref{tab:killablation} falls inside it. We report a
+session-clustered interval rather than pooling the executions, which would treat
+runs sharing a session's host-timing state as independent draws.
+
+The variation has a measured cause, and it is the race itself. The harness
+records how long each \texttt{docker kill} took to return, and across the
+\KillLatencyN{} AEP-full runs of the replication set the runs that applied an
+effect had a median kill latency \KillLatencyDiff{}\,ms \emph{longer} than those
+that did not (Mann-Whitney, two-tailed, $p = \KillLatencyP{}$): the slower the
+kill, the more often \texttt{WAITAOF} won. B3 is the control the same data
+supplies for free, and it shows nothing --- \KillLatencyBthreeDiff{}\,ms over
+\KillLatencyBthreeN{} runs, $p = \KillLatencyBthreeP{}$ --- as a system that
+never waits for the barrier must. The original cell was collected on a different
+filesystem from the four replications, a difference no run configuration
+records, so we report it separately rather than pooling it; it agrees in
+direction, at \KillLatencyOrigDiff{}\,ms over \KillLatencyOrigN{} runs
+($p = \KillLatencyOrigP{}$), with its own control at
+\KillLatencyBthreeOrigDiff{}\,ms ($p = \KillLatencyBthreeOrigP{}$,
+$n = \KillLatencyBthreeOrigN{}$).
+
+\UnwantedPrevented{} is therefore not a constant of the protocol and this paper
+does not offer it as one: it is where one host's kill-latency distribution
+happened to place a race. What is structural is that the race exists for
+AEP-full at all and cannot exist for B3.
+
 \subsubsection{The barrier's durability claim, under the fault that can
 actually test it}
 \label{sec:eval-durability}

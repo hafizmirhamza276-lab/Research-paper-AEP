@@ -376,6 +376,78 @@
 % every kill landed inside the 1000 ms fsync period, which is what makes the zero above a measurement rather than a miss
 \newcommand{\ProcessKillWindowMax}{992}
 
+% experiments/results/b2-*/analysis/redis-kill-ablation.csv | independent re-collections of the redis-kill-preack cell
+% each an identical configuration, same seed, same pinned image
+\newcommand{\ReplicationSessions}{4}
+
+% experiments/results/b2-*/ | executions per arm over 4 sessions
+\newcommand{\ReplicationRuns}{120}
+
+% b2-*/analysis/redis-kill-ablation.csv | mean over sessions of (B3 applied - AEP-full applied)
+% = mean(8, 16, 24, 21)
+\newcommand{\ReplicationPreventedMean}{17.2}
+
+% b2-*/analysis/redis-kill-ablation.csv | session-clustered 95% interval, t(3) = 3.182, session as the unit
+\newcommand{\ReplicationPreventedLow}{6.1}
+
+% b2-*/analysis/redis-kill-ablation.csv | upper end of the same interval
+% wide because the quantity moves between sessions, not because the sessions are few
+\newcommand{\ReplicationPreventedHigh}{28.4}
+
+% b2-*/analysis/redis-kill-ablation.csv | fewest AEP-full executions with an applied effect, over sessions
+\newcommand{\ReplicationAepMin}{4}
+
+% b2-*/analysis/redis-kill-ablation.csv | most, over sessions
+% a five-fold spread on a cell whose configuration did not change
+\newcommand{\ReplicationAepMax}{20}
+
+% b2-*/analysis/redis-kill-ablation.csv | B3 executions with an applied effect, identical in every session
+\newcommand{\ReplicationBthreeApplied}{28}
+
+% b2-*/analysis/redis-kill-ablation.csv | max - min of the same column over sessions
+% zero: the arm that never waits for the barrier does not move
+\newcommand{\ReplicationBthreeRange}{0}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% = 1129.3 - 927.9; the four replication sessions, one filesystem
+\newcommand{\KillLatencyDiff}{201}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | Mann-Whitney two-tailed on the same two groups
+\newcommand{\KillLatencyP}{4.0\times10^{-9}}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | runs
+\newcommand{\KillLatencyN}{120}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% = 977.0 - 990.8; the four replication sessions, one filesystem
+\newcommand{\KillLatencyBthreeDiff}{-14}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | Mann-Whitney two-tailed on the same two groups
+\newcommand{\KillLatencyBthreeP}{0.63}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | runs
+\newcommand{\KillLatencyBthreeN}{120}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% = 900.6 - 812.4; the paper's own cell, reported separately because it differs in filesystem
+\newcommand{\KillLatencyOrigDiff}{88}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | Mann-Whitney two-tailed on the same two groups
+\newcommand{\KillLatencyOrigP}{0.03}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | runs
+\newcommand{\KillLatencyOrigN}{30}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% = 826.8 - 801.1; the paper's own cell, reported separately because it differs in filesystem
+\newcommand{\KillLatencyBthreeOrigDiff}{26}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | Mann-Whitney two-tailed on the same two groups
+\newcommand{\KillLatencyBthreeOrigP}{0.53}
+
+% reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | runs
+\newcommand{\KillLatencyBthreeOrigN}{30}
+
 % lines of Python under aep_core/, excluding __pycache__
 % 14 files; regenerated on every run of this script
 \newcommand{\CoreLoc}{6\,862}

@@ -555,6 +555,60 @@ def tex_p_value(value: float) -> str:
     return f"{mantissa}\\times10^{{{int(exponent)}}}"
 
 
+def mann_whitney_two_tailed(first: list[float], second: list[float]) -> float:
+    """Two-tailed Mann-Whitney U, normal approximation with tie correction.
+
+    Deterministic on purpose. The obvious alternative, a permutation test, needs
+    a seed, and a seeded resampling test in a file whose whole contract is that
+    it regenerates byte-identically is one more thing that can silently stop
+    doing so. The samples here are n=120 and n=30, well inside the range where
+    the normal approximation is the standard choice.
+
+    Used for a location shift in `docker kill` latency between the runs that
+    applied an effect and those that did not, which is not a proportion and so
+    has no Fisher form.
+    """
+    n_first, n_second = len(first), len(second)
+    if not n_first or not n_second:
+        return 1.0
+    combined = sorted((value, group) for group, sample in
+                      ((0, first), (1, second)) for value in sample)
+    # Midranks, so ties do not bias the statistic toward whichever group the
+    # sort happened to place first.
+    ranks: list[float] = [0.0] * len(combined)
+    index = 0
+    tie_correction = 0.0
+    while index < len(combined):
+        stop = index
+        while stop + 1 < len(combined) and combined[stop + 1][0] == combined[index][0]:
+            stop += 1
+        midrank = (index + stop) / 2.0 + 1.0
+        for position in range(index, stop + 1):
+            ranks[position] = midrank
+        run = stop - index + 1
+        if run > 1:
+            tie_correction += run**3 - run
+        index = stop + 1
+
+    rank_sum_first = sum(
+        rank for rank, (_, group) in zip(ranks, combined) if group == 0
+    )
+    u_first = rank_sum_first - n_first * (n_first + 1) / 2.0
+    total = n_first * n_second
+    mean = total / 2.0
+    span = n_first + n_second
+    variance = total * (span + 1) / 12.0
+    if tie_correction:
+        variance -= total * tie_correction / (12.0 * span * (span - 1))
+    if variance <= 0:
+        return 1.0
+    # Continuity correction, then the two-tailed normal tail.
+    z = (abs(u_first - mean) - 0.5) / math.sqrt(variance)
+    if z <= 0:
+        return 1.0
+    return math.erfc(z / math.sqrt(2.0))
+
+
 def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
     """The G2 write-loss probe's numbers, pooled over its replications.
 
@@ -1785,6 +1839,187 @@ def emit_numbers(
                 "every kill landed inside the 1000 ms fsync period, which is "
                 "what makes the zero above a measurement rather than a miss",
             )
+
+    # --- Phase 8.1: the kill cell replicated, and why its magnitude moves --
+    #
+    # The ablation cell above was collected once. It has since been collected
+    # four more times under an identical configuration, and AEP-full's applied
+    # count moved 4 -> 20 out of 30 while B3 recorded 28/30 in every session.
+    # \UnwantedPrevented is therefore a point estimate of a quantity that is not
+    # a point: these macros are what let the manuscript say so with numbers
+    # rather than with an apology.
+    #
+    # The four replication sessions are read, and the original cell is NOT
+    # pooled with them. They differ in a way no run-config key records: the
+    # original was collected in the WSL-native tree on ext4, the four
+    # replications through /mnt/d on drvfs, where an event-log append costs
+    # ~40x more. Pooling a heterogeneous five to widen an interval would trade
+    # a stated limitation for an unstated confound.
+    REPLICATION_ROOTS = (
+        ("P9-B", "b2-2026-08-21"),
+        ("s1", "b2-s1-2026-08-21"),
+        ("s2", "b2-s2-2026-08-21"),
+        ("s3", "b2-s3-2026-08-21"),
+    )
+    replication: list[dict[str, int]] = []
+    for _, directory in REPLICATION_ROOTS:
+        path = (
+            ROOT / "experiments" / "results" / directory
+            / "analysis" / "redis-kill-ablation.csv"
+        )
+        if not path.is_file():
+            replication = []
+            break
+        by_system = {row["system"]: row for row in read_rows(path)}
+        aep_row = by_system.get("AEP_FULL")
+        b3_row = by_system.get("B3_INTENT_NO_BARRIER")
+        if not aep_row or not b3_row:
+            replication = []
+            break
+        replication.append(
+            {
+                "aep": int(aep_row["executions_with_an_applied_effect"]),
+                "b3": int(b3_row["executions_with_an_applied_effect"]),
+                "n": int(aep_row["executions"]),
+            }
+        )
+
+    if len(replication) == len(REPLICATION_ROOTS):
+        prevented = [row["b3"] - row["aep"] for row in replication]
+        aep_applied = [row["aep"] for row in replication]
+        b3_applied = [row["b3"] for row in replication]
+        sessions = len(replication)
+        per_arm = sum(row["n"] for row in replication)
+        mean_prevented = statistics.mean(prevented)
+        # Session as the unit, not the execution. Pooling the 120 executions
+        # would treat them as independent draws when they share a session's
+        # host-timing state; session 3B's no-pooling rule and the run-cluster
+        # bootstrap used elsewhere in this file are the same argument.
+        stdev_prevented = statistics.stdev(prevented)
+        # t(0.975, 3). Spelled out because scipy is not a dependency and a
+        # hard-coded critical value must be checkable against a table.
+        t_critical = 3.182
+        half_width = t_critical * stdev_prevented / math.sqrt(sessions)
+        macro(
+            "ReplicationSessions",
+            str(sessions),
+            "experiments/results/b2-*/analysis/redis-kill-ablation.csv | "
+            "independent re-collections of the redis-kill-preack cell",
+            "each an identical configuration, same seed, same pinned image",
+        )
+        macro(
+            "ReplicationRuns",
+            str(per_arm),
+            f"experiments/results/b2-*/ | executions per arm over "
+            f"{sessions} sessions",
+        )
+        macro(
+            "ReplicationPreventedMean",
+            f"{mean_prevented:.1f}",
+            "b2-*/analysis/redis-kill-ablation.csv | mean over sessions of "
+            "(B3 applied - AEP-full applied)",
+            f"= mean{tuple(prevented)}",
+        )
+        macro(
+            "ReplicationPreventedLow",
+            f"{mean_prevented - half_width:.1f}",
+            "b2-*/analysis/redis-kill-ablation.csv | session-clustered 95% "
+            f"interval, t({sessions - 1}) = {t_critical}, session as the unit",
+        )
+        macro(
+            "ReplicationPreventedHigh",
+            f"{mean_prevented + half_width:.1f}",
+            "b2-*/analysis/redis-kill-ablation.csv | upper end of the same "
+            "interval",
+            "wide because the quantity moves between sessions, not because "
+            "the sessions are few",
+        )
+        macro(
+            "ReplicationAepMin",
+            str(min(aep_applied)),
+            "b2-*/analysis/redis-kill-ablation.csv | fewest AEP-full "
+            "executions with an applied effect, over sessions",
+        )
+        macro(
+            "ReplicationAepMax",
+            str(max(aep_applied)),
+            "b2-*/analysis/redis-kill-ablation.csv | most, over sessions",
+            "a five-fold spread on a cell whose configuration did not change",
+        )
+        macro(
+            "ReplicationBthreeApplied",
+            str(b3_applied[0]) if len(set(b3_applied)) == 1 else "varies",
+            "b2-*/analysis/redis-kill-ablation.csv | B3 executions with an "
+            "applied effect, identical in every session",
+        )
+        macro(
+            "ReplicationBthreeRange",
+            str(max(b3_applied) - min(b3_applied)),
+            "b2-*/analysis/redis-kill-ablation.csv | max - min of the same "
+            "column over sessions",
+            "zero: the arm that never waits for the barrier does not move",
+        )
+
+    # The mechanism. The harness has always recorded the `docker kill` latency
+    # and nothing surfaced it; reports/raw/extract_kill_latency.py bridges the
+    # raw runs to this file. AEP-full dispatches only if WAITAOF returns before
+    # Redis dies, so that latency is the width of the race -- and B3, which
+    # never waits, is a negative control the same data provides for free.
+    latency_path = ROOT / "reports" / "raw" / "e1-kill-latency-by-run.csv"
+    if latency_path.is_file():
+        latency_rows = read_rows(latency_path)
+
+        def _median_split(stratum: str, system: str) -> tuple[float, float, float, int]:
+            subset = [
+                r for r in latency_rows
+                if r["filesystem"] == stratum and r["system"] == system
+            ]
+            applied = [int(r["issue_to_return_ns"]) / 1e6
+                       for r in subset if r["applied"] == "1"]
+            not_applied = [int(r["issue_to_return_ns"]) / 1e6
+                           for r in subset if r["applied"] != "1"]
+            if not applied or not_applied == []:
+                return 0.0, 0.0, 1.0, len(subset)
+            return (
+                statistics.median(applied),
+                statistics.median(not_applied),
+                mann_whitney_two_tailed(applied, not_applied),
+                len(subset),
+            )
+
+        for stratum, suffix, why in (
+            ("drvfs", "", "the four replication sessions, one filesystem"),
+            ("ext4", "Orig", "the paper's own cell, reported separately "
+                             "because it differs in filesystem"),
+        ):
+            for system, system_suffix in (
+                ("AEP_FULL", ""),
+                ("B3_INTENT_NO_BARRIER", "Bthree"),
+            ):
+                hit, miss, p_value, count = _median_split(stratum, system)
+                if not count:
+                    continue
+                name = f"KillLatency{system_suffix}{suffix}"
+                macro(
+                    f"{name}Diff",
+                    f"{hit - miss:.0f}",
+                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
+                    "median issue_to_return_ns of runs that applied an effect "
+                    "minus those that did not, ms",
+                    f"= {hit:.1f} - {miss:.1f}; {why}",
+                )
+                macro(
+                    f"{name}P",
+                    tex_p_value(p_value),
+                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
+                    "Mann-Whitney two-tailed on the same two groups",
+                )
+                macro(
+                    f"{name}N",
+                    str(count),
+                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
+                    "runs",
+                )
 
     # --- Implementation size, counted rather than remembered -------------
     # These were hand-written with a shell command in a comment beside them,
