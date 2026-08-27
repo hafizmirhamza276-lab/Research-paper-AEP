@@ -7,7 +7,7 @@
 
 ---
 
-## CURRENT PHASE: Phase 8 (B2) — 8.0 and 8.1.0 done, collection not started
+## CURRENT PHASE: Phase 8 (B2) — pre-registered through 8.3, collection not started
 
 **Nothing has been submitted anywhere.** The independent adversarial audit has happened. Its verdict was **FIX FIRST**, not SUBMIT: one SUBMIT-BLOCKER, seven MAJOR, five MINOR, nine of fourteen findings new (`reports/phase-report-6-audit-2026-08-21.md`). Phase 7 discharged the manuscript half of that list (`reports/phase-report-7-fixes-2026-08-21.md`).
 
@@ -17,6 +17,7 @@
 
 - **The cause of the instability is measured.** AEP-full dispatches only if `WAITAOF` returns before Redis dies, so the `docker kill` latency is the width of that race. Over all 150 AEP-full runs, those that applied an effect had a median kill latency of 1114.0 ms against 919.9 ms for those that did not — **+194.1 ms, permutation p = 0.00005** — while the B3 control, which never waits for the barrier, shows −12.1 ms at p = 0.76. **`\UnwantedPrevented{}` is therefore partly a property of the fault injector's timing distribution, not of the protocol**, and the manuscript still prints it as the point estimate 18 for a quantity ranging 8–24. That is Phase 8.1, and it is a live defect independent of B2.
 - **The evidence for all of this is now in the repository.** Four of the five sessions — 240 runs — were untracked and existed on one host. Phase 8.0 froze and tracked their analysis products.
+- **The AUTH cell is pre-registered and still uncollected.** `reports/phase-report-8-prediction-2026-08-27.md` fixes the prediction, k = 4, the stopping rule and the missing-vs-false adjudication at a commit where §2 proves no `AUTHORITATIVE_READBACK` × `redis-kill-preack` row exists in any of six tracked ablation tables. It also records that **B3 acknowledges** — B3 ablates the `WAITAOF` wait, not the acknowledgement (`experiments/baselines/b3_no_barrier.py:22-26`), so the fail-closed invariant is checked on AEP-full only and B3 serves as the instrumentation positive control instead.
 
 **What remains before submission is a decision, not a defect:**
 
@@ -64,8 +65,10 @@
 | 9C B2's positive control — **FAILED**, so AUTH was never collected | ✅ complete | `reports/phase-report-9c-prediction-2026-08-21.md`, `reports/phase-report-9c-result-2026-08-21.md` |
 | 8.0 Prompt provenance + rescue of the 240 untracked Phase 9 runs | ✅ complete | `reports/plan-phase-8-b2.md` §7 |
 | 8.1.0 Is the fail-closed invariant checkable retroactively? (**no**) | ✅ complete | `reports/phase-report-8-1-0-2026-08-27.md` |
-| 8.1 Paper fix: `\UnwantedPrevented` is a race outcome, not a constant | ⬜ planned, not started | `reports/plan-phase-8-b2.md` §7 |
-| 8.2–8.6 B2 proper: instrument, pre-register, collect (k=4), report | ⬜ planned, not started | `reports/plan-phase-8-b2.md` |
+| 8.1 Paper fix: `\UnwantedPrevented` is a race outcome, not a constant | ✅ complete | `reports/phase-report-8-1-0-2026-08-27.md` §F |
+| 8.2 Instrumentation: the acknowledgement, and two detected environment fields | ✅ complete | commit `e67efd1` |
+| 8.3 Pre-registration — committed and pushed before any AUTH data exists | ✅ complete | `reports/phase-report-8-prediction-2026-08-27.md` |
+| 8.4–8.6 B2 proper: collect (k=4, ext4), analyse in the declared order, report | ⬜ pre-registered, not started | `reports/phase-report-8-prediction-2026-08-27.md` |
 | 3A TLA+/property layer | ⬜ optional, not started | — |
 | 3B Second workload | ⬜ optional, not started | — |
 | 3C LLM-driven workload | ⬜ optional, not started — **and T6 turns on it** | — |
