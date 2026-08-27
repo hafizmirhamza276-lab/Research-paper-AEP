@@ -324,6 +324,64 @@ class ProcessCrashInjector:
 
 
 @dataclass
+class DurabilityAckObserver:
+    """Record that the durability acknowledgement was issued. Inject nothing.
+
+    Phase 8.2. The protocol's central fail-closed invariant is *an effect only
+    ever reached the provider if a durable acknowledgement had been issued
+    first* -- and until now no run artifact could witness it. Phase 8.1.0
+    established that four independent ways: no stream carried an ack event,
+    ``dispatch_attempts`` was 0 in all 240 runs examined, ``failure_class`` was
+    identical across every outcome, and ``applied`` comes from the provider's
+    own ledger, which cannot see worker-side authorization.
+
+    Nothing new had to be built to fix that. ``WriteAheadRunner`` already awaits
+    ``_checkpoint("AFTER_DURABLE_ABOUT_TO_FIRE_BEFORE_PREFLIGHT")`` immediately
+    after the acknowledgement is issued and the dispatch authorization
+    recorded, and before preflight -- and that call is delegated straight to
+    whichever injector the harness installed, which then discarded it. **This
+    class is the observer that stops discarding it**, so the invariant becomes
+    checkable without touching ``aep_core`` (audit finding S4-A).
+
+    **One-directional.** Reaching this checkpoint does not mean an effect was
+    applied: the kill can land after the acknowledgement and before
+    transmission, which is exactly the window ``after_barrier_before_dispatch``
+    names. Only ``applied implies acknowledged`` is testable from this record.
+
+    **Confirmatory, not exploratory.** ``_checkpoint`` is awaited on the
+    protocol path, so *dispatched implies traversed* holds by construction, and
+    ``DispatchAuthorizationError`` already enforces the invariant in code. Zero
+    exceptions is therefore near-certain and mostly exercises this observer's
+    own fidelity. It is recorded so the claim rests on evidence rather than on
+    reading the source, and any report using it has to say so.
+
+    **Cost, measured rather than argued.** ``EventLog.emit`` serialises and
+    flushes, which is a real syscall: 5.4 us median on ext4 and 229.7 us on
+    drvfs (2 000 iterations, Phase 8.1). Against a ``docker kill`` race whose
+    discriminating difference is 194 ms, that is 0.003% and 0.12%
+    respectively. It sits on the protocol path and it is negligible there --
+    but it is not free, which is why collection runs on ext4.
+    """
+
+    emit: Any
+    point_name: str = "AFTER_DURABLE_ABOUT_TO_FIRE_BEFORE_PREFLIGHT"
+    _execution_id: str | None = None
+
+    def enter_execution(self, execution_id: str) -> None:
+        self._execution_id = execution_id
+
+    async def checkpoint(self, point: Any) -> None:
+        name = getattr(point, "name", None)
+        if name != self.point_name:
+            return
+        self.emit(
+            "durability_ack_observed",
+            execution_id=self._execution_id,
+            checkpoint=name,
+        )
+
+
+@dataclass
 class CompositeInjector:
     """Fan one protocol's checkpoints out to several independent injectors.
 

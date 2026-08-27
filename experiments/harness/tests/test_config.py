@@ -18,7 +18,11 @@ import pytest
 
 from aep_core.core.intent_workflow import DispatchMode
 from experiments.mock_api.config import ReadbackKeying
-from experiments.harness.config import RunConfig, load_run_config
+from experiments.harness.config import (
+    RunConfig,
+    load_run_config,
+    run_config_from_mapping,
+)
 
 
 def base(**overrides) -> RunConfig:
@@ -198,3 +202,55 @@ def test_the_results_directory_is_per_run():
 
 def test_the_total_execution_count_is_workers_times_executions():
     assert base(workers=3, executions_per_worker=10).total_executions == 30
+
+
+# ===========================================================================
+# Phase 8.2: detected environment, and why it must stay out of the digest
+# ===========================================================================
+
+
+def test_the_environment_is_echoed_but_not_digested() -> None:
+    """The frozen corpus depends on this, and it is not a stylistic choice.
+
+    ``run_config_from_mapping`` re-verifies the digest whenever a saved
+    configuration is parsed. If the detected environment entered the digested
+    body, then every one of the 432 already-frozen runs -- written before the
+    field existed -- would compute a different digest on the next read and
+    raise. The field would have made the historical record unreadable in the
+    act of describing it better.
+
+    It is also the right answer on the merits: two runs that differ only in
+    where Docker happened to place a volume are the same configuration
+    observed twice, not two configurations.
+    """
+    config = base()
+    echoed = config.echo()
+    assert "environment" in echoed
+    assert "results_root_filesystem" in echoed["environment"]
+    assert "redis_storage_backing" in echoed["environment"]
+
+    body_without = {
+        key: value for key, value in echoed.items()
+        if key not in {"config_digest", "environment"}
+    }
+    stripped = dict(body_without)
+    stripped["config_digest"] = config.config_digest
+    # The digest is over the body alone: re-deriving it from a mapping that
+    # never carried an environment must give the same answer.
+    assert run_config_from_mapping(stripped).config_digest == config.config_digest
+
+
+def test_a_configuration_saved_before_the_field_existed_still_parses() -> None:
+    """Forward compatibility in the direction that actually happened."""
+    echoed = base().echo()
+    legacy = {key: value for key, value in echoed.items() if key != "environment"}
+    restored = run_config_from_mapping(legacy)
+    assert restored.config_digest == echoed["config_digest"]
+
+
+def test_an_unknown_key_is_still_refused() -> None:
+    """Widening `derived` must not have widened it into a hole."""
+    echoed = base().echo()
+    echoed["some_field_nobody_declared"] = 1
+    with pytest.raises(ValueError, match="unknown key"):
+        run_config_from_mapping(echoed)

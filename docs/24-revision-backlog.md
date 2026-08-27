@@ -60,6 +60,32 @@ Docker Desktop's Windows-resolving proxy), where the loop device, the
 filesystem and the container all live in one namespace. This is the single
 most worthwhile extension to the evaluation, and the paper says so.
 
+**Required of this phase when it runs (added by Phase 8.2): verify
+`redis_storage_backing` differs from the frozen runs, and state it in the
+report.** Not optional, and not merely recorded — *read*.
+
+Every number currently in the paper was collected with Redis's `/data` on a
+**named Docker volume** (`compose.phase2.yml:12`, `redis-data:/data`), i.e. on
+Docker's own storage, and `docker inspect` confirms it:
+`type=volume, source=/var/lib/docker/volumes/aep-phase2_redis-data/_data`.
+B1's whole design is to **bind-mount that directory onto a `dm-flakey`
+device**, so B1's numbers will be the first collected with the AOF on a
+different storage stack from every number they will be compared against.
+
+That is the same shape of defect Phase 8.1 caught and Phase 9C missed: a
+property that can move a measured quantity, that nobody chose to hold fixed,
+and that no field recorded. It is worse here, because in B1 the storage *is*
+the fault under test — a difference in the backing is not a confound to be
+controlled away but the thing being manipulated, and it must be stated rather
+than assumed comparable.
+
+`experiments/harness/provenance.py` now detects the backing at run
+construction and writes it into `run-config.json` under `environment`. B1 is
+therefore required to: (i) read the field from both its own runs and the
+frozen ones, (ii) confirm they differ and say how, and (iii) not report any
+AEP-versus-frozen comparison of absolute barrier latency without that
+statement. Detected, never declared — nobody declared drvfs either.
+
 ---
 
 ## B2. Replicate the prevention result beyond one cell
@@ -231,3 +257,52 @@ and passes on Linux, which is the whole point.
 instead, after which all four verify 16/16 OK. That work-around is invisible to
 anyone who later runs the script on Windows and trusts its exit code, which is
 why this is tracked rather than left as a note.
+
+---
+
+## B6. The submission PDF cannot be built on the author's machine
+
+**Deadline: before Phase 14 (the submission package).** Dated for the same
+reason B5 is: the failure surfaces at the worst possible moment if it is left.
+
+**Source:** Phase 8.1, `reports/phase-report-8-1-0-2026-08-27.md` §F.6.
+
+The author's local TeX Live (2023/Debian, in WSL) typesets **24 of the 29**
+`\bibitem` entries `bibtex` correctly produces. The last entries never receive a
+`\bibcite`, so nine citations render as undefined and
+`scripts/check_paper_numbers.py` fails its `no undefined references or
+citations` check on a pristine tree. CI, which installs its own TeX Live, is
+green on the same commits — so **CI is currently the only place the
+bibliography is correct**, and the PDF a local build produces is not the PDF the
+paper claims to be.
+
+That is tolerable while CI is the arbiter and nothing is being submitted. It
+stops being tolerable at submission, for a specific reason: **arXiv does not
+accept a PDF, it accepts a source tarball and builds it itself.** A submission
+prepared from a locally-verified tree would surface this as a broken
+bibliography inside arXiv's build, after the deadline-shaped commitment has been
+made, with the author's only local reproduction being the broken one.
+
+**Two acceptable fixes; the phase picks one.**
+
+1. **Pin the TeX distribution** the way the Redis image is pinned — a container
+   or a `tlmgr` manifest — so a local build and a CI build are the same build.
+   Consistent with how every other dependency in this artifact is handled, and
+   it makes the failure impossible rather than detected.
+2. **Make "built by CI, not locally" an explicit, checked precondition** of the
+   submission package: `ARTIFACT.md` and the submission checklist state that the
+   tarball is assembled from a CI-produced artifact, and the packaging step
+   refuses to run against a locally-built PDF.
+
+(1) is better. (2) is acceptable if (1) proves expensive, but only if it is
+*enforced* — a note saying "build in CI" is not a precondition, and this
+project's own history has an audit finding (S4-D) about exactly that class of
+unenforced assumption.
+
+**Diagnostic detail, so the next reader does not repeat it.** `bibtex` is not at
+fault: its log reports `You've used 29 entries` and all 29 keys appear as
+`\bibitem` in `main.bbl`. The truncation happens during typesetting, and only
+`\bibcite` lines 1-24 reach `main.aux`. Phase 8.1 checked the obvious
+alternatives and none of them explain it: the keys are all present in
+`refs.bib`, a manual three-pass build reproduces it, and building on ext4
+instead of drvfs makes no difference (29 bibitems either way).

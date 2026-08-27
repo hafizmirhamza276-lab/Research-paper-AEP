@@ -51,7 +51,11 @@ from experiments.harness.crash_points import (
 )
 from experiments.harness.config import RunConfig, load_run_config
 from experiments.harness.events import EventLog
-from experiments.harness.injector import ProcessCrashInjector, compose_injectors
+from experiments.harness.injector import (
+    DurabilityAckObserver,
+    ProcessCrashInjector,
+    compose_injectors,
+)
 from experiments.harness.redis_kill import RedisKillInjector, canary_payload
 from experiments.harness.workload import (
     index_by_execution_id,
@@ -124,7 +128,34 @@ async def run_worker(
     )
     # The Redis kill is listed first: a synchronous worker kill at the same
     # checkpoint never returns, and an injector after it would never fire.
-    injector = compose_injectors(redis_killer, crash_injector)
+    #
+    # The acknowledgement observer sits between them for the same reason, and
+    # the ordering is the whole point at one crash point in particular. When
+    # the crash point is `after_barrier_before_dispatch`, the worker is killed
+    # at the instant this observer reports on -- and the run in which the ack
+    # was issued and the process then died before dispatching is precisely the
+    # one the fail-closed invariant is about. Listed after the crash injector,
+    # that run would record nothing and the invariant would look vacuous.
+    #
+    # **It is attached only where a fault injector already exists**, and that
+    # restraint is deliberate. `compose_injectors` returns None when nothing is
+    # selected, and a None injector makes `WriteAheadRunner._checkpoint` a
+    # no-op: a crash-free `p0` run currently dispatches no checkpoints at all.
+    # Attaching the observer unconditionally would switch that machinery on in
+    # exactly the cells RQ3's latency numbers come from -- the only cells the
+    # cost result may use -- changing their conditions relative to every
+    # crash-free run already collected. It would also start resolving names
+    # through `crash_point_enum`, which for a baseline system is
+    # `BaselineCrashPoint` and need not contain the acknowledgement boundary at
+    # all. The observer is worth having wherever the invariant can be exercised;
+    # it is not worth perturbing the one regime that measures cost, where
+    # nothing prevents a dispatch and the invariant is vacuous anyway.
+    observer = (
+        DurabilityAckObserver(emit=log.emit)
+        if (redis_killer is not None or crash_injector is not None)
+        else None
+    )
+    injector = compose_injectors(redis_killer, observer, crash_injector)
 
     log.emit(
         "worker_started",

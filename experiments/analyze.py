@@ -319,6 +319,27 @@ class RunRecord:
     #: what happened to the un-acknowledged write made just before it.
     redis_kill_point: str | None = None
     redis_kill_canary: str | None = None
+    #: Phase 8.2. How long the `docker kill` took to return, in milliseconds.
+    #:
+    #: The harness has recorded this since amendment E1 -- `kill_redis` times
+    #: the call (`redis_kill.py:108`) and the watchdog emits it
+    #: (`redis_kill.py:305`) -- and nothing ever read it. That mattered: in the
+    #: `redis-kill-preack` regime AEP-full dispatches only if `WAITAOF` returns
+    #: before Redis dies, so this number *is* the width of the race the cell
+    #: measures, and Phase 8.1 found it separates the runs that applied an
+    #: effect from those that did not by 201 ms (p = 4.0e-9) while leaving B3,
+    #: which never waits for the barrier, untouched. Establishing that required
+    #: parsing 300 event logs by hand because no CSV carried it. Now one does,
+    #: and it does so for runs already collected as well as future ones.
+    redis_kill_latency_ms: float | None = None
+    #: Phase 8.2. Executions that traversed the post-acknowledgement checkpoint.
+    #:
+    #: Empty for every run collected before the observer existed, which is not
+    #: the same as "no execution was acknowledged" -- see
+    #: `DurabilityAckObserver`. A reader must treat absence as unknown, and the
+    #: per-execution column below is `""` rather than `0` for exactly that
+    #: reason.
+    durability_ack_execution_ids: frozenset[str] = frozenset()
     executions: list[ExecutionRecord] = field(default_factory=list)
     crash_injections: int = 0
 
@@ -533,6 +554,20 @@ def load_run(directory: Path) -> RunRecord | None:
     crash_probability = float(config.get("crash_probability", 1.0))
     redis_kill_point = config.get("redis_kill_point") or None
     kill_records = events_of(records, "redis_hard_killed")
+    # The kill's own measured latency, from the worker's watchdog rather than
+    # the runner's post-kill verification: the runner learns that Redis died,
+    # the worker is the only one that timed how long the call took.
+    issued = events_of(records, "redis_kill_issued")
+    kill_latency_ms: float | None = None
+    if issued:
+        raw_latency = issued[-1].get("issue_to_return_ns")
+        if raw_latency is not None:
+            kill_latency_ms = round(int(raw_latency) / 1e6, 3)
+    acknowledged = frozenset(
+        str(record["execution_id"])
+        for record in events_of(records, "durability_ack_observed")
+        if record.get("execution_id")
+    )
 
     return RunRecord(
         run_id=str(config["run_id"]),
@@ -556,6 +591,8 @@ def load_run(directory: Path) -> RunRecord | None:
         redis_kill_canary=(
             str(kill_records[-1].get("canary")) if kill_records else None
         ),
+        redis_kill_latency_ms=kill_latency_ms,
+        durability_ack_execution_ids=acknowledged,
         executions=executions,
         crash_injections=len(events_of(records, "crash_injected")),
     )
@@ -1092,6 +1129,20 @@ def build_executions_csv(runs: Sequence[RunRecord]) -> list[dict[str, Any]]:
             "recovery_latency_ms": execution.recovery_latency_ms,
             "undetected_duplicate": int(execution.is_undetected_duplicate),
             "lost_effect": int(execution.is_lost_effect),
+            # Phase 8.2. Both appended rather than inserted: a reader's saved
+            # column offsets, and every diff against the frozen copies, stay
+            # valid. Both are "" where the run cannot answer -- a run collected
+            # before the observer existed must not report `0` acknowledgements,
+            # which would read as "none were issued" rather than "not recorded".
+            "redis_kill_latency_ms": (
+                "" if run.redis_kill_latency_ms is None
+                else run.redis_kill_latency_ms
+            ),
+            "durability_ack_observed": (
+                ""
+                if not run.durability_ack_execution_ids
+                else int(execution.execution_id in run.durability_ack_execution_ids)
+            ),
         }
         for run in runs
         for execution in run.executions

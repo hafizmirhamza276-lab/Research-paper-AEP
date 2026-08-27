@@ -38,6 +38,7 @@ from experiments.baselines.contract import (
 from experiments.baselines.crash_points import resolve_for_system
 from experiments.harness.crash_points import CrashPoint
 from experiments.harness.injector import CrashStyle
+from experiments.harness import provenance
 from experiments.mock_api.config import ReadbackKeying
 
 #: Bumping this is a statement that previously collected runs are not
@@ -266,8 +267,30 @@ class RunConfig:
 
         Written as the first record of every run log. A result whose log does
         not carry this object cannot be attributed to a configuration.
+
+        ``environment`` carries what the run can *detect* about itself rather
+        than what it was told -- the filesystem under the results root and the
+        storage actually backing Redis's ``/data``. Phase 9C compared five
+        collections key by key, found "40 of 44 identical", and concluded they
+        were interchangeable; the filesystem difference that Phase 8.1 later
+        found was invisible to that comparison because it was not a key. See
+        ``experiments/harness/provenance.py`` for why there are two fields.
+
+        It is deliberately outside ``_body()`` and therefore outside the
+        digest. Two runs that differ only in where Docker happened to place a
+        volume are the same configuration observed twice -- and, decisively,
+        the digest is re-verified whenever a saved configuration is parsed
+        (:func:`run_config_from_mapping`), so digesting these keys would make
+        every already-frozen run fail its own check the next time anything
+        read it.
         """
-        return {**self._body(), "config_digest": self.config_digest}
+        return {
+            **self._body(),
+            "config_digest": self.config_digest,
+            "environment": provenance.collect(
+                Path(self.results_root), self.redis_container
+            ),
+        }
 
     @property
     def config_digest(self) -> str:
@@ -293,8 +316,11 @@ class RunConfig:
 def run_config_from_mapping(document: dict[str, Any]) -> RunConfig:
     """Rebuild a configuration from its echo, refusing anything unrecognised."""
     known = set(RunConfig.__dataclass_fields__)
-    # Derived and self-describing keys the echo adds back.
-    derived = {"config_digest", "resolved_crash_point"}
+    # Derived and self-describing keys the echo adds back. ``environment`` is
+    # detected at run construction and is not a knob: it must be accepted here
+    # so a run collected after Phase 8.2 can be re-read, and ignored rather
+    # than reconstructed so a run collected before it still can be.
+    derived = {"config_digest", "resolved_crash_point", "environment"}
     unknown = sorted(set(document) - known - derived)
     if unknown:
         raise ValueError(
