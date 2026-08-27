@@ -7,9 +7,18 @@
 
 ---
 
-## CURRENT PHASE: post-fix hold — the audit is done, its verdict was FIX FIRST, and the blocker is closed
+## CURRENT PHASE: Phase 8 (B2) — 8.0 and 8.1.0 done, collection not started
 
 **Nothing has been submitted anywhere.** The independent adversarial audit has happened. Its verdict was **FIX FIRST**, not SUBMIT: one SUBMIT-BLOCKER, seven MAJOR, five MINOR, nine of fourteen findings new (`reports/phase-report-6-audit-2026-08-21.md`). Phase 7 discharged the manuscript half of that list (`reports/phase-report-7-fixes-2026-08-21.md`).
+
+**Phase 9 attempted B2 and its positive control failed.** Phase 9 pre-registered B2's prediction, ran the control first as that pre-registration required, and found the `redis-kill-preack` `NO_READBACK` cell is not stable: AEP-full recorded 10, 20, 12, 4 and 7 applied effects out of 30 across five identical sessions, over-dispersion **5.37** against binomial (`reports/phase-report-9c-result-2026-08-21.md`). Its own rule then forbade a cross-class claim, so **AUTH was never collected and B2 is still open**.
+
+**Phase 8 is the re-approach, and it has already changed two things.** Plan: `reports/plan-phase-8-b2.md`; prompt of record: `prompts/phase-8-b2.md`.
+
+- **The cause of the instability is measured.** AEP-full dispatches only if `WAITAOF` returns before Redis dies, so the `docker kill` latency is the width of that race. Over all 150 AEP-full runs, those that applied an effect had a median kill latency of 1114.0 ms against 919.9 ms for those that did not — **+194.1 ms, permutation p = 0.00005** — while the B3 control, which never waits for the barrier, shows −12.1 ms at p = 0.76. **`\UnwantedPrevented{}` is therefore partly a property of the fault injector's timing distribution, not of the protocol**, and the manuscript still prints it as the point estimate 18 for a quantity ranging 8–24. That is Phase 8.1, and it is a live defect independent of B2.
+- **The evidence for all of this is now in the repository.** Four of the five sessions — 240 runs — were untracked and existed on one host. Phase 8.0 froze and tracked their analysis products.
+
+**What remains before submission is a decision, not a defect:**
 
 **The blocker is closed.** The abstract stated fault coverage the artifact does not have — write loss exercised 0 of 7 systems, hard Redis kills 2 of 7 at 1 of 3 capability classes. A repo-wide sweep found the same false claim in **three** files where the audit had found one; all four occurrences are corrected.
 
@@ -17,7 +26,17 @@
 
 1. **T6 — the framing.** "agent" occurs **0 times** across `03-model`, `04-protocol`, `05-implementation`, `06-evaluation` and `09-artifact`, and no LLM appears anywhere in `experiments/`. Either retitle around non-idempotent legacy APIs (~1 day, 0 experiments) or run 3C and make the framing load-bearing (days, new harness code). Costed both ways in the Phase 7 plan. **This one is the author's and is not taken.**
 2. **Publish the raw archive and cite a DOI.** `09-artifact.tex`'s availability sentence is false until then; the 432 run directories exist only on one root-owned path. Blocking for artifact badging anywhere.
-3. **Venue.** *Submit-ready* and *competitive at a top venue* are different. The audit's §S4.10 ranks what to build next against TSE / DSN / Middleware / TDSC; items 1–3 there cost ≈4 hours, and **B2** — prevention on the other two capability classes, ≈2 h, no code change — is the single highest-value hour in the project.
+3. **Venue.** *Submit-ready* and *competitive at a top venue* are different. The audit's §S4.10 ranks what to build next against TSE / DSN / Middleware / TDSC; items 1–3 there cost ≈4 hours. Its item 1 — **B2**, "≈2 h, **no code change**", "the single highest-value hour in the project" — **is wrong on all three counts and is superseded by `reports/plan-phase-8-b2.md`**: `notifications` is excluded by `REGIME_REDIS_KILL_PREACK.endpoints` (`experiments/run_matrix.py:249`) so POS_ONLY cannot be reached without a code change; and Phase 9C's variance finding means a single session per class is uninterpretable, so the paired design costs ≈5.5 h rather than 2. The same "no code change" claim appears at `docs/24-revision-backlog.md:81-83`.
+
+---
+
+## Prompt provenance
+
+**Phases 1A–7 have no record of the prompts they ran under.** This is audit blind spot **S4.11 #1** (`reports/phase-report-6-audit-2026-08-21.md`): the `COMBINED_PROMPT_*` files those sessions were issued "do not exist in the repository, in git history, or anywhere on this host", so every bounds check in two independent audits was made against each report's *declared* scope rather than against what was actually asked. As that audit puts it: "A session that widened its own declared bounds to match what it did is invisible to this instrument — and to the previous one."
+
+**It is not retrospectively closeable.** Reconstructing those prompts now, from memory or from what the reports say they were, would manufacture exactly the evidence the blind spot says is missing — and would be indistinguishable, to any later reader, from a genuine contemporaneous record. The gap stands.
+
+**From Phase 8 onward, the issued prompt is committed to `prompts/` before the phase's first data commit.** The first is `prompts/phase-8-b2.md`. Where a prompt turns out to be wrong, the correction is recorded alongside it rather than silently applied: that file carries one, because the prompt listed `run_matrix.py --plan-only` as a read-only inspection command and it is not (`experiments/run_matrix.py:1182-1191` writes into `--results-root` before testing the flag).
 
 **Still open from the audit, all recorded, none blocking:** the counts-only gate for `arxiv-metadata.md` (~40 lines, recommended), wiring `verify_refs.py --offline` into CI, and the four backlog experiments in `docs/24-revision-backlog.md`.
 
@@ -41,6 +60,12 @@
 | 5C Submission-ready, not submitted | ✅ complete | `reports/phase-report-5c-2026-08-10.md` |
 | 6 Independent adversarial audit | ✅ complete — verdict **FIX FIRST** | `reports/phase-report-6-audit-2026-08-21.md` |
 | 7 Fix pass (blocker + 5 prose + the bibliography gate) | ✅ complete | `reports/phase-report-7-fixes-2026-08-21.md` |
+| 9 P9-0/P9-A pre-registration for B2 | ✅ complete | `reports/phase-report-9-prediction-2026-08-21.md` |
+| 9C B2's positive control — **FAILED**, so AUTH was never collected | ✅ complete | `reports/phase-report-9c-prediction-2026-08-21.md`, `reports/phase-report-9c-result-2026-08-21.md` |
+| 8.0 Prompt provenance + rescue of the 240 untracked Phase 9 runs | ✅ complete | `reports/plan-phase-8-b2.md` §7 |
+| 8.1.0 Is the fail-closed invariant checkable retroactively? (**no**) | ✅ complete | `reports/phase-report-8-1-0-2026-08-27.md` |
+| 8.1 Paper fix: `\UnwantedPrevented` is a race outcome, not a constant | ⬜ planned, not started | `reports/plan-phase-8-b2.md` §7 |
+| 8.2–8.6 B2 proper: instrument, pre-register, collect (k=4), report | ⬜ planned, not started | `reports/plan-phase-8-b2.md` |
 | 3A TLA+/property layer | ⬜ optional, not started | — |
 | 3B Second workload | ⬜ optional, not started | — |
 | 3C LLM-driven workload | ⬜ optional, not started — **and T6 turns on it** | — |
