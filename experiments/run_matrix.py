@@ -692,7 +692,31 @@ def build_plan(arguments) -> MatrixPlan:
                     ),
                 }
             )
-    plan.runs.sort(key=lambda entry: (entry["tier"], entry["cell_key"], entry["repetition"]))
+    # Interleaved at RUN level: repetition first, cell second. Every cell's
+    # repetition 0 runs before any cell's repetition 1.
+    #
+    # Phase 8.4 session 1 is why. Ordering by cell first collected each cell as
+    # one consecutive block, and the harness's `docker kill` latency drifts
+    # monotonically upward within a session -- Spearman 0.703 over 120 runs,
+    # block medians rising 829 -> 2176 ms. Because the cell order is
+    # deterministic, one arm of a paired comparison was always the earlier block
+    # and the other always the later one, so arm and drift were *perfectly
+    # collinear*: not a large confound to adjust for, but a non-identifiable one
+    # that no number of sessions separates. The session's balance check failed
+    # at 213 ms against a 100 ms threshold, and kill latency is the measured
+    # cause of the applied rate it was comparing.
+    #
+    # Counterbalancing whole cells across sessions would not fix it, because the
+    # drift is monotonic *within* a session: each arm would still be drawn from
+    # a different part of it. Alternating run by run draws both arms from the
+    # same distribution, whatever shape it has.
+    #
+    # Identity- and seed-safe, and that is why this is a sort key and nothing
+    # else: `run_id` is `cell.slug`-`repetition`, and `cell_seed` derives from
+    # `matrix_seed`, `MATRIX_VERSION`, `cell.key` and `repetition`. None of them
+    # depends on position, so this changes the order runs are executed in and
+    # no run's identity, seed, or workload.
+    plan.runs.sort(key=lambda entry: (entry["tier"], entry["repetition"], entry["cell_key"]))
     return plan
 
 

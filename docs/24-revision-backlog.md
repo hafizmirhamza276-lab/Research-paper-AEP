@@ -306,3 +306,53 @@ fault: its log reports `You've used 29 entries` and all 29 keys appear as
 alternatives and none of them explain it: the keys are all present in
 `refs.bib`, a manual three-pass build reproduces it, and building on ext4
 instead of drvfs makes no difference (29 bibitems either way).
+
+---
+
+## B9. 8.1's kill-latency test assumes exchangeability, and the runs are not exchangeable
+
+**Due before Phase 10 (the DOI).** The number this concerns is already in the
+manuscript, so this is due before the artifact is minted, not after.
+
+**The claim at risk.** `06-evaluation.tex` reports that across the replication
+set the runs which applied an effect had a median `docker kill` latency
+`\KillLatencyDiff{}`\,ms longer than those that did not, at
+$p = \KillLatencyP{}$, and uses it to argue the unwanted-applied-effect rate is
+a race outcome rather than a protocol constant. Phase 8.1 computed that with a
+permutation test over run labels, and the committed stratified figures
+(`\KillLatencyOrigP{}`, and the Mann-Whitney variants) share the same
+assumption.
+
+**Why it is at risk.** A permutation test assumes the observations are
+*exchangeable* under the null: that relabelling them is as likely as the labels
+observed. Phase 8.4 session 1 measured that kill latency **drifts monotonically
+within a session** — Spearman(run position, latency) $= 0.703$ over 120 runs,
+with block medians rising 829 → 1008 → 1114 → 1167 → 1070 → 1145 → 2162 →
+2176\,ms. Under drift, runs adjacent in time are correlated, exchangeability
+fails, and the permutation distribution is too narrow: **the p-value is
+optimistic**, possibly by a lot.
+
+**This does not make the mechanism wrong, and the report must not overcorrect.**
+Drift is plausibly the *source* of the latency variation the test exploits, and
+latency is the measured driver of the applied rate. The direction and the
+mechanism can survive intact. What cannot stand is the p-value as currently
+computed, because it was computed under an assumption now known to be false.
+
+**What closing it requires — check, do not assume:**
+
+1. Recompute conditioning on run index: either permute **within blocks** of
+   adjacent runs, or include position as a covariate and test the latency
+   coefficient given position.
+2. Report whether kill latency still predicts the applied effect **once position
+   is accounted for**. If it does, the manuscript keeps the claim with a
+   corrected p-value and a sentence naming the dependence. If it does not, the
+   mechanism paragraph in `06-evaluation.tex` and the corresponding passage in
+   `08-threats.tex` are wrong as written and must be rewritten.
+3. Re-derive every affected macro through `scripts/paper_tables.py`, since
+   `\KillLatencyP{}` and its stratified siblings are generated, not typed.
+
+**Note the asymmetry with Phase 8.4.** From session 2 onward, collection is
+run-level interleaved (`experiments/run_matrix.py`, `build_plan`'s sort key), so
+new data is protected against exactly this. The frozen replication set that 8.1
+analysed is not, and cannot be — it is already collected. B9 is therefore a
+re-analysis obligation, not a re-collection one.
