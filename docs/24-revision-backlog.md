@@ -86,6 +86,43 @@ frozen ones, (ii) confirm they differ and say how, and (iii) not report any
 AEP-versus-frozen comparison of absolute barrier latency without that
 statement. Detected, never declared — nobody declared drvfs either.
 
+**Required of this phase when it runs (added by Phase 8.4): the second host is
+now required for *reliability*, not only for the bind-mount.** B1 has always
+needed a Linux VM because `dm-flakey` under a bind-mount is not reachable from
+Docker Desktop's VM. Phase 8.4 adds an independent reason, and it is the
+stronger one.
+
+**Fault delivery itself is degrading on this host.** The harness raises
+`FaultInjectionError: the hard kill did not land` when Redis reports an
+`uptime_in_seconds` showing it is the same server process the run started with,
+so no infrastructure fault was injected. The counts:
+
+| collection | runs | kills that did not land |
+|---|---|---|
+| Phase 9, four sessions | 240 | **0** |
+| Phase 8.4 session 1 | 120 | **0** |
+| Phase 8.4 session 2 | 120 | **2, both in the first 26** |
+
+**Zero to two is a change in kind, not in degree.** Across 360 prior runs the
+kill had never once failed to land. This is the same host degradation already
+visible in two other places — the within-session drift, whose *sign* reverses
+between sessions, and the kill-latency envelope — and fault delivery is now a
+third independent surface showing it.
+
+**Why this bears on B1 specifically, and harder than on Phase 8.** In Phase 8
+the kill is a *side condition*: a run whose fault did not land is discarded
+(amendment 4) and the estimand is measured on the runs where it did. In B1 the
+fault **is the measurement**. Write loss under `dm-flakey` is the quantity being
+studied, not the condition under which some other quantity is studied. An
+instrument that intermittently fails to deliver the fault does not cost B1
+precision — it silently removes the phenomenon while leaving runs that look
+successful.
+
+So the second host is not merely a convenience for reaching `dm-flakey`, and
+not merely a way to sample a second timing distribution. **It is required for
+B1's fault delivery to be trustworthy at all**, and B1 must additionally report
+its own non-delivery count as a first-class number rather than as a footnote.
+
 ---
 
 ## B2. Replicate the prevention result beyond one cell
