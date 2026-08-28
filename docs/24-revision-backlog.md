@@ -356,3 +356,53 @@ run-level interleaved (`experiments/run_matrix.py`, `build_plan`'s sort key), so
 new data is protected against exactly this. The frozen replication set that 8.1
 analysed is not, and cannot be — it is already collected. B9 is therefore a
 re-analysis obligation, not a re-collection one.
+
+---
+
+## B10. `paper_tables.py` writes incomplete output and exits 0 when under-invoked
+
+**Due before Phase 12.** Found in Phase 8.4 while regenerating `numbers.tex`
+after a code change.
+
+**What happens.** `scripts/paper_tables.py` takes `--analysis`,
+`--fsync-analysis` and `--flakey`. Invoked with only `--analysis`, it writes a
+`numbers.tex` that is **65 lines shorter**, silently missing whole macro
+families — the `fsync-always` block (`\BarrierCostAlways`, `\AepAlwaysMedian`,
+`\AepAlwaysPninetyfive`, `\AepThroughputAlways`, `\BthreeAlwaysMedian`,
+`\AepThroughputEverysec`) and the write-loss block (`\FlakeyReplications`,
+`\FlakeyN`, `\FlakeyAckSurvived`, `\FlakeyUnackLost`) — and **exits 0**. The
+canonical invocation is in the `Makefile` `reproduce-figures` target; nothing
+requires it.
+
+**Severity, stated accurately rather than inflated.** This is
+**late detection, not silent corruption.** The macros are cited in
+`06-evaluation.tex` and `08-threats.tex`, so a truncated `numbers.tex` fails the
+LaTeX build on undefined control sequences, and CI builds the paper. The
+committed form would have been caught. In Phase 8.4 it was caught earlier still,
+by reading the diff before staging.
+
+**Why it is nonetheless worth fixing, and where it bites.** The dangerous shape
+is regeneration **from a clean clone**, which is exactly what Phase 10 (artifact
+and DOI) and Phase 14 (submission package) do. In that setting the reviewer's
+reproduction path is "run the generator", and a generator that produces a
+plausible-looking, quietly-smaller artifact and reports success is a bad
+instrument even when a downstream gate eventually catches it. It also fails in
+the direction that looks like success, which is the property audit finding S4-D
+is about.
+
+**Two acceptable fixes; the phase picks one.**
+
+1. **Refuse to write.** If any input root is absent, exit non-zero naming the
+   missing one. Simplest, and makes the failure impossible rather than detected.
+2. **Carry a manifest of macro families.** The script declares which families it
+   emits and which input each requires, and fails when a family that exists in
+   the committed `numbers.tex` would be absent from the regenerated one. Slower
+   to build, but it also catches the reverse case — a family silently *added* —
+   and it degrades gracefully when a root is legitimately unavailable.
+
+(1) is sufficient for the failure observed. (2) is worth the extra work only if
+Phase 10 wants the generator to be self-checking against the committed artifact.
+
+**Related.** `scripts/check_paper_numbers.py` did catch the mismatch between the
+truncated `numbers.tex` and the CSVs, so the gate works. B10 is about the
+generator, not the gate.
