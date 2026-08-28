@@ -1,0 +1,3 @@
+system,runs,executions,crash_points_covered,response_classes_covered,undetected_duplicates,undetected_duplicate_rate,undetected_duplicate_ci_low,undetected_duplicate_ci_high,known_ambiguities,known_ambiguity_rate,known_ambiguity_ci_low,known_ambiguity_ci_high,lost_effects,lost_effect_rate,fisher_p_vs_aep_full
+AEP_FULL,60,60,1,2,0,0.0,0.0,0.0,29,0.48333333333333334,0.35,0.6166666666666667,0,0.0,
+B3_INTENT_NO_BARRIER,60,60,1,2,0,0.0,0.0,0.0,29,0.48333333333333334,0.35,0.6166666666666667,0,0.0,1.0

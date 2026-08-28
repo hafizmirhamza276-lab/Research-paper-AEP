@@ -1,0 +1,26 @@
+{
+  "session": "b2-paired-v2-s2-2026-08-28",
+  "fault_injection_errors": 2,
+  "other_failures": 0,
+  "failures": [
+    {
+      "run_id": "b3_intent_no_barrier-none-ledger_postings-99ac28be-r0",
+      "repetition": 0,
+      "error": "FaultInjectionError: the hard kill did not land: Redis reports uptime_in_seconds=42, so it is the same server process the run started with and no infrastructure fault was injected",
+      "uptime_in_seconds": 42
+    },
+    {
+      "run_id": "aep_full-none-payments-5e34a267-r6",
+      "repetition": 6,
+      "error": "FaultInjectionError: the hard kill did not land: Redis reports uptime_in_seconds=37, so it is the same server process the run started with and no infrastructure fault was injected",
+      "uptime_in_seconds": 37
+    }
+  ],
+  "other": [],
+  "repetitions_with_a_non_landing_kill": [
+    0,
+    6
+  ],
+  "repetitions_total": 30,
+  "clustering": "non-landing kills at repetition(s) 0, 6 of 0-29; last occurrence at rep6, none through rep29"
+}

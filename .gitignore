@@ -285,3 +285,27 @@ experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/*
 !experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/per-execution.csv
 !experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/redis-kill-ablation.csv
 !experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4 session 2 of the k=4 set, amended interleaved design, collected on ext4. Also tracks container-precondition.json and fault-injection-census.json, both under analysis/ so SHA256SUMS covers them.
+!experiments/results/b2-paired-v2-s2-2026-08-28/
+experiments/results/b2-paired-v2-s2-2026-08-28/*
+!experiments/results/b2-paired-v2-s2-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s2-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s2-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/container-precondition.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/fault-injection-census.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/table-1.csv
