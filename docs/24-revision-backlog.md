@@ -499,3 +499,50 @@ driver. The Python gates (`check_paper_numbers.py`, `check_pytest_gates.py`,
 malformed expression rather than silently reading false, so the specific failure
 mode is shell-only; what carries over is the "never tested on its failing branch"
 audit, not the substitution defect.
+
+### B11, second instance: a watcher that always reads true
+
+Found in Phase 8.4 one session after the first instance, and it belongs to the
+same entry because it is the same defect with the sign flipped.
+
+The session-2 watcher was:
+
+```sh
+while pgrep -f "run_session.sh b2-paired-v2-s2-2026-08-28"; do sleep 60; done
+```
+
+**The pattern is a substring of the watcher's own command line**, so `pgrep -f`
+matched the watcher itself. The condition could never become false, the loop
+could never exit, and the chain could never advance past a session that had in
+fact finished. Two watchers were running, which made it strictly worse: each
+also matched the other, so neither could terminate even if the first problem
+were fixed.
+
+**Why it is the same class as `${#ARRAY[@]:-0}`.** That expression always read
+*false*; this predicate always read *true*. Both look live. Neither can ever
+act. And both would have been caught by the requirement this entry already
+states, because in both cases the branch that was never exercised is the one the
+construct exists for — a loop's exit path is its failing branch, and a watcher
+whose exit path never runs is untested in precisely the way B11 names.
+
+Confirmed empirically rather than by reading: `pgrep -f "run_session.sh
+b2-paired-v2-s3-2026-08-28"` returns a match when no such session exists,
+because the `pgrep` command line contains the string it searches for.
+
+**The rule.** Do not wait on a `pgrep` pattern that appears in the waiting
+command. Wait on a child PID, on a sentinel file written only on success, or on
+`pgrep` restricted to the target process (the Python process, not the wrapper).
+Phase 8.4's chain runner uses the sentinel, runs each session in the foreground
+and reads its exit code directly, so there is one observer and no pattern
+matching at all.
+
+**A third member of the general family, from the same session.** The first
+`FaultInjectionError` census counted its own echoed output — it wrote the
+matching lines into the log it then grepped, reporting 4 failures where there
+were 2 — and extracted positions as `[3, 120, 26, 120]` because `grep -oE
+'[0-9]+'` over `[3/120]` yields both numbers. Not a gate, so not B11 proper, but
+the same root cause: a derived number that was never checked against a known
+answer. It was fixed by reading `matrix-progress.jsonl` instead and validating
+against session 2's known 2 and session 1's known 0. **The generalised
+requirement: every derived count in the collection tooling must be validated
+against a session whose answer is already known.**
