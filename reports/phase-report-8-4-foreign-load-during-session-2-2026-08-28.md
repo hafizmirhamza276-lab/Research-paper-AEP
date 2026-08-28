@@ -94,6 +94,35 @@ What it does change is the reading at 8.5 and 8.6: the between-session variance
 the design blocks on is now known to include, for at least one session, a
 competing VM load that no run-level field records.
 
+## 4a. The balance failure's *shape* is what disqualifies the class reading
+
+Size is the less interesting half of session 2's balance result. The shape is
+this:
+
+| session | AEP-full AUTH − NO_READBACK | B3 AUTH − NO_READBACK |
+|---|---|---|
+| session 1 | +13.0 ms | −14.9 ms |
+| session 2 | **−97.7 ms** | **+43.8 ms** |
+
+**The two arms do not agree in sign within the same session.** An ordering or
+lag effect — the thing amendment 2 predicted and sized — moves both arms the
+same way, because both arms are drawn from the same drifting session. Four cells
+moving independently, at roughly seven times session 1's scale, is not a lag
+effect. It is a timing environment.
+
+**That is the reason session 2's −10 pp class difference must not be read as a
+class difference yet.** The quantity the class effect is measured against is
+itself unstable in this session, in a way that is visible without looking at the
+class column at all.
+
+**B3 is the control that makes this legible.** B3 never waits for the barrier
+(`redis_kill.py`), so timing turbulence in the kill race cannot reach its applied
+outcome — and indeed B3 is *identical* across both sessions, 30/30 under AUTH and
+28/30 under NO_READBACK, range 0. B3 flat while AEP-full moves 18 → 15 locates
+the movement in the arm the barrier governs. That is a stronger statement than
+either session's class difference on its own, and it does not depend on which
+way the class difference points.
+
 ## 5. What it changes going forward
 
 - **The precondition earns its place.** Session 2's own

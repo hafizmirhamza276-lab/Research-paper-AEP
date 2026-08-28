@@ -479,10 +479,20 @@ All three share a shape: the passing path is exercised constantly and looks
 healthy, while the failing path is never executed even once, so the gate's only
 job is the only thing never tested.
 
-**The requirement.** Every shell gate in the harness and the collection scripts
-must be tested **on its failing branch**, not only its passing one, and the test
-must assert the exit code. A gate that has never once fired has not been shown
-to work; it has been shown to be quiet.
+**The requirement, in two parts.** Failing-branch testing is necessary and it is
+not sufficient — the third instance below is not a gate at all and has no failing
+branch, yet it is the same defect.
+
+1. **Every shell gate must be tested on its failing branch**, not only its
+   passing one, asserting the exit code. A gate that has never once fired has
+   not been shown to work; it has been shown to be quiet.
+2. **Every gate and every derived count must be validated against a case whose
+   answer is already known, before it is trusted on a case whose answer is
+   not.** This is the general remedy, and it is what actually caught all three
+   instances. It is cheap here because known answers exist: session 1 has 0
+   non-landing kills and 30/30 runs per cell, session 2 has exactly 2 at rep0
+   and rep6. Any census or gate that cannot reproduce those has not earned the
+   right to report a number nobody can check.
 
 **Carry the caution from how this one was tested.** The failing branch of
 `precondition.sh` was exercised by renaming the fixture so it would be classified
@@ -590,3 +600,9 @@ were **removed within four minutes** of being stopped; `docker inspect` returned
 `no such object`. Evidence about VM load does not persist. If it is not sampled
 while it exists, it is not recoverable afterwards — which is exactly what
 happened to session 2's exact start times.
+
+**Fourth instance, recorded because it happened while writing the fix.** Testing
+the load sampler, `pkill -f "load_sampler.sh /tmp/ls2"` killed the operator's own
+shell — the pattern was a substring of that shell's command line. Same defect,
+same session, third distinct victim. The pattern-matching family of process
+control is not safely usable in this codebase; use PIDs.
