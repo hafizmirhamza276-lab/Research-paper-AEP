@@ -1,0 +1,5 @@
+metric,regime,system,crash_point,response_class,readback_keying,successes,total,rate,runs,ci_low,ci_high,resamples,bootstrap_seed,clusters,observations
+undetected_duplicate_rate,redis-kill-preack,AEP_FULL,none,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,30,0.0,0.0,10000,20260806,30,30
+undetected_duplicate_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,30,0.0,30,0.0,0.0,10000,20260806,30,30
+undetected_duplicate_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,30,0.0,0.0,10000,20260806,30,30
+undetected_duplicate_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,30,0.0,30,0.0,0.0,10000,20260806,30,30
