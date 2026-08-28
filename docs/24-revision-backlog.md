@@ -546,3 +546,47 @@ answer. It was fixed by reading `matrix-progress.jsonl` instead and validating
 against session 2's known 2 and session 1's known 0. **The generalised
 requirement: every derived count in the collection tooling must be validated
 against a session whose answer is already known.**
+
+## B12. Nothing samples foreign VM load *during* a session
+
+**Filed against Phase 12, and it is the residue of the gap 9C §6 named.**
+
+Phase 8.4 added a per-session container precondition, and it works: session 3's
+precondition caught two foreign `postgres:16-alpine` containers
+(`komserv-pg-race-*`) running in the Docker Desktop VM, recorded them by name,
+and stopped them before collection. That is a real improvement over
+`container_state` in `run-config.json`, which covers the AEP Redis container
+only.
+
+**But the precondition is a snapshot at t=0, and the load that mattered arrived
+after t=0.** Session 2's own `container-precondition.json` recorded
+`foreign_running_before: []`, correctly — the VM was clean when it started. The
+foreign containers appeared during the session, and were only seen because
+session 3's precondition ran 43 minutes after session 2 finished and caught them
+still up. See
+`reports/phase-report-8-4-foreign-load-during-session-2-2026-08-28.md`.
+
+So the current instrumentation can establish "the VM was clean when this session
+began" and cannot establish "the VM was clean while this session ran". For a
+phase whose entire estimand turns on `docker kill` latency — a quantity on the
+critical path of the VM's own scheduling — that is the wrong boundary.
+
+**What is needed.** A sampler that records the VM's container set periodically
+during collection, not only at its edges, and writes the series into the run
+root. Cheap: `docker ps` at, say, 30 s intervals, appended to a JSONL beside
+`matrix-progress.jsonl`. That makes foreign load a per-run covariate rather than
+a per-session precondition, and it is the only way a later reader can ask
+whether a specific anomalous run coincided with competing load.
+
+**Why it is worth doing rather than noting.** Three surfaces of host degradation
+now have no run-level explanatory variable: the drift whose sign reverses
+between sessions, the kill-latency envelope, and — new in session 2 — kills that
+do not land at all. Each is currently attributable only to "the host", which is
+not falsifiable. A sampled container series would make at least the competing-load
+hypothesis testable rather than merely plausible.
+
+**Ephemerality makes it urgent.** Both foreign containers observed in Phase 8.4
+were **removed within four minutes** of being stopped; `docker inspect` returned
+`no such object`. Evidence about VM load does not persist. If it is not sampled
+while it exists, it is not recoverable afterwards — which is exactly what
+happened to session 2's exact start times.
