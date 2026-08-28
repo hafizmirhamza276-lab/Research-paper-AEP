@@ -1,9 +1,17 @@
-# Phase 8.4 — the first session-2 attempt was aborted, and why it does not pool
+# Phase 8.4 — two aborted session-2 attempts, and why neither pools
 
-**This record is committed before the partial root is analysed.** That ordering
-is the point of the document: the reason this collection is excluded is fixed
-and verifiable in the history *before* any number it produced exists in a
-readable form.
+**Two attempts at session 2 were aborted before the one that counts.** §1–2
+cover the first, ended by the host; §3a covers the second, ended by operator
+error. Neither enters the k = 4 set, and in both cases the reason is a fact
+about the host or the operator rather than about the runs.
+
+**§1–2 were committed before the first partial root was analysed** (`845f654`,
+with the freeze following at `0f0ee8f`). That ordering is the point of those
+sections: the reason that collection is excluded was fixed and verifiable in the
+history *before* any number it produced existed in a readable form. §3a was
+written after its own event, which needs no such ordering — that root is not
+frozen, not analysed, and excluded on a cause that is visible in a container
+exit code.
 
 ---
 
@@ -79,6 +87,50 @@ established limitation of the instrument**, not as a candidate explanation.
 container only, so foreign load reaches no artefact in the run root. Sessions
 2–4 therefore carry a new per-session `container-precondition.json` that records
 every container by name before and after the clean, running or not.
+
+## 3a. A second aborted attempt, and this one was operator error
+
+The first relaunch of session 2 was destroyed by the operator, and the mechanism
+is worth recording because it is a hazard built into the precondition itself.
+
+At 14:40 a session-2 collection started cleanly. While it was running, the
+fixtures-missing gate in `precondition.sh` was being tested — the gate had been
+silently disabled by a bash defect (see below), so it needed checking. The test
+ran a copy of the script with `aep-phase2-redis72` renamed, so that the fixture
+would be classified as **foreign**. The script then did exactly what it is
+written to do: it stopped the foreign container. That container was the live
+Redis fixture of the collection in progress.
+
+Runs 3 onward failed with `ConnectionError: Error 111 connecting to
+127.0.0.1:6381`. The collection was killed at 8 runs, of which **2 were valid**.
+The container exit code distinguishes the two causes unambiguously: the
+harness's own fault injection leaves `Exited (137)` (SIGKILL), and this left
+`Exited (0)` (a `docker stop`).
+
+The root is retained at `b2-paired-v2-s2-operator-aborted-2026-08-28` with its
+`collection.txt`. It is **not** frozen as a session: 2 valid runs against 14
+failed ones is a corrupted collection rather than a partial one, and a frozen
+manifest over it would present as a small session something that is not a
+session at all. The log is the artefact that matters, because it carries the
+`ConnectionError` cascade that shows what happened.
+
+**This does not change what is claimed anywhere.** The cause is exogenous to the
+protocol in exactly the sense §2 sets out — it is a fact about the operator and
+the host, and nothing the runs produced is any part of it. It is recorded here
+rather than quietly re-run because a discarded collection with no stated reason
+is indistinguishable, to a later reader, from one discarded for its results.
+
+**Two defects it exposed, both now fixed:**
+
+1. **The gate it was testing was genuinely broken.** `${#ARRAY[@]:-0}` is not
+   valid bash. It raises "bad substitution", the `[` test never runs, and under
+   `if` that reads as *false* rather than as an error — so the fixtures-missing
+   check could never have halted anything. It ran in that state for the 14:40
+   attempt. Now `${#ARRAY[@]}`, and verified to exit 2 on a missing fixture.
+2. **The precondition is destructive and has no dry-run.** A script that stops
+   containers must not be testable only against the live daemon. Testing it
+   during a collection was the operator's error, but the script offering no
+   safe way to exercise the gate is the script's.
 
 ## 4. What sessions 2–4 do differently
 

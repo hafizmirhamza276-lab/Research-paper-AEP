@@ -1,0 +1,81 @@
+
+=== session b2-paired-v2-s2-2026-08-28 starting at 2026-08-28T14:40:44+05:00 ===
+
+=== git state ===
+0f0ee8f3b98aab8d788e87e2cd15d3b341769d9f
+tree clean
+
+=== container precondition ===
+/root/phase8-driver/precondition.sh: line 71: ${#STOPPED[@]:-0}: bad substitution
+/root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28/container-precondition.json
+--- precondition summary ---
+/root/phase8-driver/precondition.sh: line 150: foreign running before : ${#FOREIGN[@]:-0}: bad substitution
+foreign stopped        : none
+fixtures missing       : none
+volumes                : 629 -> 629
+loadavg before/after   : 0.73 0.71 0.71 1/524 791  /  0.75 0.72 0.71 2/529 797
+/root/phase8-driver/precondition.sh: line 157: ${#MISSING[@]:-0}: bad substitution
+
+=== collection starting at 2026-08-28T14:40:50+05:00 ===
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     False   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     30 (3 runs x 10 executions)
+  workers per run      2
+  cells (total)        4
+  cells (applicable)   4
+  cells (not applic.)  0
+  runs planned         120
+  estimated wall time  1.19 h (4284.0 s)
+
+  by tier:
+    tier 2:  120 runs,  1.19 h   E1: the hard-Redis-kill ablation, AEP-full versus B3
+
+  regimes (a regime is a condition, not a dimension):
+    redis-kill-preack      p(crash)=0.0  runs=120  shape=30 x 1, redis kill @ after_intent_before_barrier +0ms
+      hard Redis kill between the intent CAS and the barrier ack (E1)
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    2     redis-kill-preack    AEP_FULL                             none                               ledger_postings  CALLER_REFERENCE     30
+    2     redis-kill-preack    AEP_FULL                             none                               payments         CALLER_REFERENCE     30
+    2     redis-kill-preack    B3_INTENT_NO_BARRIER                 none                               ledger_postings  CALLER_REFERENCE     30
+    2     redis-kill-preack    B3_INTENT_NO_BARRIER                 none                               payments         CALLER_REFERENCE     30
+
+==============================================================================
+plan written to experiments/results/b2-paired-v2-s2-2026-08-28/matrix-plan.json and matrix-plan.txt
+[1/120] tier 2 AEP_FULL none ledger_postings CALLER_REFERENCE rep0
+[2/120] tier 2 AEP_FULL none payments CALLER_REFERENCE rep0
+[3/120] tier 2 B3_INTENT_NO_BARRIER none ledger_postings CALLER_REFERENCE rep0
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[4/120] tier 2 B3_INTENT_NO_BARRIER none payments CALLER_REFERENCE rep0
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[5/120] tier 2 AEP_FULL none ledger_postings CALLER_REFERENCE rep1
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[6/120] tier 2 AEP_FULL none payments CALLER_REFERENCE rep1
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[7/120] tier 2 B3_INTENT_NO_BARRIER none ledger_postings CALLER_REFERENCE rep1
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[8/120] tier 2 B3_INTENT_NO_BARRIER none payments CALLER_REFERENCE rep1
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[9/120] tier 2 AEP_FULL none ledger_postings CALLER_REFERENCE rep2
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[10/120] tier 2 AEP_FULL none payments CALLER_REFERENCE rep2
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[11/120] tier 2 B3_INTENT_NO_BARRIER none ledger_postings CALLER_REFERENCE rep2
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[12/120] tier 2 B3_INTENT_NO_BARRIER none payments CALLER_REFERENCE rep2
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[13/120] tier 2 AEP_FULL none ledger_postings CALLER_REFERENCE rep3
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[14/120] tier 2 AEP_FULL none payments CALLER_REFERENCE rep3
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[15/120] tier 2 B3_INTENT_NO_BARRIER none ledger_postings CALLER_REFERENCE rep3
+  FAILED: ConnectionError: Error 111 connecting to 127.0.0.1:6381. Connect call failed ('127.0.0.1', 6381).
+[16/120] tier 2 B3_INTENT_NO_BARRIER none payments CALLER_REFERENCE rep3
