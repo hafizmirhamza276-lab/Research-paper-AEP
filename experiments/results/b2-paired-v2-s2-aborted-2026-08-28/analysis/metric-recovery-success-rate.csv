@@ -1,0 +1,5 @@
+metric,regime,system,crash_point,response_class,readback_keying,successes,total,rate,runs,ci_low,ci_high,resamples,bootstrap_seed,clusters,observations
+recovery_success_rate,redis-kill-preack,AEP_FULL,none,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,0,0.0,6,0.0,0.0,0,20260806,6,0
+recovery_success_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,0,0.0,7,0.0,0.0,0,20260806,7,0
+recovery_success_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,0,0.0,6,0.0,0.0,0,20260806,6,0
+recovery_success_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,0,0.0,6,0.0,0.0,0,20260806,6,0
