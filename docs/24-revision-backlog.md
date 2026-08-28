@@ -406,3 +406,59 @@ Phase 10 wants the generator to be self-checking against the committed artifact.
 **Related.** `scripts/check_paper_numbers.py` did catch the mismatch between the
 truncated `numbers.tex` and the CSVs, so the gate works. B10 is about the
 generator, not the gate.
+
+## B11. A gate that looks live and is not: shell conditions are never tested on their failing branch
+
+**Filed against Phase 12.** Found by accident during Phase 8.4, while breaking
+something else — which is itself the point. Nothing in the repository would have
+reported this gate as broken.
+
+**The defect.** `precondition.sh`'s fixtures-missing gate was written as:
+
+```sh
+if [ "${#MISSING[@]:-0}" -gt 0 ]; then
+    echo "PRECONDITION FAILED: compose fixtures absent: ${MISSING[*]}"
+    exit 2
+fi
+```
+
+`${#ARRAY[@]:-0}` is not valid bash. It raises `bad substitution`, the `[` test
+never runs, and **under `if` a command that fails to execute reads as *false*
+rather than as an error**. The gate therefore could not have halted anything, in
+either direction, and it ran in that state for a real collection. Its passing
+path printed a reassuring `fixtures missing : none` throughout, because that
+line uses `${MISSING[*]:-none}`, which is valid.
+
+**Why the class matters more than the instance.** The instance is a one-line
+fix. The class is *a gate that looks live and is not*, and this repository has it
+three times now:
+
+- **Audit finding S4-D** — an assumption stated and never enforced.
+- **B10** — `paper_tables.py` writes incomplete output and **exits 0**, failing
+  in the direction that looks like success.
+- **B11** — a stop condition whose failing branch is unreachable.
+
+All three share a shape: the passing path is exercised constantly and looks
+healthy, while the failing path is never executed even once, so the gate's only
+job is the only thing never tested.
+
+**The requirement.** Every shell gate in the harness and the collection scripts
+must be tested **on its failing branch**, not only its passing one, and the test
+must assert the exit code. A gate that has never once fired has not been shown
+to work; it has been shown to be quiet.
+
+**Carry the caution from how this one was tested.** The failing branch of
+`precondition.sh` was exercised by renaming the fixture so it would be classified
+as foreign — against the live Docker daemon, during a collection, which stopped
+the running session's Redis and destroyed it (see
+`reports/phase-report-8-4-session-2-aborted-2026-08-28.md` §3a). **A destructive
+gate needs a dry-run mode before its failing branch can be tested safely.** The
+requirement above is not dischargeable by pointing the existing scripts at the
+real daemon; Phase 12 must add the seam first.
+
+**Scope.** `experiments/harness/*.sh`, `scripts/*.sh`, and the Phase 8 collection
+driver. The Python gates (`check_paper_numbers.py`, `check_pytest_gates.py`,
+`freeze_results.py`) are in scope for the same audit, but Python raises on a
+malformed expression rather than silently reading false, so the specific failure
+mode is shell-only; what carries over is the "never tested on its failing branch"
+audit, not the substitution defect.
