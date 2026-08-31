@@ -325,6 +325,80 @@ when the state of not-yet-done reads as failure rather than as success.* It is
 consistent with all ten cases on file. Ten is not many, and it was derived from
 them rather than tested against anything new.
 
+### Tested predictively against the other seventeen checks
+
+**The hypothesis above was derived from the cases it explains, which is worth
+little on its own.** It was therefore put to every other check in
+`check_paper_numbers.py` — cases that did not build it — with one question:
+*does this check pass when given nothing?*
+
+**Result: 15 of 18 fail closed. Three fail open, and each is a prediction of
+where the next defect of this class sits.**
+
+| # | check | given nothing | |
+|---|---|---|---|
+| 1 | `per-cell-metrics.csv is keyed by regime` | missing file → explicit FAIL | closed |
+| 2–3 | `fsync analysis is present`, `G2 results are present` | missing → FAIL, and the docstring says so: *"their absence is a failure, not a silent skip"* | closed |
+| 4 | `paper_tables.py runs` | non-zero exit → FAIL | closed |
+| 5–10 | `<file>.tex matches the CSVs` ×6 | **loop iterates the files the generator emitted, not the files committed** | **open** |
+| 11 | `no banned pooled source` | no `% Source:` lines → no offenders → PASS | open, backstopped by 12 |
+| 12 | `generated tables declare their sources` | `declared > 0` — one file's line satisfies it for all six | **open per file** |
+| 13 | `every generated number is used` | new macro → FAIL | **closed** |
+| 14 | `state-machine figure matches` | non-zero exit → FAIL (it is what fails today) | closed |
+| 15 | `bibliography has entries` | missing `main.bbl` → explicit FAIL | closed |
+| 16 | `no empty bibliography entries` | no blocks → PASS | open, backstopped by 15 |
+| 17 | `bibtex reported no parse errors` | **guarded by `if blg.is_file():` — the check is never registered** | **open, unbackstopped** |
+| 18 | `no undefined references or citations` | missing `main.log` → explicit FAIL | closed |
+| — | `check_todos` | never calls `check()`; prints a count. A wrong glob prints `0`, indistinguishable from a clean paper | open by design |
+
+**#17 was demonstrated, not reasoned.** Running the gate against two build
+directories differing only in the presence of `main.blg`:
+
+```
+with main.blg     PASS bibliography has entries
+                  PASS no empty bibliography entries
+                  PASS bibtex reported no parse errors
+without main.blg  PASS bibliography has entries
+                  PASS no empty bibliography entries
+                             <- silently absent
+```
+
+Both runs report the bibliography clean. **This is the same shape as the defect
+the file's own docstring exists to prevent** — *"a blank bibliography compiles
+clean"* — reappearing in the one bibliography check that disappears with its
+input. Its two neighbours handle the missing-file case explicitly; this one does
+not.
+
+**#5–10 is structural but backstopped on every path reachable today.**
+`paper_tables.py` does exit 0 with partial output when under-invoked — confirmed
+here, 5 of 6 files with `--fsync-analysis` and `--flakey` omitted — which is B10.
+But checks 2–4 fire first on every route into that state: omitted arguments fail
+2 and 3, and empty-but-present directories make the generator exit 1, failing 4.
+**The residual is the opposite direction: a generated file that is committed and
+that the generator no longer emits is never compared**, because the loop
+enumerates what was produced rather than what is expected. Nothing covers that.
+
+### What the predictive test does to the hypothesis
+
+**It survives, and more usefully it predicted the shape of its own exceptions.**
+The three fail-open checks are fail-open for exactly the three anti-patterns
+F.0d named: a **conditional skip** (`if blg.is_file()`), enumeration of a
+**produced set instead of an expected set** (the glob loop), and a **threshold**
+(`declared > 0`) that one file satisfies on behalf of six.
+
+**Two limits on how far this should be taken.** The hypothesis was built from
+failures in shell scripts, `freeze_results.py` and F.0's own wording, and tested
+here in a Python file with an explicit `check()` protocol — related but not an
+independent population, and written by the same project. And 18 more cases is
+still not many. **What can be said is narrower than "this is how checks work":
+within one file written to be careful, the checks that fail closed are sound and
+the three that fail open are the three defects.** That is a real prediction
+confirmed on unseen cases; it is not a law.
+
+**Filed as observations, not fixed.** #17 and the stale-generated-file gap belong
+to B11's territory and are recorded here so the next pass has them; nothing in
+this session touches `check_paper_numbers.py`.
+
 ### One limitation, and it constrains work already planned
 
 `used` is collected from **`main.tex` and `sections/*.tex` only** —
