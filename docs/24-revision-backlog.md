@@ -661,7 +661,7 @@ stable across VM suspension on this host**. In a suspendable VM an append-only
 file is a more reliable account of a process's history than the process table is.
 Anywhere the collection tooling reads a duration or an age from a boot-derived
 clock, that reading is suspect on this host and must be checked rather than
-assumed sound.
+assumed sound. That check was carried out — see **B17**.
 
 See `reports/phase-report-8-4-sampler-stopped-2026-08-31.md`.
 
@@ -959,3 +959,100 @@ bytes that hash to the recorded digest, and the strays were enumerated and
 removed. Nothing was silently altered. The defect is that none of that was
 guaranteed by the freeze — it was established afterwards, by hand, because
 someone went looking.
+
+## B17. Amendment 4's exclusion criterion compares a wall-clock uptime against a suspension-blind threshold
+
+**Filed against Phase 12. A finding against amendment 4, recorded in the backlog
+because the amendment is closed and is not being reopened.**
+
+Prompted by B12a: `ps` misreported the sampler's own age because boot-derived
+clocks are not stable across VM suspension on this host. Amendment 4's exclusion
+criterion is the Redis server's uptime, so it was checked rather than assumed
+sound.
+
+### What the criterion actually is
+
+`experiments/harness/faults.py:207` reads the figure from the server itself:
+
+```python
+uptime = int(server.get("uptime_in_seconds", 10**9))
+```
+
+`faults.py:221` decides with it:
+
+```python
+was_killed=uptime <= max(30, int(time.monotonic() - started) + 10),
+```
+
+and `faults.py:231-236` raises `FaultInjectionError` when `was_killed` is false.
+
+**Two different clocks meet on line 221.**
+
+| term | clock | advances while the VM is suspended? |
+|---|---|---|
+| `uptime` | Redis's own, via `INFO server` | **yes** (see caveat below) |
+| `time.monotonic() - started` | Python's `CLOCK_MONOTONIC` | **no** — by definition |
+
+`CLOCK_MONOTONIC` on Linux excludes time the system was suspended;
+`CLOCK_BOOTTIME` is the variant that includes it. So the **threshold** is
+suspension-blind while the **quantity being thresholded** is not.
+
+**Caveat, stated because it is not verifiable from this repository.** Redis's
+source is not vendored here — `redis/` holds only `phase2.conf`,
+`phase2-always.conf` and `toxiproxy.json`. Standard Redis derives
+`uptime_in_seconds` from its start timestamp against current time, both
+wall-clock, which would include suspended time. That is the assumption above and
+it should be confirmed against Redis's source before any fix is designed.
+
+### The failure mode, and its direction
+
+If the VM suspends between `started` (`faults.py:197`) and the `INFO` read
+(`faults.py:206`) — a window of roughly one to two seconds — Redis's uptime
+absorbs the suspension while the monotonic term does not. The threshold stays at
+its floor of 30, the uptime is enormous, and `FaultInjectionError` is raised on a
+run **whose kill did land**.
+
+**The direction is conservative:** it wrongly *excludes* a good run rather than
+wrongly *including* a bad one. But amendment 4 caps refills at 3 per session and
+treats a session that reaches the ceiling as a sick instrument, so a run of these
+could condemn a healthy session on a clock artefact.
+
+**Exposure is bounded by the `max(30, ...)` floor.** A restart takes one to two
+seconds, so the monotonic term is dominated by the constant 30 in normal
+operation and only matters if a restart exceeds twenty seconds. The defect is
+real; it is not on a hot path.
+
+### It did not fire in Phase 8.4, and this is checkable rather than assumed
+
+1. **The two observed incidents are not clock artefacts.** Both non-landing kills
+   in session 2 reported `uptime_in_seconds` of **42** and **37**. A suspension
+   artefact would report hours, not tens of seconds. These are genuine
+   same-process detections, exactly as amendment 4 intends.
+2. **No suspension occurred during any collection window.** The load sampler's
+   two multi-hour gaps (B12a) fall on 29–31 August; every session window is on
+   28 August. Both Phase 8.4 session windows sample regularly at 60 s throughout.
+
+**So no Phase 8.4 exclusion decision is affected, and none of the four sessions'
+numbers change.**
+
+### Adjacent, and it closes rather than opens a question
+
+The estimand's covariate is measured with the same family of clock —
+`redis_kill.py:298` and `:305` compute
+`issue_to_return_ns = time.monotonic_ns() - armed_at`.
+
+**This one is correct, and deliberately so.** For timing a short interval,
+`CLOCK_MONOTONIC` is the right instrument precisely because it is immune to
+wall-clock adjustments such as NTP steps, which would otherwise corrupt a
+sub-second measurement. Suspension would cause an under-count, and no suspension
+occurred during collection. **The covariate is sound; recorded here so the
+question is not reopened later.**
+
+### What is needed
+
+Compare like with like: threshold the Redis-reported uptime against a wall-clock
+elapsed measurement, or read `CLOCK_BOOTTIME` rather than `CLOCK_MONOTONIC` for
+this one comparison, and confirm Redis's own derivation against its source
+first. **Do not amend amendment 4** — it is closed, its criterion was applied
+correctly to the data that exists, and this is a defect in the implementation of
+the check rather than in the registered rule.
