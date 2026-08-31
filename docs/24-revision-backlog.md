@@ -1078,3 +1078,92 @@ this one comparison, and confirm Redis's own derivation against its source
 first. **Do not amend amendment 4** — it is closed, its criterion was applied
 correctly to the data that exists, and this is a defect in the implementation of
 the check rather than in the registered rule.
+
+## B18. Shell substitution silently rewrote the tooling's own inputs, including a commit message
+
+**Filed against Phase 12. B11's class, in the layer that records what was done.**
+
+B11 is "a gate that looks live and cannot act". This is its sibling: **a command
+that looks like it ran and did something else**. Both were found the same way —
+by checking output against a known answer (**R2**) rather than by any exit code,
+because in every instance below the exit code was **0**.
+
+### First, a correction to how this was reported
+
+An earlier account of this said inline commit messages were eaten "twice, and the
+first was silent". Both halves were wrong, and checking rather than recalling is
+what established it. Every commit message from this session was re-read:
+
+- **Commit-message corruption happened exactly once**, in the commit that became
+  `1fe3f72`. The other three inline commits contain **zero** backticks and are
+  intact.
+- **That one was not silent.** `bash` printed `command substitution: line 1:
+  syntax error` to stderr. What it did do is exit **0**, create the commit, and
+  report success — so the error was *visible but non-fatal*, which is a different
+  and more dangerous thing than silent.
+
+The genuinely silent instances were elsewhere, and there were more of them.
+
+### What happened
+
+Two distinct substrates, one mechanism.
+
+**1. The commit message.** `git commit -m "…"` with a message containing
+backticked code — `` `if analysis.is_dir():` `` — had those spans executed as
+command substitutions by the invoking shell. Their output, empty, replaced the
+code in the message. The committed text read *"Line 176 is the  in the middle of
+the quote, not the  at its head"*: a sentence whose subject and object had been
+deleted, in a commit whose entire purpose was to correct a wrong citation.
+Amended from a file.
+
+**2. Command arguments through `wsl … bash -c '…'`.** Repeatedly, `$VAR`
+references inside the quoted script were expanded by the *outer* shell before
+reaching the guest, arriving empty. These were the silent ones, and one produced
+data rather than an error:
+
+| attempt | what it printed | why it was wrong |
+|---|---|---|
+| per-root file counts | four roots each reporting **8165 files, 902 subdirectories, 18 run dirs** | `$r` was empty, so every iteration measured the *parent* directory. Four identical rows of a real number for the wrong object. |
+| directories lacking a ledger | ~330 lines of `NO LEDGER:` with an empty name | `${d%/}` expanded to nothing; every directory "failed" |
+
+**The first of those is the dangerous one.** It is not a crash and not an obvious
+mangling — it is a plausible table of plausible numbers, and 8165 *is* the true
+file count of something. Had it not been checked against an independent
+measurement, it would have entered a report as four roots' contents.
+
+### Why this belongs in the backlog rather than in a habit
+
+The failure is structural, not careless. **Every layer between the intent and the
+execution is a shell**, and each strips one level of quoting: Git Bash on
+Windows, then `wsl.exe`'s argument marshalling, then the guest's `bash -c`, then
+in some cases a `python3 -c` inside that. Backticks, `$`, `!` and `{}` are all
+active in at least one of them. Writing a correct multi-level escape is possible
+and is not reliably repeatable, which is exactly the property that makes a
+convention fail under time pressure.
+
+It also compounds R1: `pkill -f` was unsafe because a *pattern* matched more than
+intended; this is unsafe because a *quoted string* means less than intended.
+Both are cases of the shell reinterpreting something the author treated as inert
+data.
+
+### Mitigation, already adopted
+
+1. **Never pass a commit message inline.** Write it to a file and use
+   `git commit -F <file>`, or a quoted heredoc (`<<'MSG'`), which disables
+   substitution. Every commit after `1fe3f72` in this session used one of these.
+2. **Never pass a multi-line or variable-bearing script through `bash -c`.**
+   Write the script to a file and invoke the file with arguments. Every survey in
+   this task was rewritten this way after the second failure, and none failed
+   afterwards.
+3. **A script that reports per-item results must print the item's identity from
+   inside the loop**, so an empty variable is visible as an empty label rather
+   than as a plausible repeated row. The `8165` table would have been obvious
+   immediately under this rule.
+
+### What is needed beyond the habit
+
+The mitigations are conventions, and **R3's lesson is that a convention nobody
+can fail is better than one nobody should fail**. Worth having: a small wrapper
+for host-to-guest invocation that takes a script path and an argument list and
+makes the inline form unavailable, so the unsafe construction cannot be reached
+rather than merely being discouraged.
