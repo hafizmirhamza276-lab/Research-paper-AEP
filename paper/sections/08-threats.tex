@@ -93,13 +93,15 @@ they sharpen the limitation rather than removing it. The \emph{direction} held
 in all five --- B3 committed effects AEP-full withheld every time, and B3's own
 count did not move by a single execution --- but the \emph{magnitude} ranged
 \ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
-\AepKillRuns{}, and we can say why: whether AEP-full dispatches is decided by
-whether \texttt{WAITAOF} returns before the kill lands, so the effect size is a
-function of the host's kill-latency distribution (the four sessions separate the
-two outcomes by \KillLatencyPerSession{}\,ms, mean \KillLatencyMean{}\,ms, 95\%
-interval [\KillLatencyLow{},\,\KillLatencyHigh{}], a half-width
-\KillLatencyPrecisionRatio{} times that mean --- consistent with the race and
-too wide to establish it).
+\AepKillRuns{}. The protocol's own logic offers a reason --- whether AEP-full
+dispatches is decided by whether \texttt{WAITAOF} returns before the kill lands,
+so the effect size should be a function of the host's kill-latency distribution
+--- but our measurement of that reason does not establish it. The four sessions
+separate the two outcomes by \KillLatencyPerSession{}\,ms, mean
+\KillLatencyMean{}\,ms, 95\% interval
+[\KillLatencyLow{},\,\KillLatencyHigh{}], a half-width
+\KillLatencyPrecisionRatio{} times that mean: an interval that contains zero and
+is wider than the effect it brackets, because the sessions disagree.
 A reader should therefore treat \UnwantedPrevented{} as one draw from that
 distribution and not as a property of AEP. A second host would not replicate the
 number; it would sample a different distribution, and the prediction this paper

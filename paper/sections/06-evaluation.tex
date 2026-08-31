@@ -427,29 +427,37 @@ sessions separate the two groups by \KillLatencyPerSession{}\,ms:
 mean \KillLatencyMean{}\,ms, 95\% interval
 [\KillLatencyLow{},\,\KillLatencyHigh{}]. \textbf{The half-width is
 \KillLatencyHalfWidth{}\,ms, \KillLatencyPrecisionRatio{} times the mean it
-brackets}, and the interval contains zero: the direction agrees across the
-sessions at a precision that does not resolve it. We give no $p$. Over
-\KillLatencySessions{} sessions a two-sided sign test cannot return below
-\KillLatencySignFloor{}, so no outcome this design admits could have reached
-significance, and a test pooling the \ReplicationRuns{} executions would assume
-exactly the independence we decline in the paragraph above. B3 is the control
-the same data supplies, and at this unit it is uninformative rather than clean
---- \KillLatencyBthreePerSession{}\,ms, mean \KillLatencyBthreeMean{}\,ms,
-interval [\KillLatencyBthreeLow{},\,\KillLatencyBthreeHigh{}], a half-width of
+brackets}, and the interval contains zero. We give the four session differences
+individually because the summary is what fails here: the interval admits effects
+three times the mean and effects of the opposite sign, and this design does not
+distinguish them. We give no $p$, and we do not put a count of sessions on one
+side of zero in place of one. Over \KillLatencySessions{} sessions a two-sided
+sign test cannot return below \KillLatencySignFloor{}, so no outcome this design
+admits could have reached significance; a count of sessions is that same test
+with its $p$ removed; and a test pooling the \ReplicationRuns{} executions would
+assume exactly the independence we decline in the paragraph above.
+
+\textbf{B3 is not the negative control this paper previously reported.} Pooled
+over the same \ReplicationRuns{} executions it read as a clean null, and pooling
+is what made it read that way. At the session level it is uninformative:
+\KillLatencyBthreePerSession{}\,ms, mean \KillLatencyBthreeMean{}\,ms, interval
+[\KillLatencyBthreeLow{},\,\KillLatencyBthreeHigh{}], a half-width of
 \KillLatencyBthreeHalfWidth{}\,ms and \KillLatencyBthreePrecisionRatio{} times
-its own mean. A control that wide
-could not have contradicted the mechanism, so its failure to contradict it is
-not evidence for it.
+its own mean. A comparison that wide could not have contradicted the mechanism
+whatever B3 had done, so its failure to contradict it was never evidence for it.
 
 The original cell was collected on a different filesystem from the four
 replications, a difference no run configuration records, so we report it
-separately rather than pooling it --- and being a single session it is the one
-place in this comparison that pools nothing. It agrees in direction, at
+separately rather than pooling it. It agrees in direction, at
 \KillLatencyOrigDiff{}\,ms over \KillLatencyOrigN{} runs
 ($p = \KillLatencyOrigP{}$), with its own control at
 \KillLatencyBthreeOrigDiff{}\,ms ($p = \KillLatencyBthreeOrigP{}$,
-$n = \KillLatencyBthreeOrigN{}$). It is unreplicated, and it is what the
-mechanism rests on.
+$n = \KillLatencyBthreeOrigN{}$). \textbf{It is one session: it pools nothing,
+and it replicates nothing.} Its $p$ carries no between-session variance
+component at all, and being a single-session rank test over runs collected in
+sequence it is the one figure here that within-session drift in kill latency can
+reach. That is what the mechanism now rests on, and it is thinner than the
+pooled figure it replaces.
 
 \UnwantedPrevented{} is therefore not a constant of the protocol and this paper
 does not offer it as one: it is where one host's kill-latency distribution
