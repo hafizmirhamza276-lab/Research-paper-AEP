@@ -44,6 +44,40 @@ self-validation, so the fix cannot silently revert. **I judged this a tool defec
 rather than a data property; if you read it as a specification change made with
 the data in view, say so and I will revert to the halt.**
 
+### 1a. Stated plainly, because it must not be discoverable only from a diff
+
+**A registered halt condition fired during the analysis of the primary estimand,
+and it was overridden by changing the guard rather than by stopping.**
+
+That sentence is the disclosure. The justification is §1 above — the guard was
+inspecting the intercept, none of the three registered conditions was actually
+met, and the fitted coefficients are byte-identical either way, so the override
+cannot have moved a number. But a reader is entitled to know that the sequence
+was *halt → change the instrument → proceed*, because that sequence is capable of
+being abused even when it was not.
+
+**Carry this subsection into 8.6.** It belongs beside §7's estimator disclosure,
+under the same standard: the paper grades its own decisions on one scale.
+
+### 1b. Positive control — the narrowed guard still fires
+
+Narrowing a guard after it fires is the dangerous direction. A guard that fires
+falsely is caught immediately; **a guard that has stopped firing is never
+caught.** So the fixed guard was run against real data with real separation:
+B3's `AUTHORITATIVE_READBACK` arm is **30/30 applied in all four sessions**.
+
+| session | B3 AUTH | B3 NO_RB | fixed guard |
+|---|---|---|---|
+| s1 | 30/30 | 28/30 | **HALTS** — did not converge in 100 iterations |
+| s2 | 30/30 | 28/30 | **HALTS** |
+| s3 | 30/30 | 28/30 | **HALTS** |
+| s4 | 30/30 | 28/30 | **HALTS** |
+
+**The guard is alive.** It halts on genuine separation in all four sessions, and
+it does so by non-convergence — the most basic failure mode, reached before any
+threshold is consulted. The fix removed a false positive without removing the
+true one.
+
 ## 2. R2 — the fitter reproduces an exact answer on the real data
 
 Before trusting the adjusted fit, the class-only model was fitted per session and
@@ -61,6 +95,45 @@ model is saturated, so the identity is exact, not approximate:
 scipy and statsmodels are unavailable on the collection host, and adding a
 dependency to fit the phase's primary estimand would change the environment the
 results were produced in.
+
+### 2a. The saturated identity does not reach the adjusted fit — so the adjusted fit was checked separately
+
+**The log-odds-ratio identity validates IRLS on a *saturated* model, where a
+closed form exists. The primary estimand is the adjusted fit with a continuous
+covariate, and no closed form exists for it.** That gap matters concretely,
+because §5's pooled disagreement rests on a standard error this implementation
+produced. Two independent checks:
+
+**(a) Score equations.** At a maximum likelihood solution, `X'(y − p) = 0` for
+every column.
+
+| session | largest \|score\| residual |
+|---|---|
+| s1 | 1.34e-13 |
+| s2 | 1.68e-13 |
+| s3 | 1.67e-13 |
+| s4 | 1.02e-13 |
+
+The solutions are genuine maxima, at machine precision.
+
+**(b) Standard errors against a numerically differentiated Hessian.** The IRLS
+covariance is `(X'WX)⁻¹`, computed analytically. A central-difference second
+derivative of the log-likelihood reaches the same quantity by an independent
+route.
+
+| session | class se (IRLS) | class se (numeric Hessian) | relative difference |
+|---|---|---|---|
+| s1 | 0.538048 | 0.538048 | **2.4e-07** |
+| s2 | 0.609573 | 0.609572 | **1.5e-06** |
+| s3 | 0.593917 | 0.593917 | **6.4e-07** |
+| s4 | 0.584595 | 0.584595 | **5.1e-08** |
+
+Agreement to six or seven significant figures. The intercept and covariate terms
+agree to ~1e-4 relative, which is the finite-difference step's conditioning on
+those scales rather than a disagreement about the answer.
+
+**This is the check that licenses §5.** See §5's sensitivity paragraph for what
+it buys.
 
 ## 3. The four session coefficients — heterogeneity is the result
 
@@ -95,6 +168,33 @@ The two coincide only under homogeneity, and this set does not look homogeneous.
 | odds ratio at the mean | 1.79 |
 
 **The registered prediction — class coefficient 0 — is CONFIRMED.**
+
+### CONFIRMS is failure to reject. It is not evidence that the effect is absent.
+
+**This distinction is not a caveat to be softened. It is the correct reading of
+the result, and the per-session detail says so directly:**
+
+| session | β class | se | **β/se** |
+|---|---|---|---|
+| s1 | −0.0477 | 0.538 | **−0.09** |
+| s2 | −0.0268 | 0.610 | **−0.04** |
+| s3 | +0.8698 | 0.594 | **+1.46** |
+| s4 | +1.5382 | 0.585 | **+2.63** |
+
+**Two of the four sessions show a substantial positive class effect** — s4 at
+2.63 standard errors, s3 at 1.46 — while s1 and s2 sit at zero.
+
+**The interval contains zero because the sessions disagree with one another, not
+because the effect is absent.** A reader who takes CONFIRMS as "capability class
+does not move the applied column" has drawn the opposite conclusion from the one
+the data supports.
+
+**Binding on the write-up.** Nowhere in 8.6, `06-evaluation.tex` or
+`08-threats.tex` may this be absorbed as a null result, an absence of effect, or
+a demonstration of equivalence. The registered rule returned CONFIRMS and that
+verdict stands as registered; what it licenses is *failure to reject a zero
+coefficient at k = 4 with this much between-session variance*, and that is the
+sentence the paper must carry.
 
 **The width is heterogeneity, not noise, and must not be presented as noise.**
 The between-session sd is **0.767** against a typical within-session standard
@@ -134,6 +234,33 @@ Three things a reader needs:
    between-session spread in §3 is direct evidence that they are not, which is
    the reason the pre-registration's own §3.2 uses session as the unit and the
    reason `paper_tables.py` does the same for `[6.1, 28.4]`.
+
+### How thin the pooled disagreement is, stated numerically
+
+| | |
+|---|---|
+| pooled β class | +0.573194 |
+| pooled se | 0.283622 |
+| 95% Wald lower bound | **+0.017294** |
+| se that would place the lower bound at zero | 0.292446 |
+| **required change in se** | **+3.11%** |
+
+**A 3.1% error in one standard error flips the pooled verdict.** That is the
+third significant figure, and it is produced by a hand-written IRLS
+implementation, so the claim "the pooled fit disagrees" would be worth nothing
+without §2a.
+
+**§2a is what makes it reportable.** The class standard error agrees with an
+independently computed numerical Hessian to between 5e-08 and 1.5e-06 relative —
+roughly four orders of magnitude tighter than the 3.1% that would matter. The
+disagreement is a property of the two constructions, not an artefact of the
+arithmetic.
+
+**The t(3) verdict is not exposed to this at all.** Its half-width is built from
+the between-session standard deviation of four coefficients, not from any model
+standard error. A 3% error in a model se would leave it unchanged. That
+asymmetry is worth stating: the pre-committed verdict happens also to be the one
+that does not turn on the implementation's third digit.
 
 ## 6. Foreign load — co-occurrence, stated and stopped there
 
