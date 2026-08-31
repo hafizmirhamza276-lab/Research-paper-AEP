@@ -224,6 +224,11 @@
 % the unit was not chosen for the result: the baselines it is contrasted against are \BaselineDupLowPct-\BaselineDupHighPct%, so the contrast is unaffected either way
 \newcommand{\AblationZeroUpperRun}{4.77}
 
+% per-cell-metrics.csv | one-sided Wilson upper bound on 0/18 run clusters, per arm per capability class
+% 6 simultaneous bounds (3 capability classes x 2 systems), so Bonferroni sets each at 98.333% to hold joint coverage at 90%
+% this is the width the phrase 'on every capability class' would have to carry, and it is why the paper declines to make that claim rather than omitting it silently
+\newcommand{\AblationZeroUpperPerClass}{20.1}
+
 % comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, the larger of the two arms' numerators
 % B3 0/540 vs AEP-full 0/540
 \newcommand{\BthreeVsAepDupCount}{0}

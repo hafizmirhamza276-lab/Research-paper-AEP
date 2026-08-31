@@ -1465,6 +1465,45 @@ def emit_numbers(
                 "contrasted against are \\BaselineDupLowPct-\\BaselineDupHighPct"
                 "%, so the contrast is unaffected either way",
             )
+            # The same construction at per-class scope, which is what
+            # \cref{tab:outcomes}'s columns actually are. Three capability
+            # classes x two systems is six simultaneous bounds, so Bonferroni
+            # needs each at 1 - 0.10/6 to hold the same joint 90%. This exists
+            # so the paper can say WHY it declines to claim equivalence per
+            # class, rather than dropping the scope silently.
+            #
+            # Derived from the per-class run counts, not by dividing the pooled
+            # one by three. The six arm-classes happen to be balanced at 18 and
+            # nothing enforces that, so this refuses to emit if they ever stop
+            # being equal rather than quietly averaging them.
+            per_class_runs: dict[tuple[str, str], int] = {}
+            for row in crashed:
+                if (
+                    row["system"] in ("AEP_FULL", "B3_INTENT_NO_BARRIER")
+                    and row["metric"] == "undetected_duplicate_rate"
+                ):
+                    key = (row["system"], row["response_class"])
+                    per_class_runs[key] = per_class_runs.get(key, 0) + int(
+                        row["runs"]
+                    )
+            distinct = set(per_class_runs.values())
+            if per_class_runs and len(distinct) == 1:
+                class_runs = distinct.pop()
+                simultaneous = len(per_class_runs)
+                joint = 1.0 - (1.0 - 0.90) / simultaneous
+                upper_class = wilson_upper_bound(0, class_runs, confidence=joint)
+                macro(
+                    "AblationZeroUpperPerClass",
+                    f"{upper_class * 100:.1f}",
+                    "per-cell-metrics.csv | one-sided Wilson upper bound on "
+                    f"0/{class_runs} run clusters, per arm per capability class",
+                    f"{simultaneous} simultaneous bounds (3 capability classes "
+                    f"x 2 systems), so Bonferroni sets each at "
+                    f"{joint * 100:.3f}% to hold joint coverage at 90%",
+                    "this is the width the phrase 'on every capability class' "
+                    "would have to carry, and it is why the paper declines to "
+                    "make that claim rather than omitting it silently",
+                )
         # The numerators themselves. "a rate of 0" was written as a bare
         # numeral in four places, which made the paper's most load-bearing
         # zero the one number no gate looked at. Emitted as the larger of the

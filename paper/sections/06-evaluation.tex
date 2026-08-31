@@ -632,10 +632,23 @@ more crash-free runs, not more executions per run, and
 \paragraph{B3-mode: the barrier removed entirely} This row is not a baseline
 we are beating; it is a supported configuration of the same implementation, and
 \cref{sec:eval-detection} is what licenses putting it in this table. It pays
-\ProtocolMinusBarrier{}\,ms over a system with no protocol at all, and it
-delivers the entire detection guarantee of \cref{tab:outcomes} --- every rate
-in that table, on every capability class, statistically indistinguishable from
-AEP-full's. What it forfeits is \cref{sec:eval-prevention}: under a hard Redis
+\ProtocolMinusBarrier{}\,ms over a system with no protocol at all. On the
+detection metrics, pooled across capability classes, we observe no difference
+between it and AEP-full, and what supports that is a bound rather than a test:
+both the undetected-duplicate and lost-effect rates lie in
+$[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%, and the
+declared-ambiguity difference lies inside the $\pm\BthreeVsAepAmbMargin{}$
+percentage-point margin that \cref{sec:eval-detection} states as a post hoc
+stipulation rather than a preregistration.
+
+\emph{We do not make that claim per capability class, and the reason is a
+number rather than an oversight.} Applying the same construction at per-class
+scope means six simultaneous bounds instead of two, over a third as many run
+clusters, and Bonferroni then puts the width at
+\AblationZeroUpperPerClass{} percentage points. A band that wide is not a
+detection guarantee, so what we report is that these data cannot support a
+per-class equivalence claim worth stating --- not that the question does not
+arise. What it forfeits is \cref{sec:eval-prevention}: under a hard Redis
 kill it will put an effect on the wire that AEP-full withholds, at
 \BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will
 not survive a host-level write loss (\cref{sec:eval-durability}).
