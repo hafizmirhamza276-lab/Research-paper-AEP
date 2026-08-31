@@ -467,41 +467,83 @@
 % F.0: this endpoint states the primary estimand's result. It may not be quoted without \ClassPpHalfWidth (33.9 pp, wider than the +12.5 pp mean) in the same sentence: the interval contains zero because the sessions disagree, not because the effect is absent
 \newcommand{\ClassPpHigh}{+46.4}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
-% = 1129.3 - 927.9; the four replication sessions, one filesystem
-\newcommand{\KillLatencyDiff}{201}
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | distinct sessions: P9-B, s1, s2, s3
+% the unit of analysis for every KillLatency macro below that carries no Orig suffix
+\newcommand{\KillLatencySessions}{4}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | Mann-Whitney two-tailed on the same two groups
-\newcommand{\KillLatencyP}{4.0\times10^{-9}}
+% 2 * (1/2)^4 | smallest two-sided sign-test p attainable over 4 sessions
+% quoted in place of a p-value: the design is floored above 0.05, so a non-significant result carries no information about the effect
+\newcommand{\KillLatencySignFloor}{0.125}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | runs
-\newcommand{\KillLatencyN}{120}
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | per-session median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% sessions in order: P9-B, s1, s2, s3
+% the data. No tally of sessions on one side of zero is emitted: that is the floored sign test in counting form
+\newcommand{\KillLatencyPerSession}{+70, -4, +282, +74}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
-% = 977.0 - 990.8; the four replication sessions, one filesystem
-\newcommand{\KillLatencyBthreeDiff}{-14}
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | mean over 4 sessions of the per-session median difference, ms
+% = mean(+70, -4, +282, +74)
+% F.0: half-width 196 ms is 1.86x the +105 ms mean it brackets. Not quotable without \KillLatencyHalfWidth or the interval beside it
+\newcommand{\KillLatencyMean}{+105}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | Mann-Whitney two-tailed on the same two groups
-\newcommand{\KillLatencyBthreeP}{0.63}
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | session-clustered 95% half-width, t(3) = 3.182, session as the unit
+% = 3.182 * 123.4 / sqrt(4)
+\newcommand{\KillLatencyHalfWidth}{196}
 
-% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | runs
-\newcommand{\KillLatencyBthreeN}{120}
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | half-width divided by the absolute mean it brackets
+% emitted so the prose states the realised precision as a ratio rather than leaving the reader to divide: F.0's binding is about what reaches the reader
+\newcommand{\KillLatencyPrecisionRatio}{1.86}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | lower end of that interval
+% F.0: half-width 196 ms is 1.86x the +105 ms mean it brackets. Not quotable without \KillLatencyHalfWidth or the interval beside it
+\newcommand{\KillLatencyLow}{-91}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | upper end
+% F.0: half-width 196 ms is 1.86x the +105 ms mean it brackets. Not quotable without \KillLatencyHalfWidth or the interval beside it
+\newcommand{\KillLatencyHigh}{+302}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | per-session median issue_to_return_ns of runs that applied an effect minus those that did not, ms
+% sessions in order: P9-B, s1, s2, s3
+% the data. No tally of sessions on one side of zero is emitted: that is the floored sign test in counting form
+\newcommand{\KillLatencyBthreePerSession}{-28, +27, -31, -152}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | mean over 4 sessions of the per-session median difference, ms
+% = mean(-28, +27, -31, -152)
+% F.0: half-width 120 ms is 2.61x the -46 ms mean it brackets. Not quotable without \KillLatencyBthreeHalfWidth or the interval beside it
+\newcommand{\KillLatencyBthreeMean}{-46}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | session-clustered 95% half-width, t(3) = 3.182, session as the unit
+% = 3.182 * 75.6 / sqrt(4)
+\newcommand{\KillLatencyBthreeHalfWidth}{120}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | half-width divided by the absolute mean it brackets
+% emitted so the prose states the realised precision as a ratio rather than leaving the reader to divide: F.0's binding is about what reaches the reader
+\newcommand{\KillLatencyBthreePrecisionRatio}{2.61}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | lower end of that interval
+% F.0: half-width 120 ms is 2.61x the -46 ms mean it brackets. Not quotable without \KillLatencyBthreeHalfWidth or the interval beside it
+\newcommand{\KillLatencyBthreeLow}{-166}
+
+% reports/raw/e1-kill-latency-by-run.csv | drvfs | B3_INTENT_NO_BARRIER | upper end
+% F.0: half-width 120 ms is 2.61x the -46 ms mean it brackets. Not quotable without \KillLatencyBthreeHalfWidth or the interval beside it
+\newcommand{\KillLatencyBthreeHigh}{+74}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
-% = 900.6 - 812.4; the paper's own cell, reported separately because it differs in filesystem
+% = 900.6 - 812.4; the paper's own cell, one session, reported separately because it differs in filesystem
 \newcommand{\KillLatencyOrigDiff}{88}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | Mann-Whitney two-tailed on the same two groups
+% a within-session test on a single session: it pools nothing, and it replicates nothing
 \newcommand{\KillLatencyOrigP}{0.03}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | AEP_FULL | runs
 \newcommand{\KillLatencyOrigN}{30}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
-% = 826.8 - 801.1; the paper's own cell, reported separately because it differs in filesystem
+% = 826.8 - 801.1; the paper's own cell, one session, reported separately because it differs in filesystem
 \newcommand{\KillLatencyBthreeOrigDiff}{26}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | Mann-Whitney two-tailed on the same two groups
+% a within-session test on a single session: it pools nothing, and it replicates nothing
 \newcommand{\KillLatencyBthreeOrigP}{0.53}
 
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | runs

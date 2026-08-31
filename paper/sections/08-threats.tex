@@ -95,8 +95,11 @@ count did not move by a single execution --- but the \emph{magnitude} ranged
 \ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
 \AepKillRuns{}, and we can say why: whether AEP-full dispatches is decided by
 whether \texttt{WAITAOF} returns before the kill lands, so the effect size is a
-function of the host's kill-latency distribution
-($\KillLatencyDiff{}$\,ms separating the two outcomes, $p = \KillLatencyP{}$).
+function of the host's kill-latency distribution (the four sessions separate the
+two outcomes by \KillLatencyPerSession{}\,ms, mean \KillLatencyMean{}\,ms, 95\%
+interval [\KillLatencyLow{},\,\KillLatencyHigh{}], a half-width
+\KillLatencyPrecisionRatio{} times that mean --- consistent with the race and
+too wide to establish it).
 A reader should therefore treat \UnwantedPrevented{} as one draw from that
 distribution and not as a property of AEP. A second host would not replicate the
 number; it would sample a different distribution, and the prediction this paper

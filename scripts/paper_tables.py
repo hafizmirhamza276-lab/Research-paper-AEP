@@ -2268,39 +2268,185 @@ def emit_numbers(
                 len(subset),
             )
 
-        for stratum, suffix, why in (
-            ("drvfs", "", "the four replication sessions, one filesystem"),
-            ("ext4", "Orig", "the paper's own cell, reported separately "
-                             "because it differs in filesystem"),
+        # B9. The drvfs stratum is FOUR sessions, and _median_split filters on
+        # filesystem and system only -- so the pooled form treated 120 runs
+        # sharing four host-timing states as one sample. Its applied rates are
+        # 20, 12, 4 and 7 out of 30 (9C's over-dispersion), so pooling mixed
+        # between-session level differences into a within-session contrast: the
+        # pooled +201 ms was larger than three of the four sessions it was
+        # built from, and one of them had the opposite sign.
+        #
+        # The session is the stratum here for the same reason it is the
+        # stratum for \ReplicationPrevented* and \ClassPp* -- which are emitted
+        # session-clustered from these same four sessions, in this same file.
+        # The pooled kill-latency macros were the one place 8.1 used a
+        # different unit on the same data.
+        def _session_diff(session: str, system: str) -> float | None:
+            subset = [
+                r for r in latency_rows
+                if r["session"] == session and r["filesystem"] == "drvfs"
+                and r["system"] == system
+            ]
+            applied = [int(r["issue_to_return_ns"]) / 1e6
+                       for r in subset if r["applied"] == "1"]
+            missed = [int(r["issue_to_return_ns"]) / 1e6
+                      for r in subset if r["applied"] != "1"]
+            if not applied or not missed:
+                return None
+            return statistics.median(applied) - statistics.median(missed)
+
+        # Fail-closed, deliberately, and the same shape as the guards on
+        # \AblationZeroUpperPerClass and \FlakeyPerRep*: the sessions are read
+        # out of the CSV rather than assumed, and if the set is not four whole
+        # sessions with both outcome groups present in each, NOTHING is
+        # emitted. The withdrawn pooled macros are gone rather than redefined,
+        # so a silent non-emission is a LaTeX undefined-control-sequence and
+        # not a paper that quietly loses a sentence.
+        drvfs_sessions = sorted({
+            r["session"] for r in latency_rows if r["filesystem"] == "drvfs"
+        })
+        KILL_LATENCY_SESSIONS = 4
+        if len(drvfs_sessions) == KILL_LATENCY_SESSIONS:
+            per_system: dict[str, list[float]] = {}
+            for system in ("AEP_FULL", "B3_INTENT_NO_BARRIER"):
+                diffs = [_session_diff(s, system) for s in drvfs_sessions]
+                if all(d is not None for d in diffs):
+                    per_system[system] = [d for d in diffs if d is not None]
+
+            if len(per_system) == 2:
+                # t(0.975, 3), as at \ReplicationPreventedLow. Spelled out
+                # because scipy is not a dependency and a hard-coded critical
+                # value must be checkable against a table.
+                t_critical = 3.182
+                k = KILL_LATENCY_SESSIONS
+                macro(
+                    "KillLatencySessions",
+                    str(k),
+                    f"reports/raw/{latency_path.name} | drvfs | distinct "
+                    f"sessions: {', '.join(drvfs_sessions)}",
+                    "the unit of analysis for every KillLatency macro below "
+                    "that carries no Orig suffix",
+                )
+                # Not a measurement -- a property of the design, and the reason
+                # no p accompanies the interval. A two-sided sign test over k
+                # sessions cannot return below 2*(1/2)^k, which at k = 4 is
+                # 0.125: no outcome this design admits reaches 0.05. Generated
+                # rather than typed so it cannot survive a change in k.
+                macro(
+                    "KillLatencySignFloor",
+                    f"{2 * 0.5 ** k:.3f}",
+                    f"2 * (1/2)^{k} | smallest two-sided sign-test p "
+                    f"attainable over {k} sessions",
+                    "quoted in place of a p-value: the design is floored above "
+                    "0.05, so a non-significant result carries no information "
+                    "about the effect",
+                )
+                for system, system_suffix in (
+                    ("AEP_FULL", ""),
+                    ("B3_INTENT_NO_BARRIER", "Bthree"),
+                ):
+                    diffs = per_system[system]
+                    mean_diff = statistics.mean(diffs)
+                    half = t_critical * statistics.stdev(diffs) / math.sqrt(k)
+                    name = f"KillLatency{system_suffix}"
+                    listing = ", ".join(f"{d:+.0f}" for d in diffs)
+                    # F.0 in its general form. The half-width is 1.86x the
+                    # mean for AEP-full and 2.61x it for B3, so neither
+                    # endpoint means anything read on its own -- the binding
+                    # travels with the value rather than living in a rule
+                    # somebody has to remember to apply.
+                    binding = (
+                        f"F.0: half-width {half:.0f} ms is "
+                        f"{half / abs(mean_diff):.2f}x the {mean_diff:+.0f} ms "
+                        f"mean it brackets. Not quotable without "
+                        f"\\{name}HalfWidth or the interval beside it"
+                    )
+                    macro(
+                        f"{name}PerSession",
+                        listing,
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        "per-session median issue_to_return_ns of runs that "
+                        "applied an effect minus those that did not, ms",
+                        f"sessions in order: {', '.join(drvfs_sessions)}",
+                        "the data. No tally of sessions on one side of zero "
+                        "is emitted: that is the floored sign test in "
+                        "counting form",
+                    )
+                    macro(
+                        f"{name}Mean",
+                        f"{mean_diff:+.0f}",
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        f"mean over {k} sessions of the per-session median "
+                        "difference, ms",
+                        f"= mean({listing})",
+                        binding,
+                    )
+                    macro(
+                        f"{name}HalfWidth",
+                        f"{half:.0f}",
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        f"session-clustered 95% half-width, t({k - 1}) = "
+                        f"{t_critical}, session as the unit",
+                        f"= {t_critical} * {statistics.stdev(diffs):.1f} / "
+                        f"sqrt({k})",
+                    )
+                    macro(
+                        f"{name}PrecisionRatio",
+                        f"{half / abs(mean_diff):.2f}",
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        "half-width divided by the absolute mean it brackets",
+                        "emitted so the prose states the realised precision as "
+                        "a ratio rather than leaving the reader to divide: "
+                        "F.0's binding is about what reaches the reader",
+                    )
+                    macro(
+                        f"{name}Low",
+                        f"{mean_diff - half:+.0f}",
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        "lower end of that interval",
+                        binding,
+                    )
+                    macro(
+                        f"{name}High",
+                        f"{mean_diff + half:+.0f}",
+                        f"reports/raw/{latency_path.name} | drvfs | {system} | "
+                        "upper end",
+                        binding,
+                    )
+
+        # The ext4 cell is ONE session, so nothing above applies to it: there
+        # is no between-session pooling in a single session. It is retained
+        # unchanged, at the unit it was collected at, and k = 1 is its cost.
+        for system, system_suffix in (
+            ("AEP_FULL", ""),
+            ("B3_INTENT_NO_BARRIER", "Bthree"),
         ):
-            for system, system_suffix in (
-                ("AEP_FULL", ""),
-                ("B3_INTENT_NO_BARRIER", "Bthree"),
-            ):
-                hit, miss, p_value, count = _median_split(stratum, system)
-                if not count:
-                    continue
-                name = f"KillLatency{system_suffix}{suffix}"
-                macro(
-                    f"{name}Diff",
-                    f"{hit - miss:.0f}",
-                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
-                    "median issue_to_return_ns of runs that applied an effect "
-                    "minus those that did not, ms",
-                    f"= {hit:.1f} - {miss:.1f}; {why}",
-                )
-                macro(
-                    f"{name}P",
-                    tex_p_value(p_value),
-                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
-                    "Mann-Whitney two-tailed on the same two groups",
-                )
-                macro(
-                    f"{name}N",
-                    str(count),
-                    f"reports/raw/{latency_path.name} | {stratum} | {system} | "
-                    "runs",
-                )
+            hit, miss, p_value, count = _median_split("ext4", system)
+            if not count:
+                continue
+            name = f"KillLatency{system_suffix}Orig"
+            macro(
+                f"{name}Diff",
+                f"{hit - miss:.0f}",
+                f"reports/raw/{latency_path.name} | ext4 | {system} | "
+                "median issue_to_return_ns of runs that applied an effect "
+                "minus those that did not, ms",
+                f"= {hit:.1f} - {miss:.1f}; the paper's own cell, one session, "
+                "reported separately because it differs in filesystem",
+            )
+            macro(
+                f"{name}P",
+                tex_p_value(p_value),
+                f"reports/raw/{latency_path.name} | ext4 | {system} | "
+                "Mann-Whitney two-tailed on the same two groups",
+                "a within-session test on a single session: it pools nothing, "
+                "and it replicates nothing",
+            )
+            macro(
+                f"{name}N",
+                str(count),
+                f"reports/raw/{latency_path.name} | ext4 | {system} | runs",
+            )
 
     # --- Implementation size, counted rather than remembered -------------
     # These were hand-written with a shell command in a comment beside them,

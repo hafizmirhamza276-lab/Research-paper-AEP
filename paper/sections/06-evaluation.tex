@@ -418,21 +418,38 @@ interval [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}], and the
 session-clustered interval rather than pooling the executions, which would treat
 runs sharing a session's host-timing state as independent draws.
 
-The variation has a measured cause, and it is the race itself. The harness
-records how long each \texttt{docker kill} took to return, and across the
-\KillLatencyN{} AEP-full runs of the replication set the runs that applied an
-effect had a median kill latency \KillLatencyDiff{}\,ms \emph{longer} than those
-that did not (Mann-Whitney, two-tailed, $p = \KillLatencyP{}$): the slower the
-kill, the more often \texttt{WAITAOF} won. B3 is the control the same data
-supplies for free, and it shows nothing --- \KillLatencyBthreeDiff{}\,ms over
-\KillLatencyBthreeN{} runs, $p = \KillLatencyBthreeP{}$ --- as a system that
-never waits for the barrier must. The original cell was collected on a different
-filesystem from the four replications, a difference no run configuration
-records, so we report it separately rather than pooling it; it agrees in
-direction, at \KillLatencyOrigDiff{}\,ms over \KillLatencyOrigN{} runs
+The variation has a candidate cause --- the race itself --- and the replication
+set cannot establish it. The harness records how long each \texttt{docker kill}
+took to return, and whether AEP-full dispatches is decided by whether
+\texttt{WAITAOF} returns first, so runs that applied an effect should be the
+ones whose kill was slower. Taking the session as the unit here too, the four
+sessions separate the two groups by \KillLatencyPerSession{}\,ms:
+mean \KillLatencyMean{}\,ms, 95\% interval
+[\KillLatencyLow{},\,\KillLatencyHigh{}]. \textbf{The half-width is
+\KillLatencyHalfWidth{}\,ms, \KillLatencyPrecisionRatio{} times the mean it
+brackets}, and the interval contains zero: the direction agrees across the
+sessions at a precision that does not resolve it. We give no $p$. Over
+\KillLatencySessions{} sessions a two-sided sign test cannot return below
+\KillLatencySignFloor{}, so no outcome this design admits could have reached
+significance, and a test pooling the \ReplicationRuns{} executions would assume
+exactly the independence we decline in the paragraph above. B3 is the control
+the same data supplies, and at this unit it is uninformative rather than clean
+--- \KillLatencyBthreePerSession{}\,ms, mean \KillLatencyBthreeMean{}\,ms,
+interval [\KillLatencyBthreeLow{},\,\KillLatencyBthreeHigh{}], a half-width of
+\KillLatencyBthreeHalfWidth{}\,ms and \KillLatencyBthreePrecisionRatio{} times
+its own mean. A control that wide
+could not have contradicted the mechanism, so its failure to contradict it is
+not evidence for it.
+
+The original cell was collected on a different filesystem from the four
+replications, a difference no run configuration records, so we report it
+separately rather than pooling it --- and being a single session it is the one
+place in this comparison that pools nothing. It agrees in direction, at
+\KillLatencyOrigDiff{}\,ms over \KillLatencyOrigN{} runs
 ($p = \KillLatencyOrigP{}$), with its own control at
 \KillLatencyBthreeOrigDiff{}\,ms ($p = \KillLatencyBthreeOrigP{}$,
-$n = \KillLatencyBthreeOrigN{}$).
+$n = \KillLatencyBthreeOrigN{}$). It is unreplicated, and it is what the
+mechanism rests on.
 
 \UnwantedPrevented{} is therefore not a constant of the protocol and this paper
 does not offer it as one: it is where one host's kill-latency distribution
