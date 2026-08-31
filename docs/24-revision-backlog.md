@@ -1560,3 +1560,100 @@ not reach it.
    *number* matches its source. It cannot see that a sentence carrying no number
    has overstated a sentence that carried one. Same class as B11 and B15: a
    check that looks live and structurally cannot detect what this needs.
+
+---
+
+## B21. The paper build compiles in a scratch directory and then reads three-week-old state back in
+
+**Filed against Phase 12.** Found while rebuilding for the Site 1/Site 2 edits,
+because it produced a `DO NOT SUBMIT` that pointed at the wrong cause.
+
+### What happened
+
+`scripts/build_paper.sh` opens by stating its own design goal:
+
+> Compilation happens in a scratch directory. Bibliography, reference, PDF, and
+> paper-number checks all run against those staged artifacts; only a clean build
+> is promoted into `paper/`.
+
+It then sets, at line 79:
+
+```bash
+export TEXINPUTS="${PAPER}//:${TEXINPUTS:-}"
+```
+
+The `//` makes kpathsea search `paper/` **recursively, for every file the run
+needs** — not only for `sections/`, `generated/` and `figures/`, which is the
+stated intent, but also for `main.aux` and `main.bbl`. Both exist in `paper/`,
+both are **untracked**, and on this host both are dated **10 August** — three
+weeks before this build.
+
+`bibtex` writes a fresh `main.bbl` into the scratch directory. pdflatex then
+finds the stale one and uses it. That `.bbl` predates three `\cite` keys
+`07-related.tex` now uses, so the build reported:
+
+```
+FAIL  no undefined references or citations
+      Citation `richardson-transactional-outbox' on page 14 undefined
+      Citation `jena2025idempotencykey' on page 14 undefined
+      Citation `setty2016olive' on page 14 undefined on input line 44.
+```
+
+All three keys are present in `refs.bib`. Nothing was wrong with the manuscript.
+
+### Why it is worth filing rather than shrugging at
+
+**The isolation the script advertises is defeated by its own search path.** The
+scratch directory is real and the promotion discipline is real, but the compile
+is not isolated: it reads back exactly the kind of stale state the scratch
+directory exists to avoid. Same class as B11 and B15 — the mechanism is present,
+the name is accurate about intent, and it does not do what a reader assumes.
+
+**It misattributes.** The failure names the citation keys and the citing file.
+It gives no indication that the cause is an artifact in a directory the build
+claims not to compile in. Time to diagnose here: substantial, and the first
+control I ran was itself wrong (below).
+
+**It is silent when it succeeds.** A stale `main.bbl` that merely has *outdated
+entries*, rather than missing ones, produces no warning at all. Nothing checks
+that the `.bbl` pdflatex read is the `.bbl` bibtex just wrote. The current
+failure is loud only because the drift happened to be a missing key.
+
+### A methodological note, because the obvious control was wrong
+
+The natural check — "did HEAD build clean?" — was run as:
+
+```bash
+git archive HEAD paper | tar -x -C /tmp/headpaper
+AEP_PAPER_DIR=/tmp/headpaper/paper bash scripts/build_paper.sh
+```
+
+It passed, which appeared to prove the edits caused the failure. **It proved
+nothing of the kind.** `git archive` emits tracked files only, so the exported
+tree had no `main.aux` and no `main.bbl` — the control silently removed the
+variable under test. The comparison was between *edited sources with stale
+artifacts* and *HEAD sources with no artifacts*, differing in two things at once.
+
+Re-run symmetrically (`phase8-driver/build_clean_copy.sh`: copy `paper/`, delete
+the untracked artifacts, build), the edited tree gives **17 passed, 1 failed** —
+identical to the control, with the one failure being the pre-existing missing
+`pydantic` (B6's territory, an environment gap).
+
+**`git archive HEAD <path>` is not a snapshot of a working directory.** Any
+future "was it like this before my change?" check that uses it must first
+establish that the behaviour under test does not depend on untracked files.
+
+### What is needed
+
+1. **Do not put `paper/` on `TEXINPUTS` wholesale.** Expose `sections/`,
+   `generated/` and `figures/` explicitly, or copy the inputs into the scratch
+   directory. Nothing needs `paper/main.aux` on the search path.
+2. **Assert the `.bbl` identity.** After `bibtex`, confirm the `.bbl` pdflatex
+   resolved is the scratch one — `\openin`/`\openout` lines are in `main.log`
+   and are greppable.
+3. **Fail loudly on stale artifacts in `paper/`.** If `main.aux`/`main.bbl` are
+   untracked build products, either `.gitignore` them and remove them before
+   each build, or refuse to build while they are present.
+4. **Decide whether `paper/main.pdf` should be tracked at all.** It is the one
+   tracked build product, and it is now stale relative to the sources, because
+   the build legitimately refuses to promote while the `pydantic` check fails.
