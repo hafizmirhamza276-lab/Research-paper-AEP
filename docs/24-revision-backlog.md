@@ -607,6 +607,64 @@ shell — the pattern was a substring of that shell's command line. Same defect,
 same session, third distinct victim. The pattern-matching family of process
 control is not safely usable in this codebase; use PIDs.
 
+### 12a. Nothing detects or records a gap *inside* the sampled series either
+
+**Added 2026-08-31, when the sampler was stopped.** The same boundary problem as
+B12 itself, one level in: the precondition cannot see load arriving after t=0,
+and the sampler cannot see its own absence.
+
+Stopping `load_sampler.sh` produced a before/after snapshot of its JSONL, and the
+series turns out **not** to be continuous. Across
+`2026-08-28T16:55:15` – `2026-08-31T12:10:52`, 1414 samples, there are two
+multi-hour holes:
+
+| gap | from | to |
+|---|---|---|
+| **36 h** | 2026-08-29T22:12:29 | 2026-08-31T10:10:44 |
+| **7.6 h** | 2026-08-29T12:38:16 | 2026-08-29T20:15:19 |
+
+The cause is WSL VM suspension — a `while true` loop with a `sleep` cannot skip
+36 hours while running. On resume it continues against a clock that has jumped.
+
+**Nothing anywhere records this.** `slice_load.py` counts the samples falling
+inside a window and emits `samples` plus a `coverage_note`, but that note
+describes only the gap *before* sampling began. A window containing a suspension
+would report a lower sample count and say nothing about why — and a sparse or
+empty `foreign_running_seen` would then read as "the VM was quiet" when the only
+supportable reading is **"the VM was not observed"**. That is the exact inversion
+`interpretation_limit` exists to prevent, defeated by a mechanism it does not
+model.
+
+This is **R5** satisfied for the leading gap and unsatisfied for interior ones,
+and it is the same shape as **B13b**: an artefact that does not declare the
+boundary of what it actually covers.
+
+**Sessions 3 and 4 are unaffected, checked rather than assumed.** Both windows
+fall on 28 August, roughly seventeen hours before the earlier gap begins. Outside
+the two gaps above, the largest interval between consecutive samples anywhere in
+the file is **73 s**, and that one occurs on 31 August. Sampling inside both
+windows is regular at its 60 s interval: 72 samples for session 3, 76 for
+session 4. **No suspension occurred during any collection window.**
+
+**Needed, and cheap:** the slicer already holds every sample's timestamp, so it
+can report the largest interior gap in the window beside the sample count, and
+say so explicitly whenever that gap exceeds the sampling interval. Pairs with
+B13c — the interval must be read from the sampler rather than hardcoded, or the
+comparison that decides "is this a gap?" uses the wrong threshold.
+
+**A methodological note that generalises past this item.** `ps` reported the
+sampler as `STARTED 30 Aug 12:20` with `ELAPSED 23:50:39`, which would suggest it
+was not the process launched on 28 August. It was: the PID never changed and the
+JSONL's first record is `16:55:15` on 28 August, seconds after the recorded
+launch. Elapsed and start time derive from boot time, and **boot time is not
+stable across VM suspension on this host**. In a suspendable VM an append-only
+file is a more reliable account of a process's history than the process table is.
+Anywhere the collection tooling reads a duration or an age from a boot-derived
+clock, that reading is suspect on this host and must be checked rather than
+assumed sound.
+
+See `reports/phase-report-8-4-sampler-stopped-2026-08-31.md`.
+
 ## B13. `slice_load.py` writes into frozen roots, and its output depends on when it ran
 
 **Filed against Phase 12. Three defects in one 137-line script, found together.**
