@@ -1445,3 +1445,118 @@ which is committed and closed.
    a projection that cannot be reproduced from inputs the document states is a
    projection with no provenance. Both columns here were reproducible only by
    guessing the omitted assumption.
+
+---
+
+## B20. The paper holds a careful version and a careless version of one equivalence claim, and ships both
+
+**SUBMISSION-BLOCKING. Not Phase 12 routine.** This is not a defect in the
+analysis pipeline or in a design projection; it is a defect in the manuscript as
+it currently stands, and a reviewer reaches it by reading two sentences in one
+document. It is older than anything Phase 8.5 produced.
+
+### The three locations, verbatim
+
+**(1) The careless version — `paper/sections/06-evaluation.tex:618-621`**, in
+`\paragraph{B3-mode: the barrier removed entirely}`:
+
+> it delivers the entire detection guarantee of \cref{tab:outcomes} --- every
+> rate in that table, on every capability class, statistically indistinguishable
+> from AEP-full's.
+
+**(2) The careful version — `paper/sections/06-evaluation.tex:283-301`**, the
+paragraph headed *A word on what the zeros can and cannot support*:
+
+> both numbers are worth nothing: a test between two zero counts has no power,
+> and failing to distinguish them is not evidence that they are the same. What
+> two zeros do support is a *bound*. The one-sided 95% Wilson upper confidence
+> bound on a zero numerator over \BthreeVsAepN{} executions is
+> \AblationZeroUpper{}%. […] This finite-sample bound is the support for "no
+> observed difference" in the two zero-event metrics; the corresponding Fisher
+> values are not evidence of equivalence.
+
+**(3) The generator's own caption — `paper/generated/table-ablation.tex:6`:**
+
+> The p-values are execution-level Fisher tests over all capability classes;
+> they do not account for run clustering and **are not used as equivalence
+> evidence**.
+
+The same disclaimer appears a third time at `06-evaluation.tex:280-281`: "The
+execution-level Fisher value ($p = \BthreeVsAepAmbP{}$) is not used as
+equivalence evidence."
+
+**The abstract's bounded counterpart — `paper/main.tex:157-160`:**
+
+> both record $\BthreeVsAepDupCount{}$ undetected duplicates and
+> $\BthreeVsAepLostCount{}$ lost effects. The individual one-sided 95% Wilson
+> upper bound for either zero-event rate is \AblationZeroUpper{}%.
+
+The abstract makes the narrower claim **and carries its bound**. Line 621 makes
+the wider claim and carries nothing.
+
+### What line 621 drops
+
+Every qualification the source paragraphs insist on:
+
+1. **The bound.** `\AblationZeroUpper{}` = 0.50 pp, and under simultaneous
+   statement Bonferroni gives joint coverage of at least 90%, not 95%. Line 621
+   states no bound and no coverage.
+2. **That the ambiguity margin is stipulated and post hoc.** Line 270-272 says
+   the $\pm\BthreeVsAepAmbMargin{}$ pp margin "was not preregistered, and we
+   state it as a stipulation rather than derive it."
+3. **That the interval is 90%, stratified and cluster-aware** —
+   \BthreeVsAepAmbClusters{} clusters over \BthreeVsAepAmbStrata{} strata — and
+   that line 277-280 calls it "a sensitivity analysis, not a strong general
+   equivalence result".
+4. **That "no observed difference" was the licensed phrasing.** Line 257-258 uses
+   exactly that wording. Line 621 upgrades it to "statistically
+   indistinguishable", which is the phrasing line 288 disclaims by name:
+   "failing to distinguish them is not evidence that they are the same."
+
+### And what it adds that no source supports
+
+**"on every capability class."** There is no per-class equivalence test anywhere
+in the paper. §`sec:eval-detection` reports per-class declared-ambiguity rates
+*descriptively* ("the two systems track each other",
+`06-evaluation.tex:262-265`), and every interval it computes is **pooled** across
+classes. The only per-class statistics in the build are the Fisher values, and
+all three locations above say those are not equivalence evidence. So line 621's
+per-class claim rests on the one quantity the manuscript twice refuses to rest it
+on.
+
+### Why this is blocking rather than routine
+
+Two disclaim the use the third makes, inside one compiled document. A reviewer
+does not need the data, the artifact, or any Phase 8 material to find it — they
+need §6.4's zeros paragraph and §6.7's B3-mode paragraph, both in
+`06-evaluation.tex`. The careless version is also the one placed in the
+deployment-recommendation paragraph, where it does argumentative work: it is what
+licenses "B3-mode gives the paper's headline result for \ProtocolMinusBarrier{}
+ms" at `06-evaluation.tex:633`.
+
+### What is needed — and what was deliberately not done now
+
+**Not fixed in Phase 8.** Line 621 is a different quantity from Phase 8.5's
+estimand (B3 vs AEP-full on `tab:outcomes` detection metrics in the crashed
+regime, versus the capability-class contrast on the applied-effect column in the
+redis-kill regime). It needs its own analysis, and rewriting it now — with the
+data in view and no pre-registration governing it — is exactly the move this
+phase has spent itself avoiding. The `paper/` lift covering Sites 1 and 2 does
+not reach it.
+
+1. **Decide what line 621 is entitled to claim,** per metric and per class,
+   before rewording it. The answer is probably "no observed difference, bounded
+   at \AblationZeroUpper{} pp pooled, with no per-class test" — but that is a
+   determination, not an edit.
+2. **Drop "on every capability class" unless a per-class analysis is run.** It is
+   currently an unsupported generalisation of a pooled result.
+3. **Make the binding structural.** See the principle recorded in
+   `reports/phase-report-8-6-section-F-2026-08-31.md` §F.0b: this is the second
+   instance in this manuscript of *failure to reject reported as
+   indistinguishability*, and §F.0 caught only the first because it was written
+   around one named estimand.
+4. **Nothing enforces consistency between a careful statement and a later
+   restatement of it.** `scripts/check_paper_numbers.py` verifies that every
+   *number* matches its source. It cannot see that a sentence carrying no number
+   has overstated a sentence that carried one. Same class as B11 and B15: a
+   check that looks live and structurally cannot detect what this needs.
