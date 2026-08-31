@@ -624,6 +624,104 @@ The "third unreproducible load-bearing figure" claim is withdrawn entirely.
 F.0e's two instances stand; there is no third. **The count in F.0e is not to be
 read as two-out-of-three with one pending.**
 
+## F.0g The design floor, third instance — the first found rather than pointed out
+
+Three times in this phase a p-value has been quoted from a reference
+distribution whose **smallest attainable value is above 0.05**. The three are
+the same argument in three places:
+
+| | quantity | reference distribution | support | minimum attainable p |
+|---|---|---|---|---|
+| 1 | the 8.5 estimand | Rademacher sign flips, G = 4 | 2⁴ = 16 | 0.0625 one-sided |
+| 2 | `\FlakeyBarrierP` | Fisher / permutation, 3 v 3 | C(6,3) = 20 | **0.1** two-sided |
+| 3 | **the kill-latency contrast** | **sign test over k = 4 sessions** | **2⁴ = 16** | **0.125** two-sided |
+
+**Instance 3 is the first one found in the course of the work rather than
+pointed out afterwards.** Instance 1 was made in conversation and never filed
+(F.0e). Instance 2 was raised by the reviewer, in a sweep I had run and in which
+I had missed it. This one surfaced while asking what a corrected p for B9 would
+even be — which is the question B9's own remedy assumed had an answer.
+
+### The diagnostic, stated so it is usable before the fact
+
+> **Count the support of the reference distribution before quoting a p from
+> it.** Every randomisation test's p is a fraction whose denominator is the
+> number of relabelings the design admits. At small k that denominator is
+> small enough to enumerate by hand: 16, 20, 16. If `2/support > 0.05`, the
+> test cannot reject whatever the data does, and reporting "not significant"
+> from it says nothing about the effect.
+
+This is cheaper than every other check in this report — it needs no data, only
+the design — and it is available at pre-registration, before a single run.
+**All three instances were caught after collection.**
+
+### Swept, and the sweep is negative
+
+The obvious next question is whether any *other* p in the manuscript is floored.
+All eight surviving p-macros were checked against their designs:
+
+| macro | design | minimum attainable p |
+|---|---|---|
+| `\BaselineDupMaxP`, `\BthreeVsAep{Dup,Lost,Amb}P`, `\UnwantedP` | 2×2 at n ≥ 30 per arm | far below 0.05 |
+| `\KillLatencyOrigP` | Mann-Whitney, 10 v 20 | 2/C(30,10), negligible |
+| `\KillLatencyBthreeOrigP` | Mann-Whitney, **2 v 28** | **2/C(30,2) = 0.0046** |
+
+**None is floored**, and this is a checked result rather than an assumption.
+`\KillLatencyBthreeOrigP` is the nearest: not floored, but with two
+observations in one group it has almost no resolution, and the same 28/2 split
+is why each B3 session difference in the drvfs arm rests on two runs.
+
+### The floor is now emitted rather than argued
+
+**This is the first of the three instances to reach the paper as a generated
+number.** `\KillLatencySignFloor` = 0.125 is computed as `2 * (1/2) ** k`, with
+`k` read out of the CSV rather than typed, and it is quoted in
+`06-evaluation.tex` as the reason no p accompanies the interval.
+
+Two consequences, and the second is the point:
+
+1. It **cannot survive a change in k**. If the session set ever changes, the
+   floor changes with it or the emission refuses.
+2. **A design property that was previously an argument in a report is now a
+   number in the manuscript.** Instances 1 and 2 were reasons for *not*
+   printing something; nothing in the artefact records why. Instance 3 prints
+   the reason. That is the difference between a decision and a disclosure, and
+   F.0e's finding — that what reaches the repository is what someone decided to
+   write down — is the argument for preferring the second.
+
+## F.0h The orphan gate fired again, and its fix produced the better sentence
+
+**Second firing during a framing revision, third overall.** The count is read
+off the record rather than remembered, because asserting a count from memory is
+the failure this session has filed five times:
+
+| | where | orphans | context |
+|---|---|---|---|
+| 1 | `reports/phase-report-4b-2026-08-07.md:239` | 39 | the gate's first run; accumulated, not a revision |
+| 2 | B20's single macro commit (F.0d) | 2 — `AblationZeroUpperExec`, `AblationZeroUpperRun` | framing revision |
+| 3 | **B9 unit 2, `ebc7d1f`** | **1 — `KillLatencyBthreeHalfWidth`** | framing revision |
+
+Firing 3 is a second confirmation of the docstring's prediction, written before
+any of this: *"a dangerous one during a framing revision, which is exactly when
+a claim gets moved, its replacement gets written, and its evidence gets
+orphaned."* Both revision-time firings are exactly that.
+
+**What is new is what the fix did to the prose.** I had emitted both a
+half-width in milliseconds and a precision ratio for B3, and quoted only the
+ratio. The gate refused the build. The repair — quoting the half-width in
+milliseconds *and* the ratio, matching the AEP-full sentence — is **the better
+sentence**: a bare "2.61 times its own mean" makes a reader reconstruct the
+width from two other numbers, and the ratio alone is the form F.0b's
+restatement problem takes when a magnitude is dropped for readability.
+
+**The gate has no opinion about prose.** It enforced that a computed number be
+consumed, and consuming it forced the sentence that states the precision
+directly. That is a second-order property worth recording alongside F.0d's
+fail-closed account: **a check on the completeness of the output can improve the
+argument, because the cheapest way to satisfy it is usually to say the thing the
+number was computed to say.** One instance. It is offered as an observation, not
+as a rule.
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
