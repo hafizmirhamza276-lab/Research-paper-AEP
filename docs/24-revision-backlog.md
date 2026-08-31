@@ -779,7 +779,7 @@ from being wrong again.
 **Filed against Phase 12. Confirmed from source and across all 11 result roots on
 the collection host.**
 
-`scripts/freeze_results.py:176-178`:
+`scripts/freeze_results.py:175-177`:
 
 ```python
 digested = [manifest_path, csv_path]
