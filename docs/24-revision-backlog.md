@@ -1630,10 +1630,15 @@ guarantee.
    violation — but it is the same misconception living in the generator, beside
    the macros whose own provenance says the Fisher values are descriptive only.
    **Phase 12.**
-2. **`06-evaluation.tex:63`** — "long enough to suspend is indistinguishable from
-   one that cannot" — surfaced by the sweep and **correctly not a violation**: it
-   describes an observational limitation, not a failure to reject. Recorded so a
-   future sweep does not re-litigate it.
+2. **Two sentences the sweep surfaced that are correctly *not* violations.**
+   Recorded so a future sweep does not re-litigate them. `06-evaluation.tex:63`
+   ("long enough to suspend is indistinguishable from one that cannot") and
+   `08-threats.tex:242` ("They are also indistinguishable from clean runs in
+   every artifact the analysis reads"). **Both are observability claims, not
+   failures to reject** — neither reports a test. The second is in fact the
+   opposite of the defect B20 names: it states that two populations *cannot be
+   told apart in the data*, and uses that to justify discarding and re-collecting
+   rather than to claim they are the same.
 
 **Item 4 of the original filing stands and is unfixed.** Nothing enforces
 consistency between a careful statement and a later restatement. All four sites
