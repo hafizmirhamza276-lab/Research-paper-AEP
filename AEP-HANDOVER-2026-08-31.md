@@ -78,8 +78,22 @@ analysis products), strict 8.0 policy: no run directories, no ledgers, no logs.
 | **class difference (pp)** | **0.0** | **−10.0** | **+23.3** | **+36.7** |
 | B3 AUTH / NO_READBACK | 30/30, 28/30 | 30/30, 28/30 | 30/30, 28/30 | 30/30, 28/30 |
 | balance (AEP-full, ms) | +13.0 | −97.7 | **+73.6** | **+41.3** |
-| drift (Spearman) | −0.478 | −0.595 | **negative** | **negative** |
+| drift (Spearman) | −0.478 | **−0.547** | **−0.112** | **−0.665** |
 | non-landing kills | 0 | 2 (rep0, rep6) | **0** | **0** |
+
+> **Correction, 31 Aug.** The s2 figure read **−0.595** in the first version of
+> this document. **That number is wrong and I put it there**, carried forward
+> from the superseded 28 Aug handover without deriving it — the failure mode
+> this project keeps filing, committed inside the document written to replace a
+> misleading one.
+>
+> All four are now derived from the tracked `per-execution.csv` of each root:
+> Spearman(run position in execution order, `redis_kill_latency_ms`), position
+> reconstructed as `(repetition, cell)` for the interleaved sort key. **One cell
+> ordering reproduces `+0.703` for the superseded `b2-paired-s1` and `−0.478`,
+> `−0.112` and `−0.665` for s1, s3 and s4 exactly**, which is what licenses
+> reading `−0.547` off the same construction. **No ordering, and no combination
+> of the s2 root with its aborted predecessor, produces `−0.595`.**
 
 **All four sessions are interleaved, and k = 4 stands — established from two
 independent sources that agree.** This corrected a claim I had asserted from
