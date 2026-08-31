@@ -82,10 +82,36 @@ assumed.** k was not wrong; the variance was.
    pre-registration forbids extending k after seeing results. What it changes is
    what CONFIRMS *means*: it is failure to reject at a precision materially worse
    than the one the design promised.
-4. **It is a finding about the design, and it belongs in 8.6 §F** beside the two
+4. **It is a finding about the design, and it goes in 8.6 §F** beside the two
    contradicted predictions. The projection assumed a between-session variance
    the host did not deliver — which is the same instability visible in the
    balance figures (+13.0, −97.7, +73.6, +41.3) and in §3.1's coefficient spread.
+
+### But §F is not where this primarily lives — it is bound to the verdict
+
+**Filing this only as a finding would be the wrong placement, and the reason is
+arithmetic.** Set the three registered numbers beside the observed one:
+
+| | |
+|---|---|
+| registered MDE | 17.3 pp |
+| projected half-width | 19.6 pp |
+| **realised half-width** | **33.9 pp** |
+| **observed mean effect** | **+12.5 pp** |
+
+**The mean is smaller than the half-width. The design could not have detected the
+effect it found.**
+
+So the verdict is not "no effect was detected"; it is "an effect of +12.5 pp was
+observed by an instrument too blunt to resolve it, and by the registered rule
+that counts as failure to reject". Those are very different sentences, and only
+the second is true.
+
+**Therefore, wherever CONFIRMS is stated — 8.6, `06-evaluation.tex`,
+`08-threats.tex`, any macro or abstract sentence — the realised precision travels
+with it.** The §F entry stays, and is not a substitute: a finding among findings
+can be read past, and a reviewer who reaches this unaided will reasonably treat
+its absence as the paper's weakest point.
 
 ## 3. §3.3 — the fail-closed invariant
 

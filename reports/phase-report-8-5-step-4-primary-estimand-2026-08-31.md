@@ -169,6 +169,40 @@ The two coincide only under homogeneity, and this set does not look homogeneous.
 
 **The registered prediction — class coefficient 0 — is CONFIRMED.**
 
+### The verdict does not travel alone. It carries its realised precision.
+
+**This is binding, and it is not a caveat to be relegated to a findings
+section.** Wherever CONFIRMS is stated — this report, 8.6, `06-evaluation.tex`,
+`08-threats.tex`, any generated macro, any abstract sentence — the following
+travels with it:
+
+> **The registered rule returned CONFIRMS at a realised precision materially
+> worse than registered.** The interval contains zero at a width that would also
+> have contained most effects worth detecting.
+
+The three numbers that force this, all from the design's own registered
+projection (`plan-phase-8-b2.md` §7) and §3.2:
+
+| | |
+|---|---|
+| registered minimum detectable effect | **17.3 pp** |
+| projected §3.2 half-width at k = 4 | **19.6 pp** |
+| **realised §3.2 half-width** | **33.9 pp** |
+| **observed mean effect** | **+12.5 pp** |
+
+**Read together: the mean effect is smaller than the half-width, so the design
+could not have detected the effect it found.** That is not failure to reject in
+the ordinary sense. It is failure to reject by a design that was underpowered
+for its own result.
+
+A reviewer reaches that in one step. If CONFIRMS appears anywhere without the
+realised precision beside it, that is the weakest point in the paper and the
+reviewer would be right to hit it. Stating it first is not a concession; it is
+the only version of the claim that survives contact with someone checking it.
+
+**§F carries this as well. §F is not a substitute for the binding** — a finding
+listed among findings can be read past, and this one cannot be allowed to be.
+
 ### CONFIRMS is failure to reject. It is not evidence that the effect is absent.
 
 **This distinction is not a caveat to be softened. It is the correct reading of
