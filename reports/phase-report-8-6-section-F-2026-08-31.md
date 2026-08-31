@@ -90,6 +90,81 @@ misread.
    the failure mode is not violation — it is a sentence that never matches the
    trigger. Nothing flags a rule that has stopped applying.
 
+## F.0b The principle, stated without reference to any quantity
+
+**F.0 binds one estimand. That is why it caught one instance and not the other.**
+This section states the rule the two instances share, deliberately naming no
+metric, no comparison and no phase, so that the next instance is caught by the
+rule rather than by someone happening to sweep for it.
+
+### The rule
+
+> **A failure to reject may not be reported as indistinguishability, equivalence,
+> sameness, or absence of an effect — in any wording — unless the precision that
+> licenses that reading is stated in the same place.**
+>
+> "The same place" means the sentence, the caption, or the list item a reader
+> encounters the claim in. Not the section. Not an earlier paragraph. Not a
+> different document.
+>
+> The licensing precision is one of: an interval and its coverage; an upper
+> bound and its coverage; or an equivalence margin, together with whether that
+> margin was pre-registered or stipulated after the fact.
+>
+> Where no such quantity exists, the only admissible report is the descriptive
+> one — *no observed difference*, *the test did not reject* — and it must not be
+> restated later in stronger words.
+
+### Why the rule has to be quantity-free
+
+Both known instances arose the same way. A careful statement is made once, with
+its bound, in the section that computed it. It is then **restated** somewhere
+that needed it as a premise — a deployment recommendation, a limitations list, an
+abstract — and the restatement keeps the conclusion and drops the qualification,
+because the qualification is not what the later passage is about.
+
+Neither instance is a violation of anything checkable:
+
+- The restatement contains **no number**, so `check_paper_numbers.py` has nothing
+  to verify. It compares numbers to sources; a sentence with no number is
+  invisible to it, and a sentence that overstates a numbered sentence is
+  invisible to every tool in the repository.
+- The restatement is **not adjacent** to the careful version, so nothing brings
+  the two into contact. In one instance they are 300 lines apart in one file.
+- The restatement is often **strictly more readable** than the careful version,
+  which is why it survives editing.
+
+A rule scoped to a named estimand cannot catch this, because the mechanism is
+generic and the estimand is not. F.0a already recorded that a rule about a
+*string* cannot catch a claim about a *meaning*; this is the next step of the
+same lesson — a rule about *one quantity* cannot catch a *pattern*.
+
+### What would actually enforce it
+
+Nothing in the repository does today, and this should be recorded as unmet rather
+than described as handled:
+
+1. **A lexicon check.** The vocabulary of unwarranted equivalence is small and
+   enumerable: *indistinguishable*, *equivalent*, *the same as*, *no
+   difference*, *no effect*, *unaffected*, *identical to*, *shows no*. A grep-
+   level check that flags each occurrence for manual sign-off would have found
+   both instances in seconds. It cannot decide whether a claim is warranted; it
+   can refuse to let one pass unreviewed.
+2. **Precision-carrying macros.** Where a result is emitted as a macro, the
+   bound or interval should be emitted such that quoting the estimate without it
+   is awkward rather than natural. Nothing enforces co-quotation today.
+3. **A restatement audit.** For each careful statement, find every later passage
+   that depends on it and check the qualifications survived the trip. This is
+   the step neither instance received.
+
+### Standing
+
+**Two instances, both in this manuscript, found five days apart by different
+means** — one by drafting under F.0, one by sweeping under it. Neither was found
+by a tool. The rule above is recorded as a requirement on future work; the
+enforcement in the list above does not exist, and no claim is made here that it
+does.
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
