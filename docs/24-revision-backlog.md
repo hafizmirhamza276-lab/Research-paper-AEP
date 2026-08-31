@@ -394,6 +394,117 @@ new data is protected against exactly this. The frozen replication set that 8.1
 analysed is not, and cannot be — it is already collected. B9 is therefore a
 re-analysis obligation, not a re-collection one.
 
+### RESOLVED 2026-08-31 — the defect was pooling, it reached the point estimate, and the control was not one
+
+**Closed.** Full working in
+`reports/phase-report-8-B9-kill-latency-reanalysis-2026-08-31.md`; derivations
+in `reports/raw/b9_kill_latency_by_session.py` and
+`reports/raw/b9_drift_reconstruction.py`. No frozen root was opened and nothing
+was re-collected. **This does not close as "recomputed, unchanged."**
+
+**Correction 1 — the `+0.703` is from the wrong collection.** It is *not*
+unreproducible: it reproduces exactly at **+0.7034** from
+`b2-paired-s1-2026-08-28`'s tracked `per-execution.csv`, with position
+reconstructed as `(cell, repetition)` in collection order. A stronger claim —
+that the figure existed only outside the artefact — was asserted in this task's
+plan and is **withdrawn in full**; the mechanism of that error is recorded in
+§F.0f. What is wrong is narrower and still fatal to the paragraph above:
+`b2-paired-s1` is a **superseded design in a different collection** from the
+Phase 9 replication set (`b2ab570`) that this entry's claim is about. **The
+drift was imported across collections before anyone measured the drift in the
+data being argued about.**
+
+**Correction 2 — the drift in this entry's own data is nothing like +0.703.**
+Spearman(repetition, kill latency) for AEP-full: −0.211, −0.505, +0.045, −0.436
+across `P9-B`, `s1`, `s2`, `s3`, and −0.125 on ext4. **Mixed in sign, moderate
+in magnitude.** Drift is real and exchangeability over run labels does fail, so
+the entry does not retire — but its stated evidence had to be replaced before
+anything could be built on it.
+
+**Correction 3 — it names the wrong test.** There is one family and it is
+Mann-Whitney throughout (`paper_tables.py`, `_median_split`), not "a permutation
+test over run labels" plus "the Mann-Whitney variants". The concern survives —
+Mann-Whitney's null distribution *is* the permutation distribution of ranks —
+but the entry misdescribes its own target.
+
+**Correction 4 — the defect is between-session pooling, which this entry never
+mentions.** `_median_split` filtered on `filesystem` and `system` only. The
+drvfs stratum is **four sessions**, so it pooled 120 runs across four
+host-timing states with no session term. Applied rates are 20, 12, 4 and 7 out
+of 30 — 9C's over-dispersion — so pooling mixed between-session level
+differences into a within-session contrast. Within-session position, which is
+what this entry diagnoses and what both its proposed remedies target, is the
+*weak* threat here: ρ(position, `applied`) is ≤ 0.19 in magnitude in every
+session.
+
+**Correction 5 — it reached the point estimate, not only the p.** The entry
+says *"what cannot stand is the p-value as currently computed"*. That is wrong.
+The four per-session median differences are **+70, −4, +282, +74** ms; the
+pooled `\KillLatencyDiff` was **+201** ms, **larger than three of the four
+sessions it was built from, with one of them of the opposite sign**. Pooling
+weights runs, so `s2`'s +282 ms — measured on 4 applied runs against 26 —
+dominated it. Session-clustered with the paper's own estimator: mean **+105.5**,
+95% interval **[−90.8, +301.7]**, **half-width 1.86× the mean it brackets**.
+
+**Correction 6 — the B3 negative control was not a negative control.**
+`_median_split("drvfs", "B3_INTENT_NO_BARRIER")` was **the same pooled call on
+the same four sessions**, so it could not stay evidential while the treatment
+arm was retired. Recomputed at the session level: −28, +27, −31, −152 ms, mean
+**−46.0**, interval **[−166.4, +74.3]**, **half-width 2.61× its mean**.
+
+> **Pooling is what made it look like a control.** The pooled −14 ms at p = 0.63
+> read as a clean null because pooling made it precise. At the correct unit the
+> interval spans 240 ms and contains effects larger than the one it was
+> supposed to be controlling for. **It never had the power to contradict the
+> mechanism, so its failure to contradict it was never evidence for it** —
+> whatever B3 had done, this comparison would have returned a null. Each
+> session's difference rests on 2 non-applied runs out of 30.
+
+**Correction 7 — the remedy this entry prescribes cannot work.** It assumes the
+fix is a corrected p. At the session level with k = 4, a two-sided sign test is
+**floored at 2·(1/2)⁴ = 0.125** — no outcome the design admits reaches 0.05. The
+t route is not floored and returns p = 0.186. `"3 of 4 sessions positive"` is
+that same floored test in counting form (two-sided p = 0.625) and is therefore
+**not** used as directional support. The paper reports the four differences, the
+mean and the interval, with no p and no tally.
+
+**Correction 8 — the block-width remedy is declined, on the record.** Block
+width is a researcher degree of freedom. Had it been necessary the rule would
+have been fixed before looking (width = the collection's repetition stride) and
+any verdict that moved with the width would have been reported as a finding
+rather than resolved by choosing a width. None of it is needed once the session
+is the block — which is not a free parameter but **the unit `paper_tables.py`
+already uses for `\ReplicationPrevented*` and `\ClassPp*` on these same four
+sessions, in the same file**. That inconsistency, one report using two units on
+one dataset, is what makes this a defect rather than a defensible choice.
+
+**Correction 9 — the asymmetry note is right and is kept.** Interleaving from
+session 2 onward does protect new data. That paragraph survives intact.
+
+**What was withdrawn beyond what this entry named.** 8.5's finding that
+`log(issue_to_return_ns)` is not degenerate was being used as independent
+support for the mechanism. It is not: non-degeneracy establishes that the
+covariate has variation to adjust on, and says nothing about whether latency
+predicts `applied`.
+
+**What the mechanism now rests on.** One session — ext4, `2026-08-07`, 30 runs
+— at **+88 ms, p = 0.03**, with its own single-session control at +26 ms,
+p = 0.53. It is retained because it is a single session and therefore pools
+nothing; its costs are that k = 1, it carries no between-session variance
+component, and **it is the one figure this entry's own exchangeability concern
+actually reaches**. Beside it, four replication sessions that are directionally
+consistent at a precision that does not resolve the question. **That is very
+little, and it is the result.** The mechanism is not refuted and it is not
+established.
+
+**Changed:** `\KillLatency{,Bthree}{Diff,P,N}` withdrawn and replaced by
+`\KillLatency{,Bthree}{PerSession,Mean,HalfWidth,PrecisionRatio,Low,High}` plus
+`\KillLatencySessions` and `\KillLatencySignFloor`, session declared in the
+`macro()` provenance and the emission fail-closed on "exactly four whole
+sessions". `\KillLatencyOrig*` and `\KillLatencyBthreeOrig*` unchanged.
+`06-evaluation.tex` and `08-threats.tex` rewritten. Nothing in `main.tex`.
+Commits `49cf2a3`, `ebc7d1f`, `c7dc005`.
+
 ---
 
 ## B10. `paper_tables.py` writes incomplete output and exits 0 when under-invoked
