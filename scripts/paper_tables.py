@@ -628,11 +628,25 @@ def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
     counted = ack_survived = unack_lost = 0
     windows: list[float] = []
     barriers: list[float] = []
+    # Per-replication figures, so the paper can state that separation was
+    # perfect in EVERY replication rather than only in the pool. Collected as a
+    # set: if the three replications ever stop agreeing, the set has more than
+    # one member, the macros are not emitted, and the sentence quoting them
+    # fails to compile. Refusing beats averaging -- the claim is "in every one",
+    # and a mean cannot support it.
+    per_rep: set[tuple[int, int, int]] = set()
     for payload in payloads:
         summary = payload.get("summary") or {}
         counted += int(summary.get("counted", 0))
         ack_survived += int(summary.get("acknowledged_survived", 0))
         unack_lost += int(summary.get("unacknowledged_lost", 0))
+        per_rep.add(
+            (
+                int(summary.get("counted", 0)),
+                int(summary.get("acknowledged_survived", 0)),
+                int(summary.get("unacknowledged_lost", 0)),
+            )
+        )
         for trial in payload.get("trials", []):
             if trial.get("error") or not trial.get("acknowledged_survived"):
                 continue
@@ -651,8 +665,11 @@ def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
             "FlakeyReplications",
             str(len(payloads)),
             source,
-            "independent runs of the probe, each rebuilding the device stack "
-            "and the filesystem from scratch",
+            "independent runs of the probe, each building the device stack "
+            "from scratch. The filesystem and the server are rebuilt more "
+            "often than that: flakey_write_loss.py:352-357 does mkfs.ext4 and "
+            "starts a fresh redis-server PER TRIAL, so no trial can read a key "
+            "a previous trial's AOF still holds",
         ),
         (
             "FlakeyN",
@@ -687,32 +704,54 @@ def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
             "widest write-to-write-loss exposure window, ms; the "
             "appendfsync everysec period it sits inside is 1000 ms",
         ),
-        (
-            "FlakeyBarrierP",
-            tex_p_value(
-                fisher_exact_two_tailed(
-                    counted - ack_survived,
-                    ack_survived,
-                    unack_lost,
-                    counted - unack_lost,
-                )
-            ),
-            source,
-            "Fisher exact two-tailed, acknowledged vs un-acknowledged "
-            f"loss over the same {counted} trials",
-        ),
     ]
-    # The cross-fault comparison is the point of the probe: the same two keys
-    # under a process kill lost nothing.
-    emitted.append(
-        (
-            "FlakeyVsProcessKillP",
-            tex_p_value(fisher_exact_two_tailed(0, 10, unack_lost, 0)),
-            "reports/raw/e1-durability-window.txt (0/10 lost under "
-            "docker kill -s KILL) vs " + source,
-            "Fisher exact two-tailed across the two fault classes",
+    # \FlakeyBarrierP and \FlakeyVsProcessKillP are deliberately NOT emitted.
+    #
+    # Both were Fisher exact two-tailed, and Fisher assumes two independent
+    # samples. These are not two samples: one_trial() writes an acknowledged
+    # and an un-acknowledged record in the SAME trial and exposes both to the
+    # SAME write-loss event. Its own docstring says "One matched pair of
+    # writes, one write-loss event, one read-back", and the provenance string
+    # this code used to emit said "over the same N trials". The construction
+    # contradicted its own documentation, and the pairing defect holds at every
+    # choice of unit.
+    #
+    # The unit is separately contested, and no choice of it rescues a p:
+    #   - trial level (what was emitted): 2.2e-53, assuming 180 independent
+    #     observations that share a device stack and come in matched pairs;
+    #   - replication level: 3 against 3, where the two-sided minimum is
+    #     2/C(6,3) = 0.1. That is the DESIGN'S FLOOR, not a statement about the
+    #     data: perfect separation is the strongest outcome available and it
+    #     still does not reach 0.05.
+    #
+    # What the probe actually shows is stronger than any of those and needs no
+    # p at all, so section 6 states it descriptively. See
+    # reports/phase-report-8-unit-of-analysis-sweep-2026-08-31.md.
+    #
+    # Emitted instead: the per-replication figures, which are what "perfect
+    # separation in every replication" rests on. Guarded -- if the replications
+    # ever disagree these do not exist and the sentence quoting them fails.
+    if len(per_rep) == 1:
+        rep_counted, rep_ack, rep_unack = per_rep.pop()
+        emitted.append(
+            (
+                "FlakeyPerRepAckSurvived",
+                f"{rep_ack}/{rep_counted}",
+                source,
+                "acknowledged writes surviving, per replication; emitted only "
+                "because all replications agree, so the paper may say 'in "
+                "every one' rather than quoting a pooled figure",
+            )
         )
-    )
+        emitted.append(
+            (
+                "FlakeyPerRepUnackLost",
+                f"{rep_unack}/{rep_counted}",
+                source,
+                "un-acknowledged writes destroyed, per replication; same "
+                "guard",
+            )
+        )
     return emitted
 
 

@@ -313,7 +313,7 @@
 \newcommand{\KillCanaryN}{60}
 
 % experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
-% independent runs of the probe, each rebuilding the device stack and the filesystem from scratch
+% independent runs of the probe, each building the device stack from scratch. The filesystem and the server are rebuilt more often than that: flakey_write_loss.py:352-357 does mkfs.ext4 and starts a fresh redis-server PER TRIAL, so no trial can read a key a previous trial's AOF still holds
 \newcommand{\FlakeyReplications}{3}
 
 % experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
@@ -337,12 +337,12 @@
 \newcommand{\FlakeyWindowMax}{61.8}
 
 % experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
-% Fisher exact two-tailed, acknowledged vs un-acknowledged loss over the same 90 trials
-\newcommand{\FlakeyBarrierP}{2.2\times10^{-53}}
+% acknowledged writes surviving, per replication; emitted only because all replications agree, so the paper may say 'in every one' rather than quoting a pooled figure
+\newcommand{\FlakeyPerRepAckSurvived}{30/30}
 
-% reports/raw/e1-durability-window.txt (0/10 lost under docker kill -s KILL) vs experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
-% Fisher exact two-tailed across the two fault classes
-\newcommand{\FlakeyVsProcessKillP}{5.8\times10^{-14}}
+% experiments/results/g2-flakey-write-loss*.json | 3 replication(s) of experiments/flakey_write_loss.py
+% un-acknowledged writes destroyed, per replication; same guard
+\newcommand{\FlakeyPerRepUnackLost}{30/30}
 
 % analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
 % 2.5th percentile of (median AEP-full - median B3); point estimate 1968.1 ms from 3 and 3 runs

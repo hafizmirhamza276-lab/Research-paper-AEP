@@ -494,13 +494,25 @@ file \texttt{fsync}-ed before the switch must survive and one \texttt{fsync}-ed
 after it must not. The probe refuses to report Redis trials unless that holds.
 % source: experiments/flakey_write_loss.py; reports/raw/g2-flakey-write-loss.txt.
 
-\paragraph{The result} Over \FlakeyN{} trials in \FlakeyReplications{}
-independent replications, each rebuilding the device and the filesystem from
-scratch, the acknowledged record survived \FlakeyAckSurvived{} and the
-unacknowledged one was destroyed \FlakeyUnackLost{}
-($p = \FlakeyBarrierP{}$). Against the same two keys under a process kill ---
-$\ProcessKillUnackLost{}$ lost --- the fault classes separate at
-$p = \FlakeyVsProcessKillP{}$. The filesystem was mounted
+\paragraph{The result} The probe ran \FlakeyN{} trials in \FlakeyReplications{}
+independent replications. Each replication builds the device stack from
+scratch, and each \emph{trial} within it rebuilds the filesystem with
+\texttt{mkfs.ext4} and starts a fresh server, so no trial can read a key a
+previous trial's append-only file still holds. \textbf{Separation was perfect in
+every replication}: the acknowledged record survived
+\FlakeyPerRepAckSurvived{} and the unacknowledged one was destroyed
+\FlakeyPerRepUnackLost{} in each, \FlakeyAckSurvived{} and \FlakeyUnackLost{}
+overall. Against the same two keys under a process kill,
+$\ProcessKillUnackLost{}$ were lost; the fault classes separate completely.
+
+We give no $p$ for either comparison, and the reason is that no unit supports
+one: at the trial level the test would assume an independence the shared device
+stack violates and would ignore the pairing --- both records are written in the
+same trial and meet the same write-loss event --- while at the replication
+level, three against three, the two-sided minimum a perfectly separated result
+can reach is $0.1$, which is the design's floor rather than a statement about
+these data. The complete separation in every replication is the finding, and it
+does not need one. The filesystem was mounted
 \texttt{ext4 rw,relatime} with its journal enabled and no \texttt{nobarrier},
 and the server's \texttt{appendfsync} was read back as \texttt{everysec} from
 the running instance; the probe refuses to measure if either is otherwise,

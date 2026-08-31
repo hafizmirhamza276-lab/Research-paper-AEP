@@ -174,8 +174,9 @@ $\BthreeKillApplied{}/\BthreeKillRuns{}$, Fisher $p = \UnwantedP{}$) ---
 The barrier's durability claim, which a process kill cannot exercise at all
 because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not the
 \texttt{write(2)}, we test directly by making the block device stop accepting
-writes: acknowledged records survive \FlakeyAckSurvived{} and unacknowledged
-ones are destroyed \FlakeyUnackLost{} ($p = \FlakeyBarrierP{}$), against
+writes: across \FlakeyReplications{} independent replications, separation is
+perfect in every one --- acknowledged records survive \FlakeyAckSurvived{} and
+unacknowledged ones are destroyed \FlakeyUnackLost{} --- against
 $\ProcessKillUnackLost{}$ lost under a process kill on the same probe. Because
 detection does not
 depend on the barrier, its cost is a deployment choice rather than the
