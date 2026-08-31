@@ -214,6 +214,34 @@ on undefined references, both of which LaTeX itself reports as warnings while
 exiting 0. Expected: 18 pages, zero undefined references, zero `\todo`, and
 `18 passed, 0 failed` from `check_paper_numbers.py`.
 
+> **`paper/main.pdf` is STALE as of 2026-08-31. Do not read it as the current
+> manuscript.**
+>
+> The tracked PDF was built on 2026-08-21 (commit `97c44ff`) and is 19 pages.
+> The sources in `paper/` have since changed and now build to 20 pages.
+>
+> **What the tracked PDF lacks:** the capability-class result added to
+> `sections/08-threats.tex` and `sections/06-evaluation.tex` — four
+> pre-registered sessions, the applied-effect difference, its session-clustered
+> interval and its half-width — and all twelve `\Class*` macros in
+> `generated/numbers.tex`. It also predates the `\ClassPpMin`/`\ClassPpMax` and
+> interval-binding changes to `scripts/paper_tables.py`.
+>
+> **Why it was not regenerated:** `build_paper.sh` correctly refuses to promote
+> a build whose checks do not pass, and one check currently fails on this host
+> (`ModuleNotFoundError: No module named 'pydantic'` in the state-machine
+> figure check — an environment gap, backlog B6). Forcing the promotion past a
+> gate is exactly what the gate exists to prevent, so the stale file is marked
+> rather than overwritten. The build itself is clean: 20 pages, no undefined
+> references or citations, no unexpanded macros.
+>
+> Note also that the "18 pages / `18 passed, 0 failed`" expectation above
+> already did not match the tracked 19-page PDF before this change. It is left
+> as written rather than silently corrected.
+>
+> **The real fix is backlog B21**, which also covers the untracked, three-week-
+> old `paper/main.aux` and `paper/main.bbl` that the build reads back in.
+
 ---
 
 ## 5. The frozen results
