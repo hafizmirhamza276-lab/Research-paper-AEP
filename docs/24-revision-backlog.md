@@ -1004,18 +1004,40 @@ source is not vendored here — `redis/` holds only `phase2.conf`,
 wall-clock, which would include suspended time. That is the assumption above and
 it should be confirmed against Redis's source before any fix is designed.
 
-### The failure mode, and its direction
+### The failure mode, and its direction — spurious EXCLUSIONS
 
-If the VM suspends between `started` (`faults.py:197`) and the `INFO` read
-(`faults.py:206`) — a window of roughly one to two seconds — Redis's uptime
-absorbs the suspension while the monotonic term does not. The threshold stays at
-its floor of 30, the uptime is enormous, and `FaultInjectionError` is raised on a
-run **whose kill did land**.
+The direction matters more than the mechanism, because it determines which of
+amendment 4's two provisions is exposed.
 
-**The direction is conservative:** it wrongly *excludes* a good run rather than
-wrongly *including* a bad one. But amendment 4 caps refills at 3 per session and
-treats a session that reaches the ceiling as a sick instrument, so a run of these
-could condemn a healthy session on a clock artefact.
+**The chain, stated explicitly.** Suppose the VM suspends between `started`
+(`faults.py:197`) and the `INFO` read (`faults.py:206`) — a window of roughly one
+to two seconds.
+
+1. Suspension **advances the wall clock**, so Redis's `uptime_in_seconds`
+   **inflates** by the whole duration of the suspension.
+2. Suspension **does not advance `CLOCK_MONOTONIC`**, so
+   `int(time.monotonic() - started) + 10` does not move. The threshold stays
+   **static** at its floor of 30.
+3. An inflated uptime against a static threshold makes `uptime <= max(30, ...)`
+   false, so **`was_killed` evaluates `False`**.
+4. `faults.py:231-236` therefore raises `FaultInjectionError: the hard kill did
+   not land` — **on a run whose kill did land.**
+
+**A landed kill is recorded as a non-landing one. The risk is spurious
+EXCLUSIONS, not spurious inclusions.**
+
+**And it lands directly on amendment 4's ceiling.** The registered rule is that
+more than 3 non-landing kills in a session marks a sick instrument. Every
+spurious exclusion consumes one of those three. A single suspension striking
+that one-to-two-second window in four separate runs would trip the ceiling and
+condemn a session whose instrument was working perfectly — and the session would
+be reported as degraded on the strength of a clock artefact, with the refills
+themselves also being unnecessary.
+
+**It could have tripped the ceiling falsely. It did not.** The sampler's gaps —
+the only suspensions on record — are **29–31 August**, and **both session
+windows are 28 August**. No collection window contains a suspension, so no
+exclusion in Phase 8.4 can have arisen this way. See the check below.
 
 **Exposure is bounded by the `max(30, ...)` floor.** A restart takes one to two
 seconds, so the monotonic term is dominated by the constant 30 in normal
