@@ -107,26 +107,47 @@ merely omitting them.
 databases are empty or that the `-wal`/`-shm` triple must travel together. There
 is still no archive script; `Makefile:38`'s `ARCHIVE ?=` is an input path.
 
-## 3. Incidental finding: a second, unhashed analysis directory in the manuscript's root
+## 3. `analysis-interim/` — a long-standing disclosed item, not a new finding
 
-`matrix` holds **`analysis-interim/`** beside `analysis/`, with the **same 15
-filenames**.
+**Correction to this document's first version, which framed `analysis-interim/`
+as an undisclosed duplicate and filed it with B15a. Both were wrong.**
 
-- **All 15 files differ.** Not one pair matches.
-- `analysis-interim/` is systematically smaller — `per-execution.csv` is 366334
-  bytes against `analysis/`'s 999731, roughly a third.
-- It is **three days older**: newest mtime 2026-08-07 against 2026-08-10.
-- **`SHA256SUMS` names 0 of its files**, out of 17 entries.
+The measurements stand: `matrix` holds `analysis-interim/` beside `analysis/`
+with the same 15 filenames, all 15 differ, it is systematically smaller
+(`per-execution.csv` 366334 bytes against 999731), it is three days older
+(2026-08-07 against 2026-08-10), and `SHA256SUMS` names none of its files.
 
-**Read at its true strength: this is superseded interim output, not a competing
-answer.** The size and date ordering make that plain, and `analysis/` is the
-newer, larger, hashed set. **Nothing here casts doubt on any published number.**
+**What was wrong is the framing. It is declared, and it was filed twice on
+10 August.**
 
-**The hazard is naming and scope, and it is B15a's shape in the manuscript's own
-root.** Two directories, identical filenames, different contents, one attested
-and one not, with nothing in the tree marking which is superseded. A reader who
-opens the wrong one gets different numbers with no warning, and an archive script
-globbing `analysis*/` would ship both.
+- `experiments/results/matrix/MANIFEST.md:154-158` lists it by name under
+  *"Directories without a parsing run log"*, with the stated purpose that "the
+  difference between the directory count and the run count is accounted for
+  rather than noticed". **`MANIFEST.md` is itself hashed by `SHA256SUMS`**, so
+  the disclosure is inside the attested set even though the directory is not.
+- `reports/phase-report-5a-2026-08-10.md` **§F.7** records it as stale analysis
+  output contributing to no number, and **§G item 4** lists it among issues
+  deliberately not touched.
+- `reports/phase-report-5b-2026-08-10.md` **item 5** records it again as still
+  present.
+
+**Why it is still there is also on the record, and it is a good reason.** Both
+filings say removing it would violate the standing rule against editing or
+deleting frozen data. It persists because the alternative was worse.
+
+**It is therefore not B15a's shape.** B15a is about duplicate artefacts that
+*nothing declares* — the root-level copies of three analysis products, which no
+manifest mentions and no policy ranks. This one is declared, ranked and twice
+reported. Filing it under B15a would have counted a disclosed, deliberately
+retained item as an undetected defect.
+
+**The one residue, and it is already owned.** §F.7 itself notes that the manifest
+*flags* the directory under a category — interrupted attempts — that does not
+quite describe stale analysis output, so a reader learns a directory is anomalous
+without learning what it is. That is a wording point on an existing disclosure,
+not a new item, and 5a §G already classes it out of scope.
+
+**Nothing here casts doubt on any published number**, and nothing here is new.
 
 ## 4. Verdict
 
@@ -136,5 +157,7 @@ globbing `analysis*/` would ship both.
    voided, and is unattested by any manifest (B15).
 3. **No ledger was opened.** 2186 `-wal`/`-shm` files stamped across both trees;
    zero size or mtime changes.
-4. `analysis-interim/` should be renamed, removed, or explicitly marked
-   superseded before any archive is built. Filed with **B15a**, not fixed here.
+4. `analysis-interim/` is **not** a new finding. It is disclosed in the hashed
+   `MANIFEST.md` and was filed on 10 August in 5A §F.7 and §G-4 and in 5B item 5,
+   and retained deliberately because deleting it would edit frozen data. **Not**
+   filed with B15a, which concerns duplicates nothing declares.
