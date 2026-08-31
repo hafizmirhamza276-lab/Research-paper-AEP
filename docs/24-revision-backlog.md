@@ -1220,3 +1220,110 @@ can fail is better than one nobody should fail**. Worth having: a small wrapper
 for host-to-guest invocation that takes a script path and an argument list and
 makes the inline form unavailable, so the unsafe construction cannot be reached
 rather than merely being discouraged.
+
+## B19. The §3.2 half-width column assumed zero between-session variance, and said so nowhere
+
+**Filed against Phase 12. Same class as Amendment 3's 0.02 threshold: a number
+that governed a design decision, with no derivation on the record.**
+
+### What the number did
+
+`reports/plan-phase-8-b2.md` §6 tabulates a "§3.2 half-width (pp)" for k = 2…6
+and argues the phase's sample size from it:
+
+> **k = 4 is also the point where the two analyses become commensurable** —
+> 3.1's MDE (17.3 pp) and 3.2's half-width (19.6 pp) agree, so the robustness
+> check can actually corroborate the primary. At k = 3 they diverge badly
+> (20.0 vs 30.6), which would make 3.2 decorative.
+
+**That column selected k = 4.** The MDE column beside it has a full derivation, a
+stated baseline (`p₀ = 53/150`), and a six-point sensitivity table across AUTH's
+plausible range. The half-width column has **no derivation anywhere in the
+document** — it appears in the table and in the sentence above, and nowhere else.
+
+### What it actually was, recovered by reproduction
+
+A session-as-unit half-width is `t(k−1)·sd/√k`, so the column implies an assumed
+sd. Taking the **binomial sampling sd of a single session's paired difference**,
+with the two arms treated as independent:
+
+`sd = 100·√(2·p₀·(1−p₀)/30) = 12.342 pp` where `p₀ = 53/150`
+
+| k | t(k−1) | reproduced | plan | difference |
+|---|---|---|---|---|
+| 2 | 12.706 | 110.89 | 110.8 | +0.09 |
+| 3 | 4.303 | 30.66 | 30.6 | +0.06 |
+| 4 | 3.182 | 19.64 | **19.6** | +0.04 |
+| 5 | 2.776 | 15.32 | 15.3 | +0.02 |
+| 6 | 2.571 | 12.95 | 12.9 | +0.05 |
+
+**All five rows reproduce to within 0.1 pp.** Five independent matches identify
+the assumption uniquely; it is not a coincidence of rounding.
+
+**It was not taken from Phase 8.1's replication set.** That set's per-session
+prevented counts are 8, 16, 21, 24 with sd 6.99 counts — a different quantity,
+and one that would have given a different column.
+
+### The assumption it embeds, which is the actual defect
+
+**A binomial sd for a session-level contrast contains no between-session variance
+component at all.** The column therefore assumed the four sessions would differ
+from one another only by binomial sampling noise — that they are exchangeable
+draws with no session-level variance.
+
+**That contradicts the design's own premise.** The phase blocks on session
+*because sessions differ*; §3.2 uses session as the unit and forbids the pooled
+Wilson interval *because* pooling understates the spread; and plan §3.4 registers
+per-session reporting because sessions are expected to disagree.
+
+**Where the reasoning slipped.** The plan justifies the *MDE* column explicitly:
+
+> the design blocks on session and adjusts for kill latency, which is what
+> brings the residual variance back to roughly binomial — 9C measured
+> over-dispersion **5.37** for unblocked pooling, so the binomial calculation
+> below is valid only because of the blocking.
+
+That justification is sound **for the quantity it was written about**. Blocking
+cleans the *within-session* contrast. It cannot make the *between-session spread
+of those contrasts* binomial — that spread is what blocking exists to
+acknowledge. **The justification was carried across to a column it does not
+cover**, and because the column had no derivation of its own, nothing marked the
+transfer.
+
+### What actually happened
+
+| | |
+|---|---|
+| assumed sd | 12.342 pp |
+| **observed sd across the four sessions** | **21.322 pp** |
+| ratio | 1.728 |
+| **implied over-dispersion** | **2.99** |
+
+9C measured over-dispersion **5.37** unblocked. The blocking moved it from 5.37
+to about **3.0** — it worked, and it did not reach the **1.0** the half-width
+column assumed. **The design's own instrument for reducing over-dispersion was
+credited with removing it entirely.**
+
+### Consequence, and what it does not license
+
+The realised §3.2 half-width is **33.9 pp against 19.6 projected**, and the
+registered MDE of 17.3 pp was not achieved. The commensurability argument that
+selected k = 4 does not survive: at the realised spread, k = 4 delivers worse
+precision than the plan's own k = 3 row, which it called "decorative".
+
+**This does not reopen the verdict and must not be used to.** k = 4 is committed,
+the plan states "if realised precision is worse, it is reported worse", and
+extending k after seeing results is optional stopping. The registered rule was
+applied exactly as written.
+
+### What is needed
+
+1. **Any future k derivation must state the assumed between-session variance
+   component explicitly, and cite where it came from.** A projection built on a
+   within-session sd is a projection that assumes the answer.
+2. **Use the realised figure.** The four v2 sessions give an observed
+   between-session sd of 21.3 pp on this contrast. Any successor design should
+   plan against that, not against binomial noise.
+3. **The same audit applies to every other power or precision number in the
+   phase set.** This one was found by reproducing a table; nothing systematic
+   checks that a tabulated projection has a derivation attached.
