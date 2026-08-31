@@ -1563,6 +1563,84 @@ not reach it.
 
 ---
 
+### RESOLVED 2026-08-31 — and the filing above was wrong in three ways
+
+**Closed.** What was fixed, and what the analysis found that this entry did not.
+
+**Correction 1 — it was four unbounded restatements, not one.** An F.0b lexicon
+sweep (*indistinguishab | equivalen | no difference | no effect | unaffected |
+identical to | the same as | shows no*) over every section, `main.tex` and every
+generated file found:
+
+| | location | wording | in the original filing? |
+|---|---|---|---|
+| 1 | `06-evaluation.tex:623-624` | "every rate in that table, on every capability class, statistically indistinguishable from AEP-full's" | yes |
+| 2 | `generated/table-outcomes.tex:11` — **caption** | "That the two are indistinguishable here is this paper's ablation result" | **no** |
+| 3 | `generated/table-deployment-choice.tex:25` — **caption** | "shows no observed difference **down the whole table**" | **no** |
+| 4 | `07-related.tex:66-68` | "Their crashed-regime detection outcomes are statistically indistinguishable" | **no** |
+
+Two are generated captions, so they live in `paper_tables.py` and cannot be
+fixed in `.tex`. **Fixing only site 1 would have closed this entry while leaving
+the defect in the paper three times over.**
+
+**Correction 2 — three axes of over-generalisation, not two.** Sites 1–4
+generalised from two metrics to every rate, and from pooled to per class. **They
+also inherited a third defect from the careful paragraph itself.**
+
+**Correction 3 — and it is the important one: the careful version was also
+unsound.** This entry framed the defect as *careful version versus careless
+version*. That framing was wrong. `\AblationZeroUpper` put `n = 540` in a Wilson
+denominator when the data are **54 runs of 10 executions** — the same
+execution-level independence `table-ablation.tex:6` disclaims for the Fisher
+values, undisclosed here, and reaching the abstract. The abstract carried it
+**five lines from a "stratified run-cluster" interval**, two units of analysis in
+one paragraph with nothing marking the switch.
+
+### The four bound values
+
+| construction | bound |
+|---|---|
+| execution-level, pooled, 0/540 @95% — **as the paper had it** | 0.50% |
+| **run-level, pooled, 0/54 @95% — as the paper now has it** | **4.77%** |
+| run-level, per class, 0/18 @95% | 13.07% |
+| **run-level, per class, 6 simultaneous bounds at joint 90%** | **20.10%** |
+
+"On every capability class", honestly scoped and honestly clustered, is **20.1
+pp — forty times the number that was quoted.** A 20-point band is not a detection
+guarantee.
+
+### What was done
+
+- The bound is reported at the **run** unit, with the execution-level figure
+  beside it and what it assumes. `\AblationZeroUpper` was **removed**, not
+  redefined, so any unmigrated site fails to compile.
+- The prose states explicitly that the unit was **not chosen for the result**:
+  the baselines it is contrasted against are `\BaselineDupLowPct`–%
+  `\BaselineDupHighPct`\%, so the contrast is unaffected either way.
+- All four sites narrowed to the pooled scope, **including both generated
+  captions**, which now say that the per-class cells the anchor table is
+  organised by are not separately bounded.
+- **20.1 pp is stated in the paper**, not only here, so the per-class claim is
+  visibly declined rather than silently dropped.
+
+### Two things found and deliberately not fixed
+
+1. **`paper_tables.py:1341`**, a code comment: *"including the p-values that say
+   the two systems are indistinguishable."* Not reader-visible, so no F.0b
+   violation — but it is the same misconception living in the generator, beside
+   the macros whose own provenance says the Fisher values are descriptive only.
+   **Phase 12.**
+2. **`06-evaluation.tex:63`** — "long enough to suspend is indistinguishable from
+   one that cannot" — surfaced by the sweep and **correctly not a violation**: it
+   describes an observational limitation, not a failure to reject. Recorded so a
+   future sweep does not re-litigate it.
+
+**Item 4 of the original filing stands and is unfixed.** Nothing enforces
+consistency between a careful statement and a later restatement. All four sites
+were found by a manual sweep; F.0b's lexicon check still does not exist.
+
+---
+
 ## B21. The paper build compiles in a scratch directory and then reads three-week-old state back in
 
 **Filed against Phase 12.** Found while rebuilding for the Site 1/Site 2 edits,
