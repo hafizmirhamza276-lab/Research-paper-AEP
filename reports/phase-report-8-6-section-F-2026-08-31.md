@@ -165,6 +165,60 @@ by a tool. The rule above is recorded as a requirement on future work; the
 enforcement in the list above does not exist, and no claim is made here that it
 does.
 
+## F.0c Three instances in one session: correct for a reason nothing enforces
+
+**This is recorded as a pattern, not as three slips.** Three constructions
+written in this one session were each correct at the moment of writing and each
+would have become wrong under a change nobody would think to guard against.
+None of the three was a mistake in the value. All three were the same defect in
+the *structure* of the claim.
+
+| # | Construction | Correct because | Would break when | Caught by |
+|---|---|---|---|---|
+| 1 | F.0 bound the **word** "CONFIRMS" | the draft happened to use that word | a paraphrase states the result without it — which is what the first sentence written under the rule did | drafting under the rule (F.0a) |
+| 2 | `\ClassPpTwo{}` to `\ClassPpFour{}` quoted as the spread | s2 happens to be lowest and s4 highest **today** | the data are regenerated, a session is reordered, or `k` is extended | review, not by any check |
+| 3 | `\ClassPpLow{}` / `\ClassPpHigh{}` emitted with no precision note | the only sentence quoting them today also quotes `\ClassPpHalfWidth{}` | the macros are quoted anywhere else — which is the entire purpose of a macro | review, not by any check |
+
+**What the three share.** Each rests on a fact that is true, unstated, and
+unowned: *the author will use this word*; *this session ordering will persist*;
+*this macro will only ever be quoted beside its neighbour*. In each case the
+guarantee lives in the author's head at the moment of writing and nowhere in the
+repository. Nothing degrades when the assumption stops holding — every macro
+still resolves, the LaTeX still compiles, `check_paper_numbers.py` still passes,
+and the sentence still reads fluently while stating something false.
+
+**This is B11's class, one level up.** B11 and F.0a are about *checks* that
+structurally cannot detect what they name. These three are about *claims* that
+structurally cannot notice when they stop being true. The common failure is the
+same: the thing that would signal the problem is not connected to the thing that
+would cause it.
+
+**Instance 3 is the sharpest, and it is instance 2 in a second place.** A macro
+exists precisely so a number can be quoted away from where it was defined. So a
+macro whose correctness depends on its quotation context is a contradiction in
+terms — and `\ClassPpLow`/`\ClassPpHigh` straddling zero *is* a statement of the
+primary estimand's result, the exact claim F.0 binds. F.0 was satisfied at the
+prose site and unenforced at the macro site, for the same reason F.0's first
+version was evaded: the rule reached the sentence someone wrote, not the claim
+someone could write next. Fixed this session by attaching the binding to both
+macro descriptions in `scripts/paper_tables.py`, so the requirement travels with
+the value rather than with the current prose.
+
+**Two of the three were found by review, not by me and not by a tool.** That is
+the part with the most predictive value. The rate at which this class is *found*
+in this project is set by how carefully someone reads, and nothing in the
+harness contributes. **The correct inference is not that three were fixed; it is
+that the population is unknown and the sampling method is manual.** Three found
+in one session, in a session that was not looking for them, argues the remaining
+count is not zero.
+
+**No enforcement is claimed.** The three enforcement mechanisms listed in F.0b
+remain unimplemented, and none of them would have caught instances 2 or 3 in any
+case: both are about a *derivation* being pinned to an incidental fact, which no
+lexical or numeric check can see. What would catch them is a rule that every
+emitted number states what it is derived *from* — index versus extremum,
+value versus value-plus-binding — and that rule does not exist.
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |

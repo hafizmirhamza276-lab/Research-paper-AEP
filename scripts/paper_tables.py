@@ -2081,16 +2081,32 @@ def emit_numbers(
             "the unit",
             "wider than the mean it brackets: the sessions disagree",
         )
+        # \ClassPpLow and \ClassPpHigh straddle zero, so quoting the pair is
+        # already a statement of the primary estimand's result -- the claim F.0
+        # binds -- and a macro's whole purpose is to be quoted away from the
+        # prose that currently carries the precision beside it. The note travels
+        # with the value so the binding does not depend on the next author
+        # having read section VIII.
+        _INTERVAL_BINDING = (
+            "F.0: this endpoint states the primary estimand's result. It may "
+            "not be quoted without \\ClassPpHalfWidth (" + f"{class_half:.1f}"
+            + " pp, wider than the "
+            + f"{class_mean:+.1f}"
+            + " pp mean) in the same sentence: the interval contains zero "
+            "because the sessions disagree, not because the effect is absent"
+        )
         macro(
             "ClassPpLow",
             f"{class_mean - class_half:+.1f}",
             "b2-paired-v2-*/analysis/redis-kill-ablation.csv | lower end of "
             "that interval",
+            _INTERVAL_BINDING,
         )
         macro(
             "ClassPpHigh",
             f"{class_mean + class_half:+.1f}",
             "b2-paired-v2-*/analysis/redis-kill-ablation.csv | upper end",
+            _INTERVAL_BINDING,
         )
         # \ClassPpMoved (sessions moving >= 20 pp: 2 of 4) is deliberately not
         # emitted. The prose states the spread and its direction instead, which
