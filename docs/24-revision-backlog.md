@@ -611,6 +611,12 @@ control is not safely usable in this codebase; use PIDs.
 
 **Filed against Phase 12. Three defects in one 137-line script, found together.**
 
+**13a is an instance of B16, not the whole of it.** Two other writes landed
+inside frozen roots in the same phase from unrelated causes — a deliberate
+repair and a stale-cwd `mkdir` — and neither involves this script. Fixing
+`slice_load.py` does not fix the class. 13b and 13c are defects in this script
+alone and belong here rather than under B16.
+
 ### 13a. It writes into a frozen root with no guard
 
 `slice_load.py:123-127` writes `foreign-load-sample.json` to both the run root
@@ -818,3 +824,80 @@ and that no policy declares subordinate.
 **Needed:** write one copy, under `analysis/`, and if the top-level convenience
 copy is kept, make it a symlink or have the freeze assert the two are identical
 before hashing.
+
+## B16. A frozen root is an ordinary writable directory: the freeze produces a digest and no enforcement
+
+**Filed against Phase 12. This is the parent item; B13a is one instance of it.**
+
+The later number is not a mistake and the item is not renumbered — B13, B14 and
+B15 are already cited by commit messages and by
+`reports/phase-report-8-4-stray-writes-into-a-frozen-root-2026-08-31.md`, and
+renumbering would break those citations to make an ordering look tidier.
+
+### The claim
+
+**Freezing a results root produces a manifest of digests and nothing else.**
+`freeze_results.py` writes `SHA256SUMS` and exits. It sets no permissions, takes
+no lock, leaves no marker any tool consults, and installs nothing that could
+refuse a later write. Afterwards the root is an ordinary directory with ordinary
+write permissions, and every process on the host may modify it freely.
+
+So there is **no prevention**. And there is **no detection either**, in the sense
+that matters: `sha256sum -c` does not run by itself. It reports a modification
+only if a person remembers to invoke it, on the right root, before drawing a
+conclusion from that root.
+
+### Three writes landed inside frozen roots in Phase 8.4, from three unrelated causes
+
+| # | write | cause | class |
+|---|---|---|---|
+| 1 | `slice_load.py` overwrote `analysis/foreign-load-sample.json` in s3 and s4 | a tool run post-freeze with no guard (**B13a**) | automated |
+| 2 | the recovered artefact was copied back into both roots | a deliberate repair, digest verified against the recorded entry first | intentional |
+| 3 | `.ai/` and `phase8-driver/` were created inside s3's root | a relative `mkdir` and a hook write, both resolved against a stale shell cwd | accidental |
+
+**The common factor is not `slice_load.py`.** One was a script, one was a
+considered human action, one was an accident of shell state. No guard that
+addresses any single cause addresses the other two. What they share is only that
+the target was writable and nothing objected.
+
+That is why this is the parent and B13a is the instance: fixing `slice_load.py`
+to refuse post-freeze writes removes cause 1 and leaves 2 and 3 untouched.
+
+### The sharper half: additions are invisible, not merely unreported
+
+Instance 3 is worse than instances 1 and 2, and in a way that is easy to miss.
+
+`sha256sum -c` iterates the entries a manifest names. A file the manifest does
+**not** name has no entry, so there is nothing to check and nothing to fail. The
+root held three files that did not exist at freeze time and reported
+**18 OK / 0 FAILED** throughout.
+
+**A passing `sha256sum -c` is not a statement that a root is unchanged. It is a
+statement that the named files are unchanged.** For modifications the check is
+sound but manual; for additions it is structurally blind. Since B15 establishes
+that the digest names 1.0% of a real root, the blind region is essentially the
+whole root.
+
+### What is needed
+
+In increasing order of cost, and the first is nearly free:
+
+1. **Make the freeze checkable for additions.** Record the complete file *set* at
+   freeze time, not only digests of a subset, so a verifier can report "3 files
+   present that were not here at freeze" as well as "0 digests failed". This
+   closes the structural blindness without changing any permission.
+2. **Leave a marker the tooling consults.** A `FROZEN` sentinel in the root that
+   every collection script checks and refuses to write past, with a `--dry-run`
+   seam so the refusal branch is testable (**R4**) and a documented override for
+   verified repairs like instance 2 — which should be *recorded*, not prevented.
+3. **Make the root read-only after freezing.** Effective against instance 3 and
+   against careless tools, and the only one of the three that acts rather than
+   reports. It complicates legitimate repair, which is why it is listed last
+   rather than first.
+
+**Do not read this as an integrity claim about Phase 8.** All four sessions
+verify 18 OK / 0 FAILED, the one broken artefact was recovered by reproducing
+bytes that hash to the recorded digest, and the strays were enumerated and
+removed. Nothing was silently altered. The defect is that none of that was
+guaranteed by the freeze — it was established afterwards, by hand, because
+someone went looking.
