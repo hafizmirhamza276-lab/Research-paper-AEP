@@ -64,8 +64,10 @@ products' complete implementations.
 
 The ablation supplies AEP's narrower empirical delta. B3 and AEP-full share
 the pre-dispatch record and no-re-entry transition but differ on the durability
-barrier. Their crashed-regime detection outcomes are statistically
-indistinguishable, while the Redis-kill experiment isolates a prevention
+barrier. We observe no difference in their crashed-regime detection outcomes,
+bounded by pooling the capability classes: both zero-event rates fall within
+$[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%
+(\cref{sec:eval-detection}). The Redis-kill experiment isolates a prevention
 effect. We found no prior evaluation that measures this detection/prevention
 decomposition with an independent external-effect ledger.
 
