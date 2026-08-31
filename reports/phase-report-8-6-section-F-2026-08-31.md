@@ -519,12 +519,27 @@ the person who had made the argument.
 **One qualification on the record, because it matters for how this is cited.**
 The arithmetic is independently confirmed here (`2/C(6,3) = 0.1`, and
 Fisher-on-a-2×2 is the permutation test conditional on the margins, so the
-hypergeometric and permutation minima coincide). **But the prior instance is not
-in the committed record** — `Rademacher`, `sign vector`, `0.0625` and `16` return
-nothing across `reports/`, `docs/` and `prompts/`. It exists in the working
-conversation, not in the repository. **So "the same argument, twice" rests on an
-account of a prior session rather than on an artefact**, and that distinction is
-exactly the kind this project has spent the phase insisting on.
+hypergeometric and permutation minima coincide).
+
+**But the prior instance is not in the committed record.** `Rademacher`, `sign
+vector`, `0.0625` and `16` return nothing across `reports/`, `docs/` and
+`prompts/`. It exists in the working conversation and nowhere in the repository.
+
+**So this second instance rests on an account rather than on a record**, and it
+should be read that way by anyone citing it. Applying this project's own
+standard to this project's own finding: an argument that cannot be pointed at is
+not evidence, whoever made it.
+
+**And that has a consequence worth stating separately, because it is a small
+finding in its own right: the first instance was therefore never filed.** A
+design-floor argument strong enough to rule out forming a 95% interval was made,
+acted on, and left in a conversation. **What reaches the repository is what
+someone decided to write down**, and the selection is invisible from inside the
+repository — nothing in `reports/` records that anything is missing from it.
+That is the same shape as B15 (`SHA256SUMS` attesting the derived products while
+the evidence sits outside the attested set) and the same shape as F.0b's
+restatement problem: **the artefact looks complete because the thing it omits
+leaves no trace in it.**
 
 **Two instances now, of the same failure of self-review** — F.0d unrecognised in
 my own guard, and a floor argument unrecognised in my own sweep. **Both were
