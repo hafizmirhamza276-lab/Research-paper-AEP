@@ -94,6 +94,36 @@ analysis products), strict 8.0 policy: no run directories, no ledgers, no logs.
 > `−0.112` and `−0.665` for s1, s3 and s4 exactly**, which is what licenses
 > reading `−0.547` off the same construction. **No ordering, and no combination
 > of the s2 root with its aborted predecessor, produces `−0.595`.**
+>
+> **Provenance of `−0.595`, closed 31 Aug: an isolated slip.** `−0.595` shares
+> its source with six other committed figures, so the question is whether they
+> are wrong too. Re-derived by `reports/raw/b9_drift_reconstruction.py`, all six
+> reproduce **exactly**, including two Theil–Sen slopes a Spearman-only check
+> would not have touched:
+>
+> | figure | committed | derived | source |
+> |---|---|---|---|
+> | `b2-paired-s1` Spearman | +0.703 | **+0.7034** | amendment 3 §1 |
+> | `b2-paired-s1` Theil–Sen | +9.06 ms/run | **+9.060** | amendment 3 §1 |
+> | `v2-s1` Spearman | −0.478 | **−0.4780** | amendment 3 §1, 28 Aug handover |
+> | `v2-s1` Theil–Sen | −1.81 ms/run | **−1.812** | amendment 3 §1 |
+> | `v2-s3` Spearman | −0.112 | **−0.1116** | this document |
+> | `v2-s4` Spearman | −0.665 | **−0.6648** | this document |
+> | **`v2-s2` Spearman** | **−0.595** | **−0.5467** | 28 Aug handover |
+>
+> Ten further subsets of s2 — per system, per response class, under both
+> reconstructions — were swept for anything near `−0.595`. The closest is
+> `−0.5517`; none is within 0.045. **So it is not a real computation with a
+> different denominator, which would have been the more serious answer.** It is
+> a transcription slip, isolated, and the 28 Aug handover's other quantitative
+> content is not impeached by it.
+>
+> Each root is reconstructed under **its own declared collection design** —
+> cell-major for the superseded root, interleaved for the four v2 roots — which
+> is a fact of the record, not a fitted parameter. The script prints the
+> cross-check: under the other design the same roots give +0.247, −0.153,
+> −0.244, +0.006, −0.149, matching nothing. **The reconstruction was validated
+> against six known answers before `−0.547` was read off it.**
 
 **All four sessions are interleaved, and k = 4 stands — established from two
 independent sources that agree.** This corrected a claim I had asserted from
