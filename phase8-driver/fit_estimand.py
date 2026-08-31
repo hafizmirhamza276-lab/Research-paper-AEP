@@ -133,6 +133,7 @@ def main(argv: list[str]) -> int:
     print(f"{'session':<32}{'n':>5}{'beta_class':>13}{'se':>9}{'iters':>7}"
           f"{'AUTH':>7}{'NO_RB':>7}{'pp diff':>9}")
     coefs = []
+    detail = []
     for root, rows in per:
         X, y = design(rows, with_position)
         out = fit(X, y)
@@ -149,6 +150,20 @@ def main(argv: list[str]) -> int:
         coefs.append(b)
         print(f"{root.name:<32}{out['n']:>5}{b:>+13.6f}{se:>9.4f}"
               f"{out['iterations']:>7}{a_ap:>4}/{a_n:<2}{n_ap:>4}/{n_n:<2}{pp:>+9.1f}")
+        detail.append((root.name, out["beta"], out["se"]))
+
+    if with_position:
+        # B9's question is whether the covariate is partly carrying elapsed
+        # time. The position term's own size and precision answer it directly,
+        # so it is printed rather than left implicit in the class coefficient's
+        # stability.
+        print("\n--- all terms, with run position in the model ---")
+        print(f"{'session':<32}{'log(lat)':>12}{'se':>8}{'position':>12}{'se':>8}"
+              f"{'|b/se| pos':>12}")
+        for name, beta, se in detail:
+            ratio = abs(beta[3] / se[3]) if se[3] else float("inf")
+            print(f"{name:<32}{beta[2]:>+12.4f}{se[2]:>8.3f}"
+                  f"{beta[3]:>+12.5f}{se[3]:>8.4f}{ratio:>12.2f}")
 
     k = len(coefs)
     mean = sum(coefs) / k
