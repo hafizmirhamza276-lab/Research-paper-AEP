@@ -555,6 +555,75 @@ surfaced. The failure is one of exhaustion within a finding, not of detection �
 which is a narrower and more actionable statement than "self-review does not
 work".
 
+## F.0f The fail-open class is not confined to the tooling — a search fails open too
+
+F.0d's generalisation was stated about *checks*. It applies with no change to
+*searches*, and the demonstration is a claim of my own that was wrong.
+
+### The failure
+
+B9's plan asserted, as its most quoted finding, that the Spearman of **+0.703**
+was **not reproducible from anything in the repository** — offered as *"the third
+instance this session of a load-bearing figure existing only outside the
+artefact"*, alongside F.0e's Rademacher case. That framing was the strongest
+thing in the plan.
+
+**It reproduces exactly: +0.7034.** The reconstruction needs the cells in
+collection order, `NO_READBACK` before `AUTHORITATIVE_READBACK`. I had tried
+only alphabetical orderings, which sort those two the other way. The search was
+incomplete; I reported its result as a property of the data.
+
+### Why this is F.0d's shape and not merely an error
+
+**"Does not reproduce" and "I did not try that ordering" are indistinguishable
+from inside the search.** An incomplete search returns an empty result set, and
+an empty result set is exactly what a genuine negative looks like. Nothing in
+the procedure distinguishes them, so the default state — *not having looked
+everywhere* — reads as a clean finding.
+
+That is the same structure as `pgrep` matching nothing being indistinguishable
+from no process running, and as F.0's word check passing a sentence that never
+contains the bound word. **The difference is only where it sits: F.0d found the
+class in the tooling; this instance is the class in the method.** It is worse
+in one respect, because a check can be read and audited afterwards, whereas the
+orderings I did not try left no trace to audit.
+
+**And it failed in the direction that favoured me.** The incomplete search
+produced the finding, not the null. A search that fails open does not produce
+random errors; it produces whichever conclusion the missing cases would have
+refuted.
+
+### The mitigation, which is not "search harder"
+
+The correction was possible because of something done before the unknown was
+read, and it is the transferable part:
+
+> **Validate a reconstruction against known answers before trusting it on the
+> unknown one.** One ordering reproduced **six independently committed figures
+> exactly** — `+0.703` and `+9.06` ms/run for the superseded root, `−0.478` and
+> `−1.81` ms/run for v2-s1, `−0.112` and `−0.665` for v2-s3 and v2-s4 — and only
+> then was `−0.547` read off it. `reports/raw/b9_drift_reconstruction.py` prints
+> the cross-check under the other design, where the same roots give +0.247,
+> −0.153, −0.244, +0.006, −0.149 and match nothing.
+
+**This is the same discipline as step 3 of the 8.5 plan**, and it is what turned
+an assertion into a derivation both times. It converts a fail-open search into a
+fail-closed one: a reconstruction that does not first reproduce what is already
+known is *rejected*, so the default state of an unvalidated construction is
+failure rather than a publishable negative.
+
+**What survives of the original finding is smaller and still true.** `+0.703` is
+a real measurement of `b2-paired-s1`, which is a **different collection** from
+the one B9's claim concerns. B9's error is importing a figure across
+collections, not quoting an unreproducible one. The closed B9 entry says the
+narrower thing.
+
+### Cost of the withdrawal
+
+The "third unreproducible load-bearing figure" claim is withdrawn entirely.
+F.0e's two instances stand; there is no third. **The count in F.0e is not to be
+read as two-out-of-three with one pending.**
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
