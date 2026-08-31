@@ -12,13 +12,22 @@ registered rules were applied as written, and no verdict below is reopened.
 
 ## F.0 The verdict, and what travels with it — binding
 
-The primary estimand returned **CONFIRMS**. That word may not appear anywhere —
-this report, `06-evaluation.tex`, `08-threats.tex`, any generated macro, any
-abstract sentence — without the following beside it:
+The primary estimand returned **CONFIRMS**.
 
-> **The registered rule returned CONFIRMS at a realised precision materially
-> worse than registered.** The interval contains zero at a width that would also
-> have contained most effects worth detecting.
+**This binds the claim, not a word.** Wherever the primary estimand's result is
+stated **in any form** — `CONFIRMS`, "a null", "no effect", "no class effect",
+"no difference", "statistically indistinguishable", "the interval contains zero",
+or any paraphrase — in prose, a table caption, a figure caption, an abstract, or
+the sentence around a macro, the realised precision is stated with it.
+
+**A paraphrase does not exempt.** The test is not whether a particular word
+appears; it is whether a reader is being told what the class comparison found. If
+they are, the qualification travels with it. **There is no form of words that
+reports this result and escapes the binding.**
+
+> **The registered rule returned CONFIRMS at a realised precision inadequate to
+> the question.** The interval contains zero at a width that would also have
+> contained most effects worth detecting.
 
 | | |
 |---|---|
@@ -26,6 +35,13 @@ abstract sentence — without the following beside it:
 | projected §3.2 half-width at k = 4 | 19.6 pp |
 | **realised §3.2 half-width** | **33.9 pp** |
 | **observed mean effect** | **+12.5 pp** |
+
+**The first two rows are themselves defective — see F.5 and B19.** Both were
+computed without a between-session variance component, so they understate the
+precision the question actually required. They are shown here because this is the
+record of what was registered; **they are deliberately not quoted in the
+manuscript**, where the self-contained comparison is the half-width against the
+observed mean.
 
 **The mean effect is smaller than the half-width. The design could not have
 detected the effect it found.** This is not failure to reject in the ordinary
@@ -37,6 +53,42 @@ reject"* — not *"no class effect was detected"*. A reviewer reaches this in on
 step, and its absence would be the paper's weakest point.
 
 **F.5 records the same fact as a finding. F.5 is not a substitute for F.0.**
+
+## F.0a The first version of this binding was evaded on its first use
+
+**Recorded because it is a finding about the disclosure mechanism, not an
+anecdote about drafting.**
+
+F.0 was first written to bind a **word**: *"The primary estimand returned
+CONFIRMS. That word may not appear anywhere … without the following beside it."*
+
+**The very first sentence written under it evaded it.** The draft of the
+`08-threats.tex` replacement said *"the registered test nonetheless returns a
+null"* — reporting the result, never using the bound word, and therefore never
+triggering the binding. It also used the exact idiom F.1 forbids and that this
+report had already flagged, three sections earlier, as the phrasing that would
+absorb this result if reused.
+
+**Nothing was hidden and nothing was caught.** The evasion was not deliberate;
+the requirement simply did not reach the sentence, because the requirement was
+about a string and the sentence was about a meaning.
+
+**This is the class that has recurred throughout the phase** — B11's "a gate that
+looks live and cannot act", the four instances in handover finding 5, B19's
+sensitivity sweep that varied the wrong parameter, B18's guard that fired on the
+intercept. **A check that structurally cannot detect what it names.** It has now
+occurred in the disclosure rule written to prevent exactly this result being
+misread.
+
+**Two consequences.**
+
+1. F.0 now binds the claim rather than the string, and says explicitly that a
+   paraphrase does not exempt.
+2. **A word-level rule is not sufficient for a semantic requirement**, and the
+   general lesson is worth more than this instance: any future requirement of the
+   form "X must always accompany Y" needs Y defined by what it *means*, because
+   the failure mode is not violation — it is a sentence that never matches the
+   trigger. Nothing flags a rule that has stopped applying.
 
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
