@@ -409,6 +409,97 @@ intends to put bounds into two generated captions, and it will hit this. The
 gate is right about the general case and wrong about that one; it is recorded
 here rather than fixed, and it does not weaken anything above.
 
+## F.0e The three rules applied: what each one actually did
+
+F.0b, F.0c and F.0d were all written in this session. B20's fix was the first
+work done under them. **Recorded because a rule that changes the work in the
+session that discovers it is worth more than one filed for later** — and because
+two of the three did something their author did not intend.
+
+### F.0b's first application — the lexicon sweep, run by hand
+
+The sweep was F.0b's own mechanism 1, executed manually:
+
+```
+indistinguishab | equivalen | no difference | no effect | unaffected
+| identical to | the same as | shows no
+```
+
+over every section, `main.tex` and every generated file.
+
+**It found four unbounded restatements where the filing recorded one**, two of
+them in **generated captions** — produced by `paper_tables.py`, invisible to
+anyone editing `.tex`, and in a place F.0b names explicitly as "the same place".
+Fixing only the filed site would have closed B20 while leaving the defect in the
+paper three times over.
+
+**The mechanism is validated and still does not exist.** Mechanism 1 would have
+found all four sites in seconds; it is a grep. What it cannot do is decide
+whether a claim is warranted — and it did not need to, because deciding was the
+easy part once the four were in front of me. **The expensive step was finding
+them, and that is the step a grep does.** F.0b listed this first for a reason and
+the reason held.
+
+**Two non-violations, recorded so a later sweep does not re-litigate them.**
+`06-evaluation.tex:63` ("long enough to suspend is indistinguishable from one
+that cannot") describes an observational limitation, not a failure to reject.
+`paper_tables.py:1341` — *"including the p-values that say the two systems are
+indistinguishable"* — is a code comment, not reader-visible, so not an F.0b
+violation; it is the same misconception living in the generator and is filed for
+Phase 12, unfixed.
+
+**The sweep was manual, and that is the finding.** Every one of the four sites
+was found by a person running a regex by hand. Nothing in the repository would
+have surfaced any of them.
+
+### F.0c's first live test — and it passed
+
+F.0c named the pattern *correct only for a reason nothing enforces*. B20 needed
+a macro to change value, which is that pattern's live case: reusing
+`\AblationZeroUpper` for the run-level number would have left every unmigrated
+site silently meaning something else, **while LaTeX compiled, every macro
+resolved, and `check_paper_numbers.py` passed.** Verified: the gate does not
+reference that macro at all, so it would not have caught a silent value change
+either.
+
+**The old name was removed rather than redefined**, converting a silent semantic
+change into `Undefined control sequence`. Four sites were enumerated in advance —
+`main.tex:159`, `06-evaluation.tex:291, 297, 298` — and **the build passed first
+time**, which is the evidence the enumeration was complete. A prose sweep for
+wording that only reads correctly at the old value (*half a percent, under one
+percent, orders of magnitude*) returned nothing.
+
+### F.0d was applied in the same session, and I did not notice
+
+`\AblationZeroUpperPerClass` is derived from the per-class run counts in
+`per-cell-metrics.csv` and **refuses to emit unless all six arm-classes are
+equal**, rather than dividing the pooled count by three. A new imbalance
+produces no macro, so the site quoting it fails to compile. **That is a
+fail-closed check: the default state of unverified data is failure.**
+
+**Deliberate as F.0c, noticed afterwards as F.0d.** The honest account: I wrote
+that guard reasoning explicitly about F.0c — the comment in the source and the
+commit message both say so, and the thought was *the arms happen to be balanced
+and nothing enforces it*. **I did not think "make this fail closed", and I did
+not connect it to F.0d until it was pointed out to me**, in the same session in
+which I had written F.0d.
+
+That is worth recording precisely rather than claiming the stronger version.
+Two readings, and I do not know which is right:
+
+- **The weaker one:** F.0c and F.0d are closer than F.0d's framing suggests.
+  *Correct for a reason nothing enforces* and *passes when it does nothing* may
+  be one property seen from two sides — an unenforced assumption is exactly a
+  condition whose violation produces silence.
+- **The stronger one, which I am not claiming:** that the principle was
+  internalised. The evidence does not support it. What the evidence supports is
+  that F.0c was internalised well enough to reach for within an hour, and that
+  I could not see F.0d in my own work when it was there.
+
+**The second half of that is the more useful observation**, and it is the same
+shape as F.0c's own finding that two of its three instances were caught by
+review rather than by me.
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
