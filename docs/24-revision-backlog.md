@@ -1740,3 +1740,136 @@ establish that the behaviour under test does not depend on untracked files.
 4. **Decide whether `paper/main.pdf` should be tracked at all.** It is the one
    tracked build product, and it is now stale relative to the sources, because
    the build legitimately refuses to promote while the `pydantic` check fails.
+
+---
+
+## B22. The write-loss probe tests matched pairs as independent samples, and the code says so itself
+
+**Filed against Phase 12. Found by the unit-of-analysis sweep
+(`reports/phase-report-8-unit-of-analysis-sweep-2026-08-31.md`), not by the
+sweep's own framing** — the sweep was looking for unit errors, and this sits
+above the unit question entirely.
+
+**The defect.** `scripts/paper_tables.py` computed `\FlakeyBarrierP` as
+`fisher_exact_two_tailed(0, 90, 90, 0)`. **Fisher's exact test assumes two
+independent samples. These are ninety matched pairs.**
+`experiments/flakey_write_loss.py:345-348`, `one_trial`:
+
+> """One matched pair of writes, one write-loss event, one read-back."""
+
+The acknowledged and un-acknowledged records are written **in the same trial**
+and exposed to **the same write-loss event**. The two rows of the 2×2 are not
+two samples; they are two measurements on one unit.
+
+**The code contradicted its own documentation.** The docstring says *"matched
+pair"*. The emitted provenance said *"acknowledged vs un-acknowledged loss over
+the **same** 90 trials"*. Both name the pairing, and the test discards it.
+
+**It is independent of the unit question and invalidates the construction at
+every unit.** Whether the trial, the replication or anything else is the
+independent unit, an unpaired test on paired data is the wrong test. A paired
+analysis at the trial level (exact binomial on 90 concordant pairs) gives
+`1.6e-27`; at the replication level a sign test on 3 gives a floor of `0.25`.
+**Neither number was ever quoted, because the p-values are now withdrawn
+entirely** — see the sweep report for the four options and the elimination.
+
+**Why this is filed rather than fixed.** The manuscript no longer quotes either
+p-value, so nothing in the paper depends on this. What remains is a defect in
+the generator: `fisher_exact_two_tailed` is still imported and used elsewhere,
+and nothing prevents the next paired comparison from reaching for it. **What is
+needed is a guard or a paired-test helper, not a recomputation.**
+
+**Same class as B11 and F.0a:** every artefact involved states the correct fact
+and no mechanism connects the statement to the computation.
+
+---
+
+## B23. `\BaselineDupMaxP` is execution-level, and is wrong by 157 orders of magnitude
+
+**Filed against Phase 12.** Found by the unit-of-analysis sweep.
+
+**State this first, so nobody misreads the size: the conclusion is safe under
+either unit.** This is a wrong *value*, not a changed *result*.
+
+| unit | comparison | value |
+|---|---|---|
+| execution — **as quoted at `06-evaluation.tex:93`** | 357/450 vs 0/540 | `5.4e-182` |
+| **run** | **42/45 runs with ≥1 duplicate vs 0/54** | **`8.7e-25`** |
+
+The sentence reads *"the weakest of the three comparisons against AEP-full is
+significant at $p = \BaselineDupMaxP{}$ by Fisher's exact test."* **It is
+significant at both.** The baselines duplicate in 77–83% of crashed executions
+and AEP-full in none; no plausible unit changes that.
+
+**The defect is that the value is computed on executions treated as independent
+when they are ten to a run**, and that `comparisons-vs-aep-full.csv` records
+this — its `fisher_unit` column reads `execution (cluster-unadjusted)` — while
+the macro's provenance does not carry it and the sentence does not state it.
+**The paper disclaims exactly this assumption in three other places**
+(`paper_tables.py:1894-1897`, `table-ablation.tex:6`, `06-evaluation.tex:300`)
+and B20 removed it from the ablation bound for the same reason.
+
+**Not fixed here** because it is a different quantity from B20's and needs its
+own decision: recompute at the run level, or keep the execution-level value and
+declare the unit. **Both are defensible; picking one is not this sweep's call.**
+
+---
+
+## B24. `\UnwantedP`'s unit is correct and declared thirty lines away
+
+**Filed against Phase 12.** Found by the unit-of-analysis sweep.
+
+**Nothing is wrong with the number.** `\UnwantedP` is Fisher exact two-tailed on
+`[[10, 20], [28, 2]]` — 30 runs per arm, and `06-evaluation.tex:348` states
+*"One execution per run, \AepKillRuns{} runs per system"*. **The run is the unit
+and the run is what was used.**
+
+**What is wrong is that nothing carries that with the number.** The macro's
+provenance names the contingency table and not the unit. The declaration exists
+only in a prose sentence about thirty lines from the first quotation, and the
+macro is quoted in **three** places including the abstract (`main.tex:171`,
+`06-evaluation.tex:379`, `08-threats.tex:73`).
+
+**This is `\ClassPpLow`'s situation exactly: correct today for a reason nothing
+enforces** (F.0c). If the probe were ever changed to run more than one execution
+per run, the macro would still resolve, `check_paper_numbers.py` would still
+pass, every sentence would still read fluently, and the p-value would silently
+become an execution-level number quoted as a run-level one. **Nothing degrades
+when the assumption stops holding.**
+
+**The fix is declaration, not recomputation** — and it is the thing B25 would
+enforce.
+
+---
+
+## B25. A unit-declaration check: designed, not built — and it would not have caught B20
+
+**Filed against Phase 12.** Designed by the unit-of-analysis sweep.
+
+**The design.** Every macro whose provenance matches an inferential pattern
+(interval, bound, CI, bootstrap, Wilson, Fisher, quantile, half-width, margin)
+must contain an explicit unit token — execution, run, run cluster, session,
+cell, stratum, trial. `paper_tables.py` refuses to emit otherwise.
+
+**Fail-closed by construction, per F.0d: a new quantity with no declared unit
+fails until declared.** The default state of new work is failure, which is the
+property that separates the orphan gate from every check in this backlog that
+looks live and cannot act.
+
+**It must handle sibling inheritance.** `\BarrierCostHigh`'s provenance reads
+*"the 97.5th percentile of **the same** bootstrap"*, inheriting its unit from
+`\BarrierCostLow`. A naive implementation flags it and three others, and a check
+that cries wolf on a quarter of its population will be silenced.
+
+**Keep this sentence: it would not have caught B20.** `\AblationZeroUpper`'s
+provenance read *"one-sided Wilson 95% upper bound on 0/540, percentage"*. **It
+declared its unit. The unit was wrong.** A declaration check passes it.
+
+**What it would have caught: all four findings of the sweep** — B22, B23, B24
+and the withdrawn `\FlakeyVsProcessKillP`. **What it cannot do is decide whether
+a declared unit is the right one.** That is the judgement B20 needed, and no
+check can make it. What the declaration buys is that the judgement becomes
+visible and reviewable, which is all a check can honestly offer.
+
+**Recorded so the check is not oversold later.** Declaration is mechanical;
+correctness is not.
