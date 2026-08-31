@@ -2047,6 +2047,25 @@ def emit_numbers(
                 "AUTHORITATIVE_READBACK minus NO_READBACK applied rate, "
                 "percentage points",
             )
+        # The prose states the spread as a range. Emitting min and max derived
+        # here, rather than letting the sentence name \ClassPpTwo and
+        # \ClassPpFour, keeps the range correct if the sessions are ever
+        # reordered, regenerated, or extended: those macros are session-indexed
+        # and only happen to be the extremes today.
+        macro(
+            "ClassPpMin",
+            f"{min(class_pp):+.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | smallest of the "
+            "per-session applied-rate differences",
+            "derived as min over sessions, not a fixed session index",
+        )
+        macro(
+            "ClassPpMax",
+            f"{max(class_pp):+.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | largest of the "
+            "per-session applied-rate differences",
+            "derived as max over sessions, not a fixed session index",
+        )
         macro(
             "ClassPpMean",
             f"{class_mean:+.1f}",
@@ -2073,13 +2092,11 @@ def emit_numbers(
             f"{class_mean + class_half:+.1f}",
             "b2-paired-v2-*/analysis/redis-kill-ablation.csv | upper end",
         )
-        macro(
-            "ClassPpMoved",
-            str(sum(1 for v in class_pp if v >= 20.0)),
-            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | sessions whose "
-            "applied-rate difference is at least 20 percentage points",
-            "the paper predicted capability class would not move this column",
-        )
+        # \ClassPpMoved (sessions moving >= 20 pp: 2 of 4) is deliberately not
+        # emitted. The prose states the spread and its direction instead, which
+        # a count of sessions past an unregistered threshold understates. The
+        # figure itself is not dropped -- it is stated in
+        # reports/phase-report-8-5-step-4-primary-estimand-2026-08-31.md.
 
     # The mechanism. The harness has always recorded the `docker kill` latency
     # and nothing surfaced it; reports/raw/extract_kill_latency.py bridges the

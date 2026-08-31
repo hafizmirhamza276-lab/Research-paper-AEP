@@ -155,6 +155,27 @@ differences, not a common coefficient.** The pooled model assumes one class
 effect shared by all sessions; the per-session fits assume nothing of the kind.
 The two coincide only under homogeneity, and this set does not look homogeneous.
 
+### Two of four sessions moved substantially — kept here because the paper does not state it
+
+**Two of the four sessions (s3, s4) show a difference of at least 20 percentage
+points; two (s1, s2) do not.** The 20 pp threshold is **post hoc and not
+registered** — it was chosen after seeing the four values, and nothing licenses
+it as a cut point. That is why it is a descriptive statement here and not a
+result.
+
+This count was briefly emitted as a `\ClassPpMoved` macro for the manuscript and
+then withdrawn. The manuscript states the spread instead — the difference ranges
+from −10.0 to +36.7 points across the four sessions, moving in both directions —
+because a count of sessions past an arbitrary threshold **understates** what
+happened: it discards the direction reversal at s2, which is the part that makes
+the interval contain zero. A reader told "two of four moved" would reasonably
+infer two moved and two sat at zero; s2 moved the other way.
+
+**Recorded rather than dropped.** The figure is real and someone will want it;
+withdrawing a number from the paper without stating it anywhere is the failure
+mode §F.0's Change 4 objected to, and it should not be committed here in the act
+of complying there.
+
 ## 4. Primary result
 
 | | |
