@@ -606,3 +606,215 @@ the load sampler, `pkill -f "load_sampler.sh /tmp/ls2"` killed the operator's ow
 shell — the pattern was a substring of that shell's command line. Same defect,
 same session, third distinct victim. The pattern-matching family of process
 control is not safely usable in this codebase; use PIDs.
+
+## B13. `slice_load.py` writes into frozen roots, and its output depends on when it ran
+
+**Filed against Phase 12. Three defects in one 137-line script, found together.**
+
+### 13a. It writes into a frozen root with no guard
+
+`slice_load.py:123-127` writes `foreign-load-sample.json` to both the run root
+and `analysis/`, checking only that the parent directory exists. It does not look
+for `SHA256SUMS`, and it does not care that the file it is about to overwrite is
+already named there.
+
+Re-running it on sessions 3 and 4 after they were frozen broke both freezes:
+`sha256sum -c` went from 18 OK / 0 FAILED to **17 OK / 1 FAILED** in each. The
+artefact was recovered by reproducing the original input rather than by
+re-freezing, so no digest was rewritten — but recovery worked only because the
+sampler's JSONL is append-only and had not rotated. Had it rotated, a hashed
+artefact would have been permanently unrecoverable, and the only remaining option
+would have been to re-freeze, which destroys the property that the digests were
+produced at collection time.
+
+**Needed:** refuse to write when `SHA256SUMS` exists in the target root and
+already names the target path, and a `--dry-run` seam so the refusal branch can
+be tested without a live frozen root (**R4**).
+
+### 13b. With no `complete at` line, the slice is unbounded and its contents depend on when it ran
+
+`slice_load.py:80`:
+
+```python
+if t1 and t > t1:
+    continue
+```
+
+When `t1` is `None` there is **no upper bound at all**. The loop keeps every
+sample from `t0` to end-of-file. So an unbounded slice's contents are set by the
+wall-clock moment the script executed, not by the session's boundary — and the
+artefact does not say so. `window_end` is serialised as `null` and no field
+distinguishes "the session ended here" from "we stopped reading here".
+
+This is the normal path, not an edge case. `finish_session.sh` runs the slice
+*during* the freeze, before the session log has been written its final
+`complete at` line, so `t1` is `None` every time. Both frozen artefacts carry
+`"window_end": null`. They are left that way deliberately: that is what the
+freeze attests, and bounding them now would be editing evidence to make it tidier.
+
+**It was harmless only by timing.** Session 3's last sample is at `18:07:09` and
+the sampler's default interval is 60 s (`load_sampler.sh:33`), so
+`finish_session.sh` had about sixty seconds to compute the slice before the next
+sample landed. Session 4 started at `18:07:19` — **four seconds** after session 3
+completed. Had the chain been a minute slower, session 3's foreign-load record
+would have silently absorbed session 4's window, and nothing anywhere would have
+flagged it: no gate reads this file, the record count would still have looked
+plausible, and `sha256sum -c` would have passed on whatever was written.
+
+**Needed:** bound the slice explicitly at compute time when the log gives no end,
+and record in the artefact which bound was used and why.
+
+### 13c. The interval is hardcoded and can disagree with the sampler
+
+`slice_load.py:98` emits `"interval_seconds": 60` as a literal. The sampler takes
+the interval as a positional argument — `load_sampler.sh:33`,
+`INTERVAL="${2:-60}"` — so 60 is only a default. A sampler started at any other
+interval produces an artefact that misreports its own resolution.
+
+That number is not decorative. The artefact's `interpretation_limit` field uses
+it to state how long a container must live to be visible, which is the entire
+basis for reading an empty `foreign_running_seen` as weak evidence rather than
+proof. A wrong interval makes that bound wrong in an unfalsifiable direction.
+
+**Needed:** the sampler records its interval in the JSONL header or in each
+record, and the slicer reads it rather than asserting it.
+
+## B14. `finish_session.sh` counts its own output, and it is the second file to do so
+
+**Filed against Phase 12. The mechanism is already recorded once; this is the
+point of the entry.**
+
+`finish_session.sh`'s inline fault count greps the session log for `FAILED` and
+then echoes the matching lines back into that same log through `tee`. Every
+later invocation therefore counts its own prior output. Session 2's log read
+**4** when it was first run and **8** when read again later. The true value is
+**2**, at repetitions 0 and 6.
+
+`fault_census.py` is correct: it reads `matrix-progress.jsonl`, the harness's
+structured record, and was validated against session 1's known 0 and session 2's
+known 2 before being trusted. Every fault figure in the Phase 8.4 reporting comes
+from it, not from the shell count.
+
+**This is the identical mechanism to the census defect already recorded under
+B11 — a derived count that reads its own echoed output — now in a second file.**
+The first instance also parsed `[3/120]` as two separate numbers and reported
+failures at positions `[3, 120, 26, 120]`. Fixing one file did not fix the class,
+because the class is *deriving a count by grepping a stream the deriving process
+also writes to*. Both instances were caught only by **R2**: validating against a
+session whose answer was already known. Neither has a failing branch, so **R3**
+could not have caught either.
+
+**Needed:** no count in the collection tooling is derived from a log that the
+counting process writes to. `matrix-progress.jsonl` is append-only and structured
+and is the answer in both cases. The shell count should be deleted rather than
+repaired, because a correct grep over a self-appended log is still one `tee` away
+from being wrong again.
+
+## B15. `SHA256SUMS` attests 1% of a root, and the gate record is in the other 99%
+
+**Filed against Phase 12. Confirmed from source and across all 11 result roots on
+the collection host.**
+
+`scripts/freeze_results.py:176-178`:
+
+```python
+digested = [manifest_path, csv_path]
+if analysis.is_dir():
+    digested += sorted(p for p in analysis.glob("*") if p.is_file())
+```
+
+`analysis.glob("*")` is non-recursive and file-filtered. The digest set is
+`MANIFEST.md`, `MANIFEST.csv` and `analysis/*` — and nothing else. No run
+directory, no ledger, no log, no top-level file. Every root on the host holds
+15–18 entries with **0 sqlite entries and 0 run-directory entries**, including
+`matrix`, the frozen 432-run tree the manuscript rests on.
+
+**Derived for sessions 3 and 4, which are typical:**
+
+| | count |
+|---|---|
+| entries in `SHA256SUMS` | 18 |
+| files anywhere in the root | **1827** |
+| **attested fraction** | **1.0%** |
+| run directories, wholly unattested | 120 |
+| `ground_truth.sqlite3` / `-wal` / `-shm`, wholly unattested | 120 / 120 / 120 |
+
+### The part that is worse than "the raw evidence is unattested"
+
+Five files sit at each root's **top level**, outside `analysis/` and therefore
+outside the digest entirely:
+
+`cell-census-bundle.json`, `gates.json`, `matrix-plan.json`, `matrix-plan.txt`,
+**`matrix-progress.jsonl`**.
+
+Two of those decide whether a session is admissible at all:
+
+- **`gates.json`** holds the HALT gate outputs — undetected duplicates, lost
+  effects, the `executions ≠ runs × 1` resume double-count signature, duplicate
+  `(system, response_class)`, canary survival.
+- **`matrix-progress.jsonl`** is the authoritative source for the fault census
+  (**R2**, and B14 above), which is what amendment 4's exclusion criterion and
+  its ceiling of 3 are evaluated against.
+
+**So the two files that determine admissibility are outside the digest.** Anyone
+could alter either one after the freeze — flip a HALT result, remove a
+`FaultInjectionError` record so a session no longer approaches the ceiling — and
+`sha256sum -c` would still report every entry OK. The check that a reader runs to
+establish that a session was not tampered with does not cover the records that
+say whether the session passed.
+
+Stated at its true strength: there is no evidence anything was altered, and
+nothing here suggests it was. The defect is that the verification offers no way
+to rule it out while appearing to.
+
+### Not an overclaim about the documentation
+
+`ARTIFACT.md:248-254` is already honest about scope. It says `SHA256SUMS`
+"currently digests the manifest and every listed matrix output — 17 files", that
+"from a clone, only the tracked subset can be checked", and that the external
+archive's manifest "must cover every raw directory, `results/voided/`, and all
+derived products". None of that is wrong, and this entry does not claim
+otherwise.
+
+**The gap is between that paragraph and what a reader does.** B5 calls
+`SHA256SUMS` "the artifact's integrity mechanism". The command in the repository
+is `sha256sum -c SHA256SUMS`, it exits 0, and nothing in its output states what
+it did not check. The honesty lives in a document; the misleading pass lives in
+the tool. Additionally, nothing produces or enforces the complete manifest
+`ARTIFACT.md` requires — there is no archive script anywhere in `scripts/`, and
+`Makefile:38`'s `ARCHIVE ?=` is an input path, not a build target.
+
+**Needed, in order of cost:** a refusal banner in `SHA256SUMS` itself naming what
+it does not cover; then a `SHA256SUMS.evidence`-style manifest over run
+directories and top-level files, produced at freeze time by the same script. The
+off-host archive written for sessions 3 and 4 in Phase 8.4 demonstrates the
+latter is cheap — a full 1827-entry manifest per root, ledger triples intact and
+no WAL checkpointed, took seconds.
+
+### B15a. Three artefacts exist twice, hashed in one place and not the other
+
+Recorded inside B15 rather than as its own item, because it is the same defect —
+a scope boundary that does not follow the content — in its sharpest form, and
+because fixing B15 without fixing this would make it worse: an evidence manifest
+would then attest *both* copies with no rule saying which one wins.
+
+`container-precondition.json`, `fault-injection-census.json` and
+`foreign-load-sample.json` each exist at both the root and under `analysis/`.
+`slice_load.py:123-127` writes both copies; the census and precondition writers
+do the same.
+
+**The `analysis/` copy is authoritative.** It is the one `SHA256SUMS` names, the
+one `publish_from_sums.sh` copies into the tracked clone, the one committed, and
+the only one a reader outside the collection host will ever see. The top-level
+copy is a convenience for operators on the host.
+
+**Nothing checks that they agree, and they can diverge silently.** Any tool that
+writes only one copy — or writes both and fails between them — leaves two
+different answers to the same question inside one frozen root, with the
+unattested one sitting at the more obvious path. A reader on the collection host
+who opens the root-level file gets an answer that `sha256sum -c` never checked
+and that no policy declares subordinate.
+
+**Needed:** write one copy, under `analysis/`, and if the top-level convenience
+copy is kept, make it a symlink or have the freeze assert the two are identical
+before hashing.
