@@ -219,6 +219,122 @@ lexical or numeric check can see. What would catch them is a rule that every
 emitted number states what it is derived *from* — index versus extremum,
 value versus value-plus-binding — and that rule does not exist.
 
+## F.0d A check that works, and why — the orphan gate
+
+**This phase has filed a long run of checks that structurally cannot detect what
+they name.** Handover finding 5's four, B14, B15, B18's guard on the intercept,
+B19's sweep of the wrong parameter, and F.0's own word-level version. **This is
+the first one in the whole backlog that works, and it fired in exactly the
+situation its docstring predicts.** It is recorded at the same length as the
+failures, because "what a working check looks like" is worth more than another
+instance of what a broken one looks like.
+
+### What it is, and what it caught
+
+`scripts/check_paper_numbers.py:158-184`, *"every generated number is used in the
+manuscript"*:
+
+```python
+defined = set(re.findall(r"\\newcommand\{\\([A-Za-z]+)\}", numbers.read_text()))
+used = ...  # every \command in main.tex and sections/*.tex
+orphans = sorted(defined - used)
+```
+
+Its docstring, written before this session:
+
+> A macro that is defined and never used is a number that was computed and then
+> dropped… a tolerable accident in a stable draft and **a dangerous one during a
+> framing revision, which is exactly when a claim gets moved, its replacement
+> gets written, and its evidence gets orphaned.**
+
+**That is precisely what happened.** B20's fix planned three commits — add both
+new bound macros, migrate the four consuming sites, remove the old macro — each
+intended to build. The first failed: `2 orphaned: AblationZeroUpperExec,
+AblationZeroUpperRun`. The plan was wrong and the gate said so.
+
+### The structural consequence: this gate and LaTeX form a two-sided ratchet
+
+| direction | caught by | fires at |
+|---|---|---|
+| defined, not used | this gate | *add without migrating* |
+| used, not defined | LaTeX `Undefined control sequence` | *remove without migrating* |
+
+**No ordering of add / migrate / remove yields more than one green commit.** The
+repository's position — a number and its use land together — is not written down
+anywhere as a rule; it is enforced by the intersection of two checks. The
+planned split was not merely inconvenient, it was impossible.
+
+### Why it works — the proposed reading, tested rather than adopted
+
+The reading offered was: *it checks an output property — is this number consumed
+— rather than intent or naming, and every failed check in this backlog rests on
+intent or a name.* Tested against every failure on file:
+
+| failed check | rests on | reading holds? |
+|---|---|---|
+| `pgrep -f "run_session.sh …"` | a **name/pattern** that matched itself | ✅ |
+| `pkill -f "load_sampler.sh …"` | same | ✅ |
+| fault census greps `FAILED`, tees into the same log | a **pattern** over a stream it writes | ✅ |
+| B14 `finish_session.sh` | same | ✅ |
+| B15 `SHA256SUMS` | a **name** implying a scope the digest set does not have | ✅ |
+| F.0 word-level binding | a **string**, evaded by paraphrase | ✅ |
+| `${#ARRAY[@]:-0}` | invalid bash evaluating to a **constant** | ❌ |
+| B18 guard on the intercept | right property, **wrong object** | ❌ |
+| B19 sweep of `p₀` | right method, **wrong parameter** | ❌ |
+
+**Six of nine. The reading is substantially right and it is not the whole
+story** — it explains identification failures and does not explain the three
+where the check evaluated a real property of the wrong thing. Recorded as
+partial rather than adopted, because a wrong general lesson is worse than a
+narrow true one.
+
+### The sharper generalisation: every failed check passes when it does nothing
+
+Run the same list against a different question — *what does this check do when it
+is given nothing to work with?*
+
+- `pgrep` pattern matches nothing → **pass**
+- `${#ARRAY[@]:-0}` → `false` under `if` → **pass**
+- `SHA256SUMS` over a set that excludes the runs → **pass**
+- F.0 on a sentence not containing the bound word → **pass**
+- B19 holding the variance assumption fixed → **pass**
+- **orphan gate on a newly defined macro → FAIL**
+
+**Every check in this backlog fails open. This one fails closed.** A new macro is
+orphaned until someone consumes it, so the *default state of new work is
+failure*, and passing requires an action nobody can take by accident. That is a
+stronger predictor than the output/intent distinction, and it subsumes it: a
+check identified by a name fails open because a name that matches nothing is
+indistinguishable from a clean result.
+
+Two properties make the fail-closed default possible here, and they are the
+transferable part:
+
+1. **Two independently produced populations must agree.** Definitions come from
+   `paper_tables.py`; uses come from human prose. **Neither process can satisfy
+   the check alone.** Every failed check above draws all its inputs from the same
+   process that produces the thing being checked — which is why the census could
+   read its own output and `pkill` could match its own shell.
+2. **Exact set arithmetic, no threshold and no pattern.** `defined - used` has
+   nothing to tune, so it cannot be tuned into silence. B19's sweep and B18's
+   guard both had a knob; both were set to a value that made them inert.
+
+**A candidate rule, offered as a hypothesis and not as a finding:** *a check is
+worth having when its inputs come from two processes that cannot collude, and
+when the state of not-yet-done reads as failure rather than as success.* It is
+consistent with all ten cases on file. Ten is not many, and it was derived from
+them rather than tested against anything new.
+
+### One limitation, and it constrains work already planned
+
+`used` is collected from **`main.tex` and `sections/*.tex` only** —
+`paper/generated/*.tex` is not scanned. So **a macro referenced only from a
+generated caption is reported orphaned.** No macro is in that position today
+because the generated tables carry literal numbers, but B20's caption work
+intends to put bounds into two generated captions, and it will hit this. The
+gate is right about the general case and wrong about that one; it is recorded
+here rather than fixed, and it does not weaken anything above.
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
