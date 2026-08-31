@@ -1960,6 +1960,127 @@ def emit_numbers(
             "zero: the arm that never waits for the barrier does not move",
         )
 
+    # --- Phase 8.4/8.5: the capability-class comparison ------------------
+    # The four pre-registered sessions that settle whether capability class
+    # moves the applied-effect column. Read from the same hashed artefact as
+    # the replication block above, and reported on the SAME construction:
+    # session as the unit, mean, t(k-1), half-width t*sd/sqrt(k). One
+    # inferential standard in this file, not two.
+    #
+    # Percentage points, not log-odds. The estimand is fitted per session as a
+    # logistic regression, but no fitter exists in this generator or in
+    # experiments.statistics, and adding one to emit two decimal places would
+    # be a far larger change than the claim needs. The paragraph these macros
+    # serve argues from the applied-effect rate, which is what the surrounding
+    # text already uses. The log-odds coefficients live in
+    # reports/phase-report-8-5-step-4-primary-estimand-2026-08-31.md.
+    #
+    # The registered MDE is deliberately NOT emitted. It was computed as a
+    # pooled binomial across all k sessions with no between-session variance
+    # component (backlog B19), which is the same omission the realised spread
+    # exposed, so quoting it as the standard would propagate the defect. The
+    # comparison the text makes instead is self-contained: the half-width
+    # against the observed mean.
+    CLASS_ROOTS = (
+        "b2-paired-v2-s1-2026-08-28",
+        "b2-paired-v2-s2-2026-08-28",
+        "b2-paired-v2-s3-2026-08-28",
+        "b2-paired-v2-s4-2026-08-28",
+    )
+    class_pp: list[float] = []
+    class_arm_n: set[int] = set()
+    for directory in CLASS_ROOTS:
+        path = (
+            ROOT / "experiments" / "results" / directory
+            / "analysis" / "redis-kill-ablation.csv"
+        )
+        if not path.is_file():
+            class_pp = []
+            break
+        by_class = {
+            row["response_class"]: row
+            for row in read_rows(path)
+            if row["system"] == "AEP_FULL"
+        }
+        auth = by_class.get("AUTHORITATIVE_READBACK")
+        norb = by_class.get("NO_READBACK")
+        if not auth or not norb:
+            class_pp = []
+            break
+        class_arm_n.update(
+            {int(auth["executions"]), int(norb["executions"])}
+        )
+        class_pp.append(
+            100.0
+            * (
+                int(auth["executions_with_an_applied_effect"])
+                / int(auth["executions"])
+                - int(norb["executions_with_an_applied_effect"])
+                / int(norb["executions"])
+            )
+        )
+
+    if len(class_pp) == len(CLASS_ROOTS):
+        k_class = len(class_pp)
+        class_mean = statistics.mean(class_pp)
+        class_sd = statistics.stdev(class_pp)
+        # t(0.975, 3), identical to the replication interval above.
+        class_half = 3.182 * class_sd / math.sqrt(k_class)
+        macro(
+            "ClassSessions",
+            str(k_class),
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | pre-registered "
+            "sessions of the capability-class comparison",
+            "all four run-level interleaved; k fixed in advance and not extended",
+        )
+        macro(
+            "ClassRunsPerArm",
+            str(sorted(class_arm_n)[0]) if len(class_arm_n) == 1 else "varies",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | executions per "
+            "arm per session",
+        )
+        for label, value in zip(("One", "Two", "Three", "Four"), class_pp):
+            macro(
+                f"ClassPp{label}",
+                f"{value:+.1f}",
+                "b2-paired-v2-*/analysis/redis-kill-ablation.csv | AEP-full "
+                "AUTHORITATIVE_READBACK minus NO_READBACK applied rate, "
+                "percentage points",
+            )
+        macro(
+            "ClassPpMean",
+            f"{class_mean:+.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | mean over "
+            "sessions of the applied-rate difference",
+            f"= mean{tuple(round(v, 1) for v in class_pp)}",
+        )
+        macro(
+            "ClassPpHalfWidth",
+            f"{class_half:.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | session-"
+            f"clustered 95% half-width, t({k_class - 1}) = 3.182, session as "
+            "the unit",
+            "wider than the mean it brackets: the sessions disagree",
+        )
+        macro(
+            "ClassPpLow",
+            f"{class_mean - class_half:+.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | lower end of "
+            "that interval",
+        )
+        macro(
+            "ClassPpHigh",
+            f"{class_mean + class_half:+.1f}",
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | upper end",
+        )
+        macro(
+            "ClassPpMoved",
+            str(sum(1 for v in class_pp if v >= 20.0)),
+            "b2-paired-v2-*/analysis/redis-kill-ablation.csv | sessions whose "
+            "applied-rate difference is at least 20 percentage points",
+            "the paper predicted capability class would not move this column",
+        )
+
     # The mechanism. The harness has always recorded the `docker kill` latency
     # and nothing surfaced it; reports/raw/extract_kill_latency.py bridges the
     # raw runs to this file. AEP-full dispatches only if WAITAOF returns before
