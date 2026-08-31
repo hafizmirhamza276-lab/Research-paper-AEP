@@ -855,6 +855,59 @@ off-host archive written for sessions 3 and 4 in Phase 8.4 demonstrates the
 latter is cheap — a full 1827-entry manifest per root, ledger triples intact and
 no WAL checkpointed, took seconds.
 
+### The raw trees are not consistent across copies, and nothing detects a partial
+
+Because `SHA256SUMS` names **zero** run directories, a copy holding a *subset* of
+a root's runs verifies exactly as well as a complete one. There is no entry for
+the missing runs to fail against. This is not hypothetical — the copies already
+disagree.
+
+**`matrix` exists twice on this machine, at two different sizes:**
+
+| copy | run directories | ledgers |
+|---|---|---|
+| `/root/aep/experiments/results/matrix` | **432** | 432 |
+| `Research-paper-AEP/experiments/results/matrix` | **84** | 84 |
+
+The second is a **19.4% snapshot** taken from this project, sitting untracked on
+disk in the working clone. `git status` does not show it and `git ls-files`
+returns 8 tracked paths for that root, none of them a run directory — so it is
+invisible to git and unattested by the manifest, while occupying the exact path a
+reader or a script would look in.
+
+**And the split runs both ways**, so neither tree is "the complete one":
+
+| root | in `/root/aep-phase8` | in the working clone |
+|---|---|---|
+| `b2-2026-08-21` | 0 runs | **60** |
+| `b2-s1/s2/s3-2026-08-21` | 0 runs each | **60 each** |
+| Phase 8.4 `s1`–`s4` | **120 each** | 0 runs each |
+
+The 21 August roots' raw runs are on the Windows side only; Phase 8.4's are on
+the WSL side only; `matrix` is complete in a third location. **No single tree on
+this machine holds all of the project's raw evidence.**
+
+**Independent confirmation of survey (a) on the 84.** They were surveyed
+separately, by the same read-only method: **84 of 84 are exactly 4096-byte bare
+pages** — the 0.34 MB aggregate is 84 × 4096 exactly — and **84 of 84 have a
+non-empty `-wal`**, totalling 41.82 MB. Sampled runs show 4,096 B of database
+against 74,192 B of WAL; WAL sizes vary by run and reach the hundreds of
+kilobytes. Across the working clone's 331 ledgers: 331 bare, 331 non-empty WALs,
+1.36 MB of database against 66.84 MB of WAL. 662 `-wal`/`-shm` files stamped
+before and after, **0 changed**.
+
+**The consequence for Phase 10 is the one that matters.** Whoever assembles the
+archive must choose a copy, and **nothing in the repository tells them which is
+complete or checks the choice afterwards**. Building from the working clone would
+publish **84 of 432 runs, 19.4%**, under a DOI — and `sha256sum -c` would return
+exit 0 on that archive, because the manifest names 17 derived files and no runs
+at all. A silently truncated archive is indistinguishable from a complete one by
+every check the project currently has.
+
+This is the same defect as the rest of B15 — the digest's scope does not reach
+the evidence — but it is the form with the worst outcome, because the failure is
+not a corrupted file that fails a check. It is a *missing 80%* that passes one.
+
 ### B15a. Three artefacts exist twice, hashed in one place and not the other
 
 Recorded inside B15 rather than as its own item, because it is the same defect —
