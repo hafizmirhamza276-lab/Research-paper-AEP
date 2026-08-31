@@ -500,6 +500,46 @@ Two readings, and I do not know which is right:
 shape as F.0c's own finding that two of its three instances were caught by
 review rather than by me.
 
+### A second instance of the same failure, one task later
+
+**The design-floor argument.** `\FlakeyBarrierP` quotes a p-value over 3
+replications against 3. At that structure the two-sided minimum is
+`2/C(6,3) = 0.1` — **so no result the design can produce reaches conventional
+significance.** The 0.1 comes from *perfect separation*, the strongest outcome
+available, and is still above 0.05. It is a property of the design, not a
+statement about the data.
+
+**That is structurally an argument this project has made before**, about the
+Rademacher sign-flip distribution at G = 4: 2⁴ = 16 sign vectors, so a minimum
+one-sided p of 1/16 = 0.0625 and no 95% interval formable. Same structure,
+different place. **It was seen when it was an estimator and missed when it was
+inside a macro** — and missed in a sweep specifically looking for unit errors, by
+the person who had made the argument.
+
+**One qualification on the record, because it matters for how this is cited.**
+The arithmetic is independently confirmed here (`2/C(6,3) = 0.1`, and
+Fisher-on-a-2×2 is the permutation test conditional on the margins, so the
+hypergeometric and permutation minima coincide). **But the prior instance is not
+in the committed record** — `Rademacher`, `sign vector`, `0.0625` and `16` return
+nothing across `reports/`, `docs/` and `prompts/`. It exists in the working
+conversation, not in the repository. **So "the same argument, twice" rests on an
+account of a prior session rather than on an artefact**, and that distinction is
+exactly the kind this project has spent the phase insisting on.
+
+**Two instances now, of the same failure of self-review** — F.0d unrecognised in
+my own guard, and a floor argument unrecognised in my own sweep. **Both were
+caught by the reviewer.** F.0c already recorded that two of its three instances
+were caught by review rather than by me; this is the same ratio holding as the
+work continues, and it is the argument for why this work is reviewed by someone
+who did not do it.
+
+**What it is not evidence of:** that the sweep was ineffective. The sweep found
+the four undeclared quantities it was designed to find, including the flakey
+probe. What it missed was a *further* property of one finding it had already
+surfaced. The failure is one of exhaustion within a finding, not of detection —
+which is a narrower and more actionable statement than "self-review does not
+work".
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
