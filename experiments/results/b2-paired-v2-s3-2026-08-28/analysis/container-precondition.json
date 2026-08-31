@@ -1,0 +1,70 @@
+{
+  "schema": "aep.phase8.container-precondition/1",
+  "captured_at": "2026-08-28T16:48:39+05:00",
+  "expected_fixtures": [
+    "aep-phase2-redis72",
+    "aep-phase2-toxiproxy"
+  ],
+  "fixtures_missing": [],
+  "foreign_running_before": [
+    {
+      "name": "komserv-pg-race-ecd02850",
+      "image": "postgres:16-alpine",
+      "status": "Up About an hour"
+    },
+    {
+      "name": "komserv-pg-race-c4309c8e",
+      "image": "postgres:16-alpine",
+      "status": "Up 2 hours"
+    }
+  ],
+  "foreign_stopped": [
+    "komserv-pg-race-ecd02850",
+    "komserv-pg-race-c4309c8e"
+  ],
+  "containers_before": [
+    {
+      "name": "komserv-pg-race-ecd02850",
+      "state": "running",
+      "status": "Up About an hour",
+      "image": "postgres:16-alpine"
+    },
+    {
+      "name": "komserv-pg-race-c4309c8e",
+      "state": "running",
+      "status": "Up 2 hours",
+      "image": "postgres:16-alpine"
+    },
+    {
+      "name": "aep-phase2-toxiproxy",
+      "state": "running",
+      "status": "Up 4 days (healthy)",
+      "image": "ghcr.io/shopify/toxiproxy:2.12.0"
+    },
+    {
+      "name": "aep-phase2-redis72",
+      "state": "running",
+      "status": "Up 9 minutes (healthy)",
+      "image": "redis:7.2.5-alpine"
+    }
+  ],
+  "containers_after": [
+    {
+      "name": "aep-phase2-toxiproxy",
+      "state": "running",
+      "status": "Up 4 days (healthy)",
+      "image": "ghcr.io/shopify/toxiproxy:2.12.0"
+    },
+    {
+      "name": "aep-phase2-redis72",
+      "state": "running",
+      "status": "Up 9 minutes (healthy)",
+      "image": "redis:7.2.5-alpine"
+    }
+  ],
+  "volume_count_before": 635,
+  "volume_count_after": 633,
+  "loadavg_before": "0.34 0.40 0.37 1/542 6276",
+  "loadavg_after": "0.53 0.44 0.39 1/516 6291",
+  "note": "Fixtures are declared by compose.phase2.yml and are part of the run; they are never cleaned, because recreating them per session would make session 1 differ from sessions 2-4 by construction. Foreign containers are recorded by name and stopped, not removed. container_state in run-config.json covers the AEP Redis container only, so foreign load reaches no other artefact in the run root."
+}

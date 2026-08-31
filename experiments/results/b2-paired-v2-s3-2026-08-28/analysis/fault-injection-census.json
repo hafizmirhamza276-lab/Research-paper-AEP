@@ -1,0 +1,10 @@
+{
+  "session": "b2-paired-v2-s3-2026-08-28",
+  "fault_injection_errors": 0,
+  "other_failures": 0,
+  "failures": [],
+  "other": [],
+  "repetitions_with_a_non_landing_kill": [],
+  "repetitions_total": 30,
+  "clustering": "no non-landing kills in this session"
+}
