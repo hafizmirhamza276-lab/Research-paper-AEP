@@ -1021,7 +1021,7 @@ def emit_numbers(
             f"regime={CRASHED_REGIME} | {len(baseline_rates)} cells",
         )
         # The same two numbers as percentages. The equivalence argument in
-        # section 6 compares them against \AblationZeroUpper, which is a
+        # section 6 compares them against \AblationZeroUpperRun, which is a
         # percentage, and the comparison was written with the rates converted
         # by hand -- "77--83%" typed beside the macros that hold 0.77 and 0.83.
         # Two representations of one measurement, only one of them generated,
@@ -1030,13 +1030,13 @@ def emit_numbers(
             "BaselineDupLowPct",
             f"{min(baseline_rates) * 100:.0f}",
             "\\BaselineDupLow as a percentage, for comparison against "
-            "\\AblationZeroUpper",
+            "\\AblationZeroUpperRun",
         )
         macro(
             "BaselineDupHighPct",
             f"{max(baseline_rates) * 100:.0f}",
             "\\BaselineDupHigh as a percentage, for comparison against "
-            "\\AblationZeroUpper",
+            "\\AblationZeroUpperRun",
         )
     # The significance of that gap. The manuscript asserted a bound --
     # "p < 10^{-100}" -- which is true but is a number nothing generated and
@@ -1367,6 +1367,13 @@ def emit_numbers(
         )
 
     arms: set[str] = set()
+    # The run counts behind those execution counts. The zero-event bound was
+    # computed on executions only, which treats 540 executions as 540
+    # independent trials when they are 54 runs of 10. That is the same
+    # execution-level independence \cref{tab:ablation}'s own caption disclaims
+    # for the Fisher values, and nothing disclaimed it here. Collected so the
+    # bound can be emitted at both units rather than at the narrower one alone.
+    arm_runs: set[str] = set()
     for metric, tag in (
         ("undetected_duplicate_rate", "Dup"),
         ("lost_effect_rate", "Lost"),
@@ -1386,6 +1393,8 @@ def emit_numbers(
             continue
         arms.add(row["system_total"])
         arms.add(row["reference_total"])
+        arm_runs.add(row["system_runs"])
+        arm_runs.add(row["reference_runs"])
         macro(
             f"BthreeVsAep{tag}P",
             tex_p_value(float(row["fisher_p_value"])),
@@ -1417,13 +1426,45 @@ def emit_numbers(
         # quantile of a two-sided 95% interval. For two simultaneous bounds,
         # the joint coverage is at least 90% by Bonferroni.
         upper = wilson_upper_bound(0, int(per_arm), confidence=0.95)
+        # The same bound at the two units, each named in the macro rather than
+        # left to the prose. Which one is defensible is not a presentational
+        # choice: 10 executions share a run, a crash point and a system, so the
+        # execution-level denominator is false by construction and the bound
+        # built on it is too narrow. With zero events the within-run
+        # correlation cannot be estimated from the data, so the run is taken as
+        # the unit -- the conservative reading, and the one this file already
+        # applies to the declared-ambiguity difference.
         macro(
-            "AblationZeroUpper",
+            "AblationZeroUpperExec",
             f"{upper * 100:.2f}",
-            f"one-sided Wilson 95% upper bound on 0/{per_arm}, percentage",
-            "uses z=Phi^-1(0.95); this differs from the upper endpoint of a "
-            "two-sided 95% interval, which uses z=Phi^-1(0.975)",
+            f"one-sided Wilson 95% upper bound on 0/{per_arm} EXECUTIONS",
+            "assumes the executions are independent trials; they are not, and "
+            "this is the value that assumption buys",
+            "uses z=Phi^-1(0.95), not the two-sided 97.5th quantile",
         )
+        if len(arm_runs) == 1:
+            per_arm_runs = arm_runs.pop()
+            upper_run = wilson_upper_bound(0, int(per_arm_runs), confidence=0.95)
+            macro(
+                "BthreeVsAepRuns",
+                per_arm_runs,
+                "comparisons-vs-aep-full.csv | run clusters per arm, identical "
+                "across all three metrics",
+                f"{per_arm} executions over {per_arm_runs} runs "
+                f"= {int(per_arm) // int(per_arm_runs)} executions per run",
+            )
+            macro(
+                "AblationZeroUpperRun",
+                f"{upper_run * 100:.2f}",
+                "comparisons-vs-aep-full.csv | one-sided Wilson 95% upper "
+                f"bound on 0/{per_arm_runs} RUN CLUSTERS",
+                f"{per_arm} executions over {per_arm_runs} runs; the run is "
+                "the independent unit, so this is the reported bound",
+                "uses z=Phi^-1(0.95), not the two-sided 97.5th quantile",
+                "the unit was not chosen for the result: the baselines it is "
+                "contrasted against are \\BaselineDupLowPct-\\BaselineDupHighPct"
+                "%, so the contrast is unaffected either way",
+            )
         # The numerators themselves. "a rate of 0" was written as a bare
         # numeral in four places, which made the paper's most load-bearing
         # zero the one number no gate looked at. Emitted as the larger of the

@@ -57,10 +57,10 @@
 % regime=crashed | 9 cells
 \newcommand{\BaselineDupHigh}{0.83}
 
-% \BaselineDupLow as a percentage, for comparison against \AblationZeroUpper
+% \BaselineDupLow as a percentage, for comparison against \AblationZeroUpperRun
 \newcommand{\BaselineDupLowPct}{77}
 
-% \BaselineDupHigh as a percentage, for comparison against \AblationZeroUpper
+% \BaselineDupHigh as a percentage, for comparison against \AblationZeroUpperRun
 \newcommand{\BaselineDupHighPct}{83}
 
 % comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, regime=crashed, largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL
@@ -209,9 +209,20 @@
 % comparisons-vs-aep-full.csv | executions per arm, identical across all three metrics
 \newcommand{\BthreeVsAepN}{540}
 
-% one-sided Wilson 95% upper bound on 0/540, percentage
-% uses z=Phi^-1(0.95); this differs from the upper endpoint of a two-sided 95% interval, which uses z=Phi^-1(0.975)
-\newcommand{\AblationZeroUpper}{0.50}
+% one-sided Wilson 95% upper bound on 0/540 EXECUTIONS
+% assumes the executions are independent trials; they are not, and this is the value that assumption buys
+% uses z=Phi^-1(0.95), not the two-sided 97.5th quantile
+\newcommand{\AblationZeroUpperExec}{0.50}
+
+% comparisons-vs-aep-full.csv | run clusters per arm, identical across all three metrics
+% 540 executions over 54 runs = 10 executions per run
+\newcommand{\BthreeVsAepRuns}{54}
+
+% comparisons-vs-aep-full.csv | one-sided Wilson 95% upper bound on 0/54 RUN CLUSTERS
+% 540 executions over 54 runs; the run is the independent unit, so this is the reported bound
+% uses z=Phi^-1(0.95), not the two-sided 97.5th quantile
+% the unit was not chosen for the result: the baselines it is contrasted against are \BaselineDupLowPct-\BaselineDupHighPct%, so the contrast is unaffected either way
+\newcommand{\AblationZeroUpperRun}{4.77}
 
 % comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, the larger of the two arms' numerators
 % B3 0/540 vs AEP-full 0/540

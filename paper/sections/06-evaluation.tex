@@ -286,19 +286,32 @@ $\BthreeVsAepDupCount{}/\BthreeVsAepN{}$ returns
 $p = \BthreeVsAepDupP{}$ for duplicates and $p = \BthreeVsAepLostP{}$ for lost
 effects, and both numbers are worth nothing: a test between two zero counts
 has no power, and failing to distinguish them is not evidence that they are
-the same. What two zeros do support is a \emph{bound}. The one-sided
+the same. What two zeros do support is a \emph{bound}. The unit for that bound
+is the run, not the execution: each arm's \BthreeVsAepN{} executions are
+\BthreeVsAepRuns{} runs of ten, and ten executions that share a run, a crash
+point and a system are not ten independent trials. The one-sided
 95\% Wilson upper confidence bound on a zero numerator over
-\BthreeVsAepN{} executions is \AblationZeroUpper{}\%. This is a genuinely
+\BthreeVsAepRuns{} run clusters is \AblationZeroUpperRun{}\%. This is a genuinely
 one-sided bound using the 95th normal quantile; it is not the upper endpoint of
 a two-sided 95\% Wilson interval, which uses the 97.5th quantile. Each system's
 rate is individually bounded this way. When the two system bounds are stated
 simultaneously, Bonferroni gives joint coverage of at least 90\%, not 95\%.
 Under that simultaneous event, both rates lie in
-$[0,\AblationZeroUpper{}\%]$, so their absolute difference is at most
-\AblationZeroUpper{} percentage points. This finite-sample bound is the support
+$[0,\AblationZeroUpperRun{}\%]$, so their absolute difference is at most
+\AblationZeroUpperRun{} percentage points. This finite-sample bound is the support
 for ``no observed difference'' in the two zero-event metrics; the corresponding
-Fisher values are not evidence of equivalence. The baseline duplicate rates,
-by comparison, are \BaselineDupLowPct{}--\BaselineDupHighPct{}\%.
+Fisher values are not evidence of equivalence.
+
+Treating the executions as independent would instead give
+\AblationZeroUpperExec{}\%, and we do not report that as the bound. It is the
+same execution-level independence we decline for the Fisher values in
+\cref{tab:ablation}, and because no events were observed there is nothing in
+these data from which to estimate the within-run correlation that would license
+it. We state plainly that the choice of unit decides nothing we go on to claim:
+the baseline duplicate rates this bound is contrasted against are
+\BaselineDupLowPct{}--\BaselineDupHighPct{}\%, more than an order of magnitude
+from either figure, so the conservative unit is taken because it is the
+defensible one and not because the comparison needs it.
 
 \textbf{We report this as a finding rather than as a limitation, because it
 reassigns our own headline claim.} The property that distinguishes AEP from
