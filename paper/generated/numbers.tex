@@ -408,6 +408,47 @@
 % zero: the arm that never waits for the barrier does not move
 \newcommand{\ReplicationBthreeRange}{0}
 
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | pre-registered sessions of the capability-class comparison
+% all four run-level interleaved; k fixed in advance and not extended
+\newcommand{\ClassSessions}{4}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | executions per arm per session
+\newcommand{\ClassRunsPerArm}{30}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | AEP-full AUTHORITATIVE_READBACK minus NO_READBACK applied rate, percentage points
+\newcommand{\ClassPpOne}{+0.0}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | AEP-full AUTHORITATIVE_READBACK minus NO_READBACK applied rate, percentage points
+\newcommand{\ClassPpTwo}{-10.0}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | AEP-full AUTHORITATIVE_READBACK minus NO_READBACK applied rate, percentage points
+\newcommand{\ClassPpThree}{+23.3}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | AEP-full AUTHORITATIVE_READBACK minus NO_READBACK applied rate, percentage points
+\newcommand{\ClassPpFour}{+36.7}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | smallest of the per-session applied-rate differences
+% derived as min over sessions, not a fixed session index
+\newcommand{\ClassPpMin}{-10.0}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | largest of the per-session applied-rate differences
+% derived as max over sessions, not a fixed session index
+\newcommand{\ClassPpMax}{+36.7}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | mean over sessions of the applied-rate difference
+% = mean(0.0, -10.0, 23.3, 36.7)
+\newcommand{\ClassPpMean}{+12.5}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | session-clustered 95% half-width, t(3) = 3.182, session as the unit
+% wider than the mean it brackets: the sessions disagree
+\newcommand{\ClassPpHalfWidth}{33.9}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | lower end of that interval
+\newcommand{\ClassPpLow}{-21.4}
+
+% b2-paired-v2-*/analysis/redis-kill-ablation.csv | upper end
+\newcommand{\ClassPpHigh}{+46.4}
+
 % reports/raw/e1-kill-latency-by-run.csv | drvfs | AEP_FULL | median issue_to_return_ns of runs that applied an effect minus those that did not, ms
 % = 1129.3 - 927.9; the four replication sessions, one filesystem
 \newcommand{\KillLatencyDiff}{201}

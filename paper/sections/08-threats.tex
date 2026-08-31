@@ -378,12 +378,37 @@ What that leaves uncovered, precisely:
       \textsc{no-readback} only, at one crash point, at
       \AepKillRuns{} runs per system, on one host --- and, as we say there,
       its effect size is a function of that host's \texttt{docker kill}
-      latency. It is the whole of the barrier's measured case. We expect the
-      other two capability classes to move the \emph{declared-ambiguity}
-      column and not the applied-effect column, because whether an effect
-      reached the provider is not something a read-back capability can
-      change after the fact --- but that is an argument, and the cells that
-      would settle it are in the plan and were not run.
+      latency. It is the whole of the barrier's measured case. We predicted
+      that the other two capability classes would move the
+      \emph{declared-ambiguity} column and not the applied-effect column,
+      because whether an effect reached the provider is not something a
+      read-back capability can change after the fact.
+
+      We since collected those cells: \ClassSessions{} pre-registered
+      sessions, \ClassRunsPerArm{} runs per arm per session, run-level
+      interleaved, with the analysis fixed in advance. \textbf{The
+      applied-effect column moved, and it moved in both directions.} The
+      \textsc{authoritative-readback} minus \textsc{no-readback} applied-rate
+      difference ran \ClassPpOne{}, \ClassPpTwo{}, \ClassPpThree{} and
+      \ClassPpFour{} percentage points across the \ClassSessions{} sessions
+      --- a spread from \ClassPpMin{} to \ClassPpMax{} points on a comparison
+      we expected to sit at zero. That is our own prediction contradicted in
+      our own data, and we report it rather than resolving it.
+
+      The session-clustered interval on that difference contains zero, at
+      [\ClassPpLow{},\,\ClassPpHigh{}] percentage points. \textbf{It contains
+      zero because the sessions disagree with one another, not because the
+      effect is absent:} the half-width is \ClassPpHalfWidth{} points, wider
+      than the mean it brackets at \ClassPpMean{} points, so this design could
+      not have resolved the effect it observed. We registered a minimum
+      detectable effect in advance and do not quote it here, because it was
+      derived without a between-session variance component and so understates
+      the precision this question needed; the comparison we make instead is
+      the half-width against the observed mean. \textbf{What we report is
+      therefore a failure to reject at a precision inadequate to the question
+      --- not evidence that capability class leaves the applied-effect column
+      alone.} The argument above is no longer unsupported: it is contradicted
+      in the data, and untested at adequate power.
 \item \textbf{The in-flight Redis-kill variant} (kill during transmission
       rather than before acknowledgement) is implemented and was not
       collected. Our own analysis predicts it ties, since neither system's

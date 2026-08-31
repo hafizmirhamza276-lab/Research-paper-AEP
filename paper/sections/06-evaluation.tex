@@ -324,8 +324,11 @@ That is a different guarantee, it is worth stating in its own metric, and no
 worker-crash fault can exercise it --- which is why \cref{sec:eval-detection}
 returns a null. The fault that exercises it is loss of Redis itself.
 
-The scope of this prevention result is one capability class
-(\textsc{no-readback}), one pre-acknowledgement crash point, and one host. We
+The scope of this prevention result is one pre-acknowledgement crash point and
+one host. The \textsc{authoritative-readback} class was subsequently collected
+over \ClassSessions{} sessions (\cref{sec:threats}); that comparison did not
+reach a precision adequate to the question and does not extend the prevention
+result, which remains a \textsc{no-readback} measurement. We
 hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
 boundary between the intent CAS and the acknowledgement. AEP-full is inside
 \texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
