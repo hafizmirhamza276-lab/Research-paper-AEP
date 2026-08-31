@@ -124,14 +124,33 @@ reproduces all five rows of the plan's table to within 0.1 pp. **It contains no
 between-session variance component at all**, so the projection assumed the
 sessions would differ only by binomial noise.
 
-That assumption contradicts the design's own premise: the phase blocks on session
-*because* sessions differ. The plan's binomial justification was written for the
-MDE column, where blocking legitimately cleans the within-session contrast; it
-cannot make the *between-session spread of contrasts* binomial, and it was
-carried across to a column that had no derivation of its own.
+**The benchmark shares the defect, so this is not "the phase missed its
+registered 17.3 pp".** The MDE column is pooled binomial across all k sessions at
+per-arm n = 30k, reproducing 5 of 5 rows, with no between-session component
+either — and pooling runs across sessions as independent draws is exactly what
+`paper_tables.py:1894-1897` refuses in the code that generates the manuscript's
+own interval. The commensurability argument that selected k = 4 has the missing
+assumption on **both** sides: the two numbers met because they omitted the same
+thing.
+
+**The accurate statement is that between-session variance was absent from both
+sides of the design's power argument.**
+
+**And the sensitivity analysis could not have caught it.** §6 swept `p₀` across
+its entire plausible range, held the variance assumption fixed throughout, and
+concluded that `p₀` "is the one input that could have invalidated the
+calculation". The input that invalidated it was the one never varied. The design
+was robust to the parameter that did not matter — the same class as handover
+finding 5's four instances, now in the design rather than in a check.
 
 Observed over-dispersion is **2.99** against 9C's unblocked **5.37**. Blocking
-worked; it did not reach the 1.0 the projection assumed. **Filed as B19.**
+worked; it did not reach the 1.0 both columns assumed. **Filed as B19.**
+
+**Descriptive, post hoc, and not a power claim:** at the realised sd of 21.3 pp,
+a 17.3 pp half-width needs **k ≈ 9** (k=4: 33.9, k=6: 22.4, k=8: 17.8, k=9:
+16.4). The sd was not knowable in advance and this is not a target the phase
+should have hit; it is recorded because a reviewer will ask and Phase 12 planning
+needs a figure grounded in observation.
 
 **k = 4 is not extended.** The plan states that if realised precision is worse it
 is reported worse, and adding sessions after seeing results is optional stopping.

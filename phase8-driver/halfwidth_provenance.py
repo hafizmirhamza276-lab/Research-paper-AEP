@@ -65,6 +65,50 @@ def main() -> int:
     print("  blocking the design added moved it from 5.37 toward 1.0 and")
     print("  reached about 3.0 -- it helped, and it did not reach the 1.0 the")
     print("  half-width column assumed.")
+
+    # ------------------------------------------------------------------
+    # The MDE column, which is the benchmark the half-width was compared
+    # against. If it shares the defect, the agreement at k = 4 is not two
+    # independent calculations meeting -- it is one omission counted twice.
+    # ------------------------------------------------------------------
+    print("\n" + "=" * 68)
+    print("MDE column: is the benchmark contaminated the same way?")
+    print("=" * 68)
+    Z = 1.959964 + 0.841621          # z(0.975) + z(0.80), 80% power, two-sided
+    plan_mde = {2: 24.4, 3: 20.0, 4: 17.3, 5: 15.5, 6: 14.1}
+    print("Hypothesis: pooled binomial across ALL k sessions, per-arm n = 30k,")
+    print("again with no between-session component.\n")
+    print(f"{'k':>3}{'n/arm':>8}{'reproduced':>13}{'plan':>8}{'diff':>8}")
+    ok = 0
+    for k in sorted(plan_mde):
+        n = 30 * k
+        mde = 100.0 * Z * math.sqrt(2.0 * P0 * (1.0 - P0) / n)
+        diff = mde - plan_mde[k]
+        if abs(diff) < 0.15:
+            ok += 1
+        print(f"{k:>3}{n:>8}{mde:>13.2f}{plan_mde[k]:>8}{diff:>+8.2f}")
+    print(f"\n  {ok} of {len(plan_mde)} rows reproduced to within 0.15 pp.")
+    print("  Both columns are binomial with no between-session term. They")
+    print("  'agreed' at k = 4 because they omitted the same thing.")
+
+    # ------------------------------------------------------------------
+    # Descriptive only. What k would the REALISED spread have needed?
+    # Post hoc: this sd was not knowable before collection.
+    # ------------------------------------------------------------------
+    print("\n" + "=" * 68)
+    print("DESCRIPTIVE, POST HOC -- k needed at the REALISED sd of "
+          f"{sd_obs:.1f} pp")
+    print("=" * 68)
+    t_by_k = {4: 3.182, 5: 2.776, 6: 2.571, 7: 2.447, 8: 2.365, 9: 2.306,
+              10: 2.262, 12: 2.201}
+    print("  Not a target the phase should have hit: the sd was not knowable")
+    print("  in advance. Recorded because a reviewer will ask, and because")
+    print("  Phase 12 planning needs a figure grounded in observation.\n")
+    print(f"{'k':>4}{'half-width (pp)':>18}{'<= 17.3?':>11}")
+    for k in sorted(t_by_k):
+        half = t_by_k[k] * sd_obs / math.sqrt(k)
+        print(f"{k:>4}{half:>18.2f}{'YES' if half <= 17.3 else 'no':>11}")
+    print("\n  Reaching a 17.3 pp half-width at the realised spread needs k = 9.")
     return 0
 
 

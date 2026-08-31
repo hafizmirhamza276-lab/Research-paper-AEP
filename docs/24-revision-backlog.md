@@ -1304,26 +1304,144 @@ to about **3.0** — it worked, and it did not reach the **1.0** the half-width
 column assumed. **The design's own instrument for reducing over-dispersion was
 credited with removing it entirely.**
 
+### The benchmark is contaminated the same way, so the "agreement" was one omission counted twice
+
+**The MDE column has the identical defect**, which changes how the whole thing
+must be stated.
+
+Plan §6 line 385: *"Baseline `p₀ = 53/150 = 0.3533` … **Per-arm n = 30k**. MDE at
+80% power, α = 0.05 two-sided"*. Pooled binomial across **all k sessions**, with
+no between-session component either. Reproduced with
+`100·(z₀.₉₇₅ + z₀.₈₀)·√(2p₀(1−p₀)/30k)`:
+
+| k | n/arm | reproduced | plan | difference |
+|---|---|---|---|---|
+| 2 | 60 | 24.45 | 24.4 | +0.05 |
+| 3 | 90 | 19.96 | 20.0 | −0.04 |
+| 4 | 120 | **17.29** | **17.3** | −0.01 |
+| 5 | 150 | 15.46 | 15.5 | −0.04 |
+| 6 | 180 | 14.12 | 14.1 | +0.02 |
+
+**5 of 5 rows.** So the commensurability argument — *"3.1's MDE (17.3 pp) and
+3.2's half-width (19.6 pp) agree, so the robustness check can actually
+corroborate the primary"* — has the missing assumption on **both sides**. The two
+numbers did not meet because two independent calculations converged. **They met
+because they omitted the same thing.**
+
+**And the MDE rests on precisely the pooling this project refuses for its own
+inference.** `scripts/paper_tables.py:1894-1897`, in the code that produces
+`[6.1, 28.4]`:
+
+> Session as the unit, not the execution. **Pooling the 120 executions would
+> treat them as independent draws when they share a session's host-timing
+> state**; session 3B's no-pooling rule and the run-cluster bootstrap used
+> elsewhere in this file are the same argument.
+
+Pooling 30k runs per arm across sessions is that operation exactly. The
+registered power calculation is built on an assumption the project rejects, in
+writing, in the generator that produces the manuscript's own interval.
+
+**Therefore the precision miss must not be stated as "the phase missed its
+registered 17.3 pp".** That framing treats the benchmark as sound. The accurate
+statement is:
+
+> **Between-session variance was absent from both sides of the design's power
+> argument.** The MDE and the half-width it was matched against were computed as
+> though sessions differ only by binomial noise, and the phase then observed
+> sessions that do not.
+
+### The sensitivity analysis could not have detected the error it existed to catch
+
+**This is the transferable lesson, and it is a bigger finding than the number.**
+
+Plan §6 lines 409–416 tests robustness — but varies **`p₀` only**:
+
+| AUTH applied fraction | 0.05 | 0.10 | 0.20 | 0.358 | 0.50 | 0.65 |
+|---|---|---|---|---|---|---|
+| MDE (pp) | 13.4 | 14.4 | 15.9 | **17.3** | 17.7 | 17.3 |
+
+and concludes:
+
+> The MDE is bounded in [13.4, 17.7] pp across the entire plausible range, so the
+> design's power does not depend on guessing AUTH's rate correctly. **This is the
+> one input that could have invalidated the calculation, and it does not.**
+
+**The variance assumption is held fixed across every column of that table.** The
+sweep varies the parameter the design was *not* sensitive to and never touches
+the one that broke it. The closing sentence — "this is the one input that could
+have invalidated the calculation" — is asserted, and it is wrong: the input that
+invalidated the calculation was the one not varied.
+
+**So the design was robust to the parameter that did not matter, and the
+robustness check is why nobody looked further.** A sensitivity analysis that
+sweeps the wrong axis is worse than none, because it converts an unexamined
+assumption into a checked one.
+
+**This is the class recorded four times in handover finding 5 and generalised in
+R2 — a check that looks live and structurally cannot detect what it names — now
+appearing in the *design* rather than in a script.** B11 and R3 cover gates in
+code. Nothing in the project covers a *power calculation* whose sensitivity sweep
+omits its own dominant term.
+
 ### Consequence, and what it does not license
 
-The realised §3.2 half-width is **33.9 pp against 19.6 projected**, and the
-registered MDE of 17.3 pp was not achieved. The commensurability argument that
-selected k = 4 does not survive: at the realised spread, k = 4 delivers worse
-precision than the plan's own k = 3 row, which it called "decorative".
+The realised §3.2 half-width is **33.9 pp against 19.6 projected**. The
+commensurability argument that selected k = 4 does not survive: at the realised
+spread, k = 4 delivers worse precision than the plan's own k = 3 row, which it
+called "decorative".
 
 **This does not reopen the verdict and must not be used to.** k = 4 is committed,
 the plan states "if realised precision is worse, it is reported worse", and
 extending k after seeing results is optional stopping. The registered rule was
 applied exactly as written.
 
+### What k the realised spread implies — descriptive, post hoc, not a power claim
+
+**This is not a target the phase should have hit.** The between-session sd was
+not knowable before collection; the phase existed partly to measure it. It is
+recorded because a reviewer will ask it immediately and because Phase 12 planning
+needs a figure grounded in observation rather than in binomial noise.
+
+At the **realised** sd of 21.32 pp, half-width `t(k−1)·sd/√k`:
+
+| k | half-width (pp) | ≤ 17.3? |
+|---|---|---|
+| 4 | **33.92** | no |
+| 5 | 26.47 | no |
+| 6 | 22.38 | no |
+| 7 | 19.72 | no |
+| 8 | 17.83 | no |
+| **9** | **16.39** | **YES** |
+| 10 | 15.25 | YES |
+| 12 | 13.55 | YES |
+
+**Reaching a 17.3 pp half-width at the observed spread needs k ≈ 9** — roughly
+11 hours of collection at the phase's measured 35.7 s/run, against the 4.8 h
+budgeted.
+
+Stated as arithmetic on an observed quantity. It does not license reopening k = 4,
+which is committed and closed.
+
 ### What is needed
 
 1. **Any future k derivation must state the assumed between-session variance
    component explicitly, and cite where it came from.** A projection built on a
-   within-session sd is a projection that assumes the answer.
-2. **Use the realised figure.** The four v2 sessions give an observed
-   between-session sd of 21.3 pp on this contrast. Any successor design should
-   plan against that, not against binomial noise.
-3. **The same audit applies to every other power or precision number in the
-   phase set.** This one was found by reproducing a table; nothing systematic
-   checks that a tabulated projection has a derivation attached.
+   within-session or pooled sd is a projection that assumes the answer.
+2. **A sensitivity analysis must sweep the variance assumption, not only the
+   rate.** §6's sweep varied `p₀` across its whole plausible range and never
+   moved the term that dominated. Sweeping the wrong axis converted an unexamined
+   assumption into an apparently checked one.
+3. **Use the realised figure.** The four v2 sessions give an observed
+   between-session sd of 21.3 pp on this contrast, and an over-dispersion of 2.99
+   against binomial *after* blocking. Any successor design should plan against
+   those, not against 1.0.
+4. **Audit every other power or precision number in the phase set the same way.**
+   This one was found by reproducing a table row by row. Nothing systematic
+   checks that a tabulated projection has a derivation attached, and both columns
+   here did not.
+5. **Extend R2's rule from derived counts to design projections.** R2 requires a
+   derived count be validated against a known answer. A power projection has no
+   known answer in advance — but it can be reproduced from its stated inputs, and
+   a projection that cannot be reproduced from inputs the document states is a
+   projection with no provenance. Both columns here were reproducible only by
+   guessing the omitted assumption.
