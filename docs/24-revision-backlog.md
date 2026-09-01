@@ -2625,3 +2625,140 @@ both cases and the correct direction was not.
 
 **Related:** F.0d (fail-open class — **amended by this entry, not merely
 instanced**), F.0c, B29a, B32, R1, and custody inventory §5f.
+
+---
+
+## B34. Documentation is a claim about behaviour, and a claim is not an observation
+
+**Filed 2026-09-01. Ranked with the F.0d family**, because it is the same
+structural failure — **a source that appears to answer the question, answering a
+different one** — with the source being a manual rather than a check.
+
+### The evidence: three of four candidates behaved differently from their documentation
+
+While establishing a mechanism for B31, four candidates were tested in throwaway
+repositories. **Three contradicted what reading the documentation would have
+predicted, in both directions.**
+
+| # | what the docs support believing | what the test showed |
+|---|---|---|
+| 1 | `git clean` skips a directory containing `.git` | **An empty `.git` is not enough.** `marked_run/` had one and was deleted. The check validates a *repository*, not a *directory name* |
+| 2 | The nested-repo skip is an *untracked*-directory protection, so `-x` would defeat it | **It survives `-x`.** A genuine nested repo inside an ignored tree **survived `git clean -xdf`** |
+| 3 | Denying `DC` (delete-child) on a directory prevents deleting its children | **It does not.** Deletion needs `DELETE` on the child *or* `DELETE_CHILD` on the parent; the children still granted `DELETE` by inheritance, and `git clean -xdf` removed them |
+
+**Two of the three would have caused a wrong decision, in opposite directions.**
+(1) and (3) would have produced a guard **believed to work and not working** —
+the worst possible outcome for a guard, since it converts a known risk into an
+unknown one. (2) would have caused a **usable mechanism to be discarded**
+unexamined.
+
+**And the fourth was verified rather than assumed too**, which is why it is the
+one that shipped.
+
+### THE GENERAL FORM
+
+> **Documentation is a claim about behaviour. A claim is not an observation.**
+>
+> A manual describes what the authors intended, at some version, under
+> assumptions it does not enumerate. It is **evidence about behaviour, not
+> behaviour** — the same relationship a paper's prose has to its data, which is
+> the distinction this entire backlog exists to police.
+
+The project already refuses to let a claim stand on its author's account of it:
+F.0 requires the precision beside the result, B29a rejects a tool's silence as
+evidence of completeness, and the standing adversarial pass exists because **the
+author of a rule is its weakest enforcer.** A tool's manual is exactly that —
+**its author's account of its behaviour** — and it has been getting an exemption
+no other claim in this project gets.
+
+### The standing method: throwaway verification outside the tree
+
+> **Any mechanism this project relies on is verified by test in a throwaway
+> location outside the working tree, before it is relied upon. Not just git's —
+> any of them.**
+
+Four properties made it cheap enough to be non-negotiable here:
+
+1. **Outside the tree.** Scratch repositories under `/tmp` and a scratch
+   directory on `D:`, all removed afterwards. No test touched a results root.
+2. **The destructive operation is run for real**, not in dry-run. `git clean -xdn`
+   listed `nested_run/` as removable; **`git clean -xdf` did not remove it.**
+   **The dry run was wrong**, which is itself a fourth documentation-versus-
+   behaviour gap, and it is the one that would have been trusted most.
+3. **The blast radius is engineered to be nil.** When the guard had to be
+   verified on the real tree, the probe created **its own directory** rather
+   than testing against a run directory — because the direct test destroys 60
+   irreplaceable runs if the answer is no. **Never test a guard by risking the
+   thing it guards.**
+4. **The check is chosen for what it can distinguish**, per B33. `git clean -nxd`
+   still lists all 402 entries with the guard active, because an ACL changes
+   git's *ability* and not its *intent*. It cannot tell guarded from unguarded,
+   so it is fail-open for this question and was not used as the verification.
+
+### What this does not license
+
+**It is not an argument for testing everything.** It applies to **mechanisms
+relied upon** — things whose failure is silent and whose correctness is assumed
+between the moment of adoption and the moment of loss. A guard, a gate, a
+freeze, a manifest. Not every library call.
+
+The distinguishing property is the one from B33: **what does believing this
+authorise?** A documentation claim that authorises "we are now protected" must be
+observed, because nothing downstream will ever check it again.
+
+**Related:** F.0d and B33 (error direction), B29a, B31a (the four tests), R2
+(validate a gate against a known answer first — **this is R2 applied to
+third-party mechanisms rather than to our own**), and R6.
+
+---
+
+## B35. Should a root declared frozen be enforceably frozen?
+
+**Filed against Phase 12. A question, not a defect. Do not act on it.**
+
+The B31 guard denies `DELETE` inside four result roots. **That semantics —
+deletion refused inside a root that carries a `SHA256SUMS` and a `MANIFEST.csv`
+and is described everywhere in this project as *frozen* — is arguably what those
+roots should have had from the moment they were frozen.**
+
+Today "frozen" is a **declaration**: a manifest is written, the prose says the
+root is closed, and nothing in the filesystem distinguishes a frozen root from a
+live one. The guard makes it a **property** for four roots, and it does so as a
+side effect of an unrelated exposure — `git clean`. **The four roots that now
+have it are the four that happened to be single-copy and gitignored, not the four
+that most needed enforcement.** That distribution is an accident.
+
+### What the question actually is
+
+**Not** "should we apply the ACL everywhere" — that is the cheap answer and it is
+probably wrong. The real question is what *frozen* is supposed to mean:
+
+1. **A declaration**, as now: freezing is a claim, and a manifest is how the
+   claim is checked after the fact. Cheap, uniform, and **detects** violation
+   rather than preventing it.
+2. **A property**: freezing sets permissions, and a violation fails at the point
+   of attempt. Prevents rather than detects — but it is **per-platform** (an
+   NTFS ACL does nothing for the `/root` trees on ext4), it must be lifted for
+   legitimate regeneration, and **a freeze that is routinely lifted is a freeze
+   in name only.**
+3. **Both, with the manifest as the authority** and permissions as an advisory
+   guard whose absence is not treated as evidence of anything.
+
+### Why it is a Phase 12 question and not a task
+
+Choosing (2) or (3) means deciding what happens when regeneration must write into
+a frozen root — which happens, and which `regen_into_repo.sh` exists because of.
+It also means deciding whether `freeze_results.py` acquires a platform-specific
+step, and whether a root without the guard is thereby *not frozen* or merely
+*unenforced*. **That last one is the trap**: if the guard's presence becomes
+evidence of frozen-ness, its absence becomes evidence of the opposite, and
+**absence-as-evidence is exactly the fail-open shape this backlog keeps filing**
+(B29a, B32, B33).
+
+**Do not resolve this by extending the guard.** The guard is scoped to B31's
+threat model — a routine `git clean` in a git working tree — and the `/root`
+trees are not in one.
+
+**Related:** B31, B31a, R6, B5 (freeze portability), and B15 (what `SHA256SUMS`
+does and does not cover — it names **zero** run directories, which is why the
+declaration is weaker than it reads).
