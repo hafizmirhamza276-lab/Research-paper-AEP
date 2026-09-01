@@ -3777,3 +3777,91 @@ cause."*
 > time — and the first control run against it was itself wrong.** The capacity
 > was real and it was exercised; it just happened to be exercised in the
 > direction that fails loudly rather than the one that fails silently.
+
+---
+
+## B42. The comparator built to verify B41 reported IDENTICAL after comparing nothing
+
+**Filed 2026-09-01. B33's class, in the tool written to check the defect it was
+checking.**
+
+### What happened
+
+`phase8-driver/compare_bibliography.sh` exists to answer one question: **did the
+shipped PDF's bibliography differ from a correct build's?** Its first extractor
+anchored on a `REFERENCES` heading:
+
+```sh
+pdftotext -layout "$1" - | awk '/^ *REFERENCES *$/{f=1} f'
+```
+
+**IEEEtran typesets that heading in small caps**, so `pdftotext` emits no line
+matching it. The extractor returned **zero lines from both PDFs**, and the diff
+of two empty files reported:
+
+```
+tracked (shipped 2026-09-01): 0 entries
+rebuilt with the fix       : 0 entries
+DIFF: IDENTICAL -- the defect changed nothing in the shipped bibliography
+```
+
+> **A comparison that compared nothing, and called it agreement.**
+
+### Why this is the sharp one
+
+**The direction is everything.** This tool's output authorises *"the shipped
+manuscript is fine, nothing further to do"* — the complacency side under B33 —
+so it must **over-report** difference. It did the exact opposite: **it cleared
+the shipped PDF without looking at it**, in the one direction where a false
+negative ends the investigation.
+
+**And it was the instrument built to verify B41.** A defect had just been
+established by measurement; the tool written to size its consequences failed in
+the same class, at the same sitting. Cf. §5f of the custody report, where
+`history_check.sh` failed open one function below its own header forbidding it —
+**this is that pattern again, now in a verifier rather than a survey.**
+
+**It would have ended the task.** "Identical, nothing shipped wrong" is a
+closing answer. Nothing downstream re-opens it, and the three historical
+promotions would never have been audited.
+
+### How it was caught, and the general rule
+
+**Not by suspicion — by the numbers being absurd.** `0 entries` beside `0
+entries` for a 21-page paper with 29 references is not a plausible measurement.
+**The verdict looked right and the inputs to it did not.**
+
+> **A comparison must report the SIZE of what it compared, beside its verdict.**
+> `IDENTICAL` is unfalsifiable on its own. `36 entries vs 36 entries, identical`
+> can be checked against expectation at a glance by anyone reading the output.
+
+**Fail-closed form, now implemented in the script:** if either extraction is
+empty, **abort** rather than diff — an empty set can never render as agreement.
+
+```
+if [ "$t" -eq 0 ] || [ "$f" -eq 0 ]; then
+    echo "ABORT: extraction produced an empty list -- the comparison would be vacuous."
+    exit 1
+fi
+```
+
+**The rewritten extractor also drops `-layout`**, because the paper is
+two-column and `-layout` interleaves body text with references on the same
+line — a second way the same function could have produced a confident wrong
+answer, found while fixing the first.
+
+### Relation to its neighbours
+
+| | |
+|---|---|
+| **B33** | the general form — error direction judged by what the output authorises |
+| **B36** | the same class in *investigation*; this one is in a *committed tool* |
+| **B42** | a comparison whose **denominator was zero and did not say so** |
+
+**The distinguishing feature is that nothing was wrong with the diff.** `diff` on
+two empty files correctly reports no differences. **The defect was entirely in
+what was fed to it**, and no amount of reviewing the comparison step would have
+revealed it.
+
+**Related:** B33, B36, B32 (compare name-sets, never counts — here the failure is
+one layer earlier: compare *something*, and say how much), and B41.
