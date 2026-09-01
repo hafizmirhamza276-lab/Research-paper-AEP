@@ -390,7 +390,7 @@ roughly a third of runs \texttt{WAITAOF} completed before Redis
 died and AEP-full held a genuine acknowledgement and dispatched correctly. That
 is the race the fault creates, not a protocol failure, and we report it as it
 came out rather than widening the window until it looks better. Second, and for
-the same reason, \emph{the effect size is a property of this host's
+the same reason, \emph{the effect size may be a property of this host's
 \texttt{docker} latency}. A faster kill pushes AEP-full toward $0$ and widens
 the gap; a slower one narrows it. The \emph{direction} is structural --- B3
 cannot be protected by a barrier it does not wait for --- but the magnitude
@@ -460,8 +460,11 @@ reach. That is what the mechanism now rests on, and it is thinner than the
 pooled figure it replaces.
 
 \UnwantedPrevented{} is therefore not a constant of the protocol and this paper
-does not offer it as one: it is where one host's kill-latency distribution
-happened to place a race. What is structural is that the race exists for
+does not offer it as one: it is one draw from a distribution that
+\ReplicationSessions{} further collections of the same cell resampled at
+\ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
+\AepKillRuns{}. What is structural is that the
+race exists for
 AEP-full at all and cannot exist for B3.
 
 \subsubsection{The barrier's durability claim, under the fault that can

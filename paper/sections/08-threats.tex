@@ -70,7 +70,9 @@ already keeping ($\ProcessKillUnackLost{}$, and $n{=}\KillCanaryN{}$ canaries
 in the ablation cells). The
 consequence for the claims is explicit: \textbf{under a process fault the
 barrier's contribution is prevention (\cref{sec:eval-prevention},
-$p=\UnwantedP{}$) and not durability}, and any reading of the barrier as
+$p=\UnwantedP{}$, replicated at
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented)
+and not durability}, and any reading of the barrier as
 protecting the record from a crashed Redis process is wrong.
 
 \paragraph{The decomposition weakens our own novelty claim, and we would
@@ -81,11 +83,14 @@ C2 is the barrier machinery: an fsync acknowledgement returning an opaque,
 non-copyable, single-use, scope-bound in-process dispatch guard that the
 pre-dispatch script refuses to proceed without. Put those together and the
 uncomfortable reading is available: our
-most novel mechanism serves the claim with the \emph{weakest} evidence --- one
-capability class, one crash point, and an effect size we can now show is
-host-dependent rather than merely suspect it is --- while the claim with the
+most novel mechanism serves the claim with the \emph{narrowest} evidence --- one
+capability class, one crash point, and an effect size whose host-dependence we
+suspect and have not established --- while the claim with the
 strongest evidence rests on write-ahead logging, which is decades old, plus a
-state-machine property that is a few lines of Lua.
+state-machine property that is a few lines of Lua. Narrowest is not weakest:
+within that scope the effect replicated across \ReplicationSessions{} further
+sessions at [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects
+prevented, the only session-clustered interval in this paper that excludes zero.
 
 The cell is no longer collected only once: \cref{sec:eval-prevention} reports
 \ReplicationSessions{} further collections under an identical configuration, and
@@ -382,8 +387,9 @@ What that leaves uncovered, precisely:
       ablation of \cref{sec:eval-prevention} was collected on
       \textsc{no-readback} only, at one crash point, at
       \AepKillRuns{} runs per system, on one host --- and, as we say there,
-      its effect size is a function of that host's \texttt{docker kill}
-      latency. It is the whole of the barrier's measured case. We predicted
+      its effect size may be a function of that host's \texttt{docker kill}
+      latency, which our measurement does not establish. It is the whole of
+      the barrier's measured case. We predicted
       that the other two capability classes would move the
       \emph{declared-ambiguity} column and not the applied-effect column,
       because whether an effect reached the provider is not something a

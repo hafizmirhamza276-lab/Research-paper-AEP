@@ -169,7 +169,9 @@ Redis-kill point, on one host, its unwanted-applied-effect rate is
 \AepUnwantedRate{} versus \BthreeUnwantedRate{} over \AepKillRuns{} runs per
 system ($\AepKillApplied{}/\AepKillRuns{}$ versus
 $\BthreeKillApplied{}/\BthreeKillRuns{}$, Fisher $p = \UnwantedP{}$) ---
-\UnwantedPrevented{} real non-idempotent effects not committed.
+\UnwantedPrevented{} real non-idempotent effects not committed, replicated over
+\ReplicationSessions{} further sessions at
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented.
 
 The barrier's durability claim, which a process kill cannot exercise at all
 because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not the
