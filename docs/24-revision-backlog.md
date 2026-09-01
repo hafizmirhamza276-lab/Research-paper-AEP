@@ -2384,3 +2384,106 @@ not a run.
 number it would have corrected is already corrected by hand.
 
 **Related:** F.0d (fail-open class), F.0c, B29a, and custody inventory §5e.
+
+---
+
+## B33. A credential search that over-reports, and the general form the backlog has been missing
+
+**Filed 2026-09-01. File, do not fix.** No remediation is proposed here and none
+has been performed; **rotation is deferred by the operator's decision.**
+
+### The instance
+
+Asked whether a `sudo` password had reached anything durable, I searched the
+Claude Code session transcripts for a password-shaped token with
+`grep -cE "hamza[0-9]{3}"`. It reported hits in **sixteen** transcript files.
+
+**Fourteen were false positives.** The git remote is
+`hafizmirhamza276-lab`, so **every transcript containing the repository URL
+matched** — `hamza276`. The narrowed pattern finds the credential in **two**
+files.
+
+> **Acting on the count of sixteen would have meant rewriting fourteen files of
+> project record to remove a string that was never in them.**
+
+Those transcripts are the durable record of this work: the derivations, the
+retractions, the corrections that this backlog cites. Redacting fourteen of them
+to remove a phantom would have destroyed audit trail to fix nothing.
+
+### Why this one is new, and why it belongs at the same rank as the others
+
+**Every fail-open case filed so far errs toward reassurance.** `pgrep` matching
+nothing (R1). `claim_sweep.py` returning two of four and exiting 0 (B29a).
+`custody_survey.sh` printing `ABSENT` for a denied tree, and later over-counting
+runs (B32). The search in F.0f that could not distinguish *"does not reproduce"*
+from *"I did not try that ordering"*. Each of them makes a situation look
+**resolved**.
+
+**This one errs toward alarm, and it is exactly as dangerous**, because of what
+its output would have authorised. A cautious-looking result is not a safe result.
+**An over-reporting credential search justifies a destructive action.**
+
+### THE GENERAL FORM
+
+> **A check's error direction must be evaluated against what its result
+> AUTHORISES, not against whether the error looks cautious.**
+>
+> - **A check whose output triggers DELETION, redaction, or rollback must
+>   UNDER-report.** A false positive destroys something real.
+> - **A check whose output triggers COMPLACENCY — "the evidence is intact", "the
+>   claim is supported", "the process is gone" — must OVER-report.** A false
+>   negative leaves something broken while asserting it is fine.
+>
+> **Same principle, opposite directions.** Which one applies is determined by the
+> **consequence of the output**, never by the tool's subject matter and never by
+> which direction feels more careful.
+
+This is why "fail-closed" alone is an incomplete instruction, and why F.0d needs
+this amendment rather than another instance. **"Fail closed" is a shorthand for
+"fail toward the answer that does not authorise an irreversible act"** — and for
+a search that licenses deletion, that direction is *fewer hits*, not more.
+
+The custody tools and the claim tools in this backlog all sit on the
+complacency side, which is why every prior entry points the same way. **Nothing
+in the record before this said the direction was contingent.** It reads as though
+over-reporting were always the safe error, and for the next tool built here that
+would be wrong.
+
+### Companion instance: `history_check.sh`, and the tightest case yet
+
+The same session produced the opposite error in the same task.
+`phase8-driver/history_check.sh` was written to answer *"did the password reach
+any shell history file?"* Its first version:
+
+```sh
+if [ ! -e "$f" ]; then
+    echo "  ABSENT: $f"
+    return
+fi
+```
+
+`[ ! -e "$f" ]` is **true for a path whose parent is `0700`.** Run unprivileged
+it reported `ABSENT: /root/.bash_history` — the fail-open, complacency-side
+error, in a credential check, in the same script whose header block reads:
+
+> *"the whole point of a fail-closed survey is not to assert an absence it has
+> not checked."*
+
+**The violation is one function below the sentence forbidding it, in the same
+file, written in the same sitting.**
+
+This is the **fourth recorded instance** of the author-is-weakest-enforcer
+pattern — after the B9 unit-3 tally-as-support defect written one commit after
+committing to remove that exact pattern, `custody_survey.sh`'s original
+fail-open, and `claim_sweep.py` (B29a). **It is the tightest of the four, and the
+only one where the prohibition already existed in the same file when the
+violation was written.** The other three violated a rule stated elsewhere or
+stated later; this one violated a rule the author had just typed, inches away.
+
+**Both errors, in one task, in opposite directions.** That is the argument for
+the general form above: the author of a tool cannot reliably reason about its
+error direction from the tool's subject, because the subject was identical in
+both cases and the correct direction was not.
+
+**Related:** F.0d (fail-open class — **amended by this entry, not merely
+instanced**), F.0c, B29a, B32, R1, and custody inventory §5f.
