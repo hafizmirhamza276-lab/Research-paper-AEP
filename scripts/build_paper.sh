@@ -78,7 +78,14 @@ trap cleanup EXIT
 
 # TeX runs from scratch. Recursive TEXINPUTS makes sections, generated tables,
 # and figures visible without copying them, while BIBINPUTS exposes refs.bib.
-export TEXINPUTS="${PAPER}//:${TEXINPUTS:-}"
+#
+# B21 item 1 / B41. The leading "." is load-bearing. A trailing colon appends
+# the compiled-in defaults, which include the current directory -- so without
+# it "${PAPER}//" sat AHEAD of the scratch dir, and every pdflatex pass opened
+# paper/main.bbl instead of the one bibtex had just written beside it. The
+# manuscript was typeset from the previous build's bibliography, and promotion
+# then overwrote that file with the .bbl the document did not use.
+export TEXINPUTS=".:${PAPER}//:${TEXINPUTS:-}"
 export BIBINPUTS="${PAPER}:${BIBINPUTS:-}"
 
 # B21 item 3. Hash the sources BEFORE compiling, so the stamp records what this

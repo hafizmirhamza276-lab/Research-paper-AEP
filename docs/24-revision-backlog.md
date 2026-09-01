@@ -3724,3 +3724,56 @@ right move. **No change was made to `build_paper.sh`.**
 
 **Related:** B21 items 1 and 2, B38 and B40 (the same shape — a component correct
 in isolation, wrong in composition), and F.0d.
+
+### What it actually cost: nothing shipped wrong, and that was not the pipeline
+
+**The window opens at `c2fffa6` (2026-08-12)**, which introduced the scratch
+build and the recursive `TEXINPUTS` in one change. Before it the build did
+`cd "$PAPER"` and compiled in place, so the `.bbl` written and the `.bbl` read
+were the same file and **no divergence was possible.** Four PDF promotions fall
+inside the window.
+
+**`paper/main.pdf` as shipped 2026-09-01 is correct**, verified by rebuilding
+with the fix and diffing the rendered reference lists — **36 entries each,
+identical**, and `paper/main.bbl` equals a freshly generated one.
+
+> **It is correct by accident.** `31c565c` at **12:41** deleted
+> `paper/main.bbl`; `47800f8` at **13:02** promoted the PDF. With nothing left
+> in `paper/` to shadow it, that build had no choice but to use its own `bibtex`
+> output. **Reverse those twenty-one minutes and it ships the 10 August
+> bibliography.**
+
+**The three earlier promotions also match their own sources.**
+`phase8-driver/audit_historical_bibs.sh` exports each tracked tree, extracts the
+shipped PDF's bibliography, rebuilds from the same sources with the corrected
+search path, and diffs:
+
+| commit | date | `refs.bib` | shipped vs rebuilt |
+|---|---|---|---|
+| `c2fffa6` | 2026-08-12 | 34 entries | **MATCH**, 36 vs 36 |
+| `83cccdc` | 2026-08-21 | 34 entries | **MATCH**, 36 vs 36 |
+| `97c44ff` | 2026-08-21 | 34 entries | **MATCH**, 36 vs 36 |
+
+**What a match proves and does not:** that build's stale `paper/main.bbl`
+happened to hold the right content. **The wrong file was still opened.**
+
+#### Correction to the framing: this is not four pieces of luck
+
+**It is two.** The three August promotions share **one** cause — `refs.bib` held
+**34 entries at all three commits**, so any stale `.bbl` from that stretch was
+current. That is a single condition holding three times, not three independent
+escapes. The 1 September promotion is the genuinely separate accident.
+
+#### And the defect did have a consequence — B21 itself is it
+
+**The moment `refs.bib` changed, it bit.** Three `\cite` keys added to
+`07-related.tex` were absent from the stale `.bbl`, and the build failed with
+undefined citations while `refs.bib` contained all three. **That is B21's
+opening paragraph**: *"it produced a `DO NOT SUBMIT` that pointed at the wrong
+cause."*
+
+> **So the defect never shipped a wrong bibliography, but it did produce a false
+> failure, misattributed to the manuscript, that cost substantial diagnosis
+> time — and the first control run against it was itself wrong.** The capacity
+> was real and it was exercised; it just happened to be exercised in the
+> direction that fails loudly rather than the one that fails silently.
