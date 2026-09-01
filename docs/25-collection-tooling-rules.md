@@ -87,3 +87,50 @@ resolution a container living less than one interval is missed entirely, so an
 empty foreign list is **weak evidence of quiet, not proof of it** — which matters
 because both foreign containers this phase observed were removed within four
 minutes.
+
+## R6. The four 21 August roots carry a deny-DELETE guard. If a delete fails there, this is why.
+
+**Applied 2026-09-01.** `experiments/results/b2-{,s1-,s2-,s3-}2026-08-21` each
+carry an inheritable deny of `DELETE` for the current user:
+
+```
+AzureAD\HamzaKhan:(OI)(CI)(DENY)(DE)
+```
+
+**Why.** Those four roots hold 240 run directories that exist **nowhere else** —
+the privileged custody survey of 1 September shows `/root/aep-phase8` holds
+**zero** of them. They are gitignored, so `git status` prints nothing for them,
+and `git clean -xdf` deletes them silently. They carry `\ReplicationPrevented*`,
+the only session-clustered interval in the paper that excludes zero. See B31.
+
+**`.gitignore` is deliberately NOT the remedy.** Tracking raw runs would put
+uncheckpointed WALs under version control and break the archive discipline —
+worse than the risk removed. **Do not "fix" a blocked delete by editing
+`.gitignore`.**
+
+**Removing and restoring it:**
+
+```
+powershell -ExecutionPolicy Bypass -File phase8-driver/apply_clean_guard.ps1 -Remove   # lift
+powershell -ExecutionPolicy Bypass -File phase8-driver/apply_clean_guard.ps1           # re-apply
+powershell -ExecutionPolicy Bypass -File phase8-driver/apply_clean_guard.ps1 -Show     # inspect
+```
+
+By hand, per root: `icacls "<root>" /remove:d "*<SID>" /T`.
+
+**Symptom to recognise:** a delete inside those roots failing with `Invalid
+argument` (git) or `Access is denied` (Explorer, `rm`). Reads, `tar`, and file
+creation are unaffected and were verified so — the guard must not obstruct the
+off-host copy it exists to bridge to.
+
+**Verified on this tree, not only in test repositories.** `git clean -nxd` still
+lists all 402 entries after the guard is applied, because an ACL changes git's
+*ability* and not its *intent* — **so a dry run cannot verify this guard and must
+not be used to.** Verification is `phase8-driver/probe_clean_guard.ps1`, which
+creates its own throwaway directory inside a guarded root, confirms deletion is
+refused, and removes it. The probe exists because the direct test — deleting a
+run directory to see whether it is protected — destroys 60 irreplaceable runs if
+the answer is no.
+
+**It stops accident, not intent.** Anyone can drop the ACE. That is the intended
+threat model: B31 is about a routine command run for an unrelated reason.

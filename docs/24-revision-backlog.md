@@ -2295,6 +2295,33 @@ authorise one.**
 contributors are told how to clean the tree: **never run `git clean -xdf` in this
 repository.** Use `git clean -nxd` and read it first.
 
+> ### GUARD APPLIED 2026-09-01 — AND HOW TO REMOVE IT
+>
+> An inheritable deny of `DELETE` is now set on all four roots for the current
+> user (B31a establishes why this form and not the obvious one). **`.gitignore`
+> is untouched.**
+>
+> ```
+> AzureAD\HamzaKhan:(OI)(CI)(DENY)(DE)     # on all four b2-*-2026-08-21
+> ```
+>
+> **REVERSAL — recorded here so nobody has to rediscover it:**
+>
+> ```
+> powershell -ExecutionPolicy Bypass -File phase8-driver/apply_clean_guard.ps1 -Remove
+> ```
+>
+> or by hand, per root:
+>
+> ```
+> icacls "<root>" /remove:d "*<SID>" /T
+> ```
+>
+> Inspect with `-Show`. **If a legitimate operation fails inside these roots with
+> `Invalid argument` or `Access is denied` on a delete, this guard is why** —
+> remove it, do the work, re-apply. Do not work around it by loosening
+> `.gitignore`.
+
 ### Rank
 
 Above the general durability finding because it differs in **kind**. General
