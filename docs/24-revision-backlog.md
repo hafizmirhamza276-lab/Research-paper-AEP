@@ -2306,6 +2306,117 @@ exposure needs a hardware event. This one needs a habit.
 **Related:** custody inventory §5c–§5e (derivation), B5 (freeze portability),
 B27 and B28 (the claims these runs carry).
 
+### B31a. A mechanism exists, and it is not a git mechanism
+
+**Amended 2026-09-01. Established by test, not by reading documentation.** The
+entry above offers *"use `git clean -nxd` and read it"*, which is a **discipline,
+not a mechanism** — and this phase has established four times that a discipline
+held only by its author fails. Four candidates were tested in scratch
+repositories outside this tree. **Three fail. One works.**
+
+#### Candidate 1 — `git clean`'s nested-repository skip: WORKS, but not usably
+
+`git clean` refuses to delete a directory that is itself a git repository unless
+`-f` is given twice. **Verified, including inside an ignored tree:**
+
+```
+$ git clean -xdf
+Removing experiments/results/b2-x/marked_run/     <- .git was an empty dir
+Removing experiments/results/b2-x/plain_run/
+                                                  <- nested_run/ SURVIVED
+```
+
+**Two things this test established that reading the manual would not.** An
+**empty `.git` directory is not enough** — `marked_run/` had one and was deleted;
+the protection requires a genuine repository. And the protection **does** survive
+`-x`, which was not obvious, since `-x` otherwise makes ignored content fully
+eligible.
+
+**Rejected anyway.** `git clean` removes the run directories *individually* —
+the roots themselves hold tracked files (`SHA256SUMS`, `MANIFEST.csv`) and are
+never removed. So protection would require **240 nested repositories, one per run
+directory.** That is elaborate, it puts a `.git` inside every frozen run
+directory, and it invalidates the directory contents against any future manifest.
+
+#### Candidate 2 — a `pre-clean` hook: DOES NOT EXIST
+
+`git help hooks` contains **zero** occurrences of the string "clean". Git has no
+`pre-clean` hook and no hook that fires on `git clean` at all. **There is nothing
+to write.** Recorded so nobody looks again.
+
+#### Candidate 3 — `skip-worktree` / `core.excludesFile`: NOT APPLICABLE
+
+`skip-worktree` is a bit on **index entries** and applies only to **tracked**
+files. The run directories are untracked, so there is no index entry to set it
+on.
+
+`core.excludesFile` is another way to express *ignore*, and the run directories
+are **already ignored** — which is precisely why `-x` reaches them. **No
+ignore-based mechanism can help here, because `-x` exists to override exactly
+that.** Any approach in this family is a category error.
+
+#### Candidate 4 — filesystem permissions: **WORKS. This is the mechanism.**
+
+**The obvious form fails and the test is why it was worth running.** A deny of
+`DC` (delete-child) on the root **does not work** — `git clean -xdf` deleted the
+run directories anyway, because deleting a child requires `DELETE` on the child
+*or* `DELETE_CHILD` on the parent, and the children still granted `DELETE` by
+inheritance.
+
+The **inheritable deny of `DELETE` itself** works:
+
+```
+icacls <root> /deny "*<SID>:(OI)(CI)(DE)"
+
+$ git clean -xdf
+warning: failed to remove res/run_a/x.sqlite3: Invalid argument
+warning: failed to remove res/run_b/x.sqlite3: Invalid argument
+after: run_a  run_b  SHA256SUMS          <- both survived, contents intact
+```
+
+**Four commands, one per root. `.gitignore` is not touched.** The archive policy
+stays exactly as it is: no raw run enters the index, no WAL is versioned, the
+allow-list is unchanged.
+
+**Verified not to break what must keep working:** reads succeed, and `tar`
+archives the protected directories normally — so **this does not obstruct the
+copy it is meant to bridge to.** Creating new files inside the root also still
+succeeds.
+
+**Costs, stated rather than discovered later.**
+
+- It **also blocks legitimate deletion** inside those roots. For collections that
+  are *declared frozen and carry a `SHA256SUMS`*, that is arguably the semantics
+  they should always have had — **it makes an existing declaration enforceable
+  rather than adding a new constraint.** Reversible with `icacls /remove:d`.
+- A tool that rewrites a file by **delete-then-rename** rather than truncating
+  will fail inside these roots. Not observed, but not excluded.
+- **It is a Windows ACL.** It protects the four 21 August roots, which is exactly
+  the scope of B31, and it does **nothing** for the `/root` trees — which do not
+  need it, since they are not inside a git working tree.
+- **It stops accident, not intent.** Anyone can remove the ACE. That is the
+  correct threat model: B31 is about a routine command run for an unrelated
+  reason, not about deliberate deletion.
+
+#### Verdict
+
+> **A mechanism exists that keeps the policy intact: an inheritable deny-`DELETE`
+> ACE on each of the four 21 August roots. It is four commands, it touches no git
+> configuration, and it defeats `git clean -xdf` under test.**
+
+**Not applied.** This entry establishes that the mechanism exists and what it
+costs; applying it is a change to the working tree and is a separate decision.
+The discipline in B31 remains the answer until then, **and is now known to be a
+fallback rather than the only option.**
+
+**Method note.** All four candidates were **tested in throwaway repositories
+outside this tree**, never in it, and the scratch directories were removed. Three
+of the four behaved differently from what their documentation implied — the empty
+`.git` that did not protect, the `DC` deny that did not block, and the
+nested-repo skip that *did* survive `-x`. **Reading the documentation would have
+produced the wrong answer in all three cases**, which is the entry's transferable
+result.
+
 ---
 
 ## B32. `custody_survey.sh` over-counts run directories, in the reassuring direction
