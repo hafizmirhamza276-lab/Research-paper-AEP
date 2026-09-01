@@ -2158,3 +2158,63 @@ used for the one job its design forbids, and its output gave no sign of that.**
 knowing the tool is not merely unwired but silently partial, and so that the
 count of fail-open checks in this repository includes the one written to detect
 them.
+
+---
+
+## B30. The mechanism counterfactual is the last flatly-asserted mechanism claim in the paper
+
+**Filed 2026-09-01, immediately after the six wording changes of `f5ac276`.
+File, do not fix — this needs a decision about what the mechanism paragraph
+should claim, which is a task and not a clause.**
+
+`06-evaluation.tex:393-395`, as it now reads:
+
+> "Second, and for the same reason, *the effect size **may be** a property of
+> this host's `docker` latency*. **A faster kill pushes AEP-full toward 0 and
+> widens the gap; a slower one narrows it.** The *direction* is structural — B3
+> cannot be protected by a barrier it does not wait for — but the magnitude
+> should not be read as a constant of the protocol."
+
+**The first sentence was hedged by edit F. The second was left alone, by
+instruction, and it is a flat counterfactual.** *"A faster kill pushes AEP-full
+toward 0"* asserts the direction and the responsiveness of the effect to kill
+latency as fact.
+
+**After `f5ac276` it is the only flatly-worded mechanism statement left in the
+manuscript.** The other four sites now read *may be*, *suspect and have not
+established*, *which our measurement does not establish*, or state the measured
+variation instead.
+
+### What supports it, and what does not
+
+| | |
+|---|---|
+| **Design argument** | AEP-full dispatches only if `WAITAOF` returns before Redis dies. That a slower kill gives `WAITAOF` more time to win is **a property of the protocol**, and it is sound |
+| **Empirical argument** | one unreplicated session at +88 ms, `p` = 0.03; a four-session interval of [−91, +302] ms containing zero |
+
+**The sentence is doing both jobs and the paper no longer distinguishes them.**
+Read as design, it is correct and needs no evidence. Read as measurement — which
+its placement invites, sitting inside a *"two honest qualifications"* passage
+that is entirely about what the data show — it asserts a responsiveness the data
+do not resolve.
+
+### Why this is a task and not a clause
+
+The three available positions are different papers:
+
+1. **Keep it as an explicit design claim**, marked as such, and say the
+   magnitude of the response is unmeasured. Requires deciding what the paragraph
+   is *for* once its measurement half is gone.
+2. **Hedge it** like the other five sites. Cheap, and leaves a qualification
+   paragraph that hedges a claim the protocol's own logic guarantees — weaker
+   than the truth.
+3. **Cut it** and let *"the direction is structural"*, two sentences later, carry
+   the whole point. That sentence is already sound and already there.
+
+**Option 3 is probably right and is not obviously right**, which is why this is
+filed rather than done. Choosing it means deciding that the counterfactual adds
+nothing the structural sentence does not already say — a judgement about the
+paragraph, not a repair to a sentence.
+
+**Related:** B26 (the four assertion sites, three now corrected), and §F.0i on
+why the sixth site was found only after the other five landed.
