@@ -3865,3 +3865,150 @@ revealed it.
 
 **Related:** B33, B36, B32 (compare name-sets, never counts — here the failure is
 one layer earlier: compare *something*, and say how much), and B41.
+
+---
+
+## B21 item 4 — should `paper/main.pdf` be tracked? Established, not decided
+
+**2026-09-01. Tracking was NOT changed.** This records the reasoning; the
+decision is the operator's.
+
+### Who consumes the tracked PDF: almost nobody
+
+| candidate | verdict |
+|---|---|
+| `check_paper_numbers.py` | **does not open it.** Zero references to `.pdf` |
+| `build_paper.sh` | checks `${JOB}.pdf` **in scratch only**, before promotion |
+| CI (`ci.yml:341`) | uploads `paper/main.pdf` — but that is the PDF **its own build just promoted**, not the tracked blob. It produces; it does not consume |
+| `09-artifact.tex:4` | promises *"implementation, evaluation harness, mock provider, baseline systems, analysis pipeline, **manuscript source**, and the tracked derived analysis products."* **A built PDF is not promised** |
+| `ARTIFACT.md` | documents `bash scripts/build_paper.sh` as the way to get one |
+| **`phase8-driver/audit_historical_bibs.sh`** | **reads it — the one real consumer.** The B41 audit of three past promotions was possible only because those PDFs are in git history |
+
+**One demonstrated consumer, and it is forensic.** Nothing in the build, the
+gate, CI, or the manuscript depends on the tracked file.
+
+### What tracking has cost, and how much was inherent
+
+Stale for eleven days; a marker written; a promotion; the marker removed.
+**Most of that was the broken gate, not tracking.** The PDF could not be
+promoted because `check_paper_numbers.py` died on a missing `pydantic`. That is
+fixed, and the gate returns `18 passed, 0 failed`. **So the historical cost
+argues less than it appears to** — its cause is gone.
+
+**What is inherent:** the marker needed maintenance and **went stale on its
+own** — dated 31 August, silent about the six 1 September edits. **A prose
+warning about a stale artifact is a second artifact that can go stale.** That
+recurs.
+
+### What untracking would cost — less than B6 implies
+
+B6 holds that local TeX Live typesets 24 of 29 `\bibitem` entries, leaving nine
+citations undefined, so **CI is the only place the bibliography is correct**. If
+so, *"untrack it and build your own"* does not yield a correct document.
+
+**Checked rather than assumed** (`phase8-driver/check_b6_symptom.sh`):
+
+```
+build verdict    : 18 passed, 0 failed
+refs.bib entries : 34
+bibitem in .bbl  : 29
+undefined cites  : 0
+pages            : 21
+```
+
+> **B6's symptom does not reproduce on this host.** A local build produces all
+> 29 entries with **zero** undefined citations.
+
+**A lead, recorded and NOT acted on: B6 may have been B41 all along.** A stale
+`paper/main.bbl` with fewer entries, shadowing the fresh one, renders exactly as
+*"the last entries never receive a `\bibcite`"*. **B6 is not closed, not fixed,
+and this is not a claim** — it is for whoever owns it.
+
+Untracking therefore costs: a cloner needs TeX Live (~2 min per `ARTIFACT.md`),
+and anyone without it gets no PDF.
+
+### Does the provenance stamp change the answer? Less than it appears
+
+Staleness is now **detectable** — edit a source without rebuilding and the gate
+refuses.
+
+> **But the stamp protects the GATE, not the READER.** Someone who clones the
+> repository and opens `paper/main.pdf` runs no gate and sees no warning. For
+> the audience a tracked PDF exists to serve, **nothing has changed.**
+
+That is the weakest link in any *"the stamp makes tracking safe"* argument, and
+it is recorded here rather than left for a reader to find.
+
+### The precedent, and it is a contradiction
+
+**`.gitignore:113` is `paper/*.pdf`**, and the block above it says in prose:
+*"The `.tex` sources and the generated tables are tracked; the artifacts of
+compiling them are not."*
+
+**Both `main.pdf` and `main-anon.pdf` are tracked anyway.** The dates settle how:
+
+| | |
+|---|---|
+| `6cd6815`, **7 Aug** | added `paper/*.pdf` to `.gitignore` |
+| `0e80297`, **10 Aug** | first tracked `paper/main.pdf` — **three days later, over the ignore rule** |
+
+And that commit says why: *"Package (T6–T8). Cover letter, arXiv metadata …,
+**the 18-page PDF**"*. **It was added as a submission package — a release
+artifact, not a routine build product.**
+
+**So the precedent does not say "untrack".** It says routine build products are
+not tracked **and this one was made an exception for release.** The exception is
+defensible, undocumented, and has left `.gitignore` contradicting the index for
+three weeks.
+
+**`paper/generated/*.tex` is the other half**: six generated files, tracked,
+because they are the evidence a reader checks. **This repository already
+distinguishes "generated" from "not worth tracking" by who needs it** — the right
+axis here too.
+
+### Options
+
+| | keeps | costs |
+|---|---|---|
+| **A — track as now** | a PDF for anyone who clones; forensic recoverability, demonstrated today | the marker problem recurs whenever it lags; `.gitignore` keeps contradicting the index unless fixed |
+| **B — untrack** | `.gitignore` and the index agree; no stale binary can mislead a reader | no PDF without TeX Live; **B41-style audits become impossible for future revisions** |
+| **C — track only at release points** | the release value without implying every commit's PDF is current | needs a rule nobody enforces — though in practice this is already what happens: four promotions in three weeks, each at a meaningful moment |
+
+### Recommendation
+
+**Keep it tracked, and fix the contradiction — but the contradiction matters more
+than the decision.**
+
+**The tracking question is genuinely low-stakes.** Nothing consumes the file;
+370 KB per revision is nothing here; and the cost that motivated item 4 was a
+broken gate that is now fixed. **A, B and C are all defensible, and saying so is
+more useful than manufacturing a preference.**
+
+**What is not low-stakes is that `.gitignore` says one thing and the index does
+another**, and has for three weeks. That is the same class as `CODEX_PROMPTS.md`'s
+READ-ONLY list contradicting two executed backlog items, and as B26's parenthetical
+contradicting B29a on the same page. **Whichever way item 4 goes, the two must be
+made to agree** — untrack, or add `!paper/main.pdf` with the release rationale
+beside it.
+
+**I lean to keeping it, for one project-specific reason that emerged today:** the
+B41 audit of three historical promotions was possible *only* because those PDFs
+are in git history. **For an artifact accompanying a paper, being able to ask
+"what did we actually ship on that date" is worth 370 KB.**
+
+#### Adversarial pass on the recommendation
+
+**The strongest case against the lean:** the forensic benefit was used **exactly
+once, today, to audit a defect this project introduced.** One use in three weeks
+is thin evidence for a permanent policy. **That objection is fair and is not
+rebutted here.** It is the weakest link, and a reader who weighs it differently
+reaches **B** without having missed anything.
+
+**Second:** *"staleness is now detectable"* does less work than it sounds, per
+the stamp section — a cloner still sees an unmarked PDF.
+
+**Third, in the other direction:** anyone arguing for B on general
+binaries-in-git grounds is reasoning from a developer's situation rather than a
+reviewer's, and this repository exists to be read by reviewers.
+
+**Not decided. Not changed. B21 stays open until the operator rules on item 4.**
