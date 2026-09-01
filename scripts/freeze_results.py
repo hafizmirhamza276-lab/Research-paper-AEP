@@ -169,14 +169,30 @@ def main() -> int:
             lines.append(f"- `{name}`")
 
     manifest_path = root / "MANIFEST.md"
-    manifest_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # newline="\n" because MANIFEST.md is HASHED into SHA256SUMS below. Without
+    # it, write_text translates to \r\n on Windows and the manifest's content
+    # digest becomes platform-dependent -- a defect no path-spelling fix
+    # repairs, since the bytes themselves differ.
+    manifest_path.write_text(
+        "\n".join(lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     analysis = root / "analysis"
     digested = [manifest_path, csv_path]
     if analysis.is_dir():
         digested += sorted(p for p in analysis.glob("*") if p.is_file())
-    sums = [f"{sha256(path)}  {path.relative_to(root)}" for path in digested]
-    (root / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8")
+    # as_posix() because str(PurePath) renders "analysis\per-execution.csv" on
+    # Windows, naming a file that does not exist under that spelling; and
+    # newline="\n" for the same reason as MANIFEST.md above. The committed
+    # convention is forward slashes and LF, and a manifest is only useful if it
+    # verifies on the platform the reviewer happens to have.
+    sums = [
+        f"{sha256(path)}  {path.relative_to(root).as_posix()}"
+        for path in digested
+    ]
+    (root / "SHA256SUMS").write_text(
+        "\n".join(sums) + "\n", encoding="utf-8", newline="\n"
+    )
 
     print(f"wrote {manifest_path}")
     print(f"wrote {csv_path}")
