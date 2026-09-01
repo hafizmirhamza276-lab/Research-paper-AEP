@@ -38,6 +38,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paper_provenance  # noqa: E402
+
 BANNED_SOURCES = ("table-1.csv",)
 
 
@@ -336,8 +339,35 @@ def main() -> int:
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
     check_state_machine(result, arguments.paper)
-    check_bibliography(result, build_dir)
-    check_undefined_references(result, build_dir)
+
+    # B21 item 3. The two checks below read main.bbl/main.blg/main.log. When
+    # --build-dir was not given they come from paper/, where build_paper.sh
+    # promotes them -- so without a provenance check this run reports on
+    # whichever build last happened to promote, and says nothing about which.
+    # That is how a "17 passed, 1 failed" baseline computed from three-week-old
+    # artifacts was quoted as a control through two phases.
+    #
+    # An explicit --build-dir pointing somewhere else is the build staging its
+    # own output and checking it before promotion; that is the one caller whose
+    # artifacts are fresh by construction.
+    if build_dir.resolve() == arguments.paper.resolve():
+        fresh, reason = paper_provenance.verify(arguments.paper)
+        result.check(fresh, "build artifacts match current sources", reason)
+    else:
+        fresh = True
+
+    if fresh:
+        check_bibliography(result, build_dir)
+        check_undefined_references(result, build_dir)
+    else:
+        # Report the exclusion rather than omitting it silently: B29a exists
+        # because a tool that skips a class and says nothing is indistinguishable
+        # from one that found nothing.
+        print(
+            "  SKIP  2 checks not run (bibliography, undefined references): "
+            "artifacts cannot be shown to match the sources"
+        )
+
     check_todos(result, arguments.paper)
 
     print()

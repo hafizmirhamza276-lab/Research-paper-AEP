@@ -98,6 +98,17 @@ paper/*.aux
 paper/*.bbl
 paper/*.blg
 paper/*.log
+# The build-provenance stamp (B21 item 3). It is a build product like the four
+# above, and it is deliberately NOT tracked: it describes one machine's last
+# build, not the repository's state.
+#
+# It sits in the same directory as the artifacts whose staleness caused the
+# problem, which invites cleaning it up as an instance of that problem. It is
+# not one, and the distinction is the whole point: THE OLD ARTIFACTS WERE
+# SILENT WHEN WRONG; THE STAMP FAILS THE GATE WHEN WRONG. Deleting it does not
+# restore the old behaviour -- it makes the gate refuse until the next build,
+# which is the safe direction. See B21 item 3 and B40.
+paper/.build-provenance.json
 paper/*.out
 paper/*.pdf
 paper/*.synctex.gz

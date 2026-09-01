@@ -67,10 +67,12 @@ STAGED_PDF="${PAPER}/.${JOB}.pdf.stage.$$"
 STAGED_LOG="${PAPER}/.${JOB}.log.stage.$$"
 STAGED_BBL="${PAPER}/.${JOB}.bbl.stage.$$"
 STAGED_BLG="${PAPER}/.${JOB}.blg.stage.$$"
+STAGED_PROV="${PAPER}/.provenance.stage.$$"
 
 cleanup() {
   rm -rf -- "$BUILD_DIR" || true
   rm -f -- "$STAGED_PDF" "$STAGED_LOG" "$STAGED_BBL" "$STAGED_BLG" || true
+  rm -f -- "$STAGED_PROV" || true
 }
 trap cleanup EXIT
 
@@ -78,6 +80,16 @@ trap cleanup EXIT
 # and figures visible without copying them, while BIBINPUTS exposes refs.bib.
 export TEXINPUTS="${PAPER}//:${TEXINPUTS:-}"
 export BIBINPUTS="${PAPER}:${BIBINPUTS:-}"
+
+# B21 item 3. Hash the sources BEFORE compiling, so the stamp records what this
+# build actually read rather than whatever the tree holds once it finishes. It
+# is staged here and promoted only with the artifacts, so a failed build leaves
+# the previous stamp exactly as it was -- the same discipline as the PDF.
+if [ "$ANON" -eq 0 ]; then
+  "${NUMBER_RUNNER[@]}" "${ROOT}/scripts/paper_provenance.py" \
+    write "$PAPER" "$STAGED_PROV" >/dev/null
+fi
+
 cd "$BUILD_DIR"
 
 echo "=== pdflatex / bibtex / pdflatex x2 (${JOB}, staged) ==="
@@ -166,6 +178,12 @@ cp -- "$BUILD_DIR/${JOB}.blg" "$STAGED_BLG"
 mv -f -- "$STAGED_LOG" "$PAPER/${JOB}.log"
 mv -f -- "$STAGED_BBL" "$PAPER/${JOB}.bbl"
 mv -f -- "$STAGED_BLG" "$PAPER/${JOB}.blg"
+# The stamp goes with them. It is promoted BEFORE the PDF for the same reason
+# the logs are: the PDF is the last thing to move, so no ordering leaves a new
+# PDF beside a stamp that does not describe it.
+if [ "$ANON" -eq 0 ]; then
+  mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance.json"
+fi
 mv -f -- "$STAGED_PDF" "$PAPER/${JOB}.pdf"
 
 echo
