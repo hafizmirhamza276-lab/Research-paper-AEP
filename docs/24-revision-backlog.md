@@ -2213,7 +2213,7 @@ closing it here would be closing on a technicality.
 | # | prescription | status |
 |---|---|---|
 | 1 | **Do not put `paper/` on `TEXINPUTS` wholesale** | **OPEN.** `build_paper.sh:79` is unchanged. The recursive search path still exposes `paper/` for every file the run needs |
-| 2 | **Assert the `.bbl` identity** after `bibtex` | **OPEN.** Nothing checks that the `.bbl` pdflatex read is the one bibtex wrote. Still the fix for the silent case — a stale `.bbl` with *outdated* rather than *missing* entries produces no warning at all |
+| 2 | **Assert the `.bbl` identity** after `bibtex` | **OPEN — and the condition it would assert is violated on EVERY build. See below.** |
 | 3 | **Fail loudly on stale artifacts in `paper/`** | ~~HALF DONE, and the wrong half~~ **DONE 2026-09-01 — see below** |
 | 4 | **Decide whether `paper/main.pdf` should be tracked at all** | **OPEN.** The PDF was promoted, which resolves the *staleness* but not the *question*. It is still the one tracked build product |
 
@@ -3639,3 +3639,88 @@ on a sample of three.
 `git clean -nxd` is recorded as unable to verify a guard **for the same reason
 in reverse**: the command is correct, and what it can tell you depends on state
 it does not control.
+
+---
+
+## B41. The manuscript is typeset from the previous build's bibliography, on every build
+
+**Filed 2026-09-01 while scoping B21 item 2. Established by probe, not inferred.
+Nothing fixed.**
+
+### What was measured
+
+`phase8-driver/probe_bbl_identity.sh` replicates `build_paper.sh`'s four steps in
+a scratch directory under its exact `TEXINPUTS`, and inspects `main.log` **after
+each pass, while the scratch directory still exists** — the earlier attempt read
+the newest surviving log after the build and got a 31 August leftover, because
+`build_paper.sh` removes its scratch dir on exit.
+
+A marker `\bibitem` was planted in the copy's `paper/main.bbl`:
+
+```
+pass 1   opened: (/tmp/bbl-identity/paper/main.bbl
+bibtex   scratch main.bbl: 8690 bytes   marker in scratch bbl: 0
+pass 2   opened: (/tmp/bbl-identity/paper/main.bbl
+pass 3   opened: (/tmp/bbl-identity/paper/main.bbl
+
+marker occurrences in PDF text: 1
+undefined citations in final log: 0
+```
+
+> **All three passes read `paper/main.bbl`. The `main.bbl` `bibtex` produced was
+> written to scratch, never opened, and then promoted over the file that was
+> actually used.**
+
+The marker reached the rendered PDF, so this is not a path-resolution curiosity —
+**it decides the bibliography the reader sees.**
+
+### What follows
+
+**The PDF's bibliography is the previous build's.** Each run reads `paper/main.bbl`
+from build *N−1*, typesets from it, and promotion then overwrites that file with
+build *N*'s bibtex output — which the next build will use. **The bibliography
+lags the sources by exactly one build.**
+
+**The gate validates a bibliography the PDF does not contain.**
+`check_bibliography` reads `build_dir/main.bbl`, which under `build_paper.sh` is
+the **scratch** one — fresh, correct, and not the one in the document.
+
+**Missing keys fail loudly; changed entries are silent.** A newly added `\cite`
+key is absent from the old `.bbl`, so the undefined-citations check catches it —
+that was B21's original symptom. **A corrected author, year or title produces no
+warning at all**, because nothing is undefined. B21 named that silent case as a
+hypothetical:
+
+> *"A stale `main.bbl` that merely has outdated entries, rather than missing
+> ones, produces no warning at all."*
+
+**It is not a hypothetical. It is the normal operating mode.**
+
+### Cause, and it belongs to item 1
+
+`build_paper.sh:79` is `export TEXINPUTS="${PAPER}//:${TEXINPUTS:-}"`. A trailing
+colon means *append the compiled-in defaults*, and those defaults include the
+current directory — so `paper//` sits **ahead of** `.`.
+`phase8-driver/probe_texinputs_order.sh`:
+
+```
+PAPER     TEXINPUTS=/tmp/bblorder/paper//:    -> /tmp/bblorder/paper/main.bbl
+SCRATCH   TEXINPUTS=.:/tmp/bblorder/paper//:  -> ./main.bbl
+PAPER     TEXINPUTS=/tmp/bblorder/paper//     -> /tmp/bblorder/paper/main.bbl
+```
+
+**Prepending `.:` makes the scratch copy win.** That is **item 1's** territory —
+"do not put `paper/` on `TEXINPUTS` wholesale" — not item 2's.
+
+### Why this outranks item 2 as scoped
+
+**Item 2 asserts a condition that is currently false on every build.** It is not
+a regression guard that passes today; **implemented alone it turns every build
+red immediately**, correctly. That is a decision about whether the repository
+should be unbuildable until item 1 lands, not a detail of the assertion.
+
+**Not fixed here.** Item 1 is not authorised and item 2 alone is not obviously the
+right move. **No change was made to `build_paper.sh`.**
+
+**Related:** B21 items 1 and 2, B38 and B40 (the same shape — a component correct
+in isolation, wrong in composition), and F.0d.
