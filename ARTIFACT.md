@@ -214,30 +214,58 @@ on undefined references, both of which LaTeX itself reports as warnings while
 exiting 0. Expected: 18 pages, zero undefined references, zero `\todo`, and
 `18 passed, 0 failed` from `check_paper_numbers.py`.
 
-> **`paper/main.pdf` is STALE as of 2026-08-31. Do not read it as the current
+> **`paper/main.pdf` is STALE as of 2026-09-01. Do not read it as the current
 > manuscript.**
 >
-> The tracked PDF was built on 2026-08-21 (commit `97c44ff`) and is 19 pages.
-> The sources in `paper/` have since changed and now build to 20 pages.
+> The tracked PDF was built on 2026-08-21 (commit `97c44ff`) and is 19 pages,
+> 356 309 bytes. The sources in `paper/` have since changed and **now build to
+> 21 pages, 374 600 bytes**.
 >
-> **What the tracked PDF lacks:** the capability-class result added to
-> `sections/08-threats.tex` and `sections/06-evaluation.tex` — four
+> **What the tracked PDF lacks — as of 2026-08-31:** the capability-class result
+> added to `sections/08-threats.tex` and `sections/06-evaluation.tex` — four
 > pre-registered sessions, the applied-effect difference, its session-clustered
 > interval and its half-width — and all twelve `\Class*` macros in
 > `generated/numbers.tex`. It also predates the `\ClassPpMin`/`\ClassPpMax` and
 > interval-binding changes to `scripts/paper_tables.py`.
 >
+> **And as of 2026-09-01, six further wording changes**, none of which are in
+> the tracked PDF: three in `sections/08-threats.tex` (`:73` the replication
+> interval beside the prevention claim; `:84` *weakest* → *narrowest* with the
+> host-dependence hedge; `:385` *is a function of* → *may be a function of*),
+> two in `sections/06-evaluation.tex` (`:393` *is* → *may be*; `:463` the
+> one-draw restatement), and one in `main.tex` (the abstract's closing clause
+> carrying the replication range).
+>
 > **Why it was not regenerated:** `build_paper.sh` correctly refuses to promote
 > a build whose checks do not pass, and one check currently fails on this host
 > (`ModuleNotFoundError: No module named 'pydantic'` in the state-machine
-> figure check — an environment gap, backlog B6). Forcing the promotion past a
-> gate is exactly what the gate exists to prevent, so the stale file is marked
+> figure check — an environment gap, ~~backlog B6~~). Forcing the promotion past
+> a gate is exactly what the gate exists to prevent, so the stale file is marked
 > rather than overwritten. The build itself is clean: 20 pages, no undefined
 > references or citations, no unexpanded macros.
+>
+> **CORRECTION, 2026-09-01 — `pydantic` was never B6.** B6 is that local TeX
+> Live typesets 24 of 29 `\bibitem` entries, so CI is the only place the
+> bibliography is correct. **This** failure was the state-machine figure check,
+> which imports `aep_core.core.intents` and needed `pydantic>=2.0` **and**
+> `redis>=5.0`. Two unrelated environment gaps; the name was carried between
+> them without being derived, here and in B21. **B6 remains open.**
 >
 > Note also that the "18 pages / `18 passed, 0 failed`" expectation above
 > already did not match the tracked 19-page PDF before this change. It is left
 > as written rather than silently corrected.
+>
+> **STATUS, 2026-09-01: the PDF is now PROMOTABLE and has NOT been promoted.**
+> With `pydantic` and `redis` installed, `build_paper.sh` returns **`18 passed,
+> 0 failed`** — including, for the first time, `state-machine figure matches the
+> transition table`. **That check had never completed on this host before today**,
+> so the figure was previously *unverified* rather than verified.
+>
+> **The marker stays until someone promotes.** The build that produced these
+> numbers ran with `AEP_PAPER_DIR` pointed at a copy, precisely so a clean build
+> could not overwrite the tracked PDF unasked. Promotion is one command —
+> `bash scripts/build_paper.sh` — and is an operator decision, not an automatic
+> consequence of the gate going green.
 >
 > **The real fix is backlog B21**, which also covers the untracked, three-week-
 > old `paper/main.aux` and `paper/main.bbl` that the build reads back in.

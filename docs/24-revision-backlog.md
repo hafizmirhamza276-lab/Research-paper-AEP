@@ -1934,7 +1934,15 @@ artifacts* and *HEAD sources with no artifacts*, differing in two things at once
 Re-run symmetrically (`phase8-driver/build_clean_copy.sh`: copy `paper/`, delete
 the untracked artifacts, build), the edited tree gives **17 passed, 1 failed** —
 identical to the control, with the one failure being the pre-existing missing
-`pydantic` (B6's territory, an environment gap).
+`pydantic` (~~B6's territory,~~ an environment gap).
+
+> **STRUCK 2026-09-01. `pydantic` was never B6's territory.** **B6** is that
+> local TeX Live typesets 24 of 29 `\bibitem` entries. **This failure** was the
+> *"state-machine figure matches the transition table"* check, which imports
+> `aep_core.core.intents` and needed `pydantic>=2.0` **and** `redis>=5.0`. Two
+> unrelated environment gaps, and the name was carried between them without
+> being derived. **Both are now resolved: `pydantic`+`redis` installed (18
+> passed, 0 failed), and B6 remains open.**
 
 **`git archive HEAD <path>` is not a snapshot of a working directory.** Any
 future "was it like this before my change?" check that uses it must first
@@ -1954,6 +1962,9 @@ establish that the behaviour under test does not depend on untracked files.
 4. **Decide whether `paper/main.pdf` should be tracked at all.** It is the one
    tracked build product, and it is now stale relative to the sources, because
    the build legitimately refuses to promote while the `pydantic` check fails.
+   **[2026-09-01: the refusal is over — 18 passed, 0 failed. The PDF is
+   promotable and unpromoted. The tracking question is untouched and still
+   open.]**
 
 ---
 
