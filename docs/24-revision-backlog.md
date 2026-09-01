@@ -2031,13 +2031,36 @@ PAPER WINS -- the stale .bbl shadows the fresh one
 
 **Even with a scratch-local `main.bbl` present, resolution goes to `paper/`.**
 
-**Residual, stated:** this is `kpsewhich`, which uses the same kpathsea library
-but is not `pdflatex` opening the file. **The definitive test is a build, which
-was not run** — a clean build promotes, and promotion is out of scope here. This
-also leaves `ARTIFACT.md:236`'s *"the build itself is clean … no undefined
-references or citations"* unreconciled: it is most likely a
-`build_clean_copy.sh` result rather than a `build_paper.sh` one, **but that is
-suspected, not established.**
+~~**Residual, stated:** this is `kpsewhich` … **The definitive test is a build,
+which was not run.**~~ **RESIDUAL CLOSED 2026-09-01 by a real build.**
+
+`phase8-driver/build_probe.sh` runs the actual `scripts/build_paper.sh` with
+`AEP_PAPER_DIR` pointed at a **copy**, so a clean build cannot promote into the
+tracked tree. Two runs, differing only in whether a stale `main.bbl` is present
+in the copy's `paper/`:
+
+| copy's `paper/` | result |
+|---|---|
+| stale artifacts removed | **17 passed, 1 failed** — the only failure is the state-machine check |
+| stale `main.bbl` planted | **16 passed, 2 failed** — adds *"no undefined references or citations"* |
+
+> **B21's mechanism is confirmed against a real `pdflatex` run, not a path
+> lookup.** A stale `main.bbl` in `paper/` breaks a build that is otherwise
+> clean.
+
+**And the clean run's citation PASS is genuine**, because the gate read the
+freshly staged log — unlike the direct invocation's, below.
+
+**A defect in my own probe, reported rather than quietly dropped.** The script
+also tried to answer *which* `main.bbl` `pdflatex` opened, by grepping the newest
+`main.log` under `.scratch/`. It printed `(./main.bbl` for **both** runs. That
+output is **invalid**: `build_paper.sh` removes its scratch directory on exit, so
+the newest surviving log was a leftover from **31 August 16:35** — three days
+old. **A probe written for a task about stale artifacts read a stale artifact and
+reported it as current.** The bbl-identity question is therefore **still open**;
+the build-level result above does not depend on it. B21's item 2 — assert the
+`.bbl` identity from `\openin`/`\openout` — remains the right fix and is
+unimplemented.
 
 #### `ARTIFACT.md`'s marker is itself stale
 
