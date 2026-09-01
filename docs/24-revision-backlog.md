@@ -2198,8 +2198,36 @@ packages installed with `--user`. The credential exposure was not added to.
    PATH, so it exits 127. **WSL is the only build path**, and there the runner is
    system `python3`, which is the one that cannot have `pydantic` installed.
 
-**Stopped here.** Steps 3 and 4 — the misattribution strikes and the
-`ARTIFACT.md` marker — were not started.
+~~**Stopped here.** Steps 3 and 4 … were not started.~~ **Completed
+2026-09-01.**
+
+### STATUS 2026-09-01: B21 STAYS OPEN. Three of its four prescriptions are undone
+
+The operator's four steps are discharged — stale artifacts deleted, baseline
+re-established, misattribution struck in both places, `ARTIFACT.md`'s marker
+removed after promotion. **That is not the same as this entry being closed**, and
+closing it here would be closing on a technicality.
+
+**Measured against this entry's own "What is needed":**
+
+| # | prescription | status |
+|---|---|---|
+| 1 | **Do not put `paper/` on `TEXINPUTS` wholesale** | **OPEN.** `build_paper.sh:79` is unchanged. The recursive search path still exposes `paper/` for every file the run needs |
+| 2 | **Assert the `.bbl` identity** after `bibtex` | **OPEN.** Nothing checks that the `.bbl` pdflatex read is the one bibtex wrote. Still the fix for the silent case — a stale `.bbl` with *outdated* rather than *missing* entries produces no warning at all |
+| 3 | **Fail loudly on stale artifacts in `paper/`** | **HALF DONE, and the wrong half.** The files are gitignored (they already were) and all three are now deleted — **but deletion is a habit, not a mechanism.** Nothing refuses to build or check while untracked build products sit in `paper/`, and the next clean build **puts `main.log`, `main.bbl` and `main.blg` straight back** |
+| 4 | **Decide whether `paper/main.pdf` should be tracked at all** | **OPEN.** The PDF was promoted, which resolves the *staleness* but not the *question*. It is still the one tracked build product |
+
+**Item 3 deserves the sharpest statement.** This task deleted three files by
+hand, and a single successful build recreates two of them. **The state that made
+the gate lie is not prevented; it was merely cleared once.** The mechanism —
+refuse, or clear before every build — is unbuilt.
+
+**What this task did settle**, and it is not nothing: the mechanism is confirmed
+against a real build rather than a path lookup; the `pydantic`/B6 misattribution
+is struck in both documents; the state-machine check has run for the first time
+and passes; and the directly-invoked baseline is recorded as never having been a
+baseline. **Items 1, 2 and 4 remain, and item 3 remains in the form that
+matters.**
 
 ---
 
@@ -3369,3 +3397,92 @@ the difference.
 
 **Related:** B21 (items 1 and 3), B33, and the amendment recording that the
 directly-invoked `17 passed, 1 failed` baseline was partly vacuous.
+
+### CLOSED 2026-09-01 — deleted, and the file deleted was not the stale one
+
+**`paper/main.log` is gone.** One nuance worth recording, because it changes what
+the deletion accomplished: **by the time it was deleted it was fresh, not stale.**
+Promotion ran first, and `build_paper.sh:163,166` rewrites `paper/main.log` on
+every clean build, so the 10 August file (45 077 bytes) had already been replaced
+by a 1 September one (45 458 bytes).
+
+**So this deletion did not remove stale evidence — it removed the *mechanism* by
+which evidence goes stale unnoticed.** A fresh log makes the direct invocation
+*correct today* and silently wrong the moment any source changes. Deleting it
+makes the direct path fail loudly and permanently instead:
+
+```
+FAIL  main.log exists
+```
+
+**That is the intended end state, not a regression.** The direct invocation was
+never a valid gate — `--build-dir` defaults to `--paper`, so it reports on
+whenever the last promotion happened to be. It now says so out loud.
+
+**Verified after deletion:** `build_paper.sh` unaffected at **18 passed, 0
+failed** (it reads its scratch log); direct invocation **17 passed, 1 failed**
+under WSL, the single failure being `main.log exists`.
+
+---
+
+## B39. A partial fix surfaced a defect a complete one would have concealed
+
+**Filed 2026-09-01. An observation, not a defect. It argues against the usual
+instinct, which is why it is recorded rather than left as a nice coincidence.**
+
+### What happened
+
+Three stale artifacts sat in `paper/`, all dated 10 August: `main.aux`,
+`main.bbl`, `main.log`. B21 named all three. **Two were deleted and one was
+not**, because the instruction named two.
+
+That accident is what exposed the third.
+
+| what was deleted | what the direct gate invocation did |
+|---|---|
+| **none** | `17 passed, 1 failed` — bibliography and citation checks **silently** computed from a three-week-old log. Looked healthy |
+| **`main.aux` + `main.bbl`** | `14 passed, 2 failed` — **`FAIL main.bbl exists`**. The gate announced that it had nothing current to check against |
+| **all three** | would have been `FAIL main.bbl exists` **and** `FAIL main.log exists` — correct, but the `main.log` failure arrives folded into a batch, indistinguishable from the `.bbl` one |
+
+**The middle row is the informative one.** Removing `main.bbl` forced the checker
+to *speak*, and what it then said — *"missing `paper/main.bbl`; run bibtex
+first"* — is what made it obvious that `main.log` was being read from the same
+directory under the same defaulting rule. **With all three gone, that inference
+still lands, but nothing distinguishes which artifact taught it.** With none
+gone, nothing is learned at all.
+
+### The general form
+
+> **Fix one thing at a time and watch what changes.** A partial fix leaves the
+> system in a state neither the before nor the after would produce, and that
+> state is often the most diagnostic one available — the remaining defect is
+> forced to act alone, against a background that has just moved.
+>
+> **A complete fix removes the defect and the evidence of it together.** The
+> system goes green and nothing is learned about *why* it was red, or which of
+> the several things changed was load-bearing.
+
+This is the same reasoning as the design floor and as B9's session-clustering:
+**a change that moves several variables at once cannot attribute the result.**
+Applied to repair rather than to measurement, it says: **repair one variable,
+observe, then the next.**
+
+### Where it does and does not apply
+
+**Applies** when the defects are independent and the system reports its own
+state — a checker, a gate, a build. The partial state is observable and cheap.
+
+**Does not apply** when a partial fix leaves the system in an *unsafe* state
+rather than merely an informative one, or when the defects interact so that
+fixing one masks the other. **Nothing here argues for shipping partial fixes.**
+It argues for **passing through** partial states deliberately and reading them,
+rather than batching every repair into one commit and learning nothing from the
+transition.
+
+**Counter-note, so this is not read as tidier than it was:** this was **not
+planned**. The instruction named two files; the third was omitted for an
+unrelated reason. **The lesson is real and the method was an accident**, and
+saying so is the difference between a finding and a story told afterwards.
+
+**Related:** B38 (the instance), B21, B33, and F.0d — where the same structure
+appears as *"a failed check that passes when it does nothing"*.
