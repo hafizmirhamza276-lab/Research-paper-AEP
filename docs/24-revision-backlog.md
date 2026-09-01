@@ -2122,11 +2122,77 @@ instance of F.0b's restatement problem created the next instance of it.**
 
 **Needed:** the standing adversarial pass must cover *restatements of* an edited
 claim, not only the edited claim. A search for the claim's other sites is
-mechanical (`claim_sweep.py` finds all four) and was not run.
+mechanical ~~(`claim_sweep.py` finds all four)~~ and was not run.
+
+> **The struck parenthetical is false, and it contradicted B29a on the same
+> page.** `claim_sweep.py` returns **two of five** sites for this claim. B29a
+> already recorded that it returned two of four; this entry kept asserting the
+> opposite, and the two were filed the same day. **A backlog can hold a
+> contradiction as easily as a manuscript can** — which is B26's own subject,
+> appearing in B26's own text.
 
 **Not in scope:** the sentence following `06-evaluation.tex:463` — *"what is
 structural is that the race exists for AEP-full at all and cannot exist for
 B3"* — is a design claim and is sound.
+
+---
+
+### CLOSED 2026-09-01 by R7, which was tested before it was trusted
+
+**The procedure is `docs/25-collection-tooling-rules.md` R7.** The instrument
+question was settled from source first, because giving a fail-open tool formal
+standing is worse than having no tool.
+
+**`claim_sweep.py` has three silent exclusions, not the one B29a records:**
+macro-bearing sentences (`:129`), sentences with no lexicon hit (`:131`), and
+`numbers.tex` plus structural lines (`:70`, `:59`). Probed against the five sites
+of this claim, it returns **two**:
+
+| site | outcome |
+|---|---|
+| `06-evaluation` *"property of this host's"* | **excluded — no lexicon hit** |
+| `06-evaluation` *"one draw from a distribution"* | excluded — macro |
+| `08-threats` *"host-dependence we"* | returned |
+| `08-threats` *"should be a function of"* | returned |
+| `08-threats` *"may be a function of that"* | excluded — macro |
+
+**One miss is the lexicon filter, and that decides the instrument question.**
+Fixing the reporting announces a skipped count without finding the sites. Adding
+`--all` removes the macro filter and *still* misses `06-evaluation`, whose
+sentence contains none of the forty lexicon terms. Removing both filters leaves
+"print every sentence" — **full-text search with extra steps and a lexicon to
+keep wrong.** It is the wrong instrument; R7 specifies `grep`. **B29 and B29a
+remain open and unfixed.**
+
+**R7 was tested against this claim, and the test changed the rule.** As first
+written it searched content nouns only and passed the four current sites. But
+`06-evaluation.tex:462` restates `:393` while sharing **not one noun** with it —
+*"one draw from a distribution"* against *"a property of this host's `docker`
+latency"* — so the noun search misses it. It happens to be harmless here, because
+Edit C left that site no longer asserting host-dependence; **it is right by luck
+of a rewrite, not by the procedure being sound.**
+
+R7 now requires **two searches and their union**: content nouns, then the macros
+carrying the claim's evidence. That reaches `:462` **and `main.tex:172`** — which
+carries `\UnwantedPrevented{}` and the word *host* nowhere, so **a noun-only
+search never looks at the abstract**, where claims are stated most strongly and
+were written when the evidence was strongest.
+
+**Both sites were added to the fixture rather than dropped.** Dropping the one
+the rule missed would have been adjusting the fixture until the rule passed.
+`phase8-driver/test_r7_fixture.sh`: **6 sites, PASS.**
+
+**What this does not close.** R7 is a procedure a person runs, not a gate. Nothing
+enforces it, and its own weakness is now on record: **a restatement sharing
+neither a content noun nor a macro with the claim escapes both searches.** No
+such site is known in this manuscript; the limit is stated rather than assumed
+absent.
+
+**Also corrected: this entry's own site list was incomplete.** `08-threats.tex:103`
+states the claim and B26 never listed it. It is correctly hedged — *"but our
+measurement of that reason does not establish it"* — so it needs no edit, and R7
+records it as the worked example of **a prediction from design, which is not a
+restatement to be brought into line.**
 
 ---
 
