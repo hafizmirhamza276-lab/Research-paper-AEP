@@ -2119,3 +2119,42 @@ sentence with no macro is what fails — or nothing at all.
 **Needed:** decide between wiring it as a diff-scoped advisory (new or changed
 evidential sentences only) and deleting it. **Leaving it in the tree unwired is
 the worst of the three**, because its existence reads as coverage.
+
+### B29a. It is fail-open, and this is the sharper defect
+
+**Amended 2026-09-01, the same day, after using it.** The entry above says the
+tool is unwired. **The tool is also wrong in the F.0d sense, and that matters
+more.**
+
+Asked to find every restatement of the race-mechanism claim, `claim_sweep.py`
+**returned two of the four sites and exited 0.** The four are
+`06-evaluation.tex:393`, `06-evaluation.tex:463`, `08-threats.tex:85` and
+`08-threats.tex:385`. It returned the two that carry no macro. **The two it
+missed carry `\UnwantedPrevented` and `\AepKillRuns`.**
+
+**It excludes macro-bearing sentences by design** — that exclusion is the whole
+point, since those are the sentences the other checks already reach — **and it
+says nothing about having done so.** Its output is a list of hits and an exit
+code of 0, which is exactly what a complete answer looks like.
+
+> **"Here is everything" and "here is everything except the class I skip" render
+> identically.** That is F.0d's fail-open class, in a tool built during the phase
+> that named it, by the person who named it.
+
+The full answer came from a plain full-text search run afterwards. **The tool was
+used for the one job its design forbids, and its output gave no sign of that.**
+
+**The fail-closed form, recorded and deliberately not built:**
+
+1. **Report the exclusion.** Print the count of sentences skipped for carrying a
+   macro, beside the count returned. A caller then sees the answer is partial —
+   `137 returned, 619 skipped as macro-bearing` — rather than inferring
+   completeness from a clean exit.
+2. **Refuse the wrong question.** A `--all` mode that scans both populations, so
+   "find every site stating X" has a correct invocation instead of only a
+   plausible-looking wrong one.
+
+**Do not build either.** Recorded so that whoever decides B29's fate decides it
+knowing the tool is not merely unwired but silently partial, and so that the
+count of fail-open checks in this repository includes the one written to detect
+them.
