@@ -149,18 +149,35 @@ turns on citation weight and copy count.
 | rank | collection | why |
 |---|---|---|
 | **1** | **`matrix`, 432 runs** | `main.tex`'s header names `matrix/analysis/per-cell-metrics.csv` as **"the ONLY quotable source for rates"**. Every rate in the paper, the whole detection result, and the 4.77% bound come from it. **The clone holds 19.4% and there is no archive.** Largest single point of failure by a wide margin |
-| **2** | **`fsync-always`** | Quoted — the entire `always` column of the deployment table — and **its runs are in no readable tree**. It may already be the answer to "missing from every tree", and it is the only root where that is even possible. **Rank 2 despite being small, because it may already be lost** |
+| **2** | **`fsync-always`** | ~~**Rank 2 despite being small, because it may already be lost**~~ — **SUPERSEDED, see below.** Rank retained; **its runs exist** (6 at `/root/aep`, triple intact, names set-equal to the tracked CSV's `run_id`s). Quoted, single-copy, 3.2 M |
 | **3** | **`b2-paired-v2-s1`, `s2`** | Carry `\ClassPp*`, the registered primary estimand. **s3 and s4 are archived; s1 and s2 are not**, so this is the half of a pre-registered k = 4 set that has no second copy |
 | **4** | **`b2-*-2026-08-21` ×4, 240 runs** | Carry `\ReplicationPrevented*` — **the only session-clustered interval in the paper that excludes zero**. Exist as run directories in the working clone only |
 | 5 | `b2-paired-v2-s3`, `s4` | Already archived. Upgrading them from same-machine to off-host is cheap and comes last because they are the only two that already have a second copy |
 | — | `throughput`, `smoke`, `selfcheck*`, `b2-paired-s1` | Not quoted by the manuscript. Not custody priorities |
 
 **Your expectation that `matrix` comes first is correct and the derivation
-supports it.** The derivation also produces something you did not predict:
-**`fsync-always` is second, because it is the one manuscript-quoted collection
-that may already have no raw evidence anywhere.** That is a finding about the
-inventory, not about backup priority, and it resolves the moment the privileged
-survey runs.
+supports it.** The derivation also produced something you did not predict:
+`fsync-always` at rank 2, on the grounds that it might already have no raw
+evidence anywhere.
+
+> **SUPERSEDED, 1 Sep, by the privileged survey.** **`fsync-always`'s runs
+> exist** — 6 directories at `/root/aep`, 3.2 M, triple intact, identified by
+> name rather than by count. **The rank-2 rationale above is withdrawn. The rank
+> is not.** What holds it there now is that it is quoted, exists in exactly one
+> tree, and is small enough that ordering it anywhere costs nothing — **a
+> convenience argument where the original was a risk argument.** Recorded rather
+> than silently rewritten, because a ranking that keeps its position after losing
+> its reason is exactly the pattern this phase has been filing.
+>
+> Two further corrections land on §4's last bullet, which said the ranking would
+> change if the survey found an unknown root under `/root`. **It found one** —
+> `b2-paired-v2-s2-operator-aborted-2026-08-28`, 16 runs, in no other tree and no
+> prior inventory. It is aborted and unquoted, so the ranking does **not** change.
+> And **`audit-clone` holds zero run directories**, so it is not a second copy of
+> anything and does not enter the ranking either.
+>
+> Derivation: `reports/phase-report-9-custody-inventory-2026-09-01.md` §5b–§5e.
+> **Nothing in §2's options is affected, and no option has been acted on.**
 
 ---
 
