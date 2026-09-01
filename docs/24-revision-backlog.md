@@ -2214,7 +2214,7 @@ closing it here would be closing on a technicality.
 |---|---|---|
 | 1 | **Do not put `paper/` on `TEXINPUTS` wholesale** | **OPEN.** `build_paper.sh:79` is unchanged. The recursive search path still exposes `paper/` for every file the run needs |
 | 2 | **Assert the `.bbl` identity** after `bibtex` | **OPEN.** Nothing checks that the `.bbl` pdflatex read is the one bibtex wrote. Still the fix for the silent case — a stale `.bbl` with *outdated* rather than *missing* entries produces no warning at all |
-| 3 | **Fail loudly on stale artifacts in `paper/`** | **HALF DONE, and the wrong half.** The files are gitignored (they already were) and all three are now deleted — **but deletion is a habit, not a mechanism.** Nothing refuses to build or check while untracked build products sit in `paper/`, and the next clean build **puts `main.log`, `main.bbl` and `main.blg` straight back** |
+| 3 | **Fail loudly on stale artifacts in `paper/`** | ~~HALF DONE, and the wrong half~~ **DONE 2026-09-01 — see below** |
 | 4 | **Decide whether `paper/main.pdf` should be tracked at all** | **OPEN.** The PDF was promoted, which resolves the *staleness* but not the *question*. It is still the one tracked build product |
 
 **Item 3 deserves the sharpest statement.** This task deleted three files by
@@ -2226,8 +2226,75 @@ refuse, or clear before every build — is unbuilt.
 against a real build rather than a path lookup; the `pydantic`/B6 misattribution
 is struck in both documents; the state-machine check has run for the first time
 and passes; and the directly-invoked baseline is recorded as never having been a
-baseline. **Items 1, 2 and 4 remain, and item 3 remains in the form that
-matters.**
+baseline. ~~Items 1, 2 and 4 remain, and item 3 remains in the form that
+matters.~~ **Items 1, 2 and 4 remain. Item 3 is done.**
+
+### ITEM 3 CLOSED 2026-09-01 — a refusal, not a removal
+
+**The entry offered two remedies and both are about the files.** *"`.gitignore`
+them and remove them before each build, or refuse to build while they are
+present."* **Neither is the fix, and saying so is the substantive part of this
+closure.**
+
+Promotion writing `main.log`/`main.bbl`/`main.blg` into `paper/` is **correct** —
+CI depends on it and `ARTIFACT.md` documents it. **The defect was never that the
+files exist. It is that a later reader could not tell whether they corresponded
+to the current sources.** So the fix is provenance, not removal: a build records
+the SHA-256 of every source it read, and the gate refuses to use artifacts it
+cannot match against that record.
+
+**The rule is "produced from THESE sources", not "newer than the sources".** Age
+was rejected: `git checkout` resets source mtimes, so an mtime rule reports stale
+after every branch switch and gets learned around — and **this project already
+recorded that sync clients normalise mtimes**, so depending on them here would
+mean ignoring its own finding. The comparison is an exact hash set: no threshold,
+no clock, the orphan gate's construction.
+
+**"Not produced by this build" was also rejected, because it breaks CI.**
+`.github/workflows/ci.yml:334` runs the gate a second time with no
+`--build-dir`, deliberately — see B40. A flag-provenance rule would fail a step
+that is correct and load-bearing.
+
+| file | change |
+|---|---|
+| `scripts/paper_provenance.py` | **new.** Writer and reader in one module, for `freeze_results.py`'s stated reason — two implementations of *"which files are sources"* would drift, and the drift would fail open |
+| `scripts/build_paper.sh` | hashes sources **before** compiling, stages the stamp, promotes it with the artifacts and **before** the PDF. A failed build leaves the previous stamp untouched |
+| `scripts/check_paper_numbers.py` | verifies only when `build_dir` resolves to `--paper`; an explicit `--build-dir` is the build checking its own staged output |
+
+**Every ambiguity resolves to STALE** — stamp missing, unreadable, malformed,
+wrong version, empty; any source unreadable; anything added, removed or changed.
+**There is no path to "fresh" that does not require a complete, readable,
+exactly-matching set** (B33: this check authorises *"the numbers are current"*,
+so it must over-report staleness).
+
+**Skips are reported, not silent** — `SKIP 2 checks not run` — per B29a.
+
+**Verified by discrimination**, per B34 and B5
+(`phase8-driver/test_b21_item3.sh`): the new code passes a fresh build and fails
+all five constructed stale states; **the pre-change code passes all six.** That
+last line is what proves the new check is doing the work rather than something
+else failing.
+
+#### The stamp lives in the directory whose files caused the problem
+
+**Named here so nobody later "cleans it up" as an instance of the very problem it
+solves.** `paper/.build-provenance.json` is a new untracked build product, in
+`paper/`, gitignored alongside `*.aux`/`*.bbl`/`*.blg`/`*.log`.
+
+> **The distinction that makes it acceptable: the old artifacts were SILENT when
+> wrong. The stamp FAILS THE GATE when wrong.**
+
+They are the same kind of file and the opposite kind of risk. **Deleting the
+stamp does not restore the old behaviour** — it makes the gate refuse until the
+next build, which is the safe direction. There is no state in which removing it
+makes the gate more permissive.
+
+#### Transitional state, so it is not read as a regression
+
+`paper/` has no stamp yet, so a bare gate run reports **`14 passed, 1 failed`**
+and names the reason. **It clears on the next build.** `paper/` was deliberately
+not rebuilt to create one: that would re-promote a byte-different PDF for no
+reason. **No artifact was deleted** — deletion is what item 3 replaces.
 
 ---
 
@@ -3486,3 +3553,89 @@ saying so is the difference between a finding and a story told afterwards.
 
 **Related:** B38 (the instance), B21, B33, and F.0d — where the same structure
 appears as *"a failed check that passes when it does nothing"*.
+
+---
+
+## B40. A check whose validity depends on what ran before it, in a different file
+
+**Filed 2026-09-01. A category this backlog did not have.**
+
+`.github/workflows/ci.yml:329-334`:
+
+```yaml
+- name: Build the manuscript
+  run: bash scripts/build_paper.sh
+
+- name: Gate -- the manuscript's numbers against the frozen CSVs
+  # build_paper.sh ends by running this too. It is repeated as its own
+  # step so the verdict is a named, separately-reported result rather
+  # than the tail of a build log -- and so that a later edit to the
+  # build script cannot quietly remove the check.
+  run: uv run --frozen python scripts/check_paper_numbers.py
+```
+
+**The second step was added as a safeguard, and its comment says so.** The
+reasoning is sound: if the check only ever ran inside `build_paper.sh`, someone
+editing that script could remove it and nothing would notice.
+
+**But it takes no `--build-dir`**, so until 2026-09-01 it read whatever sat in
+`paper/`. In CI that is fresh — the build promoted seconds earlier. **Anywhere
+else it is whatever the last promotion left**, which is how a `17 passed, 1
+failed` computed from three-week-old artifacts was quoted as a control through
+two phases.
+
+### Why this is not B37 or B38
+
+| | |
+|---|---|
+| **B37** (`import redis`) | wrong **everywhere**, for a reason invisible in the check's own file |
+| **B38** (`main.log`) | a **stale input** — the same check, given older data |
+| **B40** | **correct in isolation, correct in CI, wrong everywhere else** — and which one you get is decided by *what ran before it* |
+
+> **The command is identical in all three cases. Only its predecessor differs.**
+
+Read on its own, the step is right. Read in the CI file, it is right. **Its
+validity is a property of the sequence, and neither file states the dependency.**
+The safeguard comment explains why the step exists and says nothing about what
+must precede it — so the one fact a reader needs to judge it is in neither place.
+
+### The general form
+
+> **A check can be correct as written and still be worthless, if its correctness
+> depends on state established by a caller that does not know it is establishing
+> it.** Reviewing the check tells you nothing. Reviewing the caller tells you
+> nothing. **The defect exists only in the composition**, and nothing in this
+> project reviews compositions.
+
+This is the shape B21 itself has — a build that reads state from a directory it
+claims not to compile in — and the shape `TEXINPUTS` recursion has. **It is a
+recurring structure, not three coincidences: a dependency that is real,
+load-bearing, and written down nowhere.**
+
+### Was the safeguard vacuous?
+
+**Not entirely, and the distinction matters.** It genuinely protected against
+*"someone deletes the check from `build_paper.sh`"* — that was its stated
+purpose, and it would still have caught it.
+
+**What it did not do is what its name implies.** *"Gate — the manuscript's
+numbers against the frozen CSVs"* reads as an independent verification. It was
+a re-run of a check whose inputs the preceding step had just written, so it
+could not disagree with that step about the bibliography. **It duplicated a
+verdict rather than confirming it.**
+
+### Status
+
+**Resolved for this instance by B21 item 3**, which makes the second step verify
+provenance and therefore genuinely independent of ordering: it now passes only
+if the artifacts match the sources, whoever produced them and whenever.
+
+**Not resolved as a class.** Nothing detects the next check whose validity is
+carried by its caller. **No fix is proposed** — a general mechanism for this is
+not obviously cheaper than the defect, and inventing one here would be building
+on a sample of three.
+
+**Related:** B21 (item 3 resolves the instance), B37, B38, B33, and R6 — where
+`git clean -nxd` is recorded as unable to verify a guard **for the same reason
+in reverse**: the command is correct, and what it can tell you depends on state
+it does not control.
