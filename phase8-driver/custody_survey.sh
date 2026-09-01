@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# READ-ONLY custody survey: where does each raw run tree actually live, and
-# what has an archive?
+# READ-ONLY custody survey: where does each raw run tree live, what does it
+# hold, and how big is it?
 #
-# stat and count only. No ledger is opened, no WAL is checkpointed, nothing is
-# written into any results root. A script file rather than an inline
-# `wsl bash -lc`, per B18.
+# stat, find, ls, du only. NO ledger is opened for reading or writing, no WAL
+# is checkpointed, nothing is created, moved or deleted inside any root, and
+# nothing is written anywhere under /root. Counting a .sqlite3 by name is a
+# directory-entry read; it does not open the file.
+#
+# A script file rather than an inline `wsl bash -lc`, per B18.
 #
 # FAIL-CLOSED, and the first version of this script was not. It tested
 # `[ ! -d "$base" ]` and printed ABSENT, which is what an unprivileged shell
@@ -14,8 +17,29 @@
 # not allowed to look" must never render the same. They are now three distinct
 # outcomes -- ABSENT, UNREADABLE, and a count -- and UNREADABLE sets the exit
 # status so a caller cannot mistake a blocked survey for a complete one.
+#
+# Run unprivileged for the Windows side; run under `sudo` for /root.
 set -u
 incomplete=0
+
+# Per root: run directories, and the three ledger files counted separately so
+# a broken triple is visible rather than averaged away.
+detail() {
+    root="$1"
+    name=$(basename "$root")
+    runs=$(find "$root" -mindepth 1 -maxdepth 1 -type d \
+             ! -name analysis ! -name voided 2>/dev/null | wc -l)
+    db=$(find "$root" -mindepth 2 -name '*.sqlite3' -type f 2>/dev/null | wc -l)
+    wal=$(find "$root" -mindepth 2 -name '*.sqlite3-wal' -type f 2>/dev/null | wc -l)
+    shm=$(find "$root" -mindepth 2 -name '*.sqlite3-shm' -type f 2>/dev/null | wc -l)
+    size=$(du -sh "$root" 2>/dev/null | cut -f1)
+    triple="OK"
+    if [ "$db" -ne "$wal" ] || [ "$db" -ne "$shm" ]; then
+        triple="BROKEN"
+    fi
+    printf '  %-42s runs=%4d  db=%4d wal=%4d shm=%4d [%s]  %s\n' \
+        "$name" "$runs" "$db" "$wal" "$shm" "$triple" "$size"
+}
 
 survey() {
     base="$1"
@@ -40,13 +64,14 @@ survey() {
         echo "  ABSENT (verified: every parent readable)"
         return
     fi
+    found=0
     for root in "$base"/*/; do
         [ -d "$root" ] || continue
-        name=$(basename "$root")
-        n=$(find "$root" -mindepth 1 -maxdepth 1 -type d \
-              ! -name analysis ! -name voided 2>/dev/null | wc -l)
-        printf '  %-42s %4d run dirs\n' "$name" "$n"
+        detail "$root"
+        found=1
     done
+    [ "$found" -eq 0 ] && echo "  (no result roots)"
+    echo "  TOTAL: $(du -sh "$base" 2>/dev/null | cut -f1)"
 }
 
 for base in /root/aep/experiments/results \
@@ -57,13 +82,19 @@ for base in /root/aep/experiments/results \
 done
 
 echo
-echo "=== archives: /mnt/d/personal/AEP/phase8-raw-archive ==="
-if [ -d /mnt/d/personal/AEP/phase8-raw-archive ]; then
-    ls -la /mnt/d/personal/AEP/phase8-raw-archive/*.tar.gz 2>/dev/null \
-        || echo "  no tarballs"
-else
-    echo "  ABSENT"
-fi
+echo "=== /mnt/d/personal/AEP (non-repo trees) ==="
+for d in /mnt/d/personal/AEP/phase8-raw-archive \
+         /mnt/d/personal/AEP/phase8-raw-archive-* \
+         /mnt/d/personal/AEP/audit-clone \
+         /mnt/d/personal/AEP/phase8-driver; do
+    if [ -d "$d" ]; then
+        printf '  %-46s %s\n' "$(basename "$d")" "$(du -sh "$d" 2>/dev/null | cut -f1)"
+    fi
+done
+echo "  --- tarballs ---"
+ls -la /mnt/d/personal/AEP/phase8-raw-archive/*.tar.gz 2>/dev/null \
+    | awk '{printf "  %-52s %10d bytes  %s %s\n", $9, $5, $6, $7}' \
+    || echo "  none"
 
 echo
 if [ "$incomplete" -ne 0 ]; then

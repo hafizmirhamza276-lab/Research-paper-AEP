@@ -146,6 +146,83 @@ one day old, and neither is true.**
 
 ---
 
+## 5a. Derived inventory, 1 Sep — and it is still INCOMPLETE
+
+**Privilege was authorised for reads. It could not be used: `sudo -n true`
+returns *"a password is required"*, and I cannot supply one.** The `/root` half
+is therefore still undrived. **The tool is not at fault** — it reports
+`UNREADABLE (parent /root denied)` and exits 2, which is the fail-closed
+behaviour §1 describes. No `ABSENT` was printed for a tree that exists.
+
+**The one command that closes this**, to be run with a leading `!`:
+
+```
+! wsl -- sudo bash /mnt/d/personal/AEP/Research-paper-AEP/phase8-driver/custody_survey.sh
+```
+
+Read-only: `find`, `du`, `ls`. No ledger opened, no WAL checkpointed, nothing
+written anywhere.
+
+### What the survey does establish (Windows side, measured)
+
+| root | runs | `.sqlite3` / `-wal` / `-shm` | triple | size |
+|---|---|---|---|---|
+| `matrix` | **84** | 84 / 84 / 84 | OK | **54 M** |
+| `b2-2026-08-21` | 60 | 60 / 60 / 60 | OK | 12 M |
+| `b2-s1-2026-08-21` | 60 | 60 / 60 / 60 | OK | 12 M |
+| `b2-s2-2026-08-21` | 60 | 60 / 60 / 60 | OK | 12 M |
+| `b2-s3-2026-08-21` | 60 | 60 / 60 / 60 | OK | 12 M |
+| `b2-paired-*` (6 roots) | **0** | 0 | — | 84–104 K each (analysis only) |
+| `fsync-always` | **0** | 0 | — | **24 K (analysis only)** |
+| `throughput` | 0 | 0 | — | 9.2 M |
+| `smoke` | 6 | 6 / 6 / 6 | OK | 1.9 M |
+| **clone total** | | | | **114 M** |
+
+**Every ledger triple present is complete.** `db = wal = shm` in every root that
+has runs, so no triple has been split by a copy.
+
+### The roots the manuscript actually quotes, derived from the generator
+
+`scripts/paper_tables.py` and its invocation consume **ten** result roots:
+
+`matrix` · `fsync-always` · `b2-2026-08-21` · `b2-s1/s2/s3-2026-08-21` ·
+`b2-paired-v2-s1/s2/s3/s4-2026-08-28`
+
+**`throughput`, `smoke`, `selfcheck*` and the superseded `b2-paired-s1` are not
+quoted by the manuscript.** They are not custody priorities.
+
+### The finding that makes the privileged run necessary
+
+> **`fsync-always` is quoted by the manuscript — it is the entire `always` column
+> of the deployment table — and its run directories are in no tree I can read.**
+> The clone holds 24 K of analysis products and zero runs.
+
+Either its runs are under `/root` and the privileged survey will find them, **or
+a manuscript-quoted collection has no raw evidence anywhere on this machine.**
+The survey cannot currently tell those apart, and that is precisely the
+distinction §1 exists to preserve.
+
+### Size, extrapolated and labelled as such
+
+The clone's `matrix` is 54 M for 84 runs — **643 KB per run**. Applying that to
+the 432 B15 records gives **≈ 278 M**, on the assumption that the 84-run subset
+is size-representative, **which is not established**. The `b2` roots measure
+200 KB per run directly.
+
+| collection | runs | size |
+|---|---|---|
+| `matrix` | 432 | **≈ 278 M** (extrapolated) |
+| `b2-*-2026-08-21` ×4 | 240 | **48 M** (measured) |
+| `b2-paired-v2-*` ×4 | 480 | ≈ 96 M (extrapolated at 200 KB/run) |
+| `fsync-always` | ? | ? |
+| **manuscript-quoted total** | **1152 +** | **≈ 420 M** |
+
+**Compression is the number that matters and it is large.** The `s3` tarball is
+**1 208 538 bytes for 120 runs** whose uncompressed size is ≈ 24 M — roughly
+**20:1**. At that ratio the entire manuscript-quoted raw evidence is **≈ 21 M
+compressed**, which is small enough that size does not constrain any option in
+the companion report.
+
 ## 6. Custody verdict
 
 **The claims assessment is not affected by anything here**, and this verdict does
