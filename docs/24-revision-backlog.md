@@ -2125,11 +2125,52 @@ positive.** B33's class: an availability check that over-reports.
 > bibliography artifacts if a previous build promoted them there. **It reports on
 > whenever that build happened to be.**
 
-#### The state-machine question is still unanswered
+#### The state-machine question — ANSWERED 2026-09-01, and it passes
 
-**Whether the figure matches the transition table remains unknown.** The check has
-never been observed to run to completion on this host. It is not evidence that the
-figure is wrong; it is evidence that **nothing has verified it.**
+~~Whether the figure matches the transition table remains unknown.~~
+
+```
+PASS  state-machine figure matches the transition table
+PASS  no undefined references or citations
+18 passed, 0 failed
+build clean (main); verified artifacts promoted atomically.
+```
+
+> **The figure matches the transition table.** Stated precisely, because the two
+> statements are not the same: **the check has now run and passed. It is not
+> true that it has always passed** — before 1 September it had never completed
+> on this host, so the agreement between `figures/state-machine.tex` and the
+> transition table was **unverified, not verified-and-fine.** This is the first
+> observation of it.
+
+**The dependency chain was two packages, not the three or four that would have
+made it a finding:**
+
+| # | package | demanded by |
+|---|---|---|
+| 1 | `pydantic>=2.0` | `aep_core/core/intents.py:20` — the import that failed all along |
+| 2 | `redis>=5.0` | `aep_core/core/intents.py:21`, revealed only once (1) was satisfied |
+
+`cryptography>=46.0` is declared but **was never demanded and was not
+installed.** Nothing speculative was added.
+
+**`sudo` was authorised for this and went unused.** `pip` was bootstrapped into
+WSL's user site via `get-pip.py` (`phase8-driver/wsl_bootstrap_pip.sh`), and both
+packages installed with `--user`. The credential exposure was not added to.
+
+#### The real baseline, final
+
+| path | result |
+|---|---|
+| **`build_paper.sh` (WSL, clean)** | **18 passed, 0 failed** |
+| direct invocation | not a baseline — see above |
+
+**The build produces a 21-page PDF, 374 600 bytes.** The tracked
+`paper/main.pdf` is 19 pages, 356 309 bytes, from 21 August.
+
+> **`paper/main.pdf` is now promotable.** It was not promoted: this build ran
+> with `AEP_PAPER_DIR` pointed at a copy, and the tracked PDF is byte-identical
+> to what it was. Promotion awaits the operator.
 
 #### Three further environment findings, none acted on
 
