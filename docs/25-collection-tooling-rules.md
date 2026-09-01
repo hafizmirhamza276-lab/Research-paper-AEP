@@ -134,3 +134,87 @@ the answer is no.
 
 **It stops accident, not intent.** Anyone can drop the ACE. That is the intended
 threat model: B31 is about a routine command run for an unrelated reason.
+
+## R7. When you change what a claim asserts, find its restatements before you commit.
+
+**Scope note.** This file is about collection tooling. R7 is about editing the
+manuscript, which stretches that scope — recorded rather than glossed. It lives
+here because it is a procedure that must be followed under pressure, which is
+what this file is for.
+
+**The rule.** An edit that changes what a claim *asserts* is not finished when
+the sentence reads correctly. It is finished when **every other sentence stating
+the same claim has been found and judged.**
+
+### When it applies
+
+**Applies** when an edit changes a claim's **strength** (*is* → *may be*),
+**scope** (*weakest* → *narrowest*), **direction**, or **evidential basis**
+(a withdrawn number, a control that was not one).
+
+**Does not apply** to typography, citation fixes, a number changing under an
+unchanged claim, or a genuinely new claim with no prior statement. **Not every
+edit — only edits to what is asserted.**
+
+### What is searched, and with what
+
+**Do not use `phase8-driver/claim_sweep.py`.** It is the wrong instrument and
+gives a plausible-looking wrong answer; see the decision recorded in B26.
+
+```sh
+grep -rn --include='*.tex' -iE "<TERM1>|<TERM2>" \
+    paper/sections/ paper/main.tex paper/generated/
+```
+
+**Choose `<TERM>`s from the claim's CONTENT NOUNS** — the things the claim is
+about (`host`, `docker`, `barrier`, `readback`) — **never from its strength
+words** (*shows*, *establishes*, *may be*). A restatement is a restatement
+because it is about the same thing; it will have been reworded, so the wording
+is exactly what does not survive. Use `\b...\b` and allow the possessive:
+`\bhost'?s?\b`.
+
+**`paper/generated/` is in scope and is not optional.** B20 found **two of its
+four** defects inside generated captions, and no grep over `sections/*.tex`
+reaches them. `numbers.tex` will return `%` provenance comments — dismiss them
+by reading, not by filtering. **Do not add `grep -v` to tidy the output:** an
+unreported exclusion is precisely the defect that makes `claim_sweep.py`
+unusable here.
+
+**Expect tens of lines and read all of them.** For the host-dependence claim the
+invocation returns **37**. That is the correct order of magnitude; a search
+returning three has been over-narrowed.
+
+### Restatement versus a legitimate different claim
+
+**A restatement** states the same proposition about the same subject, anywhere in
+the document. Judge by proposition, not by wording or by section.
+
+**Not a restatement**, and must not be "fixed" into agreement:
+
+- **A prediction from design, marked as such.** `08-threats.tex:103` — *"the
+  effect size should be a function of the host's kill-latency distribution ---
+  but our measurement of that reason does not establish it."* That is the
+  protocol's logic offered as a reason and explicitly withheld as evidence.
+- **A design claim** rather than a measured one. `06-evaluation.tex:466` —
+  *"what is structural is that the race exists for AEP-full at all and cannot
+  exist for B3."*
+- **A claim about a different quantity** that happens to share vocabulary.
+
+**The distinction that matters:** does the sentence *assert* the claim, or
+*attribute* it (to design, to prediction, to a source it names as insufficient)?
+Only assertions have to move together.
+
+### What to do when one is found
+
+1. **Do not batch it.** Fix it in the same commit as the edit that created the
+   mismatch. B9 unit 3 rewrote `08-threats.tex:96` and left `:385` contradicting
+   it **289 lines away in the same file**, which is B26.
+2. **Judge each site on its own passage.** A site may legitimately stay stronger
+   or weaker if its paragraph is doing different work — but that must be a
+   decision, not an oversight.
+3. **Verify from the built PDF, not the source** (F.0i). Macros are separate
+   tokens in source and one sentence when rendered; a quantity mismatch across a
+   comparison is visible only rendered.
+4. **If the search returns a site you did not know about, say so in the commit
+   message.** That is the rule working, and it is the only evidence anyone gets
+   that it ran.
