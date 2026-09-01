@@ -2865,3 +2865,90 @@ trees are not in one.
 **Related:** B31, B31a, R6, B5 (freeze portability), and B15 (what `SHA256SUMS`
 does and does not cover — it names **zero** run directories, which is why the
 declaration is weaker than it reads).
+
+---
+
+## B36. B33's class in investigation rather than in tooling, four days after B33 was filed
+
+**Filed 2026-09-01. The near-miss is the entry; nothing is broken.**
+
+### What happened
+
+Opening B5, the first question was which committed manifests carry CRLF. The
+check was:
+
+```sh
+CR=$(grep -c $'\r' "$f")
+```
+
+It reported **CRLF on every line of all eleven `SHA256SUMS`**, and on all eleven
+`MANIFEST.md`. **Every one of those results was false.** The shell consumed the
+`$'\r'`, `grep` received an effectively empty pattern, and an empty pattern
+matches every line. The count printed was the line count.
+
+The truth, read at byte level: **0 CR bytes in all eleven files.**
+
+### What it would have authorised
+
+**A plan opening with "all eleven committed manifests are corrupt."**
+
+From there the natural next step is repair, and repair of a `SHA256SUMS` means
+**rewriting a frozen manifest** — which the project's oldest standing rule
+forbids outright, and which would have destroyed the integrity record for
+eleven roots to fix a defect that does not exist. The eleven roots verify today;
+`sha256sum -c` returns **16/16 OK** on `b2-2026-08-21` from Windows.
+
+> **An over-reporting check, authorising a destructive action, against frozen
+> artefacts.** That is **B33's general form**, arrived at independently, four
+> days after B33 stated it.
+
+### The new part: it was not in a tool
+
+B33's instances are all **tools** — `pgrep`, `claim_sweep.py`,
+`custody_survey.sh`, `history_check.sh`, the transcript search. Each was written,
+committed, and could be reviewed. **This one was an ad-hoc shell command typed
+mid-investigation and never committed anywhere.**
+
+That is worse in the way that matters: **a tool's defect is discoverable by
+reading the tool. An investigative command's defect is discoverable only by
+doubting its output.** There is nothing to review. It runs once, produces a
+number, and the number becomes a premise.
+
+### How it was caught, which is the reusable part
+
+Not by suspicion, and not by re-running it. **By looking at the bytes:**
+
+```
+$ head -4 experiments/results/matrix/SHA256SUMS | cat -A
+...  MANIFEST.md$
+...  analysis/comparisons-vs-aep-full.csv$
+```
+
+`$` at end of line and no `^M` — LF, and forward slashes. **The tool's count and
+the file's bytes disagreed, and the bytes won.** The confirmation was then run
+through a second, independent instrument (`open(f,'rb').read().count(b'\r')`),
+which agreed with the bytes and not with `grep`.
+
+### THE TRANSFERABLE RULE
+
+> **`check-what-it-authorises` applies to investigation as much as to tooling.**
+>
+> **A result that would justify touching frozen artefacts must be confirmed at
+> the byte level before it is believed.** Not re-run — *confirmed by a different
+> instrument*, because re-running a wrong command reproduces the wrong answer
+> with increased confidence.
+
+The asymmetry that makes this cheap: **confirming costs one command; acting on a
+false positive costs the artefact.** There is no symmetric case for skipping it.
+
+**Corollary, from B5's harness the same day:** the verification script's *first*
+run also reported a failure that was not real — a missing `--label`, not a
+portability defect. **That one was correct behaviour**, because a verification
+check authorises "the fix is good" and must therefore over-report failure. **Two
+false alarms in one task, one a defect and one a feature, distinguished only by
+what the output would have authorised.** That distinction is the whole content
+of B33 and it earned its keep here.
+
+**Related:** B33 (**this is its class; the entry generalises from tooling to
+investigation**), B32, B34 (documentation is a claim — here, *a tool's output* is
+a claim), R2, and B5.
