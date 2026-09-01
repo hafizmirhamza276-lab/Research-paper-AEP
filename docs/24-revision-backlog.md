@@ -2212,8 +2212,8 @@ closing it here would be closing on a technicality.
 
 | # | prescription | status |
 |---|---|---|
-| 1 | **Do not put `paper/` on `TEXINPUTS` wholesale** | **OPEN.** `build_paper.sh:79` is unchanged. The recursive search path still exposes `paper/` for every file the run needs |
-| 2 | **Assert the `.bbl` identity** after `bibtex` | **OPEN — and the condition it would assert is violated on EVERY build. See below.** |
+| 1 | **Do not put `paper/` on `TEXINPUTS` wholesale** | **DONE 2026-09-01**, narrowly: `.` prepended so the scratch dir outranks `paper/`. The path is still recursive — `paper/` is still exposed for every file, which was the entry's literal ask and is **not** what was done. See B41 |
+| 2 | **Assert the `.bbl` identity** after `bibtex` | **DONE 2026-09-01**, together with item 1, which was its precondition |
 | 3 | **Fail loudly on stale artifacts in `paper/`** | ~~HALF DONE, and the wrong half~~ **DONE 2026-09-01 — see below** |
 | 4 | **Decide whether `paper/main.pdf` should be tracked at all** | **OPEN.** The PDF was promoted, which resolves the *staleness* but not the *question*. It is still the one tracked build product |
 

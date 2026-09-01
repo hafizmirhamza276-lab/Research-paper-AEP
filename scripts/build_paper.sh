@@ -108,6 +108,41 @@ echo "=== pdflatex / bibtex / pdflatex x2 (${JOB}, staged) ==="
 "$PDFLATEX" -interaction=nonstopmode -halt-on-error -jobname="$JOB" \
   "$TEXINPUT" >/dev/null
 
+# B21 item 2 / B41. Assert that the .bbl pdflatex actually opened is the one
+# bibtex just wrote here, not one resolved through TEXINPUTS from $PAPER. This
+# runs INSIDE the scratch directory, immediately after the passes and before
+# any cleanup -- it survives cleanup by construction, not because a file
+# outlives it. An earlier attempt read the newest surviving log after the build
+# and got one three days old.
+#
+# The dependency on the three pdflatex calls above is real and is at three
+# lines' range in the same block (B40's shape, much shorter). The explicit
+# -f test is the mitigation: if this is ever reordered above them, it fails
+# closed rather than silently finding no log and concluding nothing.
+if [ ! -f "${JOB}.log" ]; then
+  echo "bbl identity: no ${JOB}.log to check -- refusing to assume" >&2
+  exit 1
+fi
+bbl_opens="$(grep -oE "\([^() ]*${JOB}\.bbl" "${JOB}.log" | sed 's/^(//' | sort -u)"
+if [ -z "$bbl_opens" ]; then
+  echo "bbl identity: ${JOB}.log records no ${JOB}.bbl being opened" >&2
+  exit 1
+fi
+while IFS= read -r opened; do
+  case "$opened" in
+    ./*|"${BUILD_DIR}"/*) ;;
+    *)
+      echo "bbl identity: pdflatex opened ${opened}, not the staged ${JOB}.bbl" >&2
+      echo "  the manuscript would be typeset from a bibliography this build" >&2
+      echo "  did not produce. See backlog B41." >&2
+      exit 1
+      ;;
+  esac
+done <<EOF
+$bbl_opens
+EOF
+echo "bbl identity: pdflatex opened the staged ${JOB}.bbl"
+
 for artifact in "${JOB}.pdf" "${JOB}.log" "${JOB}.bbl" "${JOB}.blg"; do
   if [ ! -s "$artifact" ]; then
     echo "paper build did not produce a non-empty ${artifact}" >&2
