@@ -2071,11 +2071,83 @@ about the PDF and **out of date about its own contents.**
 
 #### Verdict
 
-**Larger than this entry suggests, and blocked on a decision that is the
-operator's**, not on work. The blocking item is whether `pydantic` is installed
-into this environment — one declared dependency, currently absent from both
-interpreters. Everything else here is executable without it, and items 1–3 are
-independent of the PDF question entirely.
+~~**blocked on … whether `pydantic` is installed** — one declared dependency~~
+**AMENDED 2026-09-01: `pydantic` was not the blocker, it was the first of
+several.**
+
+### STEP 2, 2026-09-01: the real baseline, and why "one `pip install`" was wrong
+
+**`pydantic` 2.13.5 was installed into Windows Python 3.11.9.** The check then
+failed on the **next** import:
+
+```
+aep_core/core/intents.py:20  from pydantic import ...        # now satisfied
+aep_core/core/intents.py:21  from redis.asyncio import Redis # ModuleNotFoundError
+```
+
+> **The state-machine check imports the production module `aep_core.core.intents`,
+> so it requires the APPLICATION's runtime dependency set — `redis>=5.0`,
+> `pydantic>=2.0`, `cryptography>=46.0` — not a documentation toolchain.**
+> Satisfying one import reveals the next. **"One `pip install` from promotable"
+> is false**, and nothing further was installed.
+
+#### `import redis` succeeds while redis-py is absent — an over-reporting check
+
+```
+>>> import redis          # succeeds
+>>> redis.__file__        # None
+>>> redis.__path__        # ['D:\...\Research-paper-AEP\redis']
+$ pip show redis          # Package(s) not found: redis
+```
+
+**The repository has a `redis/` directory at its root holding Redis *config*
+files** (`phase2.conf`, `phase2-always.conf`, `toxiproxy.json`). Run from the
+repo root, Python resolves `redis` to that directory as a **namespace package**.
+It shadows nothing — a real `redis` package would win — but **any check that
+uses `import redis` as a proxy for "redis-py is installed" gets a false
+positive.** B33's class: an availability check that over-reports.
+
+#### The true baselines, both paths
+
+| path | result | is it meaningful? |
+|---|---|---|
+| **`build_paper.sh`** (WSL, clean copy) | **17 passed, 1 failed** | **Yes.** Gate reads freshly staged artifacts; the citation PASS is genuine |
+| **direct `python scripts/check_paper_numbers.py`** | **14 passed, 2 failed** | **No.** Fails *"main.bbl exists"*, and its citation PASS still reads the 10 August `main.log` |
+
+> **RECORDED SO IT IS NOT CITED AGAIN: the `17 passed, 1 failed` figure quoted
+> from DIRECT invocations in earlier reports was partly vacuous.** Its
+> bibliography and citation checks were computed from 10 August artifacts. **The
+> same numeral is correct for a real build and wrong for a direct run**, which is
+> precisely why it went unquestioned for two phases.
+>
+> **The direct invocation is not a baseline at all.** `--build-dir` "defaults to
+> `--paper` for direct and legacy invocations", and `paper/` only holds
+> bibliography artifacts if a previous build promoted them there. **It reports on
+> whenever that build happened to be.**
+
+#### The state-machine question is still unanswered
+
+**Whether the figure matches the transition table remains unknown.** The check has
+never been observed to run to completion on this host. It is not evidence that the
+figure is wrong; it is evidence that **nothing has verified it.**
+
+#### Three further environment findings, none acted on
+
+1. **WSL cannot install `pydantic` at all.** No `pip`, no `ensurepip`, no
+   `pipx` — only `python3 -m venv` without a pip to bootstrap. The routes are
+   `sudo apt install python3-pip` or `python3-pydantic`, and **`sudo` is
+   prohibited by the standing instruction from the custody task.** The authorised
+   install could therefore be completed in **one** environment, not both.
+2. **`.venv/` is a stump** — a dangling `lib64 -> lib` symlink and `pyvenv.cfg`,
+   no interpreter. `uv run --frozen python` on Windows fails trying to remove it.
+   Since `build_paper.sh` prefers `uv`, **the Windows build path is broken
+   independently of any dependency.**
+3. **`build_paper.sh` cannot run on Windows at all** — no `pdflatex`/`bibtex` on
+   PATH, so it exits 127. **WSL is the only build path**, and there the runner is
+   system `python3`, which is the one that cannot have `pydantic` installed.
+
+**Stopped here.** Steps 3 and 4 — the misattribution strikes and the
+`ARTIFACT.md` marker — were not started.
 
 ---
 
