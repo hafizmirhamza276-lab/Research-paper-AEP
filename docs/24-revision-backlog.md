@@ -1984,3 +1984,138 @@ visible and reviewable, which is all a check can honestly offer.
 
 **Recorded so the check is not oversold later.** Declaration is mechanical;
 correctness is not.
+
+---
+
+## B26. Four sentences assert the race mechanism as established; B9 withdrew the evidence
+
+**Filed 2026-09-01 by the pre-Phase-10 assessment
+(`reports/phase-report-9-claims-assessment-2026-09-01.md`, amended by unit 2).
+File, do not fix.**
+
+B9 withdrew the pooled kill-latency `p`, showed the point estimate was a pooling
+artefact, and showed B3 was never a negative control for it. What remains of the
+race mechanism is **one unreplicated session at +88 ms, `p` = 0.03**, and a
+four-session interval of **[−91, +302] ms containing zero**. B9 corrected the two
+sites it was scoped to. **Four others assert the mechanism as fact and were not
+looked for.**
+
+| site | wording | verdict |
+|---|---|---|
+| `06-evaluation.tex:393` | "the effect size is a property of this host's `docker` latency" | **defensible.** One of *"two honest qualifications"* — offered as a reason to distrust the number. Asserting a limitation on thin evidence is conservative |
+| `06-evaluation.tex:463` | "it is where one host's kill-latency distribution **happened to place a race**", chained by *"therefore"* to the paragraph above, which now concludes the opposite | **exposed** |
+| `08-threats.tex:85` | "an effect size we **can now show** is host-dependent rather than merely suspect it is" | **exposed.** Written when `p` = 4.0×10⁻⁹ existed |
+| `08-threats.tex:385` | "its effect size **is a function of** that host's `docker kill` latency. It is the whole of the barrier's measured case" | **exposed.** Directly contradicts `08-threats.tex:96`, 289 lines earlier in the same file |
+
+**The mechanism of the defect is the point.** `06-evaluation.tex:393` states a
+caution. The two threats-section sites restate it as a finding, because neither
+passage is *about* how well evidenced it is. **A self-imposed limitation was
+converted into an asserted result by restatement** — F.0b's mechanism running in
+the direction nobody watches.
+
+**And I introduced the contradiction.** B9 unit 3 rewrote `08-threats.tex:96` and
+did not look 289 lines down for its restatement. **The fix for the previous
+instance of F.0b's restatement problem created the next instance of it.**
+
+**Needed:** the standing adversarial pass must cover *restatements of* an edited
+claim, not only the edited claim. A search for the claim's other sites is
+mechanical (`claim_sweep.py` finds all four) and was not run.
+
+**Not in scope:** the sentence following `06-evaluation.tex:463` — *"what is
+structural is that the race exists for AEP-full at all and cannot exist for
+B3"* — is a design claim and is sound.
+
+---
+
+## B27. The prevention claim is carried in three places by one session's Fisher, and only one carries the replication
+
+**Filed 2026-09-01 by the argument assessment
+(`reports/phase-report-9-argument-assessment-2026-09-01.md` §3b, recharacterised
+by unit 2 §A2). File, do not fix.**
+
+`\UnwantedP` = 1.9 × 10⁻⁶ is a Fisher on 10/30 against 28/30, **one execution
+per run, within one session.** It appears three times:
+
+| site | what follows |
+|---|---|
+| `main.tex` — abstract | nothing. Three scope qualifiers, no indication the quantity was replicated |
+| `08-threats.tex:73` — **bold** | nothing |
+| `06-evaluation.tex` | **the replication, immediately** — five measurements, range 4–20, mean 17.2, session-clustered interval **[6.1, 28.4]** |
+
+**A reader of the abstract or of the threats section receives one session's
+`p` and never learns the quantity was measured four more times.**
+
+**What this is not, tested and rejected in unit 2 §A2.** It is **not** an F.0b
+violation — F.0b binds a failure to reject reported as indistinguishability, and
+this is a rejection. It is **not** a unit-of-analysis error of the B20/B9 class —
+a within-session run-level Fisher is a legitimate unit for the narrower
+question, and the paper declines it nowhere. **B24 separately covers whether the
+unit is declared.**
+
+**What it is:** a **representativeness gap**. A quantity measured five times is
+represented by one of its five in both places a reader forms an impression.
+Every existing check passes all three sites, because the number is correct at
+all three. **F.0b's mechanism needs only a restatement; it does not need a
+withdrawal.**
+
+---
+
+## B28. The threats section's self-criticism attaches to the wrong half, and under-claims
+
+**Filed 2026-09-01 by the argument assessment (§3a, reference class corrected by
+unit 2 §A3). File, do not fix.**
+
+`08-threats.tex:83-88` says the barrier — the paper's most novel contribution —
+*"serves the claim with the **weakest** evidence."*
+
+**On scope that is correct and must not be softened:** one capability class, one
+crash point, one host, and all four replications are the same cell.
+
+**On strength within that scope it is now wrong in the paper's own disfavour.**
+The manuscript carries session-clustered intervals for **three distinct
+quantities** (four macro pairs; the kill-latency pair is one contrast measured
+on two arms):
+
+| quantity | interval | zero |
+|---|---|---|
+| **effects prevented** | **[6.1, 28.4]** | **excluded** |
+| capability-class effect | [−21.4, +46.4] pp | contains |
+| kill-latency contrast (both arms) | [−91, +302] / [−166, +74] ms | contains |
+
+**The prevention result is the only one that excludes zero.** It is the
+best-replicated inferential claim in the paper, and the sentence calling its
+evidence the weakest sits in the same paragraph as B26's *"can now show"*.
+**Under-claim and over-claim, adjacent, in the paragraph written to be hard on
+the paper.**
+
+**Needed:** nothing that softens the scope criticism. What is missing is that
+within that scope the effect replicated four times with an interval excluding
+zero, and that the weakly evidenced thing is the *explanation*, not the result.
+
+---
+
+## B29. `claim_sweep.py` exists and is not wired to anything
+
+**Filed 2026-09-01. File, do not fix.**
+
+`phase8-driver/claim_sweep.py` implements the lexicon check **F.0b recorded as
+unimplemented**, widened from equivalence vocabulary to strength vocabulary, over
+all nine sections, `main.tex` and the six generated captions. It found B26, B27
+and B28, none of which any existing check can reach: **137 of 756 sentences carry
+evidential force and cite no macro**, and every one of them is invisible to
+`check_paper_numbers.py`, to the orphan gate, and to LaTeX.
+
+**It is not in `check_paper_numbers.py` and it is not in any build.** It is a
+tool that was run once, by hand, by the person who wrote it — which is precisely
+the property F.0e records as the reason the first design-floor argument was
+never filed.
+
+**It also cannot be made a gate as written**, and that should be recorded rather
+than discovered later: it flags sentences for **judgement**, not violations. 137
+hits with no verdict is a list, not a check. A gate would need either a
+tolerated-set file that the 137 are enrolled in — so that a *new* evidential
+sentence with no macro is what fails — or nothing at all.
+
+**Needed:** decide between wiring it as a diff-scoped advisory (new or changed
+evidential sentences only) and deleting it. **Leaving it in the tree unwired is
+the worst of the three**, because its existence reads as coverage.
