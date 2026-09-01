@@ -184,6 +184,34 @@ unusable here.
 invocation returns **37**. That is the correct order of magnitude; a search
 returning three has been over-narrowed.
 
+### Search TWICE. The noun search alone is not sufficient, and this was measured
+
+**A restatement that shares no content noun with the claim escapes the search
+above.** This is not hypothetical. `06-evaluation.tex:462` states the same
+proposition as `:393` and shares **not one noun** with it:
+
+> `:393` — *"the effect size may be a property of this host's `docker` latency"*
+> `:462` — *"`\UnwantedPrevented{}` … is one draw from a distribution"*
+
+The first search returns `:393` and **not** `:462`.
+
+**So run a second search over the macros that carry the claim's evidence:**
+
+```sh
+grep -rn --include='*.tex' "UnwantedPrevented\|KillLatency" \
+    paper/sections/ paper/main.tex paper/generated/
+```
+
+**Take the union of both searches.** The macro search reaches what the noun
+search cannot, because a restatement is *about the same quantity* even when it
+reuses none of the same words — and the macro name is the one token a
+quantitative restatement cannot paraphrase away.
+
+**It also reaches the abstract.** `main.tex:172` carries `\UnwantedPrevented{}`
+and contains the word *host* nowhere. **A noun-only search never looks at the
+abstract**, which is where the paper's claims are stated most strongly and
+where they were written when the evidence was strongest.
+
 ### Restatement versus a legitimate different claim
 
 **A restatement** states the same proposition about the same subject, anywhere in
