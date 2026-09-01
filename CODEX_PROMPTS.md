@@ -56,6 +56,23 @@ SCOPE BOUNDS — you may create/modify ONLY:
 - reports/phase-report-4b-closeout-<date>.md
 - NOTHING else. In particular: aep_core/** is READ-ONLY, experiments/harness/** and experiments/mock_api/** and experiments/baselines/** are READ-ONLY, all generator/gate scripts (paper_tables.py, check_paper_numbers.py, verify_refs.py, analyze.py, freeze_results.py, gen_state_machine.py) are READ-ONLY, CI workflows are READ-ONLY, PAPER_ROADMAP.md is READ-ONLY.
 
+> **Scope note, 2026-09-01.** The READ-ONLY list above governs *these prompts* —
+> manuscript-editing tasks, where changing a gate to make it pass is the failure
+> mode it exists to prevent. **It does not govern work on the gates themselves.**
+> Two backlog items have since been executed against files it names:
+> **B5** (`freeze_results.py`, portable manifests) and **B21 item 3**
+> (`check_paper_numbers.py`, the provenance refusal), both under explicit
+> authorisation and both leaving the gate stricter than they found it.
+>
+> **The test that separates the two cases: does the change make the gate harder
+> to satisfy, or easier?** Editing a gate so a manuscript passes is what this
+> list forbids. Editing a gate so it refuses something it used to wave through
+> is the opposite, and is how B5 and B21 item 3 were done.
+>
+> Recorded here rather than left implicit, because a rule and a practice that
+> contradict each other are worth no more than a backlog that contradicts
+> itself — the failure B26 was filed for.
+
 FORBIDDEN in this prompt:
 - Changing any harness, baseline, protocol, or analysis code — even to "fix a bug you found". A bug found = section G entry + BLOCKED-SCOPE if it blocks the phase.
 - Hand-editing any number, table, or figure in the paper. Everything quantitative flows through the committed generators.
