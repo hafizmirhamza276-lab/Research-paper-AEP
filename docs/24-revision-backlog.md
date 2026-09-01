@@ -297,6 +297,109 @@ why this is tracked rather than left as a note.
 
 ---
 
+### CLOSED 2026-09-01. Three lines, not two.
+
+**The estimate was wrong in the direction that mattered.** The entry names
+`:178` and `:179`. **The defect at `:172` is the load-bearing one and is not in
+this entry.**
+
+```python
+:172  manifest_path.write_text(...)      ->  newline="\n"     # ADDED
+:178  path.relative_to(root)             ->  .as_posix()
+:179  SHA256SUMS write_text(...)         ->  newline="\n"
+```
+
+`MANIFEST.md` is **hashed into `SHA256SUMS`** at `:175`. Without `newline="\n"`
+its bytes differ by platform, so **its content digest differs** — and no
+path-spelling fix repairs that. `:178`/`:179` make the manifest well-*formed*;
+`:172` is what makes it *reproducible*. A fix that stopped at two lines would
+have produced a `SHA256SUMS` that verified on Windows and still disagreed,
+digest for digest, with the one Linux produces from identical data.
+
+**Deliberately not changed: `:95`, `MANIFEST.csv`.** `newline=""` plus the csv
+module's `\r\n` lineterminator yields CRLF on **every** platform. Verified across
+all eleven roots — CR count equals LF count exactly. It is already portable.
+
+### The eleven existing roots need nothing, and that was checked before assuming
+
+**All eleven committed `SHA256SUMS` are already correct**: 0 CR bytes, 0
+backslashes, forward slashes throughout. `sha256sum -c` passes **16/16 from
+Windows** on `b2-2026-08-21` today.
+
+**The defect never reached a committed artifact.** Each of the four roots'
+`SHA256SUMS` was committed exactly once, with no later repair commit — so the
+bytes were LF from the moment they entered the repository. Only **future freezes
+run from Windows** were ever at risk.
+
+**One correction, and it is against this closure's own author rather than the
+entry.** The plan for this fix said the entry "reads as though the repository
+currently holds broken manifests." **That was overstated.** The paragraph
+directly above has said since it was filed that the roots were re-frozen under
+WSL and verify 16/16. The entry's *lead* foregrounds the failure output, which
+is what invited the misreading, but the fact was recorded and I implied it was
+not. **Nothing about the four roots is unresolved:** the Windows output was a
+transient, corrected by re-freezing from WSL, and **never committed** —
+established from `reports/phase-report-8-1-0-2026-08-27.md` §F.1 and from the
+commit history, not inferred.
+
+### Verified by a freeze on both platforms, not by reading the diff
+
+`phase8-driver/verify_b5_freeze.sh`. A root is copied to scratch **outside every
+results root and outside the repository**, frozen on Windows (3.11.9) and on WSL
+(3.12.3), and compared byte for byte:
+
+```
+win == wsl        BYTE-IDENTICAL
+win == committed  BYTE-IDENTICAL
+wsl == committed  BYTE-IDENTICAL
+format assertions on Windows output: CR=0 backslash=0
+```
+
+**Using the committed manifest as the expected value makes it real data rather
+than a fixture**, and proves portability and non-regression in a single
+comparison.
+
+**The test discriminates, which was checked rather than assumed (R2).** The
+pre-fix code from `HEAD`, run on the same data on Windows:
+
+| | CR | backslash |
+|---|---|---|
+| **pre-fix** `SHA256SUMS` | **16** | **14** |
+| **pre-fix** `MANIFEST.md` | **26** | 0 |
+| fixed `SHA256SUMS` | 0 | 0 |
+| fixed `MANIFEST.md` | 0 | 0 |
+
+A test that passes before and after proves nothing. This one fails before.
+
+**The harness itself failed first, and in the correct direction.** Its first run
+reported `win != committed`. The cause was the harness: the original freeze used
+`--label`, which I had omitted, so the regenerated manifest differed on its title
+line alone. It now recovers the label from the committed `MANIFEST.md`. **A
+verification check authorises "the fix is good" — the complacency side under B33
+— so it must over-report failure.** It did.
+
+**No existing `SHA256SUMS` was rewritten.** Every freeze ran on a copy in
+scratch; the standing rule was not merely obeyed but structurally out of reach.
+Afterwards: `git status` silent for `experiments/results`, the committed
+`b2-2026-08-21` manifest unchanged, `sha256sum -c` 16/16.
+
+### The regression test was DELIBERATELY NOT ADDED
+
+**So that its absence is not read as an oversight.** The entry proposes freezing
+a fixture tree and asserting no backslash and no `\r`. **There is no `tests/`
+directory and no `test_*.py` anywhere in this repository.** Adding one is
+materially more than this fix and was declined as scope.
+
+**The two-platform verification above is the stronger check regardless**, and it
+exists as a script rather than as a one-off: it compares against **real committed
+data** rather than a fixture's expectations, so it cannot drift into agreeing
+with a wrong implementation the way a self-authored fixture can. What is missing
+is that **nothing runs it automatically** — it must be invoked by hand before a
+freeze is trusted on a new platform. **That is the residual, and it is stated
+rather than closed.**
+
+---
+
 ## B6. The submission PDF cannot be built on the author's machine
 
 **Deadline: before Phase 14 (the submission package).** Dated for the same
