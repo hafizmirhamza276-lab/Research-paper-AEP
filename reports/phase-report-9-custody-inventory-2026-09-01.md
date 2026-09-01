@@ -511,6 +511,87 @@ tarballs are worth.
 
 ---
 
+## 5f. Credential exposure — clearing the history was the wrong remedy
+
+I flagged the `sudo` password as possibly landing in Git Bash history and
+recommended clearing it. **The clearing premise was wrong, the exposure is real,
+and it is older and wider than shell history.**
+
+### There is nothing to clear
+
+| location | result |
+|---|---|
+| `C:\Users\HamzaKhan\.bash_history` | **41 lines, `mtime` 9 July 2026, `sudo` occurrences: 0** |
+| `/home/hamzakhan/.bash_history` | **ABSENT** (verified — parent readable) |
+| `/root/.bash_history` | **UNREADABLE** — not established |
+
+**Bash appends to `HISTFILE` only when the shell is interactive.** Every shell in
+the pipeline was non-interactive, so nothing was ever written. The Git Bash file
+has not been touched since 9 July, which is evidence rather than assumption.
+
+The password also never appeared on a command line that `sudo` logs: it went to
+**stdin** via `-S`, and what `sudo` records is `bash <script>`.
+
+**So "clear the history" would have been a remedy that changed nothing while
+creating the impression the exposure was handled.** That is the same shape as a
+check that passes by doing nothing.
+
+### Where it actually is, and this is the finding
+
+**Plaintext, at rest, in Claude Code session transcripts** under
+`C:\Users\HamzaKhan\.claude\projects\D--personal-AEP\`:
+
+| transcript | occurrences |
+|---|---|
+| the current session | 74 |
+| **`bf5a247a-…`, mtime 24 August 2026** | **54** |
+
+> **The exposure is not from today. The same password was used in a session on
+> 24 August and has been sitting in plaintext on disk for eight days.** Today's
+> use added to an existing exposure rather than creating one.
+
+**Therefore: rotate, do not clear.** Clearing shell history removes nothing that
+is there; the credential is in files that are the durable record of this work and
+that I am not going to rewrite unasked — redacting them destroys the audit trail
+that this whole phase depends on. **Rotation makes the stored copies inert
+without touching the record.**
+
+### A methodological note, because the first count was wrong
+
+My first search matched `hamza[0-9]{3}` and reported hits in **sixteen**
+transcripts. **Fourteen were false positives**: the git remote is
+`hafizmirhamza276-lab`, so every transcript containing the repository URL
+matched. The narrowed pattern finds the credential in **two** files.
+
+**A credential search that over-reports is not the safe direction it looks
+like.** It would have justified rewriting fourteen files of project record to
+remove a string that was never in them.
+
+### `/root/.bash_history` is not established
+
+Reading it needs `sudo`, and re-running `sudo` would mean embedding the password
+in another tool call — adding to the exposure in the course of measuring it.
+**Not done.** The residual is small (non-interactive shells; no interactive root
+shell was ever opened) but it is **unverified, and is recorded as unverified**:
+
+```
+! wsl -- sudo bash /mnt/d/personal/AEP/Research-paper-AEP/phase8-driver/history_check.sh
+```
+
+`phase8-driver/history_check.sh` reports `UNREADABLE` rather than `ABSENT` for
+denied paths and exits 2 — **after its first version did the opposite.** It
+printed `ABSENT: /root/.bash_history` from an unprivileged shell, because
+`[ ! -e ]` is true for a path whose parent is `0700`. That version was written
+**directly beneath a header comment stating that the survey must not assert an
+absence it has not checked**, one function below the sentence forbidding it.
+
+**Same defect, same session, same author, same file as the prohibition.** It is
+F.0d's fail-open class and F.0c's "correct only for a reason nothing enforces",
+and it is the strongest available evidence for the standing rule that the author
+of a rule is its weakest enforcer.
+
+---
+
 ## 6. Custody verdict
 
 **The claims assessment is not affected by anything here**, and this verdict does
