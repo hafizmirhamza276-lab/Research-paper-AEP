@@ -722,6 +722,89 @@ argument, because the cheapest way to satisfy it is usually to say the thing the
 number was computed to say.** One instance. It is offered as an observation, not
 as a rule.
 
+## F.0i Why the built PDF is the review surface, and not the source
+
+**A macro defers its value. A comparison between two macro-borne quantities is
+therefore unevaluable in the source, and becomes evaluable only when it is
+rendered.** That is the reason the "read every changed site from the built PDF"
+rule exists, and it is stated here so the rule survives as a rule rather than as
+a habit somebody keeps for reasons they no longer remember.
+
+### The instance
+
+Fixing `06-evaluation.tex:463` — a clause asserting the race mechanism after B9
+withdrew its evidence — the first version read, in source:
+
+```latex
+\UnwantedPrevented{} is therefore not a constant ... it is one draw from a
+distribution that \ReplicationSessions{} further collections of the same cell
+placed between \ReplicationAepMin{} and \ReplicationAepMax{}.
+```
+
+**Nothing is visibly wrong.** Three macro names, each correctly spelled, each
+defined, each already used elsewhere, and all three about the same experiment.
+The orphan gate is silent because all three are consumed. `check_paper_numbers.py`
+is silent because every one matches its source. LaTeX is silent because all three
+are defined.
+
+Rendered, it reads:
+
+> "**18** is therefore not a constant … it is one draw from a distribution that
+> **4** further collections of the same cell placed between **4** and **20**."
+
+**`\UnwantedPrevented` is a count of effects *prevented*. `\ReplicationAepMin`
+and `\ReplicationAepMax` are counts of effects *applied*.** 18 prevented
+corresponds to 10 applied; the prevented equivalents of 4–20 applied are 24 and
+8. **The sentence compares a quantity to the range of a different quantity, and
+18 does not lie in 4–20 in any sense at all.**
+
+### Why the source could not show it
+
+**The macro names do not encode the quantity relation, and their values are not
+present.** `\UnwantedPrevented` and `\ReplicationAepMax` are equally plausible
+neighbours in a sentence about the same cell; only their *definitions* — in a
+different file — distinguish prevented from applied, and only their *values*
+make the mismatch arithmetic rather than semantic.
+
+**A reviewer reading the source sees three tokens. A reviewer reading the PDF
+sees "18 … between 4 and 20" and stops.** The defect is not subtle once the
+numbers are adjacent; it is invisible until they are.
+
+**This generalises past this instance.** Every cross-quantity comparison in this
+manuscript is written in macros, which means **every one of them is unreviewable
+in source by construction**. That is not a claim about care. It is a property of
+deferring values.
+
+### The second mechanism the same rule already caught
+
+B20's caption sweep missed `tab:outcomes` by grep because the caption renders in
+**small caps** and the grep was for the lowercase form. Same rule, different
+mechanism: **the source and the rendered artefact are different strings, and the
+claim is a property of the rendered one.**
+
+Two distinct failure modes — deferred values, and transformed glyphs — both
+closed by the same discipline.
+
+### The part that makes this a pattern rather than an incident
+
+**The mismatch was introduced while fixing a defect of the same class.** Edit C
+existed to correct a sentence asserting an unestablished mechanism; its first
+version introduced a quantity mismatch, which is the family that B20 (execution
+versus run) and B9 (pooled versus session) both belong to.
+
+That is now the third time in this work:
+
+| | the fix | what the fix introduced |
+|---|---|---|
+| 1 | B9 unit 3 removed a tally-as-support | wrote *"the direction agrees across the sessions"*, false and itself a tally |
+| 2 | B9 unit 3 corrected `08-threats:96` | left `:385` contradicting it 289 lines away |
+| 3 | Edit C corrected an unestablished mechanism claim | compared a prevented count to an applied range |
+
+**Editing under a rule is when defects of that rule's own class get written**,
+and all three were caught by a scheduled pass rather than by the author noticing.
+The standing adversarial pass is the mitigation; **F.0f's conclusion stands, that
+it is mitigation and not a solution.**
+
 ## F.1 CONFIRMS is failure to reject, not evidence of absence
 
 | session | β class | se | β/se | pp difference |
