@@ -503,11 +503,40 @@ sit on different *hardware* has never been checked, and the whole value of the
 protect against nothing that a single disk failure would not take with it**, and
 the archive's status drops from "second-filesystem copy" to "second directory".
 
-**Not resolved here**, because resolving it needs a hardware query
-(`Get-PhysicalDisk` / `Get-Partition`) that is outside this task's scope, and
-because it changes no action: **no same-machine arrangement protects against
-machine loss regardless of the answer.** It changes only how much the existing
-tarballs are worth.
+~~**Not resolved here**~~ — **RESOLVED 1 Sep, and the answer is the bad one.**
+
+```
+Get-PhysicalDisk : DeviceId 0   WD Green SN3000 1TB   NVMe   931.5 GB   (only disk)
+Get-Partition    : Disk 0 Partition 3 -> C:  539.2 GB
+                   Disk 0 Partition 5 -> D:  390.6 GB
+```
+
+> **`C:` and `D:` are partitions of the same physical NVMe SSD. There is exactly
+> one disk in this machine.**
+
+The WSL VHDX lives on `C:`. So the `b2-paired-v2-s3`/`-s4` tarballs — the only
+archive this project has — sit on **the same physical device as the originals
+they archive.**
+
+**"Different filesystem" was true. "Different device" is false**, and the
+distinction is the whole of what a backup means against disk failure. Every
+statement in this report and the options report that described the `D:` tarballs
+as protecting against *"filesystem loss"* was accurate; **anything that read them
+as protecting against *disk* loss was wrong, and the table in the options report
+§1 already refused to claim it** — its `disk failure` row says *"no — `D:` and the
+VHDX share one device unless `D:` is a separate physical disk, **which the survey
+has not established**"*. That hedge has now resolved to the unfavourable branch.
+
+**Consequence, stated plainly: this project has no backup of any kind.** It has
+two tarballs of its two least load-bearing collections, on the same disk as the
+originals. A single NVMe failure takes the originals, the tarballs, the working
+clone, and all three WSL trees **simultaneously** — 1159 run directories, every
+copy, at once.
+
+It still changes no action, for the reason given before: **no same-machine
+arrangement protects against machine loss regardless of the answer.** What it
+changes is that the existing archive is worth **less than the weakest reading**
+anyone had applied to it.
 
 ---
 

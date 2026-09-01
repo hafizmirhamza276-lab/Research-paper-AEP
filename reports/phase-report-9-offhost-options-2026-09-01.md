@@ -50,14 +50,22 @@ is.**
 | accidental `rm` of one root | **yes** | yes |
 | WSL VHDX corruption | **yes** | yes |
 | a tool that opens and checkpoints ledgers | **yes** (if the copy is not the target) | yes |
-| **disk failure** | **no** — `D:` and the VHDX share one device unless `D:` is a separate physical disk, **which the survey has not established** | yes |
+| **disk failure** | **no** — ~~unless `D:` is a separate physical disk, which the survey has not established~~ **RESOLVED 1 Sep: it is not.** `C:` and `D:` are partitions 3 and 5 of Disk 0, a single WD Green SN3000 NVMe. **One disk in the machine.** The hedge resolved to the unfavourable branch | yes |
 | **machine loss, theft, fire** | **no** | **yes** |
 | ransomware reaching mounted volumes | **no** | only if the target is offline or immutable |
 
 **The `D:` tarballs protect against VHDX corruption and against a mistake made
-inside WSL. They do not protect against disk failure — and whether `D:` is even a
-separate spindle from the VHDX is not established by any survey run so far.**
-That is a weaker guarantee than "different filesystem" implies.
+inside WSL. They do not protect against disk failure** — and as of 1 September
+that is no longer a hedge: **`C:` and `D:` are partitions of the same NVMe SSD,
+the only disk in the machine.**
+
+> **This project therefore has no backup in the sense that matters.** Its one
+> archive sits on the same physical device as the material it archives. A single
+> NVMe failure takes the originals, the tarballs, the working clone and all three
+> WSL trees at once — **1159 run directories, every copy, simultaneously.**
+
+That is substantially weaker than "different filesystem" implies, and weaker than
+the weakest reading anyone had applied to it.
 
 ---
 
