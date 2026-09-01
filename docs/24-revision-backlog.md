@@ -2218,3 +2218,169 @@ paragraph, not a repair to a sentence.
 
 **Related:** B26 (the four assertion sites, three now corrected), and §F.0i on
 why the sixth site was found only after the other five landed.
+
+---
+
+## B31. The only copy of 240 manuscript-quoted runs is gitignored, and `git clean -xdf` destroys it silently
+
+**Filed 2026-09-01. File, do not fix. This is the sharpest custody finding in the
+phase, and it is ranked above the general durability exposure rather than folded
+into it.**
+
+### The exposure
+
+`experiments/results/b2-2026-08-21`, `b2-s1-`, `b2-s2-` and `b2-s3-2026-08-21`
+hold **60 run directories each — 240 runs.** The privileged survey of
+1 September establishes that `/root/aep-phase8` holds **0** runs for all four.
+**The Windows working clone is the only copy that exists, on any machine.**
+
+`.gitignore:165-215` un-ignores each root and then re-ignores its contents
+(`experiments/results/b2-2026-08-21/*`) with an allow-list of **eight** files per
+root: `MANIFEST.csv`, `SHA256SUMS`, and six analysis CSVs.
+
+```
+$ git status --porcelain experiments/results/
+$                       # nothing. 240 run directories, zero lines of output.
+```
+
+> **The sole copy of 240 runs sits inside a git working tree, ignored, where
+> `git clean -xdf` deletes it with no confirmation — and no safety net in git
+> reports their existence beforehand.**
+
+`git clean -n` would list them. But `-n` is not the flag anyone reaches for when
+the intent is "drop build artefacts", and `git status` — the command actually
+used to decide a tree is safe to clean — prints **nothing**.
+
+### Why these 240 runs and not some other 240
+
+They carry **`\ReplicationPrevented*`**: the replication of the prevention result
+across four sessions. **The only session-clustered interval in this paper that
+excludes zero**, quoted in the abstract, in `06-evaluation.tex`, and twice in
+`08-threats.tex`, where it is what makes *"narrowest is not weakest"* true.
+
+This phase withdrew the kill-latency pooled *p*, showed its point estimate to be
+a pooling artefact, and showed B3 was never a negative control. **What is left
+carrying the prevention claim's replication is these 240 runs** — and they are
+the least protected evidence in the project.
+
+### THE POLICY IS CORRECT. THE EXPOSURE IS ITS CONSEQUENCE, NOT A DEFECT IN IT
+
+**Recorded emphatically, because the obvious "fix" is the harmful one.**
+
+Raw run directories **are not source** and must not be committed. The repo policy
+is explicit, the trees are ~12 M each, and B5's freeze/archive discipline exists
+precisely so raw evidence travels as manifested archives rather than as git
+objects. The allow-list — un-ignore the root, re-ignore its contents, readmit the
+manifest and the analysis CSVs — is **exactly right**, and is what lets
+`check_paper_numbers.py` run in CI at all.
+
+> **Nobody should "fix" this by loosening `.gitignore`.** Tracking the runs would
+> discharge a durability exposure by breaking the archive discipline, inflate the
+> repository by an order of magnitude, and put uncheckpointed WAL files under
+> version control. **That is a worse outcome than the risk it removes.**
+
+The finding is not that the ignore rules are wrong. It is that **"correct policy"
+and "invisible to every safety net git offers" are the same configuration here**,
+and nothing currently records that they coincide.
+
+### The remedy is custody, not git
+
+An off-root archive of these four collections removes the exposure completely and
+leaves `.gitignore` untouched. They are **48 M uncompressed, ≈ 2.4 M at the
+measured ≈ 21:1**. See `reports/phase-report-9-offhost-options-2026-09-01.md`.
+**No option there has been authorised or acted on, and this entry does not
+authorise one.**
+
+**Until then** the operational rule is one line, and belongs wherever
+contributors are told how to clean the tree: **never run `git clean -xdf` in this
+repository.** Use `git clean -nxd` and read it first.
+
+### Rank
+
+Above the general durability finding because it differs in **kind**. General
+durability is *"one machine failure ends the ability to re-derive."* This is
+**one routine command, run for an unrelated reason, with no warning from the tool
+that issues it, destroying evidence that exists nowhere else.** The general
+exposure needs a hardware event. This one needs a habit.
+
+**Related:** custody inventory §5c–§5e (derivation), B5 (freeze portability),
+B27 and B28 (the claims these runs carry).
+
+---
+
+## B32. `custody_survey.sh` over-counts run directories, in the reassuring direction
+
+**Filed 2026-09-01. File, do not fix. Fail-closed form recorded below, not
+built.**
+
+The 1 September privileged survey reported:
+
+```
+matrix     runs= 433  db= 432 wal= 432 shm= 432 [OK]  262M
+```
+
+**433 run directories against 432 ledgers — and the triple check said `OK`.**
+
+### The defect
+
+`detail()` counts run directories as
+
+```sh
+runs=$(find "$root" -mindepth 1 -maxdepth 1 -type d \
+         ! -name analysis ! -name voided | wc -l)
+```
+
+— an exclusion **by name, of two names**. Any other non-run directory inside a
+root is counted as a run. The extra one here is `matrix/analysis-interim/`, a
+derived-products directory dated 7 August holding an earlier `per-execution.csv`,
+`table-1.csv` and two figure PDFs; `phase8-driver/matrix_ledger_gap.sh`
+identifies it. **`matrix` is exactly 432**, which is the number the manuscript
+uses.
+
+The `[OK]` is not a second opinion. It compares `db`, `wal` and `shm` **to each
+other**. Three counts that agree can all disagree with the run count without the
+check noticing, because **nothing compares the ledger count to the run count.**
+
+### The direction is the finding
+
+> **It reports MORE evidence than exists.** For a tool whose only job is to
+> establish whether the evidence still exists, that is **the worst available
+> direction of error.**
+
+An under-count provokes investigation. An over-count is consistent with
+everything being fine, and is what a reader of a custody report hopes to see. A
+root that had **lost a run and gained a stray directory** would read as intact:
+`runs=432, db=432`, clean `[OK]`.
+
+This is F.0d's fail-open class **in the same tool, on a second axis.** The
+rewrite of 1 September fixed the permission axis — `ABSENT` versus `UNREADABLE`,
+after the first version reported a tree holding 432 runs as holding nothing — and
+left this one. **Fixing one fail-open path in a tool is not evidence that the
+tool fails closed.** That is the transferable lesson, and the reason this is
+filed separately rather than as an amendment to the custody report.
+
+It is also the **third instrument in this phase to fail open**: `claim_sweep.py`
+(B29a), `custody_survey.sh` twice, and `history_check.sh` (custody report §5f) —
+the last of which failed open **one function below its own header comment
+forbidding it.**
+
+### The fail-closed form, recorded and not built
+
+**Do not compare two counts. Compare two name-sets, and report the difference by
+name.** For each root: the set of subdirectories, and the set of subdirectories
+containing a `*.sqlite3`. Emit the symmetric difference. Anything in the first
+and not the second is either a stray directory or a lost ledger, and the tool
+**cannot tell which** — so it names it and exits non-zero rather than folding it
+into a total.
+
+This is the same construction as the **orphan gate**, and as the `fsync-always`
+determination in custody report §5b — which is why that determination is
+trustworthy while `runs=433` was not: **two independently produced sets, exact
+equality, no threshold.** A count of 6 there would have been satisfied by six
+unrelated directories, exactly as `runs=433` was satisfied by a directory that is
+not a run.
+
+**Not built**, per this phase's file-do-not-fix discipline, and because the one
+number it would have corrected is already corrected by hand.
+
+**Related:** F.0d (fail-open class), F.0c, B29a, and custody inventory §5e.
