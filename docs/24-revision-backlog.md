@@ -1957,6 +1957,105 @@ establish that the behaviour under test does not depend on untracked files.
 
 ---
 
+### SHAPE ESTABLISHED 2026-09-01. Not closed. Larger than this entry states.
+
+**Nothing was installed, promoted, or edited under `paper/`.**
+
+#### The `pydantic` failure is NOT B6, and two documents say it is
+
+This entry calls it *"B6's territory"*; `ARTIFACT.md:231` calls it *"backlog
+B6"*. **Both are wrong.**
+
+- **B6** is that local TeX Live (2023/Debian, WSL) typesets **24 of 29**
+  `\bibitem` entries, so nine citations render undefined and **CI is the only
+  place the bibliography is correct.** Its fixes are pinning the TeX
+  distribution or making "built by CI" a checked precondition.
+- **The failure actually blocking promotion** is the check *"state-machine
+  figure matches the transition table"*. `scripts/gen_state_machine.py:30`
+  imports `aep_core.core.intents`, which imports `pydantic`, which is not
+  installed.
+
+**They are unrelated environment gaps.** `pydantic>=2.0` is a **declared**
+dependency (`pyproject.toml:18`) that is simply absent — from Windows 3.11.9
+**and** WSL 3.12.3.
+
+#### The failing check has no bearing on the manuscript
+
+It regenerates a figure from `aep_core` source and compares it to the transition
+table. **It says nothing about the paper's prose, numbers, or typesetting.**
+Notably, *"no undefined references or citations"* currently **passes**.
+
+**But installing `pydantic` is not established to make the gate green.** It makes
+the check **run**. Whether the regenerated figure then *matches* is unknown and
+cannot be known without installing. **"One `pip install` from promotable" is the
+optimistic reading and is not derived.**
+
+#### The stale artifacts corrupt the gate in the OPPOSITE direction too — new
+
+`check_paper_numbers.py:291-297`: `--build-dir` **defaults to `--paper`**. So a
+direct `python scripts/check_paper_numbers.py` reads `paper/main.log` and
+`paper/main.bbl`, both dated **10 August**.
+
+| key cited by `07-related.tex` today | in 10 Aug `main.log` | in `refs.bib` |
+|---|---|---|
+| `richardson-transactional-outbox` | **0** | 1 |
+| `jena2025idempotencykey` | **0** | 1 |
+| `setty2016olive` | **0** | 1 |
+
+> **The direct invocation's *"no undefined references or citations: PASS"* is
+> vacuous.** It is computed from a log written before those citations existed.
+> **The `17 passed, 1 failed` baseline this project has quoted as a control
+> throughout Phase 8 and 9 is partly computed from three-week-old artifacts.**
+
+`build_paper.sh:147-148` **does** pass `--build-dir "$BUILD_DIR_REL"`, so the
+gate inside a build reads scratch correctly. **The same two files therefore break
+both paths in opposite directions: the build fails spuriously (this entry), and
+the direct invocation passes vacuously (this amendment).**
+
+#### Item 3 is half-done and this entry does not know it
+
+`main.aux` and `main.bbl` **are already gitignored** — `.gitignore:97-98`. What
+is missing is the removal-or-refusal half. **Deleting them is not a tracked-file
+change and loses nothing**; both are regenerable build products.
+
+#### The mechanism is LIVE, tested rather than assumed
+
+`phase8-driver/probe_texinputs.sh`, under the exact `TEXINPUTS` of
+`build_paper.sh:79`:
+
+```
+main.bbl (no local copy)      -> paper/main.bbl
+main.bbl (local copy present) -> paper/main.bbl
+PAPER WINS -- the stale .bbl shadows the fresh one
+```
+
+**Even with a scratch-local `main.bbl` present, resolution goes to `paper/`.**
+
+**Residual, stated:** this is `kpsewhich`, which uses the same kpathsea library
+but is not `pdflatex` opening the file. **The definitive test is a build, which
+was not run** — a clean build promotes, and promotion is out of scope here. This
+also leaves `ARTIFACT.md:236`'s *"the build itself is clean … no undefined
+references or citations"* unreconciled: it is most likely a
+`build_clean_copy.sh` result rather than a `build_paper.sh` one, **but that is
+suspected, not established.**
+
+#### `ARTIFACT.md`'s marker is itself stale
+
+It is dated *"as of 2026-08-31"* and enumerates what the tracked PDF lacks as of
+then. **Six wording edits landed on 1 September** (`08-threats` ×3,
+`06-evaluation` ×2, `main.tex` ×1) and are not in its list. The marker is honest
+about the PDF and **out of date about its own contents.**
+
+#### Verdict
+
+**Larger than this entry suggests, and blocked on a decision that is the
+operator's**, not on work. The blocking item is whether `pydantic` is installed
+into this environment — one declared dependency, currently absent from both
+interpreters. Everything else here is executable without it, and items 1–3 are
+independent of the PDF question entirely.
+
+---
+
 ## B22. The write-loss probe tests matched pairs as independent samples, and the code says so itself
 
 **Filed against Phase 12. Found by the unit-of-analysis sweep
