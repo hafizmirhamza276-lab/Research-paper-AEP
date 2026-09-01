@@ -119,8 +119,24 @@ roots*, not as a backup of the evidence.
 
 | | recorded | age at 1 Sep | obligation |
 |---|---|---|---|
-| **D4** — the raw archive is unpublished while §IX asserts availability (`reports/paper-review-2026-08-11.md`) | **11 Aug** | **21 days** | **reproducibility** |
+| **D4** — the raw archive is undeposited (`reports/paper-review-2026-08-11.md`) | **11 Aug** | **21 days** | **reproducibility** |
 | Handover §7 — no off-host raw storage | **31 Aug** | **1 day** | **durability** |
+
+> **Correction, same day, before the recommendation was written.** The first
+> row of this table originally read *"the raw archive is unpublished **while §IX
+> asserts availability**"*. **That second clause is false and I did not check it
+> before writing it.** `09-artifact.tex:4-10` reads:
+>
+> > "It does *not* currently contain the 432 raw run directories, the voided
+> > run, or a complete raw-evidence checksum manifest. No immutable external
+> > archive DOI is currently available. Those materials must be deposited and
+> > verified before an availability claim is made for the full raw evidence."
+>
+> **D4's manuscript half is closed.** The review offered two remedies — publish
+> the archive, or rewrite §IX to say what is tracked versus archived — and the
+> second was taken. **What is open is the deposit itself, which is Phase 10's
+> job**, and the 21 days attach to that and not to an overclaim. Asserting from
+> memory what a section says, in a report about whether claims are supported.
 
 These are different problems with different remedies. Publishing the archive
 would discharge D4 and would incidentally discharge durability; taking an
