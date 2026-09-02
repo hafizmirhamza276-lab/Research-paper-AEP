@@ -1,0 +1,295 @@
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+Successfully created context "aep-native"
+Current context is now "aep-native"
+5796ade0807cdce11975eb98170b3a570
+/etc/apt/sources.list.d/docker.list already correct
+deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable
+
+=== available docker-ce versions ===
+ docker-ce | 5:29.7.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.7.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.7.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.6.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.6.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.6.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.5.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.5.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.5.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.5.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.4.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.4.2-2~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.4.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.4.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.4.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.3.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.3.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.2.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.2.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.5-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.4-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.1.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.0.4-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.0.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.0.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.0.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:29.0.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.5.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.5.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.5.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.4.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.3.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.3.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.3.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.3.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.2.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.2.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.2.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.1.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.1.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.0.4-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.0.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.0.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.0.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:28.0.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.5.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.5.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.4.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.4.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.3.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.3.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.2.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.2.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.1.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.1.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.1.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.0.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.0.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:27.0.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.1.4-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.1.3-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.1.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.1.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.1.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.0.2-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.0.1-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+ docker-ce | 5:26.0.0-1~ubuntu.24.04~noble | https://download.docker.com/linux/ubuntu noble/stable amd64 Packages
+MATCHED Docker Desktop server 29.4.3 -> 5:29.4.3-1~ubuntu.24.04~noble
+
+=== the pins this run will install ===
+docker-ce             5:29.4.3-1~ubuntu.24.04~noble   (match: exact, target 29.4.3)
+docker-ce-cli         5:29.4.3-1~ubuntu.24.04~noble
+containerd.io         2.3.4-1~ubuntu.24.04~noble
+docker-buildx-plugin  0.36.1-1~ubuntu.24.04~noble
+docker-compose-plugin 5.5.0-1~ubuntu.24.04~noble
+
+=== install ===
+Selecting previously unselected package containerd.io.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 74122 files and directories currently installed.)
+Preparing to unpack .../00-containerd.io_2.3.4-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking containerd.io (2.3.4-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-ce-cli.
+Preparing to unpack .../01-docker-ce-cli_5%3a29.4.3-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce-cli (5:29.4.3-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package libip4tc2:amd64.
+Preparing to unpack .../02-libip4tc2_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking libip4tc2:amd64 (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libip6tc2:amd64.
+Preparing to unpack .../03-libip6tc2_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking libip6tc2:amd64 (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libnfnetlink0:amd64.
+Preparing to unpack .../04-libnfnetlink0_1.0.2-2build1_amd64.deb ...
+Unpacking libnfnetlink0:amd64 (1.0.2-2build1) ...
+Selecting previously unselected package libnetfilter-conntrack3:amd64.
+Preparing to unpack .../05-libnetfilter-conntrack3_1.0.9-6build1_amd64.deb ...
+Unpacking libnetfilter-conntrack3:amd64 (1.0.9-6build1) ...
+Selecting previously unselected package libnftnl11:amd64.
+Preparing to unpack .../06-libnftnl11_1.2.6-2build1_amd64.deb ...
+Unpacking libnftnl11:amd64 (1.2.6-2build1) ...
+Selecting previously unselected package iptables.
+Preparing to unpack .../07-iptables_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking iptables (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libnftables1:amd64.
+Preparing to unpack .../08-libnftables1_1.0.9-1ubuntu0.1_amd64.deb ...
+Unpacking libnftables1:amd64 (1.0.9-1ubuntu0.1) ...
+Selecting previously unselected package nftables.
+Preparing to unpack .../09-nftables_1.0.9-1ubuntu0.1_amd64.deb ...
+Unpacking nftables (1.0.9-1ubuntu0.1) ...
+Selecting previously unselected package docker-ce.
+Preparing to unpack .../10-docker-ce_5%3a29.4.3-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce (5:29.4.3-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package pigz.
+Preparing to unpack .../11-pigz_2.8-1_amd64.deb ...
+Unpacking pigz (2.8-1) ...
+Selecting previously unselected package docker-buildx-plugin.
+Preparing to unpack .../12-docker-buildx-plugin_0.36.1-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-buildx-plugin (0.36.1-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-ce-rootless-extras.
+Preparing to unpack .../13-docker-ce-rootless-extras_5%3a29.7.2-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce-rootless-extras (5:29.7.2-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-compose-plugin.
+Preparing to unpack .../14-docker-compose-plugin_5.5.0-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-compose-plugin (5.5.0-1~ubuntu.24.04~noble) ...
+Setting up libip4tc2:amd64 (1.8.10-3ubuntu2) ...
+Setting up libip6tc2:amd64 (1.8.10-3ubuntu2) ...
+Setting up libnftnl11:amd64 (1.2.6-2build1) ...
+Setting up docker-buildx-plugin (0.36.1-1~ubuntu.24.04~noble) ...
+Setting up containerd.io (2.3.4-1~ubuntu.24.04~noble) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/containerd.service → /usr/lib/systemd/system/containerd.service.
+Setting up docker-compose-plugin (5.5.0-1~ubuntu.24.04~noble) ...
+Setting up docker-ce-cli (5:29.4.3-1~ubuntu.24.04~noble) ...
+Setting up pigz (2.8-1) ...
+Setting up libnfnetlink0:amd64 (1.0.2-2build1) ...
+Setting up docker-ce-rootless-extras (5:29.7.2-1~ubuntu.24.04~noble) ...
+Setting up libnftables1:amd64 (1.0.9-1ubuntu0.1) ...
+Setting up nftables (1.0.9-1ubuntu0.1) ...
+Setting up libnetfilter-conntrack3:amd64 (1.0.9-6build1) ...
+Setting up iptables (1.8.10-3ubuntu2) ...
+update-alternatives: using /usr/sbin/iptables-legacy to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-legacy to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/iptables-nft to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-nft to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/arptables-nft to provide /usr/sbin/arptables (arptables) in auto mode
+update-alternatives: using /usr/sbin/ebtables-nft to provide /usr/sbin/ebtables (ebtables) in auto mode
+Setting up docker-ce (5:29.4.3-1~ubuntu.24.04~noble) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.8) ...
+held: containerd.io docker-buildx-plugin docker-ce docker-ce-cli docker-compose-plugin 
+installed docker-ce   5:29.4.3-1~ubuntu.24.04~noble
+installed containerd  2.3.4-1~ubuntu.24.04~noble
+native CLI at         -rwxr-xr-x 1 root root 45526567 May  6 22:07 /usr/bin/docker
+
+=== daemon ===
+active
+docker.service active
+START PATH TAKEN: systemd
+srw-rw---- 1 root docker 0 Sep  2 14:51 /var/run/docker.sock
+
+=== Docker Desktop shim ===
+moved /usr/local/bin/docker -> /usr/local/bin/docker-desktop-shim (preserved, not deleted)
+ROLLBACK: mv /usr/local/bin/docker-desktop-shim /usr/local/bin/docker
+docker now resolves to: /usr/bin/docker
+
+=== context aep-native ===
+aep-native
+aep-native
+NAME           DESCRIPTION                                                 DOCKER ENDPOINT               ERROR
+aep-native *   Phase 10: native Docker Engine inside Ubuntu-24.04 (WS-0)   unix:///var/run/docker.sock   
+default        Current DOCKER_HOST based configuration                     unix:///var/run/docker.sock   
+endpoint: unix:///var/run/docker.sock
+
+=== docker version / info on the native engine ===
+Client: Docker Engine - Community
+ Version:           29.4.3
+ API version:       1.54
+ Go version:        go1.26.2
+ Git commit:        055a478
+ Built:             Wed May  6 17:07:36 2026
+ OS/Arch:           linux/amd64
+ Context:           aep-native
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.4.3
+  API version:      1.54 (minimum version 1.40)
+  Go version:       go1.26.2
+  Git commit:       56be731
+  Built:            Wed May  6 17:07:36 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.3.4
+  GitCommit:        db8809540e1a7a9da5d518876894933ff55692ab
+ runc:
+  Version:          1.4.3
+  GitCommit:        v1.4.3-0-gbb14dabe
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+ Server Version: 29.4.3
+ Storage Driver: overlayfs
+ Operating System: Ubuntu 24.04.4 LTS
+ Name: KP248
+ Docker Root Dir: /var/lib/docker
+
+=== pinned redis image ===
+compose pin: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+docker.io/library/redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44: Pulling from library/redis
+8e76de07cee7: Pulling fs layer
+969098876df7: Pulling fs layer
+21af72ec0381: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+329afa62e843: Pulling fs layer
+2da3df2b9c28: Pulling fs layer
+43c4264eed91: Pulling fs layer
+1d54dcb25c1a: Pulling fs layer
+21af72ec0381: Download complete
+4f4fb700ef54: Download complete
+b4658f30007d: Download complete
+969098876df7: Download complete
+5975e168c809: Download complete
+2da3df2b9c28: Download complete
+8e76de07cee7: Download complete
+329afa62e843: Download complete
+43c4264eed91: Download complete
+2da3df2b9c28: Pull complete
+43c4264eed91: Pull complete
+969098876df7: Pull complete
+8e76de07cee7: Pull complete
+1d54dcb25c1a: Download complete
+329afa62e843: Pull complete
+1d54dcb25c1a: Pull complete
+21af72ec0381: Pull complete
+4f4fb700ef54: Pull complete
+Digest: sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+Status: Downloaded newer image for redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+docker.io/library/redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+resolved   : ["redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"]
+DIGEST OK  : sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+
+=== bind-mount canaries ===
+  PASS  wsl_local  (/root/aep-phase10-canary, fs=ext2/ext3)  token round-tripped
+  PASS  drvfs  (/mnt/d/personal/AEP/Research-paper-AEP/.scratch/phase10-canary, fs=v9fs)  token round-tripped
+
+=== record ===
+record is valid JSON
+{
+  "provisioned_at_utc": "2026-09-02T09:51:58Z",
+  "kernel": "6.6.114.1-microsoft-standard-WSL2",
+  "distro": "Ubuntu 24.04.4 LTS",
+  "pid1": "systemd",
+  "daemon_start_path": "systemd",
+  "docker_context": "aep-native",
+  "docker_endpoint": "unix:///var/run/docker.sock",
+  "version_pins": {
+    "docker-ce": "5:29.4.3-1~ubuntu.24.04~noble",
+    "docker-ce-cli": "5:29.4.3-1~ubuntu.24.04~noble",
+    "containerd.io": "2.3.4-1~ubuntu.24.04~noble",
+    "docker-buildx-plugin": "0.36.1-1~ubuntu.24.04~noble",
+    "docker-compose-plugin": "5.5.0-1~ubuntu.24.04~noble"
+  },
+  "version_match": {
+    "target_docker_desktop_server_version": "29.4.3",
+    "status": "exact",
+    "installed_server_version": "29.4.3"
+  },
+  "docker_desktop_shim": {
+    "preserved_at": "/usr/local/bin/docker-desktop-shim",
+    "rollback": "mv /usr/local/bin/docker-desktop-shim /usr/local/bin/docker",
+    "still_present": true
+  },
+  "pinned_image": "redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+  "resolved_repo_digests": ["redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"],
+  "canaries": [ {"name":"wsl_local","path":"/root/aep-phase10-canary/canary.txt","filesystem":"ext2/ext3","token":"aep-phase10-wsl_local-20260902T095157Z-765-22476","seen":"aep-phase10-wsl_local-20260902T095157Z-765-22476","pass":true},{"name":"drvfs","path":"/mnt/d/personal/AEP/Research-paper-AEP/.scratch/phase10-canary/canary.txt","filesystem":"v9fs","token":"aep-phase10-drvfs-20260902T095157Z-765-20253","seen":"aep-phase10-drvfs-20260902T095157Z-765-20253","pass":true} ]
+}
+
+=== done ===
+docker context : aep-native
+docker server  : 29.4.3
+client os/arch : linux/amd64
+record         : /root/phase10/provision-record.json

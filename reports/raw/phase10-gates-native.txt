@@ -1,0 +1,431 @@
+Checked 43 packages in 127ms
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-toxiproxy Healthy 
+GATE FAILED: 2 failure(s) and 0 error(s).
+Uninstalled 10 packages in 1.77s
+ - coverage==7.15.3
+ - fakeredis==2.37.0
+ - iniconfig==2.3.0
+ - lupa==2.8
+ - pluggy==1.6.0
+ - pygments==2.20.0
+ - pytest==9.1.1
+ - pytest-asyncio==1.4.0
+ - pytest-cov==7.1.0
+ - sortedcontainers==2.4.0
+make: *** [Makefile:168: reproduce-figures] Error 1
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 8 packages in 6.79s
+ + fakeredis==2.37.0
+ + iniconfig==2.3.0
+ + lupa==2.8
+ + pluggy==1.6.0
+ + pygments==2.20.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + sortedcontainers==2.4.0
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-toxiproxy Healthy 
+ Container aep-phase2-toxiproxy Stopping 
+ Container aep-phase2-toxiproxy Stopped 
+ Container aep-phase2-toxiproxy Removing 
+ Container aep-phase2-toxiproxy Removed 
+ Container aep-phase2-redis72 Stopping 
+ Container aep-phase2-redis72 Stopped 
+ Container aep-phase2-redis72 Removing 
+ Container aep-phase2-redis72 Removed 
+ Volume aep-phase2_redis-data Removing 
+ Network aep-phase2_default Removing 
+ Volume aep-phase2_redis-data Removed 
+ Network aep-phase2_default Removed 
+.............................. [ 20%]
+........................................................................ [ 24%]
+..........F............................................................. [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 36%]
+.....................F.................................................. [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 96%]
+..................................................................       [100%]
+=================================== FAILURES ===================================
+______ test_the_cross_fault_comparison_is_against_the_process_kill_probe _______
+
+    def test_the_cross_fault_comparison_is_against_the_process_kill_probe() -> None:
+        macros = dict(
+            (name, value)
+            for name, value, *_ in flakey_macros(
+                [_payload(60, 60, 60, [_trial()] * 60)]
+            )
+        )
+        # 0/10 lost under a process kill vs 60/60 under write loss.
+>       assert macros["FlakeyVsProcessKillP"] == "2.5\\times10^{-12}"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'FlakeyVsProcessKillP'
+
+tests/test_paper_tables.py:242: KeyError
+____________ test_the_barrier_is_validated_once_not_per_resolution _____________
+
+redis_client = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+lock_manager = <aep_core.core.locks.DistributedLockManager object at 0x7265f86e4d70>
+
+>   ???
+
+D:\personal\AEP\Research-paper-AEP\tests\test_recovery_durability_barrier.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+aep_core/core/intent_recovery.py:427: in recover_intent
+    await self._durable(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <aep_core.core.intent_recovery.IntentRecoveryService object at 0x7265f85552e0>
+barrier = <aep_core.core.durability.RealWaitAofDurabilityBarrier object at 0x7265f86e5910>
+connection = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+timeout_ms = 2000
+
+    async def _durable(self, barrier, connection, timeout_ms: int) -> None:
+        try:
+            await self._validate_barrier(barrier)
+            durable = await barrier.confirm_durable(connection, timeout_ms)
+        except Exception as exc:
+            raise WriteAheadWorkflowError(
+                f"recovery durability barrier failed:{type(exc).__name__}"
+            ) from None
+        if not durable:
+>           raise WriteAheadWorkflowError(
+                "recovery durability barrier did not acknowledge the write"
+            )
+E           aep_core.core.intent_workflow.WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+
+aep_core/core/intent_recovery.py:376: WriteAheadWorkflowError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_before_commit_leaves_no_effect_and_no_record
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/httpcore/_synchronization.py:241: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7265f82e48b0>
+    self._lock = threading.Lock()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_before_commit_leaves_no_effect_and_no_record
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/httpcore/_synchronization.py:241: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7265f6753a60>
+    self._lock = threading.Lock()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.0-final-0 ________________
+
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+aep_core/__init__.py                      0      0   100%
+aep_core/core/__init__.py                 0      0   100%
+aep_core/core/connector_contract.py      72      1    99%   154
+aep_core/core/durability.py             158      1    99%   255
+aep_core/core/exceptions.py               8      0   100%
+aep_core/core/intent_recovery.py        246     28    89%   114, 136, 144, 156, 189-191, 217, 230, 253, 286, 288, 318-320, 323-324, 333-338, 387, 397, 402, 405, 410, 493, 506
+aep_core/core/intent_workflow.py        259     23    91%   255, 259, 263, 297-298, 318-324, 334, 340, 357, 383, 508-525, 539, 552, 606-607
+aep_core/core/intents.py                383     47    88%   170, 173-174, 249, 255, 261, 264-265, 273-274, 276, 285, 292, 295-296, 316, 319, 322, 333, 335, 350, 355, 358, 362, 685, 693, 699, 716, 747, 786, 920, 1022-1025, 1033, 1037, 1043, 1073, 1105, 1119, 1141-1142, 1151, 1179, 1208-1209
+aep_core/core/locks.py                  110      4    96%   382-393
+aep_core/core/request_binding.py        788     78    90%   225, 272, 302, 304-305, 385, 390, 396, 401, 404-405, 407, 427, 442-445, 459, 466, 475, 488, 497, 525, 544, 549, 553, 567, 589, 596, 608, 662, 667-672, 681, 697, 699, 708, 713, 716, 727, 743, 759, 762, 766, 769, 773, 817, 900, 907, 925, 927, 929, 935, 937, 951, 960-961, 964, 967-968, 980, 1053, 1094, 1103, 1125, 1218-1219, 1324, 1387, 1389, 1391, 1449, 1459, 1461, 1479
+aep_core/core/request_vault.py          251     22    91%   207, 211, 213, 216, 229, 231, 233, 236, 253, 274, 356, 367, 376, 378, 380, 383, 415, 426-427, 432, 437, 445
+aep_core/core/state_codec.py             61      3    95%   85, 135-136
+aep_core/core/storage.py                181     15    92%   491, 497, 515-516, 553, 605-614, 730, 809-810, 823-831
+aep_core/core/validation.py              11      0   100%
+-------------------------------------------------------------------
+TOTAL                                  2528    222    91%
+Required test coverage of 90% reached. Total coverage: 91.22%
+=========================== short test summary info ============================
+FAILED tests/test_paper_tables.py::test_the_cross_fault_comparison_is_against_the_process_kill_probe
+FAILED tests/test_recovery_durability_barrier.py::test_the_barrier_is_validated_once_not_per_resolution
+2 failed, 1792 passed, 3 warnings in 193.31s (0:03:13)
+GATE pytest exit=1
+
+
+########## check_pytest_gates.py -- zero skipped, zero xpassed, suite actually ran ##########
+GATE pytest-gates exit=1
+
+
+########## AOF survived the restart test ##########
+  verified redis_version=7.2.5
+  verified appendonly=yes
+  verified appendfsync=everysec
+  verified aof-use-rdb-preamble=yes
+  verified aof_enabled=1
+  verified waitaof=present
+OK: live Redis matches phase2.conf semantics
+GATE verify-redis-semantics-after exit=0
+
+
+########## validate_citations.py ##########
+docs/22-formal-model.md: 371 citations (240 explicit, 131 continuation)
+OK: 371 citations, 0 invalid
+GATE validate-citations exit=0
+
+
+########## check_paper_numbers.py ##########
+======================================================================
+check_paper_numbers.py -- the manuscript against its results
+======================================================================
+paper          /mnt/d/personal/AEP/Research-paper-AEP/paper
+build artifacts /mnt/d/personal/AEP/Research-paper-AEP/paper
+analysis       /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix/analysis
+fsync analysis /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/fsync-always/analysis
+flakey results /mnt/d/personal/AEP/Research-paper-AEP/experiments/results
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  appendfsync=always analysis is present
+  PASS  G2 write-loss results is present
+  PASS  paper_tables.py runs
+  FAIL  numbers.tex matches the CSVs
+        regenerate: python scripts/paper_tables.py --analysis /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix/analysis --out /mnt/d/personal/AEP/Research-paper-AEP/paper/generated
+  PASS  table-ablation.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-deployment-choice.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  FAIL  build artifacts match current sources
+        no .build-provenance.json in /mnt/d/personal/AEP/Research-paper-AEP/paper; the artifacts there were not recorded as produced from any source tree. Run scripts/build_paper.sh, or pass --build-dir for a staged build.
+  SKIP  2 checks not run (bibliography, undefined references): artifacts cannot be shown to match the sources
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+13 passed, 2 failed
+
+DO NOT SUBMIT:
+  - numbers.tex matches the CSVs: regenerate: python scripts/paper_tables.py --analysis /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix/analysis --out /mnt/d/personal/AEP/Research-paper-AEP/paper/generated
+  - build artifacts match current sources: no .build-provenance.json in /mnt/d/personal/AEP/Research-paper-AEP/paper; the artifacts there were not recorded as produced from any source tree. Run scripts/build_paper.sh, or pass --build-dir for a staged build.
+GATE check-paper-numbers exit=1
+
+
+########## make reproduce-figures ##########
+=== reproduce-figures: regenerating from experiments/results/matrix/analysis ===
+wrote .scratch/reproduce/figures/generated/numbers.tex
+wrote .scratch/reproduce/figures/generated/table-ablation.tex
+wrote .scratch/reproduce/figures/generated/table-ambiguity-by-crashpoint.tex
+wrote .scratch/reproduce/figures/generated/table-deployment-choice.tex
+wrote .scratch/reproduce/figures/generated/table-latency.tex
+wrote .scratch/reproduce/figures/generated/table-outcomes.tex
+
+=== byte-comparing against paper/generated/ ===
+  DIFFERS   numbers.tex
+--- /dev/fd/63	2026-09-02 15:08:50.262803638 +0500
++++ /dev/fd/62	2026-09-02 15:08:50.262803638 +0500
+@@ -554,6 +554,6 @@
+ \newcommand{\CoreLoc}{6\,862}
+ 
+ % lines of Python under experiments/, excluding __pycache__
+-% 90 files; regenerated on every run of this script
+-\newcommand{\HarnessLoc}{23\,022}
++% 91 files; regenerated on every run of this script
++\newcommand{\HarnessLoc}{23\,243}
+ 
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== the state-machine figure against the implementation ===
+OK: paper/figures/state-machine.tex matches aep_core.core.intents
+
+=== the two analysis figures ===
+  DIFFERS   figure-1-undetected-vs-ambiguity.pdf: 11726 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+  DIFFERS   figure-2-duplicates-by-crash-point.pdf: 12551 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+
+reproduce-figures: 3 generated file(s) DIFFER from what is committed.
+That is a finding about the repository, not a build error to paper over.
+GATE reproduce-figures exit=2
+
+
+########## make reproduce-smoke  (tears the stack down with -v on exit) ##########
+=== reproduce-smoke: environment ===
+Python 3.13.0 (main, Oct 16 2024, 03:23:02) [Clang 18.1.8 ]
+
+=== provisioning Redis 7.2 from compose.phase2.yml ===
+
+=== asserting the live server really provides phase2.conf semantics ===
+  verified redis_version=7.2.5
+  verified appendonly=yes
+  verified appendfsync=everysec
+  verified aof-use-rdb-preamble=yes
+  verified aof_enabled=1
+  verified waitaof=present
+OK: live Redis matches phase2.conf semantics
+
+=== marking the instance disposable ===
+OK
+
+=== collecting: 7 systems x 1 cell, real SIGKILL ===
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     False   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     2 (1 runs x 2 executions)
+  workers per run      2
+  cells (total)        21
+  cells (applicable)   21
+  cells (not applic.)  0
+  runs planned         7
+  estimated wall time  0.06 h (214.9 s)
+
+  by tier:
+    tier 1:    7 runs,  0.06 h   E3: POSITIVE_ONLY_READBACK and NO_READBACK -- where the known-ambiguity claim lives, and had no evidence at all
+
+  regimes (a regime is a condition, not a dimension):
+    (session-3)            p(crash)=1.0  runs=7    shape=1 x 2
+      every execution crashed, no infrastructure fault
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    1     (session-3)          AEP_FULL                             mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B0_NAIVE_RETRY                       mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B1_LEASE_ONLY                        mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B2_CAS_ONLY                          mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B3_INTENT_NO_BARRIER                 mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B4B_DURABLE_WORKFLOW_AT_MOST_ONCE    mid_dispatch                       notifications    CALLER_REFERENCE     1
+    1     (session-3)          B4_DURABLE_WORKFLOW                  mid_dispatch                       notifications    CALLER_REFERENCE     1
+
+==============================================================================
+plan written to .scratch/reproduce/smoke/matrix-plan.json and matrix-plan.txt
+[1/7] tier 1 AEP_FULL mid_dispatch notifications CALLER_REFERENCE rep0
+[2/7] tier 1 B0_NAIVE_RETRY mid_dispatch notifications CALLER_REFERENCE rep0
+[3/7] tier 1 B1_LEASE_ONLY mid_dispatch notifications CALLER_REFERENCE rep0
+[4/7] tier 1 B2_CAS_ONLY mid_dispatch notifications CALLER_REFERENCE rep0
+[5/7] tier 1 B3_INTENT_NO_BARRIER mid_dispatch notifications CALLER_REFERENCE rep0
+[6/7] tier 1 B4B_DURABLE_WORKFLOW_AT_MOST_ONCE mid_dispatch notifications CALLER_REFERENCE rep0
+[7/7] tier 1 B4_DURABLE_WORKFLOW mid_dispatch notifications CALLER_REFERENCE rep0
+
+==============================================================================
+collected 7 run(s), skipped 0 already-collected
+wall time 0.07 h
+progress: .scratch/reproduce/smoke/matrix-progress.jsonl
+resume with: python -m experiments.run_matrix --resume --results-root .scratch/reproduce/smoke
+==============================================================================
+
+=== analysing ===
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 7,
+  "crash_free_runs": 0,
+  "crash_points": [
+    "mid_dispatch"
+  ],
+  "executions": 14,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "crashed"
+  ],
+  "response_classes": [
+    "POSITIVE_ONLY_READBACK"
+  ],
+  "runs": 7,
+  "runs_dropped_for_clock_suspension": 5,
+  "runs_dropped_for_undeclared_suspend_policy": 2,
+  "runs_with_a_hard_redis_kill": 0,
+  "runs_with_usable_timing": 0,
+  "systems": [
+    "AEP_FULL",
+    "B0_NAIVE_RETRY",
+    "B1_LEASE_ONLY",
+    "B2_CAS_ONLY",
+    "B3_INTENT_NO_BARRIER",
+    "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    "B4_DURABLE_WORKFLOW"
+  ],
+  "worst_suspension_seconds": 5.363
+}
+
+Table 1 -- per system, pooled over every cell collected
+==============================================================================================
+system                  runs   exec  undet.dup           95% CI  known amb.    lost   Fisher p
+----------------------------------------------------------------------------------------------
+AEP_FULL                   1      2     0.0000   [0.000, 0.000]      0.0000  0.0000         --
+B0_NAIVE_RETRY             1      2     0.5000   [0.500, 0.500]      0.0000  0.0000   1.00e+00
+B1_LEASE_ONLY              1      2     0.5000   [0.500, 0.500]      0.0000  0.0000   1.00e+00
+B2_CAS_ONLY                1      2     0.0000   [0.000, 0.000]      0.0000  0.0000   1.00e+00
+B3_INTENT_NO_BARRIER       1      2     0.0000   [0.000, 0.000]      0.0000  0.0000   1.00e+00
+B4B_DURABLE_WORKFLOW_AT_MOST_ONCE     1      2     0.0000   [0.000, 0.000]      0.0000  1.0000   1.00e+00
+B4_DURABLE_WORKFLOW        1      2     1.0000   [1.000, 1.000]      0.0000  0.0000   3.33e-01
+==============================================================================================
+
+WARNING: 5 of 7 run(s) show a wall-versus-monotonic divergence above 2.0s (worst: 5.363s). The host suspended during them, so every wall-clock duration they contain includes the suspension. Their COUNTS are unaffected and are still in the rate metrics; their TIMINGS are excluded from the latency and throughput aggregates.
+E5: 2 of 7 run(s) were collected on a host that did not declare suspend disabled. No suspension was detected in them, and that is not evidence of absence -- a host that was never idle long enough looks the same. Their COUNTS stand; NO absolute timing from them may enter the paper, and none is in the aggregates above.
+E2: no crash-free run has been collected, so every overhead column above is empty by construction rather than by measurement. RQ3 has no answer until the p0 regime is collected.
+written:
+  .scratch/reproduce/smoke/analysis/table-1.csv
+  .scratch/reproduce/smoke/analysis/per-cell-metrics.csv
+  .scratch/reproduce/smoke/analysis/comparisons-vs-aep-full.csv
+  .scratch/reproduce/smoke/analysis/latency-and-throughput.csv
+  .scratch/reproduce/smoke/analysis/per-execution.csv
+  .scratch/reproduce/smoke/analysis/metric-undetected-duplicate-rate.csv
+  .scratch/reproduce/smoke/analysis/metric-known-ambiguity-rate.csv
+  .scratch/reproduce/smoke/analysis/metric-lost-effect-rate.csv
+  .scratch/reproduce/smoke/analysis/metric-unverified-failure-rate.csv
+  .scratch/reproduce/smoke/analysis/metric-state-corruption-rate.csv
+  .scratch/reproduce/smoke/analysis/metric-recovery-success-rate.csv
+  .scratch/reproduce/smoke/analysis/figure-1-undetected-vs-ambiguity.pdf
+  .scratch/reproduce/smoke/analysis/figure-2-duplicates-by-crash-point.pdf
+  .scratch/reproduce/smoke/analysis/coverage.json
+
+=== outcome rates, one row per system ===
+system                                   undet.dup   lost effect   declared amb
+-------------------------------------------------------------------------------
+AEP_FULL                                       0/2           0/2            0/2
+B0_NAIVE_RETRY                                 1/2           0/2            0/2
+B1_LEASE_ONLY                                  1/2           0/2            0/2
+B2_CAS_ONLY                                    0/2           0/2            0/2
+B3_INTENT_NO_BARRIER                           0/2           0/2            0/2
+B4B_DURABLE_WORKFLOW_AT_MOST_ONCE              0/2           2/2            0/2
+B4_DURABLE_WORKFLOW                            2/2           0/2            0/2
+
+reproduce-smoke: OK. New data is under .scratch/reproduce/smoke; the frozen tree was not touched.
+
+=== tearing down ===
+GATE reproduce-smoke exit=0
+
+
+########## VERDICT ##########
+AT LEAST ONE GATE FAILED

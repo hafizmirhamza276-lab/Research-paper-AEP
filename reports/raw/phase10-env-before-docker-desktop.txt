@@ -1,0 +1,412 @@
+
+=== captured_at (UTC) ===
+2026-09-02T09:42:26Z
+
+=== identity ===
+user=root  host=KP248  cwd=/mnt/d/personal/AEP/Research-paper-AEP
+
+=== docker version ===
+Client:
+ Version:           29.4.3
+ API version:       1.54
+ Go version:        go1.26.2
+ Git commit:        055a478
+ Built:             Wed May  6 17:10:36 2026
+ OS/Arch:           windows/amd64
+ Context:           desktop-linux
+
+Server: Docker Desktop 4.74.0 (227015)
+ Engine:
+  Version:          29.4.3
+  API version:      1.54 (minimum version 1.40)
+  Go version:       go1.26.2
+  Git commit:       56be731
+  Built:            Wed May  6 17:07:37 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.3
+  GitCommit:        77c84241c7cbdd9b4eca2591793e3d4f4317c590
+ runc:
+  Version:          1.3.5
+  GitCommit:        v1.3.5-0-g488fc13e
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+=== docker context ls ===
+NAME              DESCRIPTION                               DOCKER ENDPOINT                             ERROR
+default           Current DOCKER_HOST based configuration   npipe:////./pipe/docker_engine              
+desktop-linux *   Docker Desktop                            npipe:////./pipe/dockerDesktopLinuxEngine   
+
+=== docker context show ===
+desktop-linux
+
+=== which -a docker ===
+/usr/local/bin/docker
+/mnt/c/Program Files/Docker/Docker/resources/bin/docker
+
+=== cat /usr/local/bin/docker  (the Docker Desktop shim being replaced) ===
+#!/usr/bin/env bash
+# Forward to Docker Desktop, from the Windows-side tree.
+cd /mnt/d/personal/AEP/Research-paper-AEP 2>/dev/null || true
+exec docker.exe "$@"
+
+=== docker info | grep -i 'root dir|storage driver|server version' ===
+ Server Version: 29.4.3
+ Storage Driver: overlayfs
+ Docker Root Dir: /var/lib/docker
+
+=== docker info (fuller, for the record) ===
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+  cgroupns
+ Kernel Version: 6.6.114.1-microsoft-standard-WSL2
+ Operating System: Docker Desktop
+ Architecture: x86_64
+ Total Memory: 15.35GiB
+ Name: docker-desktop
+ Docker Root Dir: /var/lib/docker
+
+=== compose up -d --wait ===
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-toxiproxy Healthy 
+ Container aep-phase2-redis72 Healthy 
+
+=== docker inspect aep-phase2-redis72 -- Mounts VERBATIM ===
+[{"Type":"volume","Name":"aep-phase2_redis-data","Source":"/var/lib/docker/volumes/aep-phase2_redis-data/_data","Destination":"/data","Driver":"local","Mode":"rw","RW":true,"Propagation":""},{"Type":"bind","Source":"D:\\personal\\AEP\\Research-paper-AEP\\redis\\phase2.conf","Destination":"/usr/local/etc/redis/redis.conf","Mode":"ro","RW":false,"Propagation":"rprivate"}]
+
+=== docker inspect aep-phase2-redis72 -- HostConfig.Binds VERBATIM ===
+["D:\\personal\\AEP\\Research-paper-AEP\\redis\\phase2.conf:/usr/local/etc/redis/redis.conf:ro","aep-phase2_redis-data:/data:rw"]
+
+=== docker inspect aep-phase2-redis72 -- Image + digest ===
+Config.Image      : redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+Image (resolved)  : sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+RepoDigests       : ["redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"]
+RepoTags          : ["redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"]
+
+=== docker images --digests (redis, toxiproxy) ===
+REPOSITORY                                      TAG                       DIGEST                                                                    IMAGE ID       CREATED         SIZE
+ghcr.io/shopify/toxiproxy                       2.12.0                    sha256:9378ed52a28bc50edc1350f936f518f31fa95f0d15917d6eb40b8e376d1a214e   9378ed52a28b   17 months ago   26.3MB
+redis                                           7.2.5                     sha256:3aaec283e6e593bde528077d60280ac1589887067a39273348860837c9346d7e   3aaec283e6e5   2 years ago     175MB
+redis                                           <none>                    sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44   6aaf3f5e6bc8   2 years ago     60MB
+
+=== docker inspect aep-phase2-redis72 -- full (first 200 lines) ===
+[
+    {
+        "Id": "4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be",
+        "Created": "2026-08-13T07:19:04.157654294Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "redis-server",
+            "/usr/local/etc/redis/redis.conf"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 694,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-02T09:39:16.745840673Z",
+            "FinishedAt": "2026-09-02T09:39:12.637207266Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-09-02T09:42:31.077040693Z",
+                        "End": "2026-09-02T09:42:31.157859552Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-09-02T09:42:32.158594262Z",
+                        "End": "2026-09-02T09:42:32.220321356Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-09-02T09:42:33.221121801Z",
+                        "End": "2026-09-02T09:42:33.289809913Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-09-02T09:42:34.291270547Z",
+                        "End": "2026-09-02T09:42:34.360317803Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-09-02T09:42:35.361246333Z",
+                        "End": "2026-09-02T09:42:35.422669198Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+        "ResolvConfPath": "/var/lib/docker/containers/4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be/hostname",
+        "HostsPath": "/var/lib/docker/containers/4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be/hosts",
+        "LogPath": "/var/lib/docker/containers/4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be/4c30a5546934beb80f4cd07060734fe95acee02ea318cf2fbf9eee44b550d7be-json.log",
+        "Name": "/aep-phase2-redis72",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "D:\\personal\\AEP\\Research-paper-AEP\\redis\\phase2.conf:/usr/local/etc/redis/redis.conf:ro",
+                "aep-phase2_redis-data:/data:rw"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "aep-phase2_default",
+            "PortBindings": {
+                "6379/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "6381"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "aep-phase2_redis-data",
+                "Source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data",
+                "Destination": "/data",
+                "Driver": "local",
+                "Mode": "rw",
+                "RW": true,
+                "Propagation": ""
+            },
+            {
+                "Type": "bind",
+                "Source": "D:\\personal\\AEP\\Research-paper-AEP\\redis\\phase2.conf",
+                "Destination": "/usr/local/etc/redis/redis.conf",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+
+=== uname -a ===
+Linux KP248 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+=== WSL kernel version (from uname -r) ===
+6.6.114.1-microsoft-standard-WSL2
+
+=== cat /etc/os-release ===
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+=== df -T for the repo ===
+Filesystem     Type 1K-blocks     Used Available Use% Mounted on
+D:\            9p   409598972 26342964 383256008   7% /mnt/d
+
+=== df -T for /var/lib/docker ===
+df: /var/lib/docker: No such file or directory
+(/var/lib/docker does not exist on this distro -- Docker Desktop keeps its data root in its own VM)
+
+=== df -T (all) ===
+Filesystem     Type     1K-blocks      Used Available Use% Mounted on
+none           overlay    8049960         0   8049960   0% /usr/lib/modules/6.6.114.1-microsoft-standard-WSL2
+none           tmpfs      8049960         4   8049956   1% /mnt/wsl
+drivers        9p       565355516 283087444 282268072  51% /usr/lib/wsl/drivers
+/dev/sdd       ext4    1055762868   4825492 997233904   1% /
+none           tmpfs      8049960        36   8049924   1% /mnt/wslg
+none           overlay    8049960         0   8049960   0% /usr/lib/wsl/lib
+rootfs         rootfs     8044952      2772   8042180   1% /init
+none           tmpfs      8049960       548   8049412   1% /run
+none           tmpfs      8049960         0   8049960   0% /run/lock
+none           tmpfs      8049960         0   8049960   0% /run/shm
+none           overlay    8049960        80   8049880   1% /mnt/wslg/versions.txt
+none           overlay    8049960        80   8049880   1% /mnt/wslg/doc
+C:\            9p       565355516 283087444 282268072  51% /mnt/c
+D:\            9p       409598972  26342984 383255988   7% /mnt/d
+tmpfs          tmpfs      1609992        20   1609972   1% /run/user/0
+
+=== /proc/mounts entry governing the repo ===
+/dev/sdd / ext4 rw,relatime,discard,errors=remount-ro,data=ordered 0 0
+D:\134 /mnt/d 9p rw,noatime,aname=drvfs;path=D:\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6 0 0
+
+=== dmsetup targets ===
+verity           v1.9.0
+striped          v1.6.0
+linear           v1.4.0
+error            v1.6.0
+
+=== lsmod | grep -i 'dm_|loop' ===
+(no matching modules loaded)
+
+=== lsmod (all, for the record) ===
+Module                  Size  Used by
+nf_conntrack_netlink    45056  0
+xt_nat                 12288  11
+xt_conntrack           12288  2
+xt_MASQUERADE          16384  7
+xfrm_user              49152  1
+xfrm_algo              16384  1 xfrm_user
+xt_set                 20480  0
+ip_set                 49152  1 xt_set
+xt_addrtype            12288  6
+ip6t_REJECT            12288  2
+nf_reject_ipv6         16384  1 ip6t_REJECT
+ipt_REJECT             12288  2
+nf_reject_ipv4         12288  1 ipt_REJECT
+sunrpc                602112  1
+nft_compat             16384  30
+isofs                  45056  1
+tls                    98304  0
+intel_rapl_msr         16384  0
+intel_rapl_common      32768  1 intel_rapl_msr
+kvm_intel             356352  0
+kvm                   966656  1 kvm_intel
+irqbypass              12288  1 kvm
+crc32c_intel           16384  6
+battery                20480  0
+ac                     16384  0
+sch_fq_codel           16384  2
+configfs               53248  1
+autofs4                45056  0
+br_netfilter           28672  0
+bridge                282624  1 br_netfilter
+stp                    12288  1 bridge
+llc                    12288  2 bridge,stp
+ip_tables              28672  0
+tun                    53248  2
+
+=== dm-flakey module present on disk? ===
+-rw-rw-r-- 1 root root 26864 Dec  2  2025 /usr/lib/modules/6.6.114.1-microsoft-standard-WSL2/kernel/drivers/md/dm-flakey.ko
+
+=== systemd? ===
+systemd
+running
+
+=== iptables present? ===
+(neither iptables nor nft on PATH)
+
+=== AEP_HARNESS_SUSPEND_DISABLED ===
+value=<unset>
+
+=== git HEAD ===
+a9bf5598e6dcc31b5979c88fbb395f3700a1ae90 2026-09-02T14:37:33+05:00 phase 10: commit the issued prompt and the direction document before any work

@@ -28,6 +28,15 @@ Redis storage on a backing unlike every number currently in the paper -- in the
 one experiment where the storage *is* the fault. Recording the backing is what
 lets that phase state the difference rather than inherit it.
 
+*The third, added by Phase 10.* The same shape again, one level further out.
+``docs/24-revision-backlog.md`` B1 and Phase 8.1 both turn on the width of a
+race: AEP-full dispatches iff ``WAITAOF`` returns before Redis dies. Phase 10
+replaced the container runtime and measured that the same instrument delivers
+``docker kill`` at a median of 961.8 ms through the Docker Desktop shim and
+317 ms through a native unix-socket daemon. **A property that can move a
+measured quantity, that nobody chose, that no field recorded** -- and this time
+it is the fault injector itself. ``docker_kill_latency`` records it.
+
 **Detected, never declared.** Every value here is read from the running system:
 ``stat -f`` for the filesystem under the results root, ``docker inspect`` for
 the mount actually serving ``/data``. A declared field would be worth nothing,
@@ -184,6 +193,73 @@ def redis_storage_backing(container: str) -> dict[str, Any]:
     return record
 
 
+#: Where the host's measured ``docker kill`` latency is cached.
+#:
+#: Written by ``scripts/measure_kill_latency.py --output``; read here. A path
+#: rather than a live measurement because measuring costs a hundred container
+#: kills, and a run that killed a hundred containers to describe itself would
+#: be a worse instrument than the gap it closes.
+KILL_LATENCY_CACHE = "reports/raw/measurement-host-kill-latency.json"
+KILL_LATENCY_CACHE_VARIABLE = "AEP_KILL_LATENCY_CACHE"
+
+
+def docker_kill_latency() -> dict[str, Any]:
+    """The host's ``docker kill`` latency distribution, at the time of the run.
+
+    Phase 10, addition 3. Phase 8.1 established that in the
+    ``redis-kill-preack`` regime AEP-full dispatches **iff** ``WAITAOF`` returns
+    before Redis dies, and that runs which applied an effect had 194.1 ms higher
+    kill latency than runs which did not (permutation p = 0.00005). The width of
+    that race is therefore a property of the *fault injector on this host*, and
+    it moves: Phase 10 measured the same instrument at a median of 961.8 ms
+    through the Docker Desktop shim and 317 ms through a native unix-socket
+    daemon, against the same compose container.
+
+    Nothing recorded that. Phase 9C's over-dispersion finding was
+    uninterpretable until Phase 8.1 went back and parsed 300 event logs by hand
+    to recover the per-run latencies, and the *host-level* distribution those
+    runs were drawn from was never recorded at all. This field is that number,
+    stamped into every run from Phase 10 onward, whatever regime it is in.
+
+    **Why every run and not only the ones that kill Redis.** A run in the
+    ``session-3`` regime performs no ``docker kill`` -- its fault is a worker
+    ``SIGKILL`` delivered by the process to itself (``injector.py:81-82``),
+    which has no cross-boundary landing latency to measure. But the *host* it
+    ran on still had one, and whether two collections are comparable turns on
+    whether the host was the same instrument. Recording it only where it is
+    exercised would leave exactly the gap this field exists to close.
+
+    Fail-soft like every other probe here: a missing or unreadable cache is
+    recorded as such, never raised.
+    """
+    root = Path(__file__).resolve().parents[2]
+    configured = os.environ.get(KILL_LATENCY_CACHE_VARIABLE)
+    cache = Path(configured) if configured else root / KILL_LATENCY_CACHE
+    record: dict[str, Any] = {"cache": str(cache)}
+    try:
+        payload = json.loads(cache.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        record["error"] = f"{type(error).__name__}: {error}"
+        return record
+    record["measured_at_utc"] = payload.get("measured_at_utc")
+    target = payload.get("target") or {}
+    record["target_mode"] = target.get("mode")
+    record["comparable_to_collected_runs"] = target.get(
+        "comparable_to_collected_runs"
+    )
+    for label, summary in (payload.get("summaries") or {}).items():
+        record.setdefault("runtimes", {})[label] = {
+            key: summary.get(key)
+            for key in (
+                "trials_counted", "min", "median", "p95", "max",
+                "median_ci_low", "median_ci_high", "context", "server_version",
+            )
+        }
+    if "runtimes" not in record:
+        record["error"] = "the cache carries no runtime summaries"
+    return record
+
+
 def docker_identity() -> dict[str, Any]:
     """Client and server versions, and the container's start time.
 
@@ -250,6 +326,7 @@ def collect(results_root: Path, redis_container: str | None) -> dict[str, Any]:
         "results_root_filesystem": results_root_filesystem(results_root),
         "harness_version": harness_version(),
         "docker": docker_identity(),
+        "docker_kill_latency": docker_kill_latency(),
         "platform_release": os.uname().release if hasattr(os, "uname") else None,
     }
     if redis_container:

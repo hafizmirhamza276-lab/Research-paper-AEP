@@ -1,0 +1,30 @@
+==============================================================================
+G2: host-level write loss (dm-flakey drop_writes)
+==============================================================================
+  platform        Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  kernel          6.6.114.1-microsoft-standard-WSL2
+  redis           Redis server v=7.2.5 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=5259b0772c1000e1
+  dm targets      flakey           v1.5.0
+
+  loop            /dev/loop0
+  dm table (pass) 0 524288 flakey /dev/loop0 0 1 0
+  dm table (drop) 0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
+
+--- the environment the durability claim rests on ---
+  mount_options            ext4 rw,relatime
+  ext4_features            has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum
+  appendfsync              everysec
+  appendonly               yes
+  redis_dir                /root/phase10/aep-g2-selftest/mnt/redisdata
+  redis_version            7.2.5
+
+--- selftest: does the device stack actually lose writes? ---
+  table_pass                       0 524288 flakey /dev/loop0 0 1 0
+  table_drop                       0 524288 flakey /dev/loop0 0 0 1 1 drop_writes
+  before_the_cut_survived          True
+  after_the_cut_survived           False
+  after_the_cut_fsync_error        None
+  valid                            True
+
+
+wrote /root/phase10/flakey-selftest.json
