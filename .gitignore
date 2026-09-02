@@ -370,3 +370,56 @@ experiments/results/b2-paired-v2-s4-2026-08-28/analysis/*
 !experiments/results/b2-paired-v2-s4-2026-08-28/analysis/per-execution.csv
 !experiments/results/b2-paired-v2-s4-2026-08-28/analysis/redis-kill-ablation.csv
 !experiments/results/b2-paired-v2-s4-2026-08-28/analysis/table-1.csv
+
+# --- Phase 10's runtime-confound replication (WS-0) ---------------------------
+# Two arms of the frozen `matrix` cell -- AEP-full x NO_READBACK x session-3 --
+# re-collected under a NATIVE Docker Engine inside the WSL2 distro rather than
+# Docker Desktop. The ext4 arm was collected outside the repository tree, on the
+# distro's own disk, because the tree is on 9p/drvfs and the frozen cell it
+# replicates was collected on ext4; the drvfs arm was collected in place. Both
+# are here so the filesystem is separated from the runtime instead of
+# confounded with it.
+#
+# Pre-registered in reports/phase-report-10-prediction-2026-09-02.md, committed
+# and pushed at 9b1848b (10:34:00Z) before the first run existed (11:30:32Z).
+#
+# Same rule as every root above: analysis products and the collection's own
+# provenance stamp only -- never a run directory, never a sqlite ledger, never
+# a log. COLLECTION-PROVENANCE.json is included because it is what records that
+# the ext4 arm's collection path and its committed path differ, which nothing
+# else in the tree states.
+!experiments/results/phase10-replication-ext4-2026-09-02/
+experiments/results/phase10-replication-ext4-2026-09-02/*
+!experiments/results/phase10-replication-ext4-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/
+experiments/results/phase10-replication-ext4-2026-09-02/analysis/*
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/
+experiments/results/phase10-replication-ext4-arbb30-2026-09-02/*
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/
+experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/*
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-drvfs-2026-09-02/
+experiments/results/phase10-replication-drvfs-2026-09-02/*
+!experiments/results/phase10-replication-drvfs-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/
+experiments/results/phase10-replication-drvfs-2026-09-02/analysis/*
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/
+experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/*
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/
+experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/*
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-execution.csv

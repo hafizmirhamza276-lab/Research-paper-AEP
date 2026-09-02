@@ -1,0 +1,935 @@
+{
+  "analysis": "phase10-replication/1",
+  "arm_vs_arm": {
+    "informative_cell": {
+      "known_ambiguity_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.06666666666666668,
+        "ci_low": -0.07,
+        "confidence": 0.95,
+        "half_width": 0.06833333333333334,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "lost_effect_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "recovery_success_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "undetected_duplicate_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "unverified_failure_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      }
+    },
+    "informative_cell_direction": "drvfs minus ext4",
+    "matched": {
+      "known_ambiguity_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.06666666666666668,
+        "ci_low": -0.07,
+        "confidence": 0.95,
+        "half_width": 0.06833333333333334,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "lost_effect_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "recovery_success_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "undetected_duplicate_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "unverified_failure_rate": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 30,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      }
+    },
+    "matched_direction": "drvfs minus ext4"
+  },
+  "bootstrap_seed": 20260806,
+  "cell": {
+    "crash_points": [
+      "before_intent_write",
+      "after_intent_before_barrier",
+      "mid_dispatch",
+      "after_response_before_resolution",
+      "after_resolution_before_barrier",
+      "after_barrier_before_dispatch"
+    ],
+    "informative_crash_point": "after_resolution_before_barrier",
+    "readback_keying": "CALLER_REFERENCE",
+    "regime_labels_accepted": [
+      "",
+      "(session-3)",
+      "crashed"
+    ],
+    "response_class": "NO_READBACK",
+    "system": "AEP_FULL"
+  },
+  "frozen_source": "experiments/results/matrix/analysis/per-execution.csv",
+  "informative_cell": {
+    "known_ambiguity_rate": {
+      "drvfs": {
+        "ci_high": 0.24333333333333335,
+        "ci_low": 0.14666666666666667,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.19333333333333333,
+        "runs": 30,
+        "successes": 58,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.18333333333333332,
+        "ci_low": -0.3966666666666666,
+        "confidence": 0.95,
+        "half_width": 0.29,
+        "margin": 0.15,
+        "point": -0.13999999999999999,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "INCONCLUSIVE -- UNDERPOWERED",
+        "within_margin": false
+      },
+      "ext4": {
+        "ci_high": 0.24333333333333335,
+        "ci_low": 0.14666666666666667,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.19333333333333333,
+        "runs": 30,
+        "successes": 58,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.18333333333333332,
+        "ci_low": -0.3966666666666666,
+        "confidence": 0.95,
+        "half_width": 0.29,
+        "margin": 0.15,
+        "point": -0.13999999999999999,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "INCONCLUSIVE -- UNDERPOWERED",
+        "within_margin": false
+      },
+      "frozen": {
+        "ci_high": 0.6,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.3333333333333333,
+        "runs": 3,
+        "successes": 10,
+        "total": 30
+      }
+    },
+    "lost_effect_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 3,
+        "successes": 0,
+        "total": 30
+      }
+    },
+    "recovery_success_rate": {
+      "drvfs": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 1.0,
+        "runs": 30,
+        "successes": 300,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 1.0,
+        "runs": 30,
+        "successes": 300,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 1.0,
+        "runs": 3,
+        "successes": 30,
+        "total": 30
+      }
+    },
+    "undetected_duplicate_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 3,
+        "successes": 0,
+        "total": 30
+      }
+    },
+    "unverified_failure_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 3,
+        "successes": 0,
+        "total": 30
+      }
+    }
+  },
+  "margin": 0.15,
+  "margin_is": "a stipulation declared before collection, not a derivation",
+  "matched": {
+    "known_ambiguity_rate": {
+      "drvfs": {
+        "ci_high": 0.24333333333333335,
+        "ci_low": 0.14666666666666667,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.19333333333333333,
+        "runs": 30,
+        "successes": 58,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.18333333333333332,
+        "ci_low": -0.3966666666666666,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.29,
+        "margin": 0.15,
+        "point": -0.13999999999999999,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "INCONCLUSIVE -- UNDERPOWERED",
+        "within_margin": false
+      },
+      "ext4": {
+        "ci_high": 0.24333333333333335,
+        "ci_low": 0.14666666666666667,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.19333333333333333,
+        "runs": 30,
+        "successes": 58,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.18333333333333332,
+        "ci_low": -0.3966666666666666,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.29,
+        "margin": 0.15,
+        "point": -0.13999999999999999,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "INCONCLUSIVE -- UNDERPOWERED",
+        "within_margin": false
+      },
+      "frozen": {
+        "ci_high": 0.9,
+        "ci_low": 0.5111111111111111,
+        "crash_points": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_resolution_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "rate": 0.7222222222222222,
+        "runs": 18,
+        "successes": 130,
+        "total": 180
+      }
+    },
+    "lost_effect_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_resolution_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "rate": 0.0,
+        "runs": 18,
+        "successes": 0,
+        "total": 180
+      }
+    },
+    "recovery_success_rate": {
+      "drvfs": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 1.0,
+        "runs": 30,
+        "successes": 300,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 1.0,
+        "runs": 30,
+        "successes": 300,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 1.0,
+        "ci_low": 0.6666666666666666,
+        "crash_points": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_resolution_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "rate": 0.8333333333333334,
+        "runs": 18,
+        "successes": 150,
+        "total": 180
+      }
+    },
+    "undetected_duplicate_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_resolution_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "rate": 0.0,
+        "runs": 18,
+        "successes": 0,
+        "total": 180
+      }
+    },
+    "unverified_failure_rate": {
+      "drvfs": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "drvfs_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "ext4": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_resolution_before_barrier"
+        ],
+        "rate": 0.0,
+        "runs": 30,
+        "successes": 0,
+        "total": 300
+      },
+      "ext4_vs_frozen": {
+        "arm_clusters": 30,
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "confidence": 0.95,
+        "crash_points_dropped_not_in_both": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "half_width": 0.0,
+        "margin": 0.15,
+        "point": 0.0,
+        "reference_clusters": 3,
+        "strata": [
+          "after_resolution_before_barrier"
+        ],
+        "verdict": "NOT A CONFOUND at this margin",
+        "within_margin": true
+      },
+      "frozen": {
+        "ci_high": 0.0,
+        "ci_low": 0.0,
+        "crash_points": [
+          "after_barrier_before_dispatch",
+          "after_intent_before_barrier",
+          "after_resolution_before_barrier",
+          "after_response_before_resolution",
+          "before_intent_write",
+          "mid_dispatch"
+        ],
+        "rate": 0.0,
+        "runs": 18,
+        "successes": 0,
+        "total": 180
+      }
+    }
+  },
+  "resamples": 10000,
+  "unit_of_analysis": "the run"
+}

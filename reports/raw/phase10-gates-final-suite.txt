@@ -1,0 +1,164 @@
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+........................................................................ [ 24%]
+..........F............................................................. [ 28%]
+........................................................................ [ 32%]
+.....................................................F.................. [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+.......................................................................F [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 96%]
+..................................................................       [100%]
+=================================== FAILURES ===================================
+______ test_the_cross_fault_comparison_is_against_the_process_kill_probe _______
+
+    def test_the_cross_fault_comparison_is_against_the_process_kill_probe() -> None:
+        macros = dict(
+            (name, value)
+            for name, value, *_ in flakey_macros(
+                [_payload(60, 60, 60, [_trial()] * 60)]
+            )
+        )
+        # 0/10 lost under a process kill vs 60/60 under write loss.
+>       assert macros["FlakeyVsProcessKillP"] == "2.5\\times10^{-12}"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'FlakeyVsProcessKillP'
+
+tests/test_paper_tables.py:242: KeyError
+___________ test_acknowledged_real_waitaof_barrier_permits_dispatch ____________
+
+redis_client = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+storage_adapter = <aep_core.core.storage.RedisStorageAdapter object at 0x76a0706176b0>
+lock_manager = <aep_core.core.locks.DistributedLockManager object at 0x76a070617590>
+
+>   ???
+
+D:\personal\AEP\Research-paper-AEP\tests\test_phase2_waitaof_integration.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+aep_core/core/intent_workflow.py:477: in execute
+    raise barrier_error
+aep_core/core/intent_workflow.py:446: in execute
+    ack = await self._confirm_dispatch_barrier(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <aep_core.core.intent_workflow.WriteAheadRunner object at 0x76a06e6fc290>
+connection = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+scope = '4882dded-8614-460a-94d4-16e41a694ba6:4dcfc1cc-7aa3-4ebe-b7d3-dffaa558bcc2:2'
+
+    async def _confirm_dispatch_barrier(
+        self, connection: Any, *, scope: str
+    ) -> DurabilityAck:
+        """Barrier the write-ahead intent and issue the in-process dispatch guard."""
+    
+        try:
+            return await confirm_durable_ack(
+                self.barrier,
+                connection,
+                self.policy.durability_timeout_ms,
+                scope=scope,
+            )
+        except NotImplementedError:
+            raise
+        except Exception as exc:
+>           raise WriteAheadWorkflowError(
+                f"durability barrier failed: {type(exc).__name__}"
+            ) from None
+E           aep_core.core.intent_workflow.WriteAheadWorkflowError: durability barrier failed: DurabilityBarrierError
+
+aep_core/core/intent_workflow.py:359: WriteAheadWorkflowError
+___________ test_one_execution_produces_exactly_one_applied_mutation ___________
+
+redis_client = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+storage_adapter = <aep_core.core.storage.RedisStorageAdapter object at 0x76a06e444770>
+lock_manager = <aep_core.core.locks.DistributedLockManager object at 0x76a06e31f7d0>
+connector = <experiments.mock_api.client.MockLegacyApiConnector object at 0x76a06e46df50>
+mock_api = <experiments.mock_api.tests.server_harness.MockApiProcess object at 0x76a06e46e650>
+
+>   ???
+
+D:\personal\AEP\Research-paper-AEP\experiments\mock_api\tests\test_evaluation_dispatch.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+aep_core/core/intent_workflow.py:647: in execute
+    await self._confirm_barrier(connection)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <aep_core.core.intent_workflow.WriteAheadRunner object at 0x76a06e4ad0d0>
+connection = <redis.asyncio.client.Redis(<redis.asyncio.connection.ConnectionPool(<redis.asyncio.connection.Connection(decode_respo...d_timeout=10, endpoint_type=None),orig_host_address=127.0.0.1,orig_socket_timeout=5,orig_socket_connect_timeout=5)>)>)>
+
+    async def _confirm_barrier(self, connection: Any) -> None:
+        try:
+            durable = await self.barrier.confirm_durable(
+                connection, self.policy.durability_timeout_ms
+            )
+        except NotImplementedError:
+            raise
+        except Exception as exc:
+            raise WriteAheadWorkflowError(
+                f"durability barrier failed: {type(exc).__name__}"
+            ) from None
+        if not durable:
+>           raise WriteAheadWorkflowError(
+                "durability barrier did not acknowledge the preceding write"
+            )
+E           aep_core.core.intent_workflow.WriteAheadWorkflowError: durability barrier did not acknowledge the preceding write
+
+aep_core/core/intent_workflow.py:340: WriteAheadWorkflowError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_before_commit_leaves_no_effect_and_no_record
+  /root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/threading.py:281: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x76a06daa05e0>
+    def __init__(self, lock=None):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_real_client_times_out_when_the_response_is_withheld
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/httpx/_utils.py:41: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x76a06e4a5210>
+    if proxy_info.get(scheme):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.0-final-0 ________________
+
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+aep_core/__init__.py                      0      0   100%
+aep_core/core/__init__.py                 0      0   100%
+aep_core/core/connector_contract.py      72      1    99%   154
+aep_core/core/durability.py             158      1    99%   255
+aep_core/core/exceptions.py               8      0   100%
+aep_core/core/intent_recovery.py        246     29    88%   114, 136, 144, 156, 189-191, 217, 230, 253, 286, 288, 318-320, 323-324, 333-338, 376, 387, 397, 402, 405, 410, 493, 506
+aep_core/core/intent_workflow.py        259     22    92%   255, 259, 263, 297-298, 318-324, 334, 357, 383, 508-525, 539, 552, 606-607
+aep_core/core/intents.py                383     47    88%   170, 173-174, 249, 255, 261, 264-265, 273-274, 276, 285, 292, 295-296, 316, 319, 322, 333, 335, 350, 355, 358, 362, 685, 693, 699, 716, 747, 786, 920, 1022-1025, 1033, 1037, 1043, 1073, 1105, 1119, 1141-1142, 1151, 1179, 1208-1209
+aep_core/core/locks.py                  110      4    96%   382-393
+aep_core/core/request_binding.py        788     78    90%   225, 272, 302, 304-305, 385, 390, 396, 401, 404-405, 407, 427, 442-445, 459, 466, 475, 488, 497, 525, 544, 549, 553, 567, 589, 596, 608, 662, 667-672, 681, 697, 699, 708, 713, 716, 727, 743, 759, 762, 766, 769, 773, 817, 900, 907, 925, 927, 929, 935, 937, 951, 960-961, 964, 967-968, 980, 1053, 1094, 1103, 1125, 1218-1219, 1324, 1387, 1389, 1391, 1449, 1459, 1461, 1479
+aep_core/core/request_vault.py          251     22    91%   207, 211, 213, 216, 229, 231, 233, 236, 253, 274, 356, 367, 376, 378, 380, 383, 415, 426-427, 432, 437, 445
+aep_core/core/state_codec.py             61      3    95%   85, 135-136
+aep_core/core/storage.py                181     15    92%   491, 497, 515-516, 553, 605-614, 730, 809-810, 823-831
+aep_core/core/validation.py              11      0   100%
+-------------------------------------------------------------------
+TOTAL                                  2528    222    91%
+Required test coverage of 90% reached. Total coverage: 91.22%
+=========================== short test summary info ============================
+FAILED tests/test_paper_tables.py::test_the_cross_fault_comparison_is_against_the_process_kill_probe
+FAILED tests/test_phase2_waitaof_integration.py::test_acknowledged_real_waitaof_barrier_permits_dispatch
+FAILED experiments/mock_api/tests/test_evaluation_dispatch.py::test_one_execution_produces_exactly_one_applied_mutation
+3 failed, 1791 passed, 3 warnings in 186.48s (0:03:06)

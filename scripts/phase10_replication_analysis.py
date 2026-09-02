@@ -72,8 +72,26 @@ from experiments.statistics import (  # noqa: E402
 # --------------------------------------------------------------------------
 SYSTEM = "AEP_FULL"
 RESPONSE_CLASS = "NO_READBACK"
-REGIME = "(session-3)"
 KEYING = "CALLER_REFERENCE"
+
+#: The crash-always regime, under every label it has ever been written with.
+#:
+#: **Recorded as a post-data correction, not applied silently** (rule 4). This
+#: script was committed before collection with a single literal `"(session-3)"`,
+#: which is what the tracked `experiments/results/matrix/analysis/per-execution.csv`
+#: (committed 2026-08-10, `831c796`) contains. A freshly generated
+#: per-execution.csv writes `"crashed"` for the same regime, because
+#: `analyze.py:406` maps the empty regime key to that display label. The two are
+#: the same condition -- `analyze.py:601-616` derives the key as `""` when
+#: `crash_probability == 1.0` and the run performs no Redis kill -- so joining
+#: frozen and new rows on the label alone silently selects **zero** rows from
+#: the new arm. That is what happened on the first run of this analysis.
+#:
+#: The correction is a label alias and nothing else. It does not touch the
+#: estimand, the unit of analysis, the margin, the resamples, the seed or the
+#: verdict rule, and it cannot move a verdict in either direction: before it,
+#: the new arm contributed no rows at all.
+REGIMES = frozenset({"(session-3)", "crashed", ""})
 
 #: The six crash points of the matched arms.
 CRASH_POINTS = (
@@ -120,7 +138,7 @@ def select(rows: list[dict[str, str]], crash_points: tuple[str, ...]
         for row in rows
         if row.get("system") == SYSTEM
         and row.get("response_class") == RESPONSE_CLASS
-        and row.get("regime") == REGIME
+        and row.get("regime") in REGIMES
         and row.get("readback_keying") == KEYING
         and row.get("crash_point") in crash_points
     ]
@@ -256,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
         "cell": {
             "system": SYSTEM,
             "response_class": RESPONSE_CLASS,
-            "regime": REGIME,
+            "regime_labels_accepted": sorted(REGIMES),
             "readback_keying": KEYING,
             "crash_points": list(CRASH_POINTS),
             "informative_crash_point": INFORMATIVE_CRASH_POINT,

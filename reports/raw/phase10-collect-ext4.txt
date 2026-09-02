@@ -1,0 +1,219 @@
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Healthy 
+ Container aep-phacontainer status running
+published ports  {"6379/tcp":[{"HostIp":"127.0.0.1","HostPort":"6381"}]}
+run_id via 6381  run_id:61ec53bc51bb66bc18fa8163cc2ab7f0c29271f7
+run_id in-container run_id:61ec53bc51bb66bc18fa8163cc2ab7f0c29271f7
+docker desktop   no aep-phase2 containers running
+  verified redis_version=7.2.5
+  verified appendonly=yes
+  verified appendfsync=everysec
+  verified aof-use-rdb-preamble=yes
+  verified aof_enabled=1
+  verified waitaof=present
+OK: live Redis matches phase2.conf semantics
+  /root/aep-phase10/ext4-2026-09-02  ->  ext2/ext3  /dev/sdd ext4
+  /root/aep-phase10/ext4-2026-09-02-arbb30  ->  ext2/ext3  /dev/sdd ext4
+
+
+########## test-instance marker ##########
+OK
+
+
+########## measurement host, as recorded into this collection ##########
+    "note": "amendment E5. Not detectable: a host that merely did not happen to suspend is indistinguishable from one that cannot. The declaration must be exported by the collection command itself.",
+    "value": null,
+    "variable": "AEP_HARNESS_SUSPEND_DISABLED"
+  }
+}
+
+
+########## MATCHED: 3 runs x 10 executions x 6 crash points ##########
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     False   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     30 (3 runs x 10 executions)
+  workers per run      2
+  cells (total)        6
+  cells (applicable)   6
+  cells (not applic.)  0
+  runs planned         18
+  estimated wall time  0.22 h (783.0 s)
+
+  by tier:
+    tier 1:   18 runs,  0.22 h   E3: POSITIVE_ONLY_READBACK and NO_READBACK -- where the known-ambiguity claim lives, and had no evidence at all
+
+  regimes (a regime is a condition, not a dimension):
+    (session-3)            p(crash)=1.0  runs=18   shape=3 x 10
+      every execution crashed, no infrastructure fault
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    1     (session-3)          AEP_FULL                             after_barrier_before_dispatch      ledger_postings  CALLER_REFERENCE     3
+    1     (session-3)          AEP_FULL                             after_intent_before_barrier        ledger_postings  CALLER_REFERENCE     3
+    1     (session-3)          AEP_FULL                             after_resolution_before_barrier    ledger_postings  CALLER_REFERENCE     3
+    1     (session-3)          AEP_FULL                             after_response_before_resolution   ledger_postings  CALLER_REFERENCE     3
+    1     (session-3)          AEP_FULL                             before_intent_write                ledger_postings  CALLER_REFERENCE     3
+    1     (session-3)          AEP_FULL                             mid_dispatch                       ledger_postings  CALLER_REFERENCE     3
+
+==============================================================================
+plan written to /root/aep-phase10/ext4-2026-09-02/matrix-plan.json and matrix-plan.txt
+[1/18] tier 1 AEP_FULL after_barrier_before_dispatch ledger_postings CALLER_REFERENCE rep0
+[2/18] tier 1 AEP_FULL after_intent_before_barrier ledger_postings CALLER_REFERENCE rep0
+[3/18] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep0
+[4/18] tier 1 AEP_FULL after_response_before_resolution ledger_postings CALLER_REFERENCE rep0
+[5/18] tier 1 AEP_FULL before_intent_write ledger_postings CALLER_REFERENCE rep0
+[6/18] tier 1 AEP_FULL mid_dispatch ledger_postings CALLER_REFERENCE rep0
+[7/18] tier 1 AEP_FULL after_barrier_before_dispatch ledger_postings CALLER_REFERENCE rep1
+[8/18] tier 1 AEP_FULL after_intent_before_barrier ledger_postings CALLER_REFERENCE rep1
+[9/18] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep1
+[10/18] tier 1 AEP_FULL after_response_before_resolution ledger_postings CALLER_REFERENCE rep1
+[11/18] tier 1 AEP_FULL before_intent_write ledger_postings CALLER_REFERENCE rep1
+[12/18] tier 1 AEP_FULL mid_dispatch ledger_postings CALLER_REFERENCE rep1
+[13/18] tier 1 AEP_FULL after_barrier_before_dispatch ledger_postings CALLER_REFERENCE rep2
+[14/18] tier 1 AEP_FULL after_intent_before_barrier ledger_postings CALLER_REFERENCE rep2
+[15/18] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep2
+[16/18] tier 1 AEP_FULL after_response_before_resolution ledger_postings CALLER_REFERENCE rep2
+[17/18] tier 1 AEP_FULL before_intent_write ledger_postings CALLER_REFERENCE rep2
+[18/18] tier 1 AEP_FULL mid_dispatch ledger_postings CALLER_REFERENCE rep2
+
+==============================================================================
+collected 18 run(s), skipped 0 already-collected
+wall time 0.31 h
+progress: /root/aep-phase10/ext4-2026-09-02/matrix-progress.jsonl
+resume with: python -m experiments.run_matrix --resume --results-root /root/aep-phase10/ext4-2026-09-02
+==============================================================================
+MATCHED exit=0
+
+
+########## POWERED: 30 runs x 10 executions at after_resolution_before_barrier ##########
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     False   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     300 (30 runs x 10 executions)
+  workers per run      2
+  cells (total)        1
+  cells (applicable)   1
+  cells (not applic.)  0
+  runs planned         30
+  estimated wall time  0.36 h (1305.0 s)
+
+  by tier:
+    tier 1:   30 runs,  0.36 h   E3: POSITIVE_ONLY_READBACK and NO_READBACK -- where the known-ambiguity claim lives, and had no evidence at all
+
+  regimes (a regime is a condition, not a dimension):
+    (session-3)            p(crash)=1.0  runs=30   shape=30 x 10
+      every execution crashed, no infrastructure fault
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    1     (session-3)          AEP_FULL                             after_resolution_before_barrier    ledger_postings  CALLER_REFERENCE     30
+
+==============================================================================
+plan written to /root/aep-phase10/ext4-2026-09-02-arbb30/matrix-plan.json and matrix-plan.txt
+[1/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep0
+[2/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep1
+[3/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep2
+[4/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep3
+[5/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep4
+[6/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep5
+[7/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep6
+[8/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep7
+[9/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep8
+[10/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep9
+[11/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep10
+[12/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep11
+[13/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep12
+[14/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep13
+[15/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep14
+[16/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep15
+[17/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep16
+[18/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep17
+[19/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep18
+[20/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep19
+[21/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep20
+[22/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep21
+[23/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep22
+[24/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep23
+[25/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep24
+[26/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep25
+[27/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep26
+[28/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep27
+[29/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep28
+[30/30] tier 1 AEP_FULL after_resolution_before_barrier ledger_postings CALLER_REFERENCE rep29
+
+==============================================================================
+collected 30 run(s), skipped 0 already-collected
+wall time 0.48 h
+progress: /root/aep-phase10/ext4-2026-09-02-arbb30/matrix-progress.jsonl
+resume with: python -m experiments.run_matrix --resume --results-root /root/aep-phase10/ext4-2026-09-02-arbb30
+==============================================================================
+POWERED exit=0
+
+
+########## analyse both roots ##########
+--- /root/aep-phase10/ext4-2026-09-02 ---
+AEP_FULL                  18    180     0.0000   [0.000, 0.000]      0.7111  0.0000         --
+==============================================================================================
+
+WARNING: 18 of 18 run(s) show a wall-versus-monotonic divergence above 2.0s (worst: 16.642s). The host suspended during them, so every wall-clock duration they contain includes the suspension. Their COUNTS are unaffected and are still in the rate metrics; their TIMINGS are excluded from the latency and throughput aggregates.
+E2: no crash-free run has been collected, so every overhead column above is empty by construction rather than by measurement. RQ3 has no answer until the p0 regime is collected.
+written:
+  /root/aep-phase10/ext4-2026-09-02/analysis/table-1.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/per-cell-metrics.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/comparisons-vs-aep-full.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/latency-and-throughput.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/per-execution.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-undetected-duplicate-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-known-ambiguity-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-lost-effect-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-unverified-failure-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-state-corruption-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/metric-recovery-success-rate.csv
+  /root/aep-phase10/ext4-2026-09-02/analysis/figure-1-undetected-vs-ambiguity.pdf
+  /root/aep-phase10/ext4-2026-09-02/analysis/figure-2-duplicates-by-crash-point.pdf
+  /root/aep-phase10/ext4-2026-09-02/analysis/coverage.json
+--- /root/aep-phase10/ext4-2026-09-02-arbb30 ---
+==============================================================================================
+
+WARNING: 29 of 30 run(s) show a wall-versus-monotonic divergence above 2.0s (worst: 10.899s). The host suspended during them, so every wall-clock duration they contain includes the suspension. Their COUNTS are unaffected and are still in the rate metrics; their TIMINGS are excluded from the latency and throughput aggregates.
+E5: 1 of 30 run(s) were collected on a host that did not declare suspend disabled. No suspension was detected in them, and that is not evidence of absence -- a host that was never idle long enough looks the same. Their COUNTS stand; NO absolute timing from them may enter the paper, and none is in the aggregates above.
+E2: no crash-free run has been collected, so every overhead column above is empty by construction rather than by measurement. RQ3 has no answer until the p0 regime is collected.
+written:
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/table-1.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/per-cell-metrics.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/comparisons-vs-aep-full.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/latency-and-throughput.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/per-execution.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-undetected-duplicate-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-known-ambiguity-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-lost-effect-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-unverified-failure-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-state-corruption-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/metric-recovery-success-rate.csv
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/figure-1-undetected-vs-ambiguity.pdf
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/figure-2-duplicates-by-crash-point.pdf
+  /root/aep-phase10/ext4-2026-09-02-arbb30/analysis/coverage.json
+
+
+########## run counts ##########
+/root/aep-phase10/ext4-2026-09-02: 18 run directories
+/root/aep-phase10/ext4-2026-09-02-arbb30: 30 run directories
+finished      2026-09-02T12:23:09Z

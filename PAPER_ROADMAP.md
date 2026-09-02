@@ -69,6 +69,7 @@
 | 8.2 Instrumentation: the acknowledgement, and two detected environment fields | ✅ complete | commit `e67efd1` |
 | 8.3 Pre-registration — committed and pushed before any AUTH data exists | ✅ complete | `reports/phase-report-8-prediction-2026-08-27.md` |
 | 8.4–8.6 B2 proper: collect (k=4, ext4), analyse in the declared order, report | ⬜ pre-registered, not started | `reports/phase-report-8-prediction-2026-08-27.md` |
+| 10 WS-0 Native Docker Engine inside WSL2; measurement host re-baselined | ✅ complete | `reports/phase-report-10-wsl2-native-docker-2026-09-02.md`, `reports/phase-report-10-env-before.md`, `reports/phase-report-10-prediction-2026-09-02.md`, `docs/27-measurement-host.md` |
 | 3A TLA+/property layer | ⬜ optional, not started | — |
 | 3B Second workload | ⬜ optional, not started | — |
 | 3C LLM-driven workload | ⬜ optional, not started — **and T6 turns on it** | — |

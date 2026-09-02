@@ -185,6 +185,77 @@ def canary(name: str, directory: Path, image: str) -> dict[str, Any]:
     return record
 
 
+def redis_endpoint_facts(container: str, host: str, port: int) -> dict[str, Any]:
+    """Is the Redis on the harness's port the one THIS daemon owns?
+
+    Added after Phase 10 collected 40 runs against the wrong runtime without
+    noticing. The sequence: Docker Desktop's stack was left up and holding
+    ``127.0.0.1:6381``; the native daemon's ``compose up`` failed with *"failed
+    to bind host port 127.0.0.1:6381/tcp: address already in use"*; and the
+    collection proceeded against Docker Desktop's Redis.
+
+    **Nothing already in the project could have caught it.**
+    ``verify_redis_semantics.py`` interrogates the *server* -- version, AOF,
+    ``appendfsync``, ``WAITAOF`` -- and a Redis started from the same compose
+    file by a different daemon passes every one of those checks. ``docker
+    version`` interrogates the *daemon* and says nothing about who owns a port.
+    The question that distinguishes them is neither: it is whether the server
+    answering the socket is the process inside the container this daemon
+    manages, and it is answered by comparing ``INFO server``'s ``run_id`` seen
+    from outside with the same field seen through ``docker exec``.
+    """
+    record: dict[str, Any] = {
+        "container": container,
+        "url": f"redis://{host}:{port}",
+    }
+    status = _docker("inspect", container, "--format", "{{.State.Status}}")
+    record["container_status"] = status
+    ports = _docker("inspect", container, "--format", "{{json .NetworkSettings.Ports}}")
+    record["published_ports"] = ports
+    record["publishes_expected_port"] = bool(ports and str(port) in ports)
+
+    inside = _docker("exec", container, "redis-cli", "INFO", "server")
+    record["run_id_in_container"] = next(
+        (
+            line.split(":", 1)[1].strip()
+            for line in (inside or "").splitlines()
+            if line.startswith("run_id:")
+        ),
+        None,
+    )
+
+    outside_run_id = None
+    try:
+        import socket
+
+        with socket.create_connection((host, port), timeout=5) as connection:
+            connection.sendall(b"INFO server\r\n")
+            chunks = []
+            connection.settimeout(5)
+            while True:
+                chunk = connection.recv(65536)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                if b"run_id:" in b"".join(chunks) and chunk.endswith(b"\r\n"):
+                    break
+        text = b"".join(chunks).decode("utf-8", errors="replace")
+        for line in text.splitlines():
+            if line.startswith("run_id:"):
+                outside_run_id = line.split(":", 1)[1].strip()
+                break
+    except Exception as error:  # noqa: BLE001 -- described, never raised
+        record["error"] = f"{type(error).__name__}: {error}"
+    record["run_id_on_port"] = outside_run_id
+
+    record["same_server"] = bool(
+        record["run_id_in_container"]
+        and outside_run_id
+        and record["run_id_in_container"] == outside_run_id
+    )
+    return record
+
+
 def redis_image_facts(compose_file: Path) -> dict[str, Any]:
     record: dict[str, Any] = {"compose_file": str(compose_file)}
     pinned = pinned_image(compose_file)
@@ -395,6 +466,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="skip the two container runs (they need a working daemon and the image)",
     )
+    parser.add_argument("--redis-container", default="aep-phase2-redis72")
+    parser.add_argument("--redis-host", default="127.0.0.1")
+    parser.add_argument("--redis-port", type=int, default=6381)
+    parser.add_argument(
+        "--no-redis-endpoint",
+        action="store_true",
+        help="skip the check that the Redis on the port is this daemon's container",
+    )
     parser.add_argument("--output", type=Path, default=None)
     arguments = parser.parse_args(argv)
 
@@ -433,6 +512,13 @@ def main(argv: list[str] | None = None) -> int:
         "bind_mount_canary": canaries,
         "redis_image": image,
         "device_mapper": device_mapper_facts(),
+        "redis_endpoint": (
+            {"skipped": True, "reason": "--no-redis-endpoint"}
+            if arguments.no_redis_endpoint
+            else redis_endpoint_facts(
+                arguments.redis_container, arguments.redis_host, arguments.redis_port
+            )
+        ),
         "filesystem": filesystem_facts(docker.get("data_root")),
         "suspend": suspend_facts(),
         "clock": clock_facts(),
@@ -456,6 +542,16 @@ def main(argv: list[str] | None = None) -> int:
             "dmsetup targets does not contain flakey"
             + ("" if payload["device_mapper"].get("module_on_disk")
                else " and dm-flakey.ko is not on disk either")
+        )
+    endpoint = payload["redis_endpoint"]
+    if "skipped" not in endpoint and not endpoint.get("same_server"):
+        failures.append(
+            "the Redis answering "
+            f"{endpoint.get('url')} is not the server inside this daemon's "
+            f"{endpoint.get('container')} "
+            f"(on port: {endpoint.get('run_id_on_port')}, in container: "
+            f"{endpoint.get('run_id_in_container')}, container status: "
+            f"{endpoint.get('container_status')}) -- another runtime may own the port"
         )
     if not arguments.no_canary and "skipped" not in canaries:
         for name, result in canaries.items():

@@ -1,0 +1,181 @@
+{
+  "arm": "ext4",
+  "collected_at_filesystem": {
+    "device": "/dev/sdd",
+    "df_device": "/dev/sdd",
+    "df_type": "ext4",
+    "mount_point": "/",
+    "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+    "stat_f_type": "ext2/ext3",
+    "type": "ext4"
+  },
+  "collected_at_path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+  "committed_at_filesystem": {
+    "device": "D:\\134",
+    "df_device": "D:\\",
+    "df_type": "9p",
+    "mount_point": "/mnt/d",
+    "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+    "stat_f_type": "v9fs",
+    "type": "9p"
+  },
+  "committed_at_path": "experiments/results/phase10-replication-ext4-arbb30-2026-09-02",
+  "measurement_host": {
+    "bind_mount_canary": {
+      "drvfs": {
+        "directory": "/mnt/d/personal/AEP/Research-paper-AEP/.scratch/phase10-canary",
+        "filesystem": "v9fs",
+        "name": "drvfs",
+        "pass": true,
+        "returncode": 0,
+        "seen": "aep-host-verify-drvfs-3d786af7b8d0431f9d9c0bcdee7d59ac",
+        "token": "aep-host-verify-drvfs-3d786af7b8d0431f9d9c0bcdee7d59ac"
+      },
+      "wsl_local": {
+        "directory": "/root/aep-phase10-canary",
+        "filesystem": "ext2/ext3",
+        "name": "wsl_local",
+        "pass": true,
+        "returncode": 0,
+        "seen": "aep-host-verify-wsl_local-f40c0dee01d8486a93b74d8fd89882ad",
+        "token": "aep-host-verify-wsl_local-f40c0dee01d8486a93b74d8fd89882ad"
+      }
+    },
+    "checked_at_utc": "2026-09-02T12:27:40Z",
+    "clock": {
+      "monotonic_span_seconds": 2.000052,
+      "sample_seconds": 2.0,
+      "source": "experiments/analyze.py TIMING_SUSPENSION_TOLERANCE_SECONDS",
+      "tolerance_seconds": 2.0,
+      "wall_minus_monotonic_seconds": -3e-06,
+      "wall_span_seconds": 2.000049,
+      "within_tolerance": true
+    },
+    "device_mapper": {
+      "has_flakey": true,
+      "module_on_disk": true,
+      "module_path": "/usr/lib/modules/6.6.114.1-microsoft-standard-WSL2/kernel/drivers/md/dm-flakey.ko",
+      "targets": [
+        "flakey           v1.5.0",
+        "verity           v1.9.0",
+        "striped          v1.6.0",
+        "linear           v1.4.0",
+        "error            v1.6.0"
+      ]
+    },
+    "docker": {
+      "cli_path": "/usr/bin/docker",
+      "client_os_arch": "linux/amd64",
+      "client_version": "29.4.3",
+      "compose_version": "5.5.0",
+      "context": "aep-native",
+      "daemon_name": "KP248",
+      "daemon_os": "Ubuntu 24.04.4 LTS",
+      "daemon_socket": "unix:///var/run/docker.sock",
+      "data_root": "/var/lib/docker",
+      "docker_host_env": null,
+      "is_unix_socket": true,
+      "is_windows_named_pipe": false,
+      "server_git_commit": "56be731",
+      "server_version": "29.4.3",
+      "storage_driver": "overlayfs"
+    },
+    "docker_kill_latency": {
+      "age_days": 0.1,
+      "cache": "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/measurement-host-kill-latency.json",
+      "comparable_historical_source": "reports/raw/e1-kill-latency-by-run.csv (issue_to_return_ns, n=300, median 961.6 ms, range 681.8-1673.9 ms, Docker Desktop shim). NOT comparable to \\ProcessKillWindowMin/Max 419-992 ms, which is the write-to-death window of the durability probe.",
+      "instrument": "experiments.harness.redis_kill.kill_redis command_ms -- time.monotonic() around subprocess.run(['docker','kill','-s','KILL',container])",
+      "measured_at_utc": "2026-09-02T10:00:45Z",
+      "runtimes": {
+        "aep-native": {
+          "context": "aep-native",
+          "endpoint": "unix:///var/run/docker.sock",
+          "max": 397.0,
+          "median": 317.0,
+          "median_ci_high": 327.0,
+          "median_ci_low": 312.5,
+          "min": 264.0,
+          "p95": 361.0,
+          "server_version": "29.4.3",
+          "trials_counted": 100,
+          "unit": "milliseconds"
+        }
+      }
+    },
+    "euid": 0,
+    "filesystem": {
+      "docker_data_root": {
+        "device": "/dev/sdd",
+        "is_drvfs": false,
+        "mount_options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "mount_point": "/var/lib/docker",
+        "path": "/var/lib/docker",
+        "type": "ext2/ext3"
+      },
+      "repo": {
+        "device": "D:\\134",
+        "is_drvfs": true,
+        "mount_options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "mount_point": "/mnt/d",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP",
+        "type": "v9fs"
+      }
+    },
+    "gates": {
+      "failures": [],
+      "passed": true
+    },
+    "host": "KP248",
+    "kernel": "6.6.114.1-microsoft-standard-WSL2",
+    "os_release": {
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "ID": "ubuntu",
+      "ID_LIKE": "debian",
+      "LOGO": "ubuntu-logo",
+      "NAME": "Ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "UBUNTU_CODENAME": "noble",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "VERSION_ID": "24.04"
+    },
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "probe": "aep.measurement-host/1",
+    "redis_endpoint": {
+      "container": "aep-phase2-redis72",
+      "container_status": "running",
+      "published_ports": "{\"6379/tcp\":[{\"HostIp\":\"127.0.0.1\",\"HostPort\":\"6381\"}]}",
+      "publishes_expected_port": true,
+      "run_id_in_container": "61ec53bc51bb66bc18fa8163cc2ab7f0c29271f7",
+      "run_id_on_port": "61ec53bc51bb66bc18fa8163cc2ab7f0c29271f7",
+      "same_server": true,
+      "url": "redis://127.0.0.1:6381"
+    },
+    "redis_image": {
+      "compose_file": "/mnt/d/personal/AEP/Research-paper-AEP/compose.phase2.yml",
+      "digest_matches": true,
+      "image_id": "sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+      "pinned_digest": "sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+      "pinned_reference": "redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44",
+      "resolved_repo_digests": [
+        "redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"
+      ]
+    },
+    "repo_root": "/mnt/d/personal/AEP/Research-paper-AEP",
+    "suspend": {
+      "declared": false,
+      "note": "amendment E5. Not detectable: a host that merely did not happen to suspend is indistinguishable from one that cannot. The declaration must be exported by the collection command itself.",
+      "value": null,
+      "variable": "AEP_HARNESS_SUSPEND_DISABLED"
+    }
+  },
+  "note": "The ext4 arm was collected OUTSIDE the repository tree, on the distro's own ext4, because the repository tree is on 9p/drvfs and the frozen matrix cell it replicates was collected on ext4. It was copied here afterwards. collected_at_filesystem is the filesystem the runs were WRITTEN to; committed_at_filesystem is where the bytes sit now. They differ for the ext4 arm and are the same for the drvfs arm.",
+  "paths_differ": true,
+  "phase": 10,
+  "pre_registration": "reports/phase-report-10-prediction-2026-09-02.md",
+  "pre_registration_commit": "9b1848b53903c8fc285e781e0d6e19a37c236364",
+  "sub_collection": "powered"
+}

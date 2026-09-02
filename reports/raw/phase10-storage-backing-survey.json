@@ -1,0 +1,710 @@
+{
+  "cross_root_comparisons": [
+    {
+      "distinct_results_roots": [
+        "b2-paired-v2-*",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "340-349",
+      "roots": {
+        "b2-paired-v2-*": [
+          "ClassSessions"
+        ],
+        "matrix": [
+          "AepKillRuns"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "e1-durability-window probe",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "385-397",
+      "roots": {
+        "e1-durability-window probe": [
+          "ProcessKillWindowMax",
+          "ProcessKillWindowMin"
+        ],
+        "matrix": [
+          "AepKillApplied"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "b2-*-2026-08-21",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "406-419",
+      "roots": {
+        "b2-*-2026-08-21": [
+          "ReplicationAepMax",
+          "ReplicationAepMin",
+          "ReplicationBthreeApplied",
+          "ReplicationBthreeRange",
+          "ReplicationPreventedHigh",
+          "ReplicationPreventedLow",
+          "ReplicationPreventedMean",
+          "ReplicationRuns",
+          "ReplicationSessions"
+        ],
+        "matrix": [
+          "AepKillRuns",
+          "UnwantedPrevented"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "b2-*-2026-08-21",
+        "e1-kill-latency (matrix + b2-*)"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "421-438",
+      "roots": {
+        "DERIVED (2 * (1/2)^4)": [
+          "KillLatencySignFloor"
+        ],
+        "b2-*-2026-08-21": [
+          "ReplicationRuns"
+        ],
+        "e1-kill-latency (matrix + b2-*)": [
+          "KillLatencyHalfWidth",
+          "KillLatencyHigh",
+          "KillLatencyLow",
+          "KillLatencyMean",
+          "KillLatencyPerSession",
+          "KillLatencyPrecisionRatio",
+          "KillLatencySessions"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "b2-*-2026-08-21",
+        "e1-kill-latency (matrix + b2-*)"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "440-447",
+      "roots": {
+        "b2-*-2026-08-21": [
+          "ReplicationRuns"
+        ],
+        "e1-kill-latency (matrix + b2-*)": [
+          "KillLatencyBthreeHalfWidth",
+          "KillLatencyBthreeHigh",
+          "KillLatencyBthreeLow",
+          "KillLatencyBthreeMean",
+          "KillLatencyBthreePerSession",
+          "KillLatencyBthreePrecisionRatio"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "b2-*-2026-08-21",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "462-468",
+      "roots": {
+        "b2-*-2026-08-21": [
+          "ReplicationAepMax",
+          "ReplicationAepMin",
+          "ReplicationSessions"
+        ],
+        "matrix": [
+          "AepKillRuns",
+          "UnwantedPrevented"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "e1-durability-window probe",
+        "g2-flakey (no Docker in the path)"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "525-534",
+      "roots": {
+        "e1-durability-window probe": [
+          "ProcessKillUnackLost"
+        ],
+        "g2-flakey (no Docker in the path)": [
+          "FlakeyAckSurvived",
+          "FlakeyN",
+          "FlakeyPerRepAckSurvived",
+          "FlakeyPerRepUnackLost",
+          "FlakeyReplications",
+          "FlakeyUnackLost"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "e1-durability-window probe",
+        "g2-flakey (no Docker in the path)"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "558-568",
+      "roots": {
+        "e1-durability-window probe": [
+          "ProcessKillUnackLost"
+        ],
+        "g2-flakey (no Docker in the path)": [
+          "FlakeyUnackLost",
+          "FlakeyWindowMax",
+          "FlakeyWindowMin"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "fsync-always",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "623-631",
+      "roots": {
+        "fsync-always": [
+          "BarrierCostAlways"
+        ],
+        "matrix": [
+          "BarrierCost"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "fsync-always",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "633-640",
+      "roots": {
+        "fsync-always": [
+          "BthreeAlwaysMedian"
+        ],
+        "matrix": [
+          "BthreeStepMedian"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "fsync-always",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "648-658",
+      "roots": {
+        "fsync-always": [
+          "BarrierCostAlways"
+        ],
+        "matrix": [
+          "BarrierCost",
+          "BarrierCostAlwaysHigh",
+          "BarrierCostAlwaysLow",
+          "BarrierCostHigh",
+          "BarrierCostLow"
+        ]
+      }
+    },
+    {
+      "distinct_results_roots": [
+        "fsync-always",
+        "matrix"
+      ],
+      "file": "paper/sections/06-evaluation.tex",
+      "lines": "704-715",
+      "roots": {
+        "fsync-always": [
+          "AepThroughputAlways"
+        ],
+        "matrix": [
+          "AepThroughputEverysec"
+        ]
+      }
+    }
+  ],
+  "instrumentation_added": "experiments/harness/provenance.py, Phase 8.2, commit e67efd1, 2026-08-27. Collections before it carry no environment block.",
+  "note_on_tracking": "Raw run directories are gitignored by design (.gitignore:134-151); only analysis products and manifests are tracked. No TRACKED file carries results_root_filesystem or redis_storage_backing.",
+  "rule": "Only run-config.json's recorded environment block determines the answer. Directory names and current file locations do not.",
+  "survey": "phase10-storage-backing/1",
+  "tracked_file_count": 149,
+  "tracked_results_roots": [
+    "b2-2026-08-21",
+    "b2-paired-s1-2026-08-28",
+    "b2-paired-v2-s1-2026-08-28",
+    "b2-paired-v2-s2-2026-08-28",
+    "b2-paired-v2-s2-aborted-2026-08-28",
+    "b2-paired-v2-s3-2026-08-28",
+    "b2-paired-v2-s4-2026-08-28",
+    "b2-s1-2026-08-21",
+    "b2-s2-2026-08-21",
+    "b2-s3-2026-08-21",
+    "fsync-always",
+    "matrix"
+  ],
+  "trees": {
+    "/mnt/d/personal/AEP/Research-paper-AEP": {
+      "b2-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 60,
+        "run_directories": 60,
+        "with_environment": 0
+      },
+      "b2-paired-s1-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-s1-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-v2-s1-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s1-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-v2-s2-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s2-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-v2-s2-aborted-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s2-aborted-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-v2-s3-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s3-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-v2-s4-2026-08-28": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s4-2026-08-28",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-s1-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s1-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 60,
+        "run_directories": 60,
+        "with_environment": 0
+      },
+      "b2-s2-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s2-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 60,
+        "run_directories": 60,
+        "with_environment": 0
+      },
+      "b2-s3-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s3-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 60,
+        "run_directories": 60,
+        "with_environment": 0
+      },
+      "fsync-always": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/fsync-always",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "matrix": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 84,
+        "run_directories": 84,
+        "with_environment": 0
+      },
+      "selfcheck": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/selfcheck",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "selfcheck-c5": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/selfcheck-c5",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "smoke": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/smoke",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 6,
+        "run_directories": 6,
+        "with_environment": 0
+      },
+      "throughput": {
+        "filesystem": "UNDETERMINED",
+        "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/throughput",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      }
+    },
+    "/root/aep": {
+      "fsync-always": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/fsync-always",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 6,
+        "run_directories": 6,
+        "with_environment": 0
+      },
+      "matrix": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/matrix",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 432,
+        "run_directories": 433,
+        "with_environment": 0
+      },
+      "matrix-smoke": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/matrix-smoke",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 6,
+        "run_directories": 6,
+        "with_environment": 0
+      },
+      "smoke": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/smoke",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 6,
+        "run_directories": 6,
+        "with_environment": 0
+      },
+      "throughput": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/throughput",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "voided": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep/experiments/results/voided",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 1,
+        "run_directories": 1,
+        "with_environment": 0
+      }
+    },
+    "/root/aep-phase8": {
+      "b2-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/b2-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-paired-s1-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 120,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-s1-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 120,
+            "value": "experiments/results/b2-paired-s1-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 120,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 120,
+        "run_directories": 120,
+        "with_environment": 120
+      },
+      "b2-paired-v2-s1-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 120,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s1-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 120,
+            "value": "experiments/results/b2-paired-v2-s1-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 120,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 120,
+        "run_directories": 120,
+        "with_environment": 120
+      },
+      "b2-paired-v2-s2-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 120,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 120,
+            "value": "experiments/results/b2-paired-v2-s2-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 120,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 120,
+        "run_directories": 120,
+        "with_environment": 120
+      },
+      "b2-paired-v2-s2-aborted-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 26,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-aborted-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 26,
+            "value": "experiments/results/b2-paired-v2-s2-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 26,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 26,
+        "run_directories": 26,
+        "with_environment": 26
+      },
+      "b2-paired-v2-s2-operator-aborted-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 16,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-operator-aborted-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 16,
+            "value": "experiments/results/b2-paired-v2-s2-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 16,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 16,
+        "run_directories": 16,
+        "with_environment": 16
+      },
+      "b2-paired-v2-s3-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 120,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s3-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 120,
+            "value": "experiments/results/b2-paired-v2-s3-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 120,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 120,
+        "run_directories": 120,
+        "with_environment": 120
+      },
+      "b2-paired-v2-s4-2026-08-28": {
+        "filesystem": [
+          {
+            "runs": 120,
+            "value": "type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False"
+          }
+        ],
+        "path": "/root/aep-phase8/experiments/results/b2-paired-v2-s4-2026-08-28",
+        "recorded_results_root": [
+          {
+            "runs": 120,
+            "value": "experiments/results/b2-paired-v2-s4-2026-08-28"
+          }
+        ],
+        "redis_storage_backing": [
+          {
+            "runs": 120,
+            "value": "volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data"
+          }
+        ],
+        "run_configs": 120,
+        "run_directories": 120,
+        "with_environment": 120
+      },
+      "b2-s1-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/b2-s1-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-s2-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/b2-s2-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "b2-s3-2026-08-21": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/b2-s3-2026-08-21",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "fsync-always": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/fsync-always",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "matrix": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-phase8/experiments/results/matrix",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      }
+    },
+    "/root/aep-stage3": {
+      "fsync-always": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-stage3/experiments/results/fsync-always",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "matrix": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-stage3/experiments/results/matrix",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      },
+      "stage3-replication-2026-08-13": {
+        "filesystem": "UNDETERMINED",
+        "path": "/root/aep-stage3/experiments/results/stage3-replication-2026-08-13",
+        "recorded_results_root": null,
+        "redis_storage_backing": "UNDETERMINED",
+        "run_configs": 0,
+        "run_directories": 0,
+        "with_environment": 0
+      }
+    }
+  }
+}
