@@ -843,7 +843,23 @@ runtime than in every collected run.
 5. **B1 itself was not run.** Out of scope for this phase, and its second
    blocker is not removed (see *What this unblocks*).
 
-6. **The Windows host's sleep/hibernation configuration was not established.**
+6. **The final data commit `c63aea0` is committed locally but NOT pushed.**
+   `git push` hangs with no output; `git-credential-manager.exe` is resident and
+   is presumably holding an interactive authentication dialog that cannot be
+   answered from this session. Two attempts were stopped after ~10 and ~7
+   minutes. The repository is intact — no `index.lock`, no
+   `refs/remotes/origin/main.lock`, `git fsck --connectivity-only` clean,
+   `main` ahead of `origin/main` by exactly one commit.
+
+   **The pre-registration ordering requirement is unaffected and already
+   satisfied**: decision A2 requires the prompt commit and the pre-registration
+   commit to be pushed *before data exists*, and both were —
+   `a9bf559` at 09:38:02Z and `9b1848b` at 10:34:00Z, against a first data byte
+   at 11:30:32Z, all verifiable on `origin/main`. What remains unpushed is only
+   the commit that *carries* the data, whose ordering claim is already witnessed
+   externally. **`git push origin main` needs to be run interactively.**
+
+7. **The Windows host's sleep/hibernation configuration was not established.**
    `powercfg` could not be queried non-interactively from this shell. It does
    not affect anything this phase reports, because no timing number is claimed
    and the E5 gate excluded every duration anyway.
