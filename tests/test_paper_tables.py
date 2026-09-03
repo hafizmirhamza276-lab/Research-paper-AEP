@@ -231,15 +231,86 @@ def test_no_countable_trial_emits_no_macros_rather_than_zeroes() -> None:
     assert flakey_macros([_payload(0, 0, 0, [])]) == []
 
 
-def test_the_cross_fault_comparison_is_against_the_process_kill_probe() -> None:
-    macros = dict(
+def test_the_cross_fault_comparison_is_stated_as_separation_not_as_a_p_value() -> None:
+    """The cross-fault comparison against the process-kill probe, as it is now made.
+
+    This test used to assert ``FlakeyVsProcessKillP == "2.5\\times10^{-12}"``.
+    That macro was withdrawn in ``9545ccb`` (2026-08-31) because Fisher's exact
+    test assumes two independent samples and ``one_trial()`` writes the
+    acknowledged and the unacknowledged record in the SAME trial and exposes
+    both to the SAME write-loss event -- so the p-value was computed on matched
+    pairs at every choice of unit. ``scripts/paper_tables.py:707-731`` records
+    the full reasoning.
+
+    The claim did not go away; it moved. ``06-evaluation.tex:531-534`` now makes
+    the comparison descriptively, out of ``FlakeyPerRepAckSurvived`` and
+    ``FlakeyPerRepUnackLost`` beside ``ProcessKillUnackLost``. **Those two
+    macros had no test at all** -- so between the withdrawal and this commit,
+    the arithmetic behind the separation sentence was unguarded while a test
+    guarded a macro nothing emitted.
+
+    Two things are pinned here, and the pairing is the point:
+
+    * the withdrawn p-values are **absent**, so the withdrawal cannot be
+      silently undone; and
+    * the figures that replaced them are **present and correct**, so the
+      sentence that now carries the comparison still has a gate behind it.
+    """
+    emitted = flakey_macros([_payload(60, 60, 60, [_trial()] * 60)])
+    macros = dict((name, value) for name, value, *_ in emitted)
+
+    # Withdrawn, deliberately. Re-emitting either is the regression.
+    assert "FlakeyVsProcessKillP" not in macros
+    assert "FlakeyBarrierP" not in macros
+
+    # What the manuscript's cross-fault sentence is actually built from:
+    # 60/60 unacknowledged writes destroyed by write loss, against the process
+    # kill probe's 0/10, quoted as \ProcessKillUnackLost in the same sentence.
+    assert macros["FlakeyPerRepAckSurvived"] == "60/60"
+    assert macros["FlakeyPerRepUnackLost"] == "60/60"
+    assert macros["FlakeyAckSurvived"] == "60/60"
+    assert macros["FlakeyUnackLost"] == "60/60"
+
+
+def test_the_per_replication_figures_vanish_when_the_replications_disagree() -> None:
+    """The guard `paper_tables.py:734` describes, which nothing tested.
+
+    The per-replication macros exist so the paper can say the separation held
+    "in every one" rather than quoting a pooled figure. That is only true while
+    the replications agree, and the implementation's own comment says so:
+    "Guarded -- if the replications ever disagree these do not exist and the
+    sentence quoting them fails."
+
+    Failing that way round is the whole design: an absent macro breaks the
+    build loudly, where a pooled one would read as a per-replication claim and
+    be wrong quietly.
+    """
+    agreeing = dict(
         (name, value)
         for name, value, *_ in flakey_macros(
-            [_payload(60, 60, 60, [_trial()] * 60)]
+            [
+                _payload(30, 30, 30, [_trial()] * 30),
+                _payload(30, 30, 30, [_trial()] * 30),
+            ]
         )
     )
-    # 0/10 lost under a process kill vs 60/60 under write loss.
-    assert macros["FlakeyVsProcessKillP"] == "2.5\\times10^{-12}"
+    assert agreeing["FlakeyPerRepAckSurvived"] == "30/30"
+    assert agreeing["FlakeyPerRepUnackLost"] == "30/30"
+
+    disagreeing = dict(
+        (name, value)
+        for name, value, *_ in flakey_macros(
+            [
+                _payload(30, 30, 30, [_trial()] * 30),
+                _payload(30, 30, 29, [_trial()] * 29 + [_trial(ack=False)]),
+            ]
+        )
+    )
+    # The pooled figures survive -- they are honest about being pooled.
+    assert disagreeing["FlakeyUnackLost"] == "59/60"
+    # The per-replication ones do not, so no sentence can claim "in every one".
+    assert "FlakeyPerRepAckSurvived" not in disagreeing
+    assert "FlakeyPerRepUnackLost" not in disagreeing
 
 
 # ------------------------------------------- the barrier's own metric
