@@ -20,6 +20,14 @@ Rescue and triage, not science. Three things:
 
 No new claim was collected. Nothing under any raw run directory was modified.
 
+**Carried in from Phase 10, and now closed.** Phase 10's *Not done and why* item 6
+recorded that its data commit `c63aea0` was committed but not pushed, because
+`git push` hung on `git-credential-manager.exe`. It pushed cleanly during this
+phase. `main` and `origin/main` are in sync at `f40a486`, and Phase 10's
+pre-registration ordering — `a9bf559` pushed 09:38:02Z and `9b1848b` pushed
+10:34:00Z against a first data byte at 11:30:32Z — is now externally witnessed
+together with the data commit it constrains.
+
 ---
 
 ## Gate triage
