@@ -42,6 +42,42 @@ script used a 50 ms timeout and reported iptables' ~2 ms landing as 54 ms — a
 
 Full detail (min/p95/max) in `reports/raw/phase13-landing.txt`.
 
+### What the chosen mechanism costs per run — the second number a chooser needs
+
+A reader picking between these four needs the price as well as the precision.
+Measured from the runs' own clocks during Arm A's first session — consecutive
+run **start** stamps, the first `wall_ms` each `events-runner.jsonl` records, so
+each interval is one whole run including provider start, fault, restart and
+settle:
+
+| | seconds per run |
+|---|---|
+| min | 41.0 |
+| **median** | **49.9** |
+| mean | 67.0 |
+| p95 | 134.6 |
+| max | 143.6 |
+
+**INTERIM: n = 22 intervals over 23 runs, from a session still collecting.**
+The figure is still moving — at n = 20 the median read 52.8 s and the ratio
+1.47× — so it is marked interim rather than frozen, and will be restated at the
+full n = 179 when session 1 lands. The distribution is right-skewed, so the
+median and the mean say different things and both are given.
+
+Against the harness's fitted estimate of **36.0 s/run** for this regime shape:
+**1.39× on the median, 1.86× on the mean** at this n. Directory mtimes are not
+used for this — they are touched after the fact, and the first attempt at this
+measurement reported a nonsense rate because of it.
+
+> **So the trade is: `docker pause` → `docker kill` lands 6.3× faster and 3.7×
+> tighter than `docker kill` alone, and costs roughly 1.4–1.9× more wall time
+> per run** — the range is the median-versus-mean spread, not uncertainty about
+> which is right. The extra is not the pause itself, which is 58 ms; it is that
+> the mechanism still requires the container restart and readiness wait that any
+> kill-class fault requires, against a fitted term that predates the native
+> runtime. This is a property of the mechanism, measured, and it is why a
+> 540-run Arm A is a ~10-hour collection rather than a ~5-hour one.
+
 Two preconditions were verified before any of this, because the mechanism is
 worthless if either fails:
 
@@ -161,6 +197,52 @@ described as a Redis-kill result, and the comparison to the frozen cell would be
 to a different experiment. **It is recorded here as the honest alternative and
 is not adopted without an explicit decision**, because adopting it silently
 would answer a different question from the one §VI-C2 asks.
+
+---
+
+## 4a. The wall-time estimate is wrong for this regime, and it is not hand-edited
+
+`matrix-plan.txt` predicts **1.79 h** for a 180-run session of this regime; the
+realised rate implies **~3.3 h**. Leaving that in place unremarked is not an
+option, and neither is quietly editing it. What follows is the third thing:
+saying where the discrepancy comes from and what the correct fix would be.
+
+**The estimate is hand-set, not derived.** `experiments/run_matrix.py:341-357`
+holds module-level constants, and the file says so — *"Re-fitted for this session
+against the 83 runs Session 3 actually collected"*. `estimated_run_seconds`
+calls itself *"a crude, stated, checkable model"*. So editing a constant is
+legitimate in principle, and the model's **shape is already right**: it has a
+per-regime kill term at line 558, `if cell.regime.redis_kill_point is not None:
+total += REDIS_KILL_SECONDS`.
+
+**Back-solving that constant would be wrong for three reasons, and it has not
+been done.**
+
+1. **`REDIS_KILL_SECONDS = 5.0` is shared by all three redis-kill regimes.**
+   Fitting it to `redis-pause-kill-preack`'s measurements would silently change
+   the predicted cost of `redis-kill-preack` and `redis-kill-inflight`, which
+   were not measured here. Back-solving gives 21.8 s — a 4.4× change to a
+   parameter three regimes read, from one regime's data.
+2. **The constant's stated basis is stale in a direction that makes the
+   arithmetic misleading.** Its comment records *"kill 0.8–1.1 s, start 0.9 s,
+   ready ~2 s"* — measured through the Docker Desktop shim. Phase 10 measured
+   the native runtime's kill at 317 ms against 961.8 ms, so the kill itself got
+   **cheaper**. The missing ~17 s is therefore somewhere else — the restart, the
+   readiness wait, or the settle — and attributing it to the kill term because
+   that is the term available would encode a wrong cause in a fitted constant.
+   **Nothing here decomposes it, and a fix should not precede that
+   decomposition.**
+3. **`run_matrix.py` is the module the collection is currently running from.**
+   Editing it between sessions would mean sessions 2 and 3 were planned by a
+   different module than session 1, for a cosmetic gain, during a pre-registered
+   collection.
+
+**The correct fix, recorded rather than applied:** a per-regime term on
+`Regime` — an `estimated_extra_seconds` field beside `runs_per_cell` and the
+other per-regime shape overrides — set from a measured decomposition of restart,
+readiness and settle, per mechanism. That is a change to the plan's own schema
+and belongs in a phase that can measure the parts, not in one that can only
+observe the total.
 
 ---
 

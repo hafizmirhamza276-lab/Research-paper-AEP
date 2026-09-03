@@ -1,0 +1,11 @@
+runs observed          : 23
+inter-run intervals (n): 22
+  min       41.0 s
+  median    49.9 s
+  mean      67.0 s
+  p95      134.6 s
+  max      143.6 s
+
+harness fitted estimate for this regime: 36.0 s/run
+observed / fitted                      : 1.39x
+implied REDIS_KILL_SECONDS if the rest of the model holds: 18.9 s (currently 5.0)
