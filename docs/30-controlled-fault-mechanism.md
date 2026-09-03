@@ -52,21 +52,22 @@ settle:
 
 | | seconds per run |
 |---|---|
-| min | 41.0 |
-| **median** | **49.9** |
-| mean | 67.0 |
-| p95 | 134.6 |
-| max | 143.6 |
+| min | 36.0 |
+| **median** | **43.3** |
+| mean | 60.0 |
+| p95 | 136.7 |
+| max | 158.8 |
 
-**INTERIM: n = 22 intervals over 23 runs, from a session still collecting.**
-The figure is still moving — at n = 20 the median read 52.8 s and the ratio
-1.47× — so it is marked interim rather than frozen, and will be restated at the
-full n = 179 when session 1 lands. The distribution is right-skewed, so the
-median and the mean say different things and both are given.
+**Final, n = 179 intervals over the complete 180-run session 1.** The interim
+figures reported at small n were higher and are superseded: the median read
+52.8 s at n = 20 and 49.9 s at n = 22 against **43.3 s** at full n, so the early
+runs were the slow ones and quoting them would have overstated the cost by ~20%.
+The distribution is right-skewed, so the median and the mean say different
+things and both are given.
 
 Against the harness's fitted estimate of **36.0 s/run** for this regime shape:
-**1.39× on the median, 1.86× on the mean** at this n. Directory mtimes are not
-used for this — they are touched after the fact, and the first attempt at this
+**1.20× on the median, 1.67× on the mean.** Directory mtimes are not used for
+this — they are touched after the fact, and the first attempt at this
 measurement reported a nonsense rate because of it.
 
 > **So the trade is: `docker pause` → `docker kill` lands 6.3× faster and 3.7×
