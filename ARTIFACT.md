@@ -351,6 +351,51 @@ layers above:
 cd experiments/results/matrix && sha256sum -c SHA256SUMS 2>&1 | grep -v "No such file"
 ```
 
+### Every run's configuration against its own digest — and what that proves
+
+Each run records a `config_digest`: a SHA-256 over every field that could change
+a number. `scripts/verify_published_archive.py` checks all of them as its last
+step, and it can be run alone against an unpacked archive:
+
+```sh
+uv run --frozen --extra experiments --extra analysis python \
+  scripts/audit_config_digests.py --root <unpacked>/matrix --require-runs 400
+```
+
+Expected: **`NONE UNEXPLAINED`**, over 432 configs.
+
+**It is verified per schema generation, and this is not a workaround.** The
+harness's `RunConfig` gained fields twice during the evaluation — amendment E1's
+`redis_kill_*` and amendment E5's `suspend_disabled_declared` — and the digest
+is computed over the field set in force when the run was collected. Verifying a
+2026-08-06 run against today's field set therefore asks the wrong question and
+gets the wrong answer. The audit reconstructs each historical field set from the
+git history of `experiments/harness/config.py` and verifies each run against the
+one in force at its collection. Three generations exist — 35 fields
+(`2fefe5e`), 38 (`9154d85a`), 42 (`e67efd1`) — and **all 432 runs verify**, with
+the 150 that today's field set cannot check reproduced exactly by generation
+`9154d85a` and **none unexplained**. That is positive evidence that no
+configuration was altered after collection, established across a schema the
+project itself evolved. `docs/32-config-digest-verifiability.md` has the method
+and the per-root breakdown.
+
+> **What this check proves, and what it does not.** It proves that each run's
+> recorded configuration is the one its digest was computed over, under the
+> field set in force at collection time — so a field altered afterwards is
+> caught, and so is a digest that matches no generation. **It is a tamper check,
+> not a correctness check.** It says nothing about whether the configuration was
+> the right one, whether the fault it names was actually delivered, or whether
+> the run measured what it intended to. Those are the jobs of the fault-delivery
+> census, the run-level oracle reconciliation and the per-cell counts in
+> `MANIFEST.csv` respectively. In the same way `scripts/validate_citations.py`
+> proves citation ranges are valid and not that the semantics are right, this
+> proves the configuration is unaltered and not that it was correct.
+
+Both of the check's failure modes were demonstrated rather than asserted, on
+copies, against the real corpus: a stored digest matching no generation, and a
+configuration whose contents were altered while its digest was left untouched.
+Both are caught; the check also refuses to pass when it examined nothing.
+
 ### Provenance: one derived artifact was regenerated after the first freeze
 
 `analysis/comparisons-vs-aep-full.csv` is the **only** tracked results file that

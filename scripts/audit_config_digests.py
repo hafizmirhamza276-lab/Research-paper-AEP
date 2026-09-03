@@ -129,6 +129,7 @@ def explain(document: dict[str, Any], generations) -> dict[str, Any]:
     recorded.pop("config_digest", None)
     recorded.pop("environment", None)
 
+    matches: list[tuple[str, str, int]] = []
     for commit, date, names in generations:
         body = {
             key: value
@@ -141,19 +142,45 @@ def explain(document: dict[str, Any], generations) -> dict[str, Any]:
         if set(body) != {n for n in names if n not in EXCLUDED}:
             continue
         if digest_over(body) == stored:
-            return {
-                "verdict": "EXPLAINED BY SCHEMA GENERATION",
-                "commit": commit,
-                "date": date,
-                "fields": len(names),
-            }
-    return {"verdict": "UNEXPLAINED"}
+            matches.append((commit, date, len(names)))
+
+    if not matches:
+        return {"verdict": "UNEXPLAINED"}
+    # More than one generation reproducing the same stored digest would mean a
+    # field could be altered and still be "explained" by a generation that did
+    # not contain it. It has never happened -- the generations differ by fields
+    # that are present in every document that carries them -- but a check that
+    # would not notice is not a check.
+    if len(matches) > 1:
+        return {
+            "verdict": "AMBIGUOUS -- MORE THAN ONE GENERATION MATCHES",
+            "commit": matches[0][0],
+            "date": matches[0][1],
+            "fields": matches[0][2],
+            "all": [c for c, _, _ in matches],
+        }
+    commit, date, count = matches[0]
+    return {
+        "verdict": "EXPLAINED BY SCHEMA GENERATION",
+        "commit": commit,
+        "date": date,
+        "fields": count,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", action="append", default=[], required=True)
     parser.add_argument("--json", default=None)
+    parser.add_argument(
+        "--require-runs",
+        type=int,
+        default=0,
+        metavar="N",
+        help="fail unless at least N run configs were examined. A check that "
+        "silently examined nothing reports a clean pass, which is the one "
+        "outcome it must never produce.",
+    )
     arguments = parser.parse_args(argv)
 
     current = frozenset(RunConfig.__dataclass_fields__)
@@ -221,6 +248,23 @@ def main(argv: list[str] | None = None) -> int:
             "historical field set, so every failure is schema evolution and "
             "nothing was altered after collection."
         )
+
+    examined = sum(verdicts.values())
+    ambiguous = sum(
+        count for verdict, count in verdicts.items() if verdict.startswith("AMBIGUOUS")
+    )
+    print()
+    print(f"run configs examined: {examined}")
+    if arguments.require_runs and examined < arguments.require_runs:
+        print(
+            f"GATE FAILED: examined {examined} run configs, required at least "
+            f"{arguments.require_runs}. A digest check that found nothing to "
+            f"check has not checked anything."
+        )
+        return 2
+    if ambiguous:
+        print(f"GATE FAILED: {ambiguous} run(s) matched more than one generation.")
+        return 3
 
     if arguments.json:
         Path(arguments.json).write_text(

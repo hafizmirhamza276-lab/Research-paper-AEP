@@ -134,6 +134,10 @@ python -m experiments.analyze --results-root matrix --destination /tmp/derived</
 </ol>
 <p>One further point of provenance: <code>matrix/analysis/comparisons-vs-aep-full.csv</code> is the one tracked results file <code>analyze.py</code> did not produce. It was regenerated regime-labelled by <code>experiments/rebuild_comparisons.py</code>, because the original pooled three fault regimes, which the paper's own reporting rule forbids. Run through that script over a fresh re-derivation it is byte-identical.</p>
 
+<h3>Every run's configuration verifies against its own digest</h3>
+<p>Each run records a <code>config_digest</code> over every configuration field that could change a number. <strong>All 432 runs of the evaluation verify</strong>, and they are verified <em>per schema generation</em>: the harness's configuration grew twice during the evaluation, and the digest is computed over the field set in force when the run was collected, so checking a 2026-08-06 run against the final field set asks the wrong question. Three generations exist &mdash; 35 fields, 38, and 42 &mdash; and every stored digest is reproduced exactly by the generation in force at its run's collection, with <strong>none unexplained</strong>. That is positive evidence that no configuration was altered after collection, across a schema the project itself evolved.</p>
+<p><strong>What the check proves and what it does not:</strong> it proves each run's recorded configuration is the one its digest was computed over, so a field altered afterwards is caught and so is a digest matching no generation. It is a <em>tamper</em> check, not a correctness check &mdash; it says nothing about whether the configuration was the right one or whether the fault it names was delivered.</p>
+
 <h3>Collection host, and what is in these files</h3>
 <p>All runs were collected on one host: Ubuntu 24.04 inside WSL2 on Windows 11, kernel 6.6.114.1-microsoft-standard-WSL2, with Redis pinned by digest to <code>redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44</code>. Collections before 2026-09-02 ran under Docker Desktop; those from 2026-09-02 under a native Docker Engine inside the distribution.</p>
 <p>The run artifacts contain the host's name (<code>KP248</code>) and absolute filesystem paths (<code>/root/aep/&hellip;</code>, <code>/mnt/d/personal/AEP/&hellip;</code>). These are retained deliberately: they are the evidence from which the collection path of the frozen evaluation was reconstructed, and removing them would invalidate the manifest and delete a determination the analysis depends on. The archive was scanned before deposit and contains no credentials, no email addresses, no account names and no hardware identifiers.</p>
@@ -265,8 +269,18 @@ uv run --frozen --extra experiments --extra analysis \
 
 It resolves the DOI, downloads the archive **from Zenodo rather than from
 disk**, checks both digests against the values this repository tracks, extracts
-all 26 300 files and verifies each against `MANIFEST.sha256`, then re-runs
-`analyze.py` and byte-compares against the tracked CSVs.
+all 26 300 files and verifies each against `MANIFEST.sha256`, re-runs
+`analyze.py` and byte-compares against the tracked CSVs, and finally **verifies
+every run's `config_digest` against the schema generation in force when that run
+was collected** (`docs/32-config-digest-verifiability.md`). Expected on that last
+step: `NONE UNEXPLAINED`, over more than 1 400 configs.
+
+The digest audit can also be run on its own against an unpacked archive:
+
+```sh
+uv run --frozen --extra experiments --extra analysis python \
+  scripts/audit_config_digests.py --root <unpacked>/matrix --require-runs 400
+```
 
 Expected final line:
 

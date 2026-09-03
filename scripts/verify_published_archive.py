@@ -245,6 +245,39 @@ def main(argv: list[str] | None = None) -> int:
         if result.returncode not in (0, 1):
             failures.append(f"verify_raw_archive exited {result.returncode}")
 
+        print()
+        print("=== 5. every run's config against its own digest ===")
+        # This lives here rather than in CI because CI has no run directories:
+        # they are gitignored, so a job over the tracked roots would examine
+        # zero configs and report a clean pass. The archive is the only place
+        # the check has anything to check, and it is where a reviewer meets it.
+        roots = sorted(
+            path.parent
+            for path in (extract).glob("*/*/run-config.json")
+        )
+        distinct = sorted({str(path.parent) for path in roots})
+        audit = subprocess.run(
+            [
+                sys.executable,
+                str(REPO / "scripts" / "audit_config_digests.py"),
+                *sum(([f"--root", root] for root in distinct), []),
+                "--require-runs",
+                "1000",
+            ],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+        )
+        for line in audit.stdout.strip().splitlines()[-6:]:
+            print(f"  {line}")
+        report["digest_audit_returncode"] = audit.returncode
+        if audit.returncode != 0:
+            failures.append(
+                f"config-digest audit exited {audit.returncode} "
+                "(1 = a stored digest matches no schema generation; "
+                "2 = nothing was examined; 3 = ambiguous generation match)"
+            )
+
     print()
     if failures:
         print("VERIFICATION FAILED:")
