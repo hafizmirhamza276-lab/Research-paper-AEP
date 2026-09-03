@@ -66,6 +66,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+# Acyclic: redis_kill imports nothing from this package, so naming its
+# constants here cannot create an import cycle.
+from experiments.harness import redis_kill
+
 #: Probes run once per run, at construction, before any worker starts. The
 #: Docker CLI costs 0.44-0.52 s per invocation on this host
 #: (``redis_kill.py`` measured it), so this is seconds per session against a
@@ -328,6 +332,21 @@ def collect(results_root: Path, redis_container: str | None) -> dict[str, Any]:
         "docker": docker_identity(),
         "docker_kill_latency": docker_kill_latency(),
         "platform_release": os.uname().release if hasattr(os, "uname") else None,
+        # Phase 13. WHICH fault the Redis kill point delivers. It lives here
+        # rather than in RunConfig because RunConfig._body() feeds
+        # config_digest, and adding a field there changes the digest of every
+        # run ever collected -- 150 of the 432 frozen matrix runs already fail
+        # that check for exactly that reason (docs/31-transmission-event.md §4).
+        #
+        # The cost of that choice, stated because it is the defect this project
+        # keeps finding: two runs differing ONLY in mechanism have the SAME
+        # config_digest and the same derived regime label. They are separated by
+        # their results root and by this field, and by nothing else -- so an
+        # analysis that pools across roots would conflate them. Arm A's analysis
+        # filters by root for that reason.
+        "redis_fault_mechanism": os.environ.get(
+            redis_kill.REDIS_FAULT_MECHANISM_VARIABLE, redis_kill.MECHANISM_KILL
+        ),
     }
     if redis_container:
         record["redis_storage_backing"] = redis_storage_backing(redis_container)

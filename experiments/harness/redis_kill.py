@@ -115,6 +115,104 @@ def kill_redis(container: str, *, timeout: float = 30.0) -> dict[str, Any]:
         }
 
 
+#: Which fault a run delivers at the Redis kill point. Read from the process
+#: environment rather than from ``RunConfig``, because ``RunConfig._body()``
+#: iterates every dataclass field into ``config_digest`` and adding one would
+#: change the digest of every run ever collected -- 150 of the 432 frozen matrix
+#: runs already fail that check for exactly this reason
+#: (``docs/31-transmission-event.md`` §4). The mechanism is instead recorded in
+#: the ``environment`` block, which ``echo()`` writes and ``config_digest``
+#: excludes, which is the same route Phase 8.2 used for
+#: ``results_root_filesystem`` and Phase 10 for ``docker_kill_latency``.
+REDIS_FAULT_MECHANISM_VARIABLE = "AEP_HARNESS_REDIS_FAULT_MECHANISM"
+
+#: The mechanism the frozen cells used, and the default. Named explicitly so a
+#: run that selected nothing is distinguishable from one that selected this.
+MECHANISM_KILL = "kill"
+#: Phase 13 Arm A. Freeze first, then kill.
+MECHANISM_PAUSE_THEN_KILL = "pause-then-kill"
+
+
+def pause_then_kill(container: str, *, timeout: float = 30.0) -> dict[str, Any]:
+    """Freeze the container, then SIGKILL it. Same end state, narrower race.
+
+    Phase 13 Arm A. ``docker kill`` alone lands 368.4 ms after it is issued
+    (median, n=100, spread 134.6 ms), against a ``WAITAOF`` round trip of
+    U(0, 1000) ms under ``appendfsync everysec`` -- so whether AEP-full's
+    barrier returns before the fault arrives is a coin weighted by the
+    injector, which is what ``08-threats.tex`` §A(e) concedes. ``docker pause``
+    lands in **58.3 ms, spread 36.0 ms** (`docs/30-controlled-fault-mechanism.md`),
+    cutting the residual race from 37% of that window to 5.8%.
+
+    **The fault class does not change**, and that is why this mechanism was
+    chosen over the faster ones. ``docker pause`` uses the cgroup-v2 freezer;
+    the kill that follows delivers SIGKILL to PID 1 exactly as before, and the
+    container ends in the same state -- verified: ``docker kill`` on a paused
+    container exits 137 and auto-unpauses. An ``iptables`` drop lands in ~2 ms
+    but is an F2 partition, and would answer a different question.
+
+    **The race is narrowed, not closed, and it cannot be closed.** Freezing
+    *synchronously at the checkpoint* would make ``WAITAOF`` unanswerable -- but
+    B3 reaches the same checkpoint and still needs ``authorize_dispatch`` and
+    ``preflight``, both Redis calls, so it would stop dispatching too and the
+    contrast would vanish because the injector disabled both arms. The
+    asymmetry this experiment measures *is* a timing difference.
+
+    Returns the same shape as :func:`kill_redis`, with the pause's own timing
+    added, so a run records what the fault cost as well as that it happened.
+    """
+    started = time.monotonic()
+    paused: dict[str, Any]
+    try:
+        completed = subprocess.run(
+            ["docker", "pause", container],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        paused = {
+            "paused": completed.returncode == 0,
+            "pause_returncode": completed.returncode,
+            "pause_stderr": completed.stderr.strip()[-200:],
+            "pause_ms": int((time.monotonic() - started) * 1000),
+        }
+    except Exception as error:  # noqa: BLE001 -- see kill_redis's docstring
+        paused = {
+            "paused": False,
+            "pause_error": f"{type(error).__name__}: {error}",
+            "pause_ms": int((time.monotonic() - started) * 1000),
+        }
+
+    # The kill is issued whether or not the pause succeeded. A run whose pause
+    # failed is still a valid crash-fault run -- it is just the uncontrolled
+    # one -- and `paused` records which it was, so the analysis can separate
+    # them instead of the injector silently deciding not to inject.
+    killed = kill_redis(container, timeout=timeout)
+    return {
+        **killed,
+        **paused,
+        "mechanism": MECHANISM_PAUSE_THEN_KILL,
+        "total_ms": int((time.monotonic() - started) * 1000),
+    }
+
+
+def killer_for(mechanism: str | None) -> Callable[[str], dict[str, Any]]:
+    """Resolve the named mechanism, refusing anything unrecognised.
+
+    Refusing rather than defaulting: a typo in the variable would otherwise
+    deliver the uncontrolled fault into a root whose name says it is the
+    controlled one, and the run log would not contradict it.
+    """
+    if mechanism in (None, "", MECHANISM_KILL):
+        return kill_redis
+    if mechanism == MECHANISM_PAUSE_THEN_KILL:
+        return pause_then_kill
+    raise ValueError(
+        f"unknown {REDIS_FAULT_MECHANISM_VARIABLE}={mechanism!r}; expected "
+        f"{MECHANISM_KILL!r} or {MECHANISM_PAUSE_THEN_KILL!r}"
+    )
+
+
 def start_redis(container: str, *, timeout: float = 60.0) -> dict[str, Any]:
     """Bring the container back. Explicit, because Docker will not.
 
@@ -229,6 +327,9 @@ class RedisKillInjector:
             if raw_executions
             else None
         )
+        # The mechanism, unless the caller supplied its own killer (tests do).
+        if killer is kill_redis:
+            killer = killer_for(source.get(REDIS_FAULT_MECHANISM_VARIABLE))
         return cls(
             plan=RedisKillPlan(
                 point=point,

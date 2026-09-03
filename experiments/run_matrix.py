@@ -278,12 +278,56 @@ REGIME_REDIS_KILL_INFLIGHT = Regime(
     keyings=(ReadbackKeying.CALLER_REFERENCE,),
 )
 
+#: Phase 13 Arm A (WS-3). The SAME fault class as
+#: :data:`REGIME_REDIS_KILL_PREACK` -- F3 crash-stop of the state store,
+#: delivered at the same instruction boundary -- with the injector's own
+#: contribution to the race narrowed by freezing the container before killing
+#: it. ``docker pause`` lands in 58.3 ms against ``docker kill``'s 368.4 ms, and
+#: with a third of the spread (`docs/30-controlled-fault-mechanism.md`, all four
+#: candidate mechanisms measured 100x).
+#:
+#: **The old regime is not modified and must not be**: the frozen cells are the
+#: uncontrolled replication this one is compared against, and a change there
+#: would make them incomparable to themselves.
+#:
+#: **All three capability classes**, which the old regime deliberately does not
+#: reach. That regime restricts itself to two endpoints to save 60 runs of
+#: interpolation; WS-3 asks whether the prevention result holds *per capability
+#: class*, so the middle endpoint is the point rather than an expense. Nothing
+#: about the old regime changes: ``endpoints`` is a per-regime restriction and
+#: this is a different :class:`Regime` object.
+#:
+#: **The mechanism itself is selected by the environment**, not by a field here
+#: -- ``experiments/harness/redis_kill.py:REDIS_FAULT_MECHANISM_VARIABLE``
+#: explains why, and ``docs/31-transmission-event.md`` §4 shows the 150 frozen
+#: runs that a new ``RunConfig`` field would have broken.
+REGIME_REDIS_PAUSE_KILL_PREACK = Regime(
+    name="redis-pause-kill-preack",
+    label=(
+        "hard Redis kill between the intent CAS and the barrier ack, preceded "
+        "by a container freeze so the injector's own latency is 58 ms rather "
+        "than 368 ms (WS-3 Arm A)"
+    ),
+    crash_probability=0.0,
+    iterates_crash_points=False,
+    redis_kill_point="after_intent_before_barrier",
+    redis_kill_delay_ms=0,
+    redis_kill_executions=1,
+    runs_per_cell=30,
+    executions_per_run=1,
+    workers=1,
+    systems=ABLATION_SYSTEMS,
+    endpoints=("payments", "notifications", "ledger_postings"),
+    keyings=(ReadbackKeying.CALLER_REFERENCE,),
+)
+
 REGIMES: tuple[Regime, ...] = (
     REGIME_CRASH_ALWAYS,
     REGIME_NO_CRASH,
     REGIME_CRASH_SOMETIMES,
     REGIME_REDIS_KILL_PREACK,
     REGIME_REDIS_KILL_INFLIGHT,
+    REGIME_REDIS_PAUSE_KILL_PREACK,
 )
 
 #: Wall-time model, in seconds. **Re-fitted for this session against the 83
