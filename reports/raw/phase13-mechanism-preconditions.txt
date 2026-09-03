@@ -1,0 +1,28 @@
+
+
+########## which mechanisms are even available on this host ##########
+  nft        /usr/sbin/nft
+  iptables   /usr/sbin/iptables
+  tc         /usr/sbin/tc
+  docker pause/unpause: present
+  cgroup version: cgroup2fs
+
+
+########## is the stack up? ##########
+/aep-phase2-redis72 running false
+
+
+########## CRITICAL: can docker kill a PAUSED container, and how long does it take? ##########
+aep-phase2-redis72
+  paused ok
+  status=paused paused=true
+  kill: aep-phase2-redis72
+  kill of a paused container took 474 ms, exit above
+  status=exited paused=false exit=137
+  restarted
+  status=running
+
+
+########## does a PAUSED redis block a client command? (the whole premise) ##########
+  PING while running -> b'+PONG\r\n'
+  PING while PAUSED  -> TIMED OUT after 2002 ms  <-- BLOCKED, as required
