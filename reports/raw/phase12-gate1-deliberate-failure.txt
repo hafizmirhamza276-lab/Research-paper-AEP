@@ -1,0 +1,47 @@
+
+
+########## A. the real commit -- both tests must PASS ##########
+..                                                                       [100%]
+2 passed in 0.42s
+exit=0
+
+
+########## B. scratch commit 1 -- undo the withdrawal (re-emit FlakeyVsProcessKillP) ##########
+  patched: FlakeyVsProcessKillP is emitted again
+        """
+        emitted = flakey_macros([_payload(60, 60, 60, [_trial()] * 60)])
+        macros = dict((name, value) for name, value, *_ in emitted)
+    
+        # Withdrawn, deliberately. Re-emitting either is the regression.
+>       assert "FlakeyVsProcessKillP" not in macros
+E       AssertionError: assert 'FlakeyVsProcessKillP' not in {'FlakeyReplications': '1', 'FlakeyN': '60', 'FlakeyAckSurvived': '60/60', 'FlakeyUnackLost': '60/60', ...}
+
+tests/test_paper_tables.py:263: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_paper_tables.py::test_the_cross_fault_comparison_is_stated_as_separation_not_as_a_p_value
+1 failed, 1 passed in 2.13s
+exit=1
+
+
+########## C. scratch commit 2 -- break the guard (emit per-replication macros unconditionally) ##########
+  patched: the disagreement guard is removed; the first replication is quoted
+            )
+        )
+        # The pooled figures survive -- they are honest about being pooled.
+        assert disagreeing["FlakeyUnackLost"] == "59/60"
+        # The per-replication ones do not, so no sentence can claim "in every one".
+>       assert "FlakeyPerRepAckSurvived" not in disagreeing
+E       AssertionError: assert 'FlakeyPerRepAckSurvived' not in {'FlakeyReplications': '2', 'FlakeyN': '60', 'FlakeyAckSurvived': '60/60', 'FlakeyUnackLost': '59/60', ...}
+
+tests/test_paper_tables.py:312: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_paper_tables.py::test_the_per_replication_figures_vanish_when_the_replications_disagree
+1 failed, 1 passed in 2.23s
+exit=1
+
+
+########## D. back on the real commit -- both tests must PASS again ##########
+..                                                                       [100%]
+2 passed in 0.35s
+exit=0
+HEAD is 4e2d6b7 on main

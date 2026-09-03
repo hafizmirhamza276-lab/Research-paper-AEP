@@ -299,11 +299,34 @@ re-digested against the manifest after the build:
 `python3 scripts/build_raw_archive.py --verify-sources-unchanged` → *"re-digested
 26299 source files … UNCHANGED"*.
 
-**What remains before this section's availability claim becomes true:** upload to
-Zenodo or Figshare, record the DOI, tag the commit, and add the resolver URL and
-archive checksum here (WS-2.2). Until then the repository supports regeneration
-from the tracked derived products, and the from-raw rerun is reproducible on the
-build host but not yet by a reader.
+**Scanned before deposit.** `scripts/scan_archive_for_leakage.py` read all
+26 300 files across twelve categories. **Zero** credentials, keys or tokens;
+**zero** email addresses; **zero** account names; **zero** hardware identifiers;
+**zero** environment dumps. What is present is the host's name (`KP248`, 9
+files) and absolute filesystem paths (`/root/aep/…`, `/mnt/d/personal/AEP/…`).
+Those are retained deliberately: 11 of the files carrying them are the evidence
+`docs/28-storage-backing-recovery.md` §3.1 uses to determine the frozen
+evaluation's collection path, and removing them would invalidate both digests.
+Raw: `reports/raw/phase12-leakage-scan.{txt,json}`.
+
+**What remains before this section's availability claim becomes true — and it is
+a manual step, not an automated one.** `docs/29-archive-deposit.md` is a
+complete do-it-by-hand checklist for the Zenodo web interface: which files to
+upload, their digests, every metadata field's exact value, what to check on the
+sandbox record before publishing, and the post-upload verification. No API token
+exists or is needed.
+
+Two things are deliberately **pending** rather than done, and are recorded here
+so their absence is visible:
+
+| pending | why, and what closes it |
+|---|---|
+| **The DOI.** `paper/main.tex`'s `\archivedoi` reads `PENDING`, and §IX renders "prepared and verified but not yet deposited". | One line in one file, after the upload. Every other site derives from it; no section file contains a DOI string. |
+| **A CI job verifying the published archive.** `scripts/verify_published_archive.py` exists and its local path is tested — 26 300 files checked, 122 tracked products compared, 0 differing — but it is **not wired into CI**. | With no DOI there is nothing to fetch, so the job could only pass without checking anything, and *a gate that cannot fail is decoration*. The job's YAML is written out in `docs/29-archive-deposit.md` §5, together with the deliberate-failure test it must be subjected to before it is trusted. |
+
+Until then the repository supports regeneration from the tracked derived
+products, and the from-raw rerun is reproducible on the build host and by anyone
+holding the archive, but not yet by a reader who has only this repository.
 
 ### Verifying
 

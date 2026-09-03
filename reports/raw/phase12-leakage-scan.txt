@@ -1,0 +1,49 @@
+scanning /root/aep-raw-archive/aep-raw-evidence.tar (520,396,800 bytes)
+categories are THIS SCRIPT'S OWN -- see the module docstring; the specification they were asked to match is not in the session.
+
+scanned 26,300 files, 492,905,568 bytes
+
+credential             files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+email_address          files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+windows_user_path      files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+windows_drive_path     files=   153  occurrences=     162  reviewer-visible=   49  docs28-load-bearing=  0  
+    1 distinct value(s); the shortest few:
+      D:\\134
+    e.g. in ARCHIVE-METADATA.json
+    e.g. in phase10-VOIDED-ext4-arbb30-wrong-runtime/measurement-host.json
+wsl_absolute_path      files=   549  occurrences=    2079  reviewer-visible=  190  docs28-load-bearing= 11  
+    200+ distinct value(s); the shortest few:
+      /root/aep
+      /root/aep-5b
+      /root/phase82-verify/b2-s2
+      /root/aep-phase10/ext4-2026-09-02
+      /root/aep/experiments/results/smoke
+      /root/aep/experiments/run_matrix.py
+    e.g. in ARCHIVE-METADATA.json
+    e.g. in b2-paired-v2-s2-2026-08-28/matrix-progress.jsonl
+drvfs_mount_path       files=   568  occurrences=    1373  reviewer-visible=  190  docs28-load-bearing=  4  
+    44 distinct value(s); the shortest few:
+      /mnt/d/personal/AEP/Research-paper-AEP
+      /mnt/d/personal/AEP/Research-paper-AEP/compose.phase2.yml
+      /mnt/d/personal/AEP/Research-paper-AEP/.scratch/phase10-canary
+      /mnt/d/personal/AEP/Research-paper-AEP/.scratch/reproduce/smoke
+      /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/smoke
+      /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix
+    e.g. in ARCHIVE-METADATA.json
+    e.g. in phase10-VOIDED-ext4-arbb30-wrong-runtime/aep_full-after_resolution_before_barrier-ledger
+hostname               files=     9  occurrences=      17  reviewer-visible=    1  docs28-load-bearing=  0  
+    1 distinct value(s); the shortest few:
+      KP248
+    e.g. in ARCHIVE-METADATA.json
+    e.g. in phase10-VOIDED-ext4-arbb30-wrong-runtime/measurement-host.json
+account_name           files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+non_loopback_ip        files=  3717  occurrences=    5263  reviewer-visible=  818  docs28-load-bearing= 19  
+    1 distinct value(s); the shortest few:
+      6.6.114.1
+    e.g. in ARCHIVE-METADATA.json
+    e.g. in b2-2026-08-21/aep_full-none-ledger_postings-8530cc0f-r0/events-runner.jsonl
+mac_address            files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+github_identity        files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+env_dump               files=     0  occurrences=       0  reviewer-visible=    0  docs28-load-bearing=  0  
+
+No blocking category present.

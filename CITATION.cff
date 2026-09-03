@@ -15,8 +15,13 @@ abstract: >-
   harness, tracked derived analysis products from a 432-run evaluation under
   real SIGKILL -- with a separate hard-Redis-kill ablation on one capability
   class, and a block-level write-loss probe on durable records rather than on
-  protocol outcomes -- and the manuscript generated from them. The raw run archive and immutable DOI are not yet
-  published. ARTIFACT.md maps every quantitative claim in the paper to its
+  protocol outcomes -- and the manuscript generated from them. The raw run
+  archive -- 1458 run directories, 26300 files, manifest SHA-256
+  87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7 -- is
+  assembled and verified but not yet deposited, so no DOI exists for it yet.
+  docs/29-archive-deposit.md is the checklist that closes that; the DOI belongs
+  in an `identifiers:` block here once it is minted.
+  ARTIFACT.md maps every quantitative claim in the paper to its
   currently available evidence and reproduction command.
 type: software
 license: MIT

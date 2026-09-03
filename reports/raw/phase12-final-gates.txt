@@ -1,0 +1,89 @@
+
+
+########## both builds -- public and anonymous ##########
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+18 passed, 0 failed
+
+build clean (main); verified artifacts promoted atomically.
+public exit=0
+  none
+
+=== staged output ===
+Output written on main-anon.pdf (21 pages
+overfull boxes: 0
+underfull boxes: 52
+
+build clean (main-anon); verified artifacts promoted atomically.
+anonymous exit=0
+
+
+########## the DOI must NOT appear in the anonymous PDF, and the pending sentence must ##########
+anonymous PDF, artifact sentence:
+  available via the submission system
+  available via the submission system
+anonymous PDF mentions doi.org: 1
+anonymous PDF mentions the author: 0
+public PDF, archive sentence:
+  not yet deposited
+
+
+########## check_paper_numbers ##########
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  PASS  build artifacts match current sources
+  PASS  bibliography has entries
+  PASS  no empty bibliography entries
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+19 passed, 0 failed
+exit=0
+
+
+########## make reproduce-figures, with the documented ARCHIVE ##########
+=== byte-comparing against paper/generated/ ===
+  IDENTICAL numbers.tex
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== the state-machine figure against the implementation ===
+OK: paper/figures/state-machine.tex matches aep_core.core.intents
+
+=== the two analysis figures ===
+  IDENTICAL figure-1-undetected-vs-ambiguity.pdf (apart from 8 bytes of PDF CreationDate)
+  IDENTICAL figure-2-duplicates-by-crash-point.pdf (apart from 7 bytes of PDF CreationDate)
+
+reproduce-figures: VERDICT -- every committed table and macro file is
+byte-identical to a fresh regeneration from the frozen CSVs, the
+state-machine figure matches the implementation, and any analysis figure
+compared above matched outside its PDF timestamp. Anything reported as
+SKIPPED was not checked.
+exit=0
+
+
+########## validate_citations ##########
+docs/22-formal-model.md: 371 citations (240 explicit, 131 continuation)
+OK: 371 citations, 0 invalid
+exit=0
+
+
+########## suite ##########
+SKIPPED [1] D:\personal\AEP\Research-paper-AEP\experiments\mock_api\tests\test_evaluation_dispatch.py:263: set AEP_PHASE2_REDIS_INTEGRATION=1 and REDIS_URL to the dedicated Redis 7.2+ AOF DB 15
+SKIPPED [1] D:\personal\AEP\Research-paper-AEP\experiments\mock_api\tests\test_evaluation_dispatch.py:294: set AEP_PHASE2_REDIS_INTEGRATION=1 and REDIS_URL to the dedicated Redis 7.2+ AOF DB 15
+SKIPPED [1] D:\personal\AEP\Research-paper-AEP\experiments\mock_api\tests\test_evaluation_dispatch.py:315: set AEP_PHASE2_REDIS_INTEGRATION=1 and REDIS_URL to the dedicated Redis 7.2+ AOF DB 15
+1761 passed, 34 skipped, 3 warnings in 441.73s (0:07:21)
+exit=0
+GATE FAILED: 34 test(s) were SKIPPED. In CI every precondition is provisioned, so a skip is an unmet environment assumption, not a legitimate outcome. Re-run with -ra to see which, and either fix the environment or delete the test.
+exit=1
+
+COMMIT 785452a7a12e0a53e1ca8761ce73ed028cad8d21

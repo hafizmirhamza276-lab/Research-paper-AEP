@@ -1,0 +1,18 @@
+session                                  fs      AEP       B3  diff  kill latency ms (n/med)  append p05 us
+----------------------------------------------------------------------------------------------------------------------
+matrix (the paper's kill cell)         ext4    10/30    28/30    18             not recorded  38.8
+b2-2026-08-21 (P9C s0)                drvfs    20/30    28/30     8             not recorded  472.7
+b2-s1-2026-08-21 (P9C s1)             drvfs    12/30    28/30    16             not recorded  397.2
+b2-s2-2026-08-21 (P9C s2)             drvfs     4/30    28/30    24             not recorded  392.2
+b2-s3-2026-08-21 (P9C s3)             drvfs     7/30    28/30    21             not recorded  386.5
+b2-paired-s1-2026-08-28 (P8.4 v1)      ext4    13/30    28/30    15               120/1138.8  109.8
+b2-paired-v2-s1-2026-08-28 (P8.4)      ext4    18/30    28/30    10               120/1046.7  90.3
+b2-paired-v2-s2-2026-08-28 (P8.4)      ext4    18/30    28/30    10               120/1096.4  94.0
+b2-paired-v2-s3-2026-08-28 (P8.4)      ext4    10/30    28/30    18               120/1053.5  94.5
+b2-paired-v2-s4-2026-08-28 (P8.4)      ext4    12/30    28/30    16                120/976.8  78.8
+
+=== AEP-full unwanted-applied counts, grouped by filesystem ===
+  drvfs  n=4  values [4, 7, 12, 20]  range 4-20  median 9.5
+  ext4   n=6  values [10, 10, 12, 13, 18, 18]  range 10-18  median 12.5
+
+  ranges OVERLAP: drvfs 4-20 against ext4 10-18

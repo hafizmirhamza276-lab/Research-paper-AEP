@@ -4,10 +4,20 @@
 The public repository \artifactavail{} contains the implementation, evaluation
 harness, mock provider, baseline systems, analysis pipeline, manuscript source,
 and the tracked derived analysis products used by the number generator. It does
-\emph{not} currently contain the 432 raw run directories, the voided run, or a
-complete raw-evidence checksum manifest. No immutable external archive DOI is
-currently available. Those materials must be deposited and verified before an
-availability claim is made for the full raw evidence.
+\emph{not} contain the raw run directories, which are bulk data: those are
+carried by a separate archive, \archiveavail{}.
+
+\paragraph{The raw evidence archive} 1\,458 run directories across 20
+collection roots, 26\,300 files, 493\,MB uncompressed and 24\,MB compressed,
+covering the 432-run evaluation, the \texttt{appendfsync=always} arm, the
+voided oracle-disagreement run, every prevention replication, and two
+collections voided for having run against the wrong container runtime. Every
+file carries a SHA-256 in \texttt{MANIFEST.sha256}, whose own digest
+\texttt{87fa2d53\ldots} attests the whole archive. Before deposit the archive
+was extracted, checked file-by-file against that manifest, and re-analysed:
+against every tracked analysis product the result was 114 byte-identical, 8
+identical after two declared normalisations recorded with the deposit, and none
+differing.
 
 \paragraph{What is pinned} The Python environment is locked
 (\texttt{uv.lock}); the Redis image is pinned by digest in the compose file;
@@ -22,8 +32,8 @@ skipped.
 and its cells are independent. The full plan is 1\,068 runs at an estimated
 25\,h of wall time on one machine; the cells behind the results in
 \cref{sec:evaluation} are a subset keyed in the tracked
-\texttt{MANIFEST.csv}. The pending raw archive must additionally carry the
-complete per-cell and per-run manifest, so a reader can see what was collected
+\texttt{MANIFEST.csv}. The raw archive carries the complete per-cell and
+per-run manifest alongside the runs, so a reader can see what was collected
 rather than inferring it from the tables.
 
 \paragraph{Regenerating the paper's numbers} The tables and every headline
@@ -68,6 +78,7 @@ figure or fails the check; it cannot silently disagree with the code.
 \paragraph{Citations} Every bibliography entry was verified to exist before it
 was written: matched against DBLP's search API, or resolved through
 \texttt{doi.org}, or --- for vendor documentation --- fetched and read on a
-recorded date. The verification script and bibliography metadata are tracked;
-the raw lookup transcript belongs in the pending external archive and is not
-present in the current Git repository.
+recorded date. The verification script and bibliography metadata are tracked.
+The raw lookup transcript is not present in the Git repository and is not in
+the raw-evidence archive either, which carries run data only; it is the one
+item named in this section for which no external copy yet exists.

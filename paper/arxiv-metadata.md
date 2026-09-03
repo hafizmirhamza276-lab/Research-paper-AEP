@@ -29,9 +29,22 @@ Declared Ambiguity: The Agent Execution Protocol (AEP) for Autonomous Agents Cal
 ```
 3 figures, 12 tables. Code, manuscript source, and tracked derived analysis:
 https://github.com/hafizmirhamza276-lab/Research-paper-AEP
-Raw evidence archive and immutable DOI are pending; do not submit this metadata
-until they are integrated and verified.
+Raw evidence archive is assembled and verified (26,300 files, manifest sha256
+87fa2d53...) but not yet deposited; insert its DOI here and do not submit this
+metadata until the DOI resolves.
 ```
+
+> **Where the DOI comes from.** It is defined once, in `paper/main.tex` at the
+> `\newcommand{\archivedoi}` line, and currently reads `PENDING`. Take the value
+> from there rather than re-typing it, so this file and the manuscript cannot
+> disagree. `docs/29-archive-deposit.md` §5 is the checklist.
+>
+> **In the anonymous build the DOI is withheld**, exactly as the GitHub URL is:
+> a Zenodo record names its depositor, so citing it under double-anonymous
+> review defeats the anonymisation. The anonymous branch of the toggle never
+> reads `\archivedoi`, so it cannot leak even if one is inserted. If this
+> metadata accompanies an anonymous submission, the archive line must read
+> "available via the submission system" and carry no DOI.
 
 > Counted from the source, not estimated: 3 `figure` and 12 `table`
 > environments across `main.tex`, `sections/*.tex` and `generated/*.tex`

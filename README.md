@@ -4,8 +4,10 @@ The research artifact for *Declared Ambiguity: The Agent Execution Protocol
 (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs* — a protocol,
 five baseline designs it is measured against, a fault-injection harness,
 tracked derived results from a 432-run evaluation, and the manuscript generated
-from them. The raw run archive and immutable DOI are pending (§5 of
-`ARTIFACT.md`).
+from them. The raw run archive — 1 458 run directories, 26 300 files, manifest
+digest `87fa2d53…` — is **built and verified but not yet deposited**, so no DOI
+exists yet; `ARTIFACT.md` §5 records exactly what is pending and
+`docs/29-archive-deposit.md` is the checklist that closes it.
 
 **Start at [`ARTIFACT.md`](ARTIFACT.md)** if you are here to check a number in
 the paper. It maps every quantitative claim to the command that reproduces it.
@@ -82,7 +84,7 @@ writes instead.
 | `experiments/baselines/` | B0–B4b, and `B4_SEMANTICS.md` on what B4 shares with a real durable-execution engine |
 | `experiments/harness/`, `experiments/run_matrix.py` | Fault injection, the six crash points, the matrix orchestrator |
 | `experiments/analyze.py` | Runs → metrics, intervals, figures |
-| `experiments/results/` | Tracked derived analysis products from the frozen evaluation; the raw run archive and DOI are pending external publication (see `ARTIFACT.md` §5) |
+| `experiments/results/` | Tracked derived analysis products from the frozen evaluation; the raw run archive is assembled and verified, and its deposit is pending (see `ARTIFACT.md` §5 and `docs/29-archive-deposit.md`) |
 | `paper/` | The manuscript. `paper/generated/` is machine-written and must never be hand-edited |
 | `scripts/` | The generators and the CI gates |
 | `docs/22-formal-model.md` | System model, failure model, properties P1–P3, declared residual windows, non-claims |

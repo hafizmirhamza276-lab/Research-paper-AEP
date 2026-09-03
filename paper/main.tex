@@ -88,9 +88,27 @@
 % The address is set in \texttt rather than \url so it produces no link
 % annotation -- an annotation is a second surface an anonymity check has to
 % clear, and the Monday audit found four of them the text check had missed.
+% ---------------------------------------------------------------------
+% THE ARCHIVE DOI. One line, and it is the next line.
+%
+% Minting it is a manual web upload (docs/29-archive-deposit.md); until that
+% happens this reads PENDING and every site that mentions the archive renders
+% the honest "not yet deposited" sentence. Inserting the real DOI is a
+% one-line edit HERE and nowhere else -- \archiveavail below derives every
+% rendering from it, and no section file contains a DOI string.
+\newcommand{\archivedoi}{PENDING}
+\newcommand{\archivedoipendingmarker}{PENDING}
+% ---------------------------------------------------------------------
+
 \ifanonymous
   \newcommand{\artifacturl}{available via the submission system}
   \newcommand{\artifactavail}{available via the submission system}
+  % A Zenodo record names its depositor, so under double-anonymous review the
+  % DOI defeats the anonymisation exactly as the GitHub URL did. It gets the
+  % same treatment, in the same block, for the same reason -- and note that
+  % this branch does not test \archivedoi at all: an anonymous build cannot
+  % leak a DOI even if one is inserted above.
+  \newcommand{\archiveavail}{available via the submission system}
   \newcommand{\authorname}{Anonymous Author(s)}
   \newcommand{\authorcontact}{}
   % The identifying string must not survive in the document properties either,
@@ -106,6 +124,16 @@
   \newcommand{\authorname}{Hamza Khan}
   \newcommand{\authorcontact}{%
     \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.}}
+  % Rendered from \archivedoi, never from a literal. While it is PENDING the
+  % sentence says so; the moment a DOI replaces it the same sentence becomes a
+  % true availability claim, with no other file edited.
+  \ifx\archivedoi\archivedoipendingmarker
+    \newcommand{\archiveavail}{prepared and verified but not yet deposited; no
+      DOI exists at the time of writing}
+  \else
+    \newcommand{\archiveavail}{deposited at%
+      \ \texttt{https://doi.org/\archivedoi}}
+  \fi
 \fi
 % =====================================================================
 
