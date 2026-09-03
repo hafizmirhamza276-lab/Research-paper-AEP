@@ -54,6 +54,50 @@ Reply in chat in at most 6 lines: the DOI, whether all gates are green on one co
 
 ---
 
+# Correction issued after the prompt, recorded not silently applied
+
+Issued by the operator mid-phase, **after** step 1 was complete and step 3's
+analysis was done, and **before** anything was uploaded. Verbatim:
+
+> Correction to the Phase 12 prompt: I have no Zenodo account and no token, and none is needed. Zenodo accepts manual uploads through its web interface; the token was only for API automation. Do not wait on me for a credential.
+>
+> Revised Step 2 — prepare the deposit, do not perform it.
+>
+> Produce everything needed for me to complete the upload myself in a few minutes through the web UI, and stop short of uploading:
+>
+> 1. Run the leakage scan first, exactly as specified in my previous message (scripts/scan_archive_for_leakage.py, all the listed categories, per-category counts and sample paths, and for each: whether it appears in files a reviewer would open, whether removing it breaks a digest, and whether it is load-bearing evidence for docs/28's storage-backing determinations). Report it and give your recommendation — publish as-is, publish with a stated redaction, or restructure. Do not strip anything. I decide.
+>
+> 2. Resolve the anonymity question and implement it: how §IX, ARTIFACT.md, CITATION.cff and arxiv-metadata.md should refer to the DOI in the anonymous build versus the public build, consistent with the existing \artifacturl / \artifactavail toggle in paper/main.tex. Implement the toggle form now, with a placeholder DOI constant defined in exactly one place so that inserting the real DOI later is a one-line change. State that line's file and line number in the report.
+>
+> 3. Write docs/29-archive-deposit.md as a complete, do-it-by-hand checklist for me: which file to upload and its digest, the exact metadata field values to paste (title, authors, description, license, keywords, related identifier for the GitHub repo, version), whether to use sandbox first and what to check on the rendered record before publishing, and the post-upload verification I should run. Make the description text copy-pasteable and complete, including the manifest digest and the two declared normalisations.
+>
+> 4. Write scripts/verify_published_archive.py which takes a DOI or a download URL, fetches the archive, verifies MANIFEST.sha256, extracts it, runs analyze.py, and byte-compares against the tracked CSVs. I will run it after uploading. Test it now against the local archive file so that only the fetching half is untested.
+>
+> 5. Prepare the CI job that verifies the archive by digest, but leave the DOI as the same placeholder constant, and mark the job as skipped-with-reason until the DOI exists — noting that this is the one permitted exception to the zero-skipped-tests gate, that it is temporary, and that it must be un-skipped in the phase that inserts the DOI. If the project's CI gate cannot express a skip-with-reason without failing, do not weaken the gate: leave the job out of CI entirely and record it as pending in ARTIFACT.md §5 instead. State which route you took and why.
+>
+> 6. Do not tag v1.0.0 yet. State in the report which commit should carry the tag when the DOI exists.
+>
+> Steps 1 and 3 of the original Phase 12 prompt — the red gate, and the filesystem hypothesis — are unchanged and are now the primary work of this phase. Do them fully.
+>
+> Reply in chat in at most 6 lines: the leakage scan verdict and your recommendation, whether all gates are green on one commit, and the filesystem hypothesis verdict in one sentence.
+
+## One thing this correction refers to that is not in this session
+
+The correction says the leakage scan was **"exactly as specified in my previous
+message"**, with "all the listed categories". **No such specification exists in
+this session's transcript.** The Phase 12 prompt above contains no leakage scan
+and no category list, and neither does any earlier message available here.
+
+Rather than block on it or silently invent a list and present it as the one
+asked for, `scripts/scan_archive_for_leakage.py` defines its own category set,
+derives it from what is actually at risk in this artifact, and **states in its
+own docstring and output that the categories are its own choice**. If the
+operator's list differs, the difference is a one-line edit to the category
+table and a re-run. Recorded here so the substitution is visible rather than
+assumed.
+
+---
+
 # Notes recorded with the prompt, not applied silently
 
 No correction or amendment was issued by the operator after this prompt. This
