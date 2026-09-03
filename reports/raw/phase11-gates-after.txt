@@ -1,0 +1,98 @@
+
+
+########## apply the regenerated numbers.tex ##########
+ paper/generated/numbers.tex | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+--- the complete applied diff ---
+diff --git a/paper/generated/numbers.tex b/paper/generated/numbers.tex
+index 5d2d56c..11c901e 100644
+--- a/paper/generated/numbers.tex
++++ b/paper/generated/numbers.tex
+@@ -554,6 +554,6 @@
+ \newcommand{\CoreLoc}{6\,862}
+ 
+ % lines of Python under experiments/, excluding __pycache__
+-% 90 files; regenerated on every run of this script
+-\newcommand{\HarnessLoc}{23\,022}
++% 91 files; regenerated on every run of this script
++\newcommand{\HarnessLoc}{23\,243}
+ 
+
+
+########## make reproduce-figures, DEFAULT ARCHIVE (experiments/results/matrix, the 84-run partial) ##########
+ - pytest-asyncio==1.4.0
+ - pytest-cov==7.1.0
+ - sortedcontainers==2.4.0
+wrote .scratch/reproduce/figures/generated/numbers.tex
+wrote .scratch/reproduce/figures/generated/table-ablation.tex
+wrote .scratch/reproduce/figures/generated/table-ambiguity-by-crashpoint.tex
+wrote .scratch/reproduce/figures/generated/table-deployment-choice.tex
+wrote .scratch/reproduce/figures/generated/table-latency.tex
+wrote .scratch/reproduce/figures/generated/table-outcomes.tex
+
+=== byte-comparing against paper/generated/ ===
+  IDENTICAL numbers.tex
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== the state-machine figure against the implementation ===
+OK: paper/figures/state-machine.tex matches aep_core.core.intents
+
+=== the two analysis figures ===
+  DIFFERS   figure-1-undetected-vs-ambiguity.pdf: 11726 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+  DIFFERS   figure-2-duplicates-by-crash-point.pdf: 12551 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+
+reproduce-figures: 2 generated file(s) DIFFER from what is committed.
+That is a finding about the repository, not a build error to paper over.
+make: *** [Makefile:168: reproduce-figures] Error 1
+exit=2
+
+
+########## make reproduce-figures, ARCHIVE = the extracted 432-run tree from the Phase 11 archive ##########
+=== reproduce-figures: regenerating from /root/aep-archive-verify/extract/matrix/analysis ===
+Checked 33 packages in 159ms
+comparisons-vs-aep-full.csv has no `regime` column. Re-run experiments.rebuild_comparisons; pooled comparisons are not a valid paper source.
+make: *** [Makefile:168: reproduce-figures] Error 1
+exit=2
+
+
+########## check_paper_numbers.py ##########
+======================================================================
+check_paper_numbers.py -- the manuscript against its results
+======================================================================
+paper          /mnt/d/personal/AEP/Research-paper-AEP/paper
+build artifacts /mnt/d/personal/AEP/Research-paper-AEP/paper
+analysis       /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix/analysis
+fsync analysis /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/fsync-always/analysis
+flakey results /mnt/d/personal/AEP/Research-paper-AEP/experiments/results
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  appendfsync=always analysis is present
+  PASS  G2 write-loss results is present
+  PASS  paper_tables.py runs
+  PASS  numbers.tex matches the CSVs
+  PASS  table-ablation.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-deployment-choice.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  FAIL  build artifacts match current sources
+        no .build-provenance.json in /mnt/d/personal/AEP/Research-paper-AEP/paper; the artifacts there were not recorded as produced from any source tree. Run scripts/build_paper.sh, or pass --build-dir for a staged build.
+  SKIP  2 checks not run (bibliography, undefined references): artifacts cannot be shown to match the sources
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+14 passed, 1 failed
+
+DO NOT SUBMIT:
+  - build artifacts match current sources: no .build-provenance.json in /mnt/d/personal/AEP/Research-paper-AEP/paper; the artifacts there were not recorded as produced from any source tree. Run scripts/build_paper.sh, or pass --build-dir for a staged build.
+exit=1

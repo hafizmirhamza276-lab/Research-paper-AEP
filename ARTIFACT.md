@@ -239,22 +239,80 @@ These 13 files are exactly the inputs `scripts/check_paper_numbers.py` opens.
 They are re-included by name at the tail of `.gitignore`; everything else under
 `experiments/results/` stays ignored.
 
-**Not yet published externally** — the 432 raw run directories, each holding
-its run config, ground-truth ledger, merged log and per-run summary, are the
-inputs to `experiments/analyze.py`. They are not committed and no working DOI or
-archive URL exists as of 2026-08-11. The required archive must also contain
-`results/voided/`, including the excluded oracle-disagreement run and its
-explanation. Until that immutable archive is uploaded and verified, the GitHub
-repository supports regeneration from the tracked derived products but not a
-from-raw rerun of the analysis.
+**Not yet published externally** — the raw run directories, each holding its run
+config, ground-truth ledger, merged log and per-run summary, are the inputs to
+`experiments/analyze.py`. They are not committed. **As of 2026-09-03 they are
+assembled and verified but not uploaded: no DOI or archive URL exists yet.**
+
+### The raw evidence archive (Phase 11, 2026-09-03)
+
+Built by `scripts/build_raw_archive.py` and verified by
+`scripts/verify_raw_archive.py`. Full account:
+`reports/phase-report-11-rescue-2026-09-03.md`.
+
+| | |
+|---|---|
+| collection roots | **20** |
+| run directories | **1 458** |
+| files | **26 300** |
+| payload | **492 905 568 bytes** (`.tar` 520 396 800; `.tar.gz` **24 257 505**) |
+| **`MANIFEST.sha256`** | **`87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7`** |
+| `aep-raw-evidence.tar` | `3aa90b215e838b41c02e47d38fd9ce474a3cb01c58d090659f2e7711ff6dbc94` |
+| `aep-raw-evidence.tar.gz` | `fec959b5517eaeb1fd4bd9992472ce079206aea2fd374bd7e8a834ab2ac07353` |
+| `ARCHIVE-METADATA.json` | `cf75e7232ad9a97ee989760ca05cda758c67d4da0245a7929ba12706f7a220e5` |
+
+The manifest carries a SHA-256 for **every** file; the digest above is the digest
+of the manifest itself. `ARCHIVE-METADATA.json` names each root's source path,
+its filesystem at archive time, its run and file counts, and the tracked
+`analysis/` directory it produced — and lists **every** raw run directory on the
+build host that was *excluded*, with the reason, so no collection is silently
+absent.
+
+It contains the 432-run `matrix` evaluation, `fsync-always`, **`results/voided/`
+with the excluded oracle-disagreement run and its `README.md`**, the four
+`b2-*-2026-08-21` prevention replications, the six Phase-8.4 paired collections
+including the two aborted ones, the four Phase-10 replication arms, and Phase
+10's two voided wrong-runtime arms.
+
+**Determinism.** Entries sorted by archive path; `uid`/`gid` zeroed,
+`uname`/`gname` emptied, modes normalised, gzip member `mtime=0`. File mtimes are
+preserved deliberately — they are evidence for
+`docs/28-storage-backing-recovery.md`.
+
+**Verified sufficient, not merely present.** The archive was extracted to a
+scratch path, checked file-by-file against the manifest (26 300 verified, 0
+problems), and `experiments/analyze.py` re-run over the *extraction* with each
+root's own recorded bootstrap seed and resample count. Against every git-tracked
+analysis file: **114 byte-identical, 8 identical after two declared
+normalisations, 0 differing.** The eight normalised are accounted for by two
+changes to `analyze.py` that postdate the freeze — the crash-always regime's
+label (`(session-3)` → `crashed`) and two columns added to `per-execution.csv` —
+and a row-level check confirms 0 differing keys and every shared column agreeing
+on every row. A further 8 tracked files are written by the collection rather than
+by `analyze.py`; all 8 are in the archive with digests matching the tracked
+copies. `matrix/analysis/comparisons-vs-aep-full.csv` reproduces byte-identically
+through its actual producer, `experiments/rebuild_comparisons.py`, as the
+provenance note below requires.
+
+**Nothing under any raw run directory was modified.** Every source file was
+re-digested against the manifest after the build:
+`python3 scripts/build_raw_archive.py --verify-sources-unchanged` → *"re-digested
+26299 source files … UNCHANGED"*.
+
+**What remains before this section's availability claim becomes true:** upload to
+Zenodo or Figshare, record the DOI, tag the commit, and add the resolver URL and
+archive checksum here (WS-2.2). Until then the repository supports regeneration
+from the tracked derived products, and the from-raw rerun is reproducible on the
+build host but not yet by a reader.
 
 ### Verifying
 
 `experiments/results/matrix/SHA256SUMS` currently digests the manifest and every
 listed matrix output — 17 files. From a clone, only the tracked subset can be
-checked. After the external archive is assembled, its complete SHA-256 manifest
-must cover every raw directory, `results/voided/`, and all derived products;
-only then should the exact resolver URL and archive checksum be added here.
+checked. **The complete SHA-256 manifest that must cover every raw directory,
+`results/voided/`, and all derived products now exists** — `MANIFEST.sha256`,
+digest `87fa2d53…` above — but the resolver URL and archive checksum still cannot
+be added here, because nothing has been uploaded.
 
 The intended verification commands, once that archive exists, are:
 

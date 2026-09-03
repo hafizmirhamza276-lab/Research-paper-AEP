@@ -1,0 +1,1550 @@
+{
+  "ctime_probe": [
+    {
+      "after_backdating_mtime_ctime_stays_now": true,
+      "filesystem": "ext4",
+      "fresh_write_ctime_equals_mtime": true,
+      "path": "/root/.aep-ctime-probe",
+      "usable": true
+    },
+    {
+      "after_backdating_mtime_ctime_stays_now": true,
+      "filesystem": "9p",
+      "fresh_write_ctime_equals_mtime": true,
+      "path": "/mnt/d/personal/AEP/Research-paper-AEP/.scratch/.ctime-probe",
+      "usable": true
+    }
+  ],
+  "mounts_now": {
+    "/": {
+      "device": "/dev/sdd",
+      "mount_point": "/",
+      "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+      "type": "ext4"
+    },
+    "/mnt/d": {
+      "device": "D:\\134",
+      "mount_point": "/mnt/d",
+      "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+      "type": "9p"
+    },
+    "/var/lib/docker": {
+      "device": "/dev/sdd",
+      "mount_point": "/var/lib/docker",
+      "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+      "type": "ext4"
+    }
+  },
+  "roots": {
+    "b2-2026-08-21": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-09-01T06:46:54Z",
+        "ctime_last": "2026-09-01T06:46:55Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 920111.8,
+          "median": 918899.5,
+          "min": 917720.0
+        },
+        "mtime_first": "2026-08-21T15:11:43Z",
+        "mtime_last": "2026-08-21T15:51:35Z",
+        "runs": 60,
+        "written_in_place": false
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/b2-2026-08-21": 60
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 60,
+        "runs_without_environment_block": 60,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-2026-08-21",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "ctime is later than mtime across every run: the inodes were touched after the write, so where the bytes sit now is NOT evidence of where they were written"
+          ],
+          "value": null
+        }
+      }
+    },
+    "b2-paired-s1-2026-08-28": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T04:59:19Z",
+        "ctime_last": "2026-08-28T06:21:08Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T04:59:19Z",
+        "mtime_last": "2026-08-28T06:21:08Z",
+        "runs": 120,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-s1-2026-08-28": 120
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-s1-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 120,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-s1-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 120 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-s1-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s1-2026-08-28": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T07:24:37Z",
+        "ctime_last": "2026-08-28T08:42:19Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T07:24:37Z",
+        "mtime_last": "2026-08-28T08:42:19Z",
+        "runs": 120,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s1-2026-08-28": 120
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s1-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 120,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s1-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 120 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s1-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s2-2026-08-28": {
+      "absolute_paths_in_artifacts": {
+        "matrix-progress.jsonl": [
+          "/root/aep-phase8/experiments/harness/faults.py",
+          "/root/aep-phase8/experiments/harness/orchestrate.py",
+          "/root/aep-phase8/experiments/harness/runner.py",
+          "/root/aep-phase8/experiments/run_matrix.py"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T09:46:03Z",
+        "ctime_last": "2026-08-28T11:38:53Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T09:46:03Z",
+        "mtime_last": "2026-08-28T11:38:53Z",
+        "runs": 120,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s2-2026-08-28": 120
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 120,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 120 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s2-aborted-2026-08-28": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T08:59:19Z",
+        "ctime_last": "2026-08-28T09:15:10Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T08:59:19Z",
+        "mtime_last": "2026-08-28T09:15:10Z",
+        "runs": 26,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s2-2026-08-28": 26
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 26,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-aborted-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 26 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s2-operator-aborted-2026-08-28": {
+      "absolute_paths_in_artifacts": {
+        "matrix-progress.jsonl": [
+          "/root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py",
+          "/root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/asyncio/selector_events.py",
+          "/root/aep-phase8/.venv/lib/python3.13/site-packages/redis/asyncio/client.py",
+          "/root/aep-phase8/.venv/lib/python3.13/site-packages/redis/asyncio/connection.py",
+          "/root/aep-phase8/.venv/lib/python3.13/site-packages/redis/asyncio/retry.py",
+          "/root/aep-phase8/.venv/lib/python3.13/site-packages/redis/commands/core.py",
+          "/root/aep-phase8/.venv/lib/python3.13/site-packages/redis/utils.py",
+          "/root/aep-phase8/experiments/harness/composition.py",
+          "/root/aep-phase8/experiments/harness/orchestrate.py",
+          "/root/aep-phase8/experiments/harness/runner.py",
+          "/root/aep-phase8/experiments/run_matrix.py"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T09:41:00Z",
+        "ctime_last": "2026-08-28T09:44:30Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T09:41:00Z",
+        "mtime_last": "2026-08-28T09:44:30Z",
+        "runs": 16,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s2-2026-08-28": 16
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 16,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s2-operator-aborted-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 16 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s2-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s3-2026-08-28": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T11:48:44Z",
+        "ctime_last": "2026-08-28T13:06:35Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T11:48:44Z",
+        "mtime_last": "2026-08-28T13:06:35Z",
+        "runs": 120,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s3-2026-08-28": 120
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s3-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 120,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s3-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 120 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s3-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-paired-v2-s4-2026-08-28": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-28T13:07:23Z",
+        "ctime_last": "2026-08-28T14:24:08Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-28T13:07:23Z",
+        "mtime_last": "2026-08-28T14:24:08Z",
+        "runs": 120,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "experiments/results/b2-paired-v2-s4-2026-08-28": 120
+        },
+        "filesystem": {
+          "device": "/dev/sdf",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "experiments/results/b2-paired-v2-s4-2026-08-28",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 120,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase8/experiments/results/b2-paired-v2-s4-2026-08-28",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 120 runs"
+          ],
+          "value": {
+            "device": "/dev/sdf",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "experiments/results/b2-paired-v2-s4-2026-08-28",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "b2-s1-2026-08-21": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-09-01T06:46:55Z",
+        "ctime_last": "2026-09-01T06:46:55Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 916181.6,
+          "median": 915116.6,
+          "min": 914059.4
+        },
+        "mtime_first": "2026-08-21T16:17:13Z",
+        "mtime_last": "2026-08-21T16:52:35Z",
+        "runs": 60,
+        "written_in_place": false
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/b2-s1-2026-08-21": 60
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 60,
+        "runs_without_environment_block": 60,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s1-2026-08-21",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "ctime is later than mtime across every run: the inodes were touched after the write, so where the bytes sit now is NOT evidence of where they were written"
+          ],
+          "value": null
+        }
+      }
+    },
+    "b2-s2-2026-08-21": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-09-01T06:46:55Z",
+        "ctime_last": "2026-09-01T06:46:55Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 913860.4,
+          "median": 912834.4,
+          "min": 911762.6
+        },
+        "mtime_first": "2026-08-21T16:55:54Z",
+        "mtime_last": "2026-08-21T17:30:52Z",
+        "runs": 60,
+        "written_in_place": false
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/b2-s2-2026-08-21": 60
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 60,
+        "runs_without_environment_block": 60,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s2-2026-08-21",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "ctime is later than mtime across every run: the inodes were touched after the write, so where the bytes sit now is NOT evidence of where they were written"
+          ],
+          "value": null
+        }
+      }
+    },
+    "b2-s3-2026-08-21": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-09-01T06:46:55Z",
+        "ctime_last": "2026-09-01T06:46:55Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 911629.2,
+          "median": 910596.5,
+          "min": 909528.8
+        },
+        "mtime_first": "2026-08-21T17:33:06Z",
+        "mtime_last": "2026-08-21T18:08:06Z",
+        "runs": 60,
+        "written_in_place": false
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/b2-s3-2026-08-21": 60
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 60,
+        "runs_without_environment_block": 60,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s3-2026-08-21",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "ctime is later than mtime across every run: the inodes were touched after the write, so where the bytes sit now is NOT evidence of where they were written"
+          ],
+          "value": null
+        }
+      }
+    },
+    "fsync-always": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-07T09:38:47Z",
+        "ctime_last": "2026-08-07T11:08:53Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-07T09:38:47Z",
+        "mtime_last": "2026-08-07T11:08:53Z",
+        "runs": 6,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/fsync-always": 6
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 6,
+        "runs_without_environment_block": 6,
+        "unanimous": true
+      },
+      "source_path": "/root/aep/experiments/results/fsync-always",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "INFERRED",
+          "evidence": [
+            "ctime == mtime across every run, so the collection was written where it sits rather than copied here"
+          ],
+          "value": null
+        }
+      }
+    },
+    "matrix": {
+      "absolute_paths_in_artifacts": {
+        "matrix-progress.jsonl": [
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/_parsers/base.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/_parsers/resp3.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/asyncio/client.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/asyncio/connection.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/asyncio/retry.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/commands/core.py",
+          "/root/aep/.venv/lib/python3.13/site-packages/redis/utils.py",
+          "/root/aep/experiments/baselines/b4_durable_workflow.py",
+          "/root/aep/experiments/harness/composition.py",
+          "/root/aep/experiments/harness/config.py",
+          "/root/aep/experiments/harness/orchestrate.py",
+          "/root/aep/experiments/harness/reconcile.py",
+          "/root/aep/experiments/harness/runner.py",
+          "/root/aep/experiments/mock_api/supervisor.py",
+          "/root/aep/experiments/run_matrix.py"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-08-06T06:17:35Z",
+        "ctime_last": "2026-08-10T06:41:41Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-06T06:17:35Z",
+        "mtime_last": "2026-08-10T06:41:41Z",
+        "runs": 432,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/matrix": 432
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 432,
+        "runs_without_environment_block": 432,
+        "unanimous": true
+      },
+      "source_path": "/root/aep/experiments/results/matrix",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "INFERRED",
+          "evidence": [
+            "no environment block; the collection's own orchestrator artifacts record absolute paths to the harness source, which fix the working directory the relative results_root resolves against",
+            "ctime == mtime across every run, so the collection was written where it sits rather than copied here"
+          ],
+          "value": null
+        }
+      }
+    },
+    "phase10-VOIDED-ext4-arbb30-wrong-runtime": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/root/aep-phase10/ext4-2026-09-02-arbb30"
+        ],
+        "matrix-progress.jsonl": [
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r10/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r11/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r12/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r13/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r14/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r15/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r16/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r17/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r18/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r19/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r20/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r21/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r3/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r4/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r5/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r6/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r7/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r8/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r9/summary.json"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T10:58:33Z",
+        "ctime_last": "2026-09-02T11:24:45Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T10:58:33Z",
+        "mtime_last": "2026-09-02T11:24:45Z",
+        "runs": 23,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/root/aep-phase10/ext4-2026-09-02-arbb30": 23
+        },
+        "filesystem": {
+          "device": "/dev/sdd",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 23,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase10/VOIDED/ext4-2026-09-02-arbb30-VOID-wrong-runtime",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 23 runs"
+          ],
+          "value": {
+            "device": "/dev/sdd",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "phase10-VOIDED-ext4-wrong-runtime": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/root/aep-phase10/ext4-2026-09-02"
+        ],
+        "matrix-progress.jsonl": [
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r2/summary.json"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T10:42:57Z",
+        "ctime_last": "2026-09-02T10:57:37Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T10:42:57Z",
+        "mtime_last": "2026-09-02T10:57:37Z",
+        "runs": 18,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/root/aep-phase10/ext4-2026-09-02": 18
+        },
+        "filesystem": {
+          "device": "/dev/sdd",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "/root/aep-phase10/ext4-2026-09-02",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 18,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase10/VOIDED/ext4-2026-09-02-VOID-wrong-runtime",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 18 runs"
+          ],
+          "value": {
+            "device": "/dev/sdd",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "/root/aep-phase10/ext4-2026-09-02",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "phase10-replication-drvfs-2026-09-02": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02"
+        ],
+        "matrix-progress.jsonl": [
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-after_barrier_before_d",
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-after_intent_before_ba",
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-after_resolution_befor",
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-after_response_before_",
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-before_intent_write-le",
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-mid_dispatch-ledger_po"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T12:23:52Z",
+        "ctime_last": "2026-09-02T12:38:27Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T12:23:52Z",
+        "mtime_last": "2026-09-02T12:38:27Z",
+        "runs": 18,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02": 18
+        },
+        "filesystem": {
+          "device": "D:\\134",
+          "is_drvfs": true,
+          "mount_point": "/mnt/d",
+          "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02",
+          "type": "v9fs"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 18,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 18 runs"
+          ],
+          "value": {
+            "device": "D:\\134",
+            "is_drvfs": true,
+            "mount_point": "/mnt/d",
+            "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02",
+            "type": "v9fs"
+          }
+        }
+      }
+    },
+    "phase10-replication-drvfs-arbb30-2026-09-02": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02"
+        ],
+        "matrix-progress.jsonl": [
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/aep_full-after_resolutio"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T12:39:40Z",
+        "ctime_last": "2026-09-02T13:10:44Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T12:39:40Z",
+        "mtime_last": "2026-09-02T13:10:44Z",
+        "runs": 30,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "D:\\134",
+        "mount_point": "/mnt/d",
+        "options": "rw,noatime,aname=drvfs;path=D:\\;uid=1001;gid=1001;symlinkroot=/mnt/,cache=5,access=client,msize=65536,trans=fd,rfd=6,wfd=6",
+        "type": "9p"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02": 30
+        },
+        "filesystem": {
+          "device": "D:\\134",
+          "is_drvfs": true,
+          "mount_point": "/mnt/d",
+          "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02",
+          "type": "v9fs"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 30,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 30 runs"
+          ],
+          "value": {
+            "device": "D:\\134",
+            "is_drvfs": true,
+            "mount_point": "/mnt/d",
+            "path": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02",
+            "type": "v9fs"
+          }
+        }
+      }
+    },
+    "phase10-replication-ext4-2026-09-02": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/root/aep-phase10/ext4-2026-09-02"
+        ],
+        "matrix-progress.jsonl": [
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_intent_before_barrier-ledger_postings-f1b0f955-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-after_response_before_resolution-ledger_postings-9aa36b96-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-before_intent_write-ledger_postings-47da250f-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02/aep_full-mid_dispatch-ledger_postings-21d57516-r2/summary.json"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T11:30:25Z",
+        "ctime_last": "2026-09-02T11:49:49Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T11:30:25Z",
+        "mtime_last": "2026-09-02T11:49:49Z",
+        "runs": 18,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/root/aep-phase10/ext4-2026-09-02": 18
+        },
+        "filesystem": {
+          "device": "/dev/sdd",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "/root/aep-phase10/ext4-2026-09-02",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 18,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase10/ext4-2026-09-02",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 18 runs"
+          ],
+          "value": {
+            "device": "/dev/sdd",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "/root/aep-phase10/ext4-2026-09-02",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "phase10-replication-ext4-arbb30-2026-09-02": {
+      "absolute_paths_in_artifacts": {
+        "matrix-plan.json": [
+          "/root/aep-phase10/ext4-2026-09-02-arbb30"
+        ],
+        "matrix-progress.jsonl": [
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r1/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r10/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r11/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r12/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r13/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r14/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r15/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r16/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r17/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r18/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r19/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r2/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r20/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r21/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r22/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r23/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r24/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r25/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r26/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r27/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r28/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r29/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r3/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r4/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r5/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r6/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r7/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r8/summary.json",
+          "/root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r9/summary.json"
+        ]
+      },
+      "inode_evidence": {
+        "ctime_first": "2026-09-02T11:50:49Z",
+        "ctime_last": "2026-09-02T12:21:45Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-09-02T11:50:49Z",
+        "mtime_last": "2026-09-02T12:21:45Z",
+        "runs": 30,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 1,
+        "distinct_redis_storage_backings": 1,
+        "distinct_results_root_values": {
+          "/root/aep-phase10/ext4-2026-09-02-arbb30": 30
+        },
+        "filesystem": {
+          "device": "/dev/sdd",
+          "is_drvfs": false,
+          "mount_point": "/",
+          "path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+          "type": "ext2/ext3"
+        },
+        "redis_storage_backing": {
+          "container": "aep-phase2-redis72",
+          "mount_type": "volume",
+          "name": "aep-phase2_redis-data",
+          "read_only": false,
+          "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+        },
+        "runs": 30,
+        "runs_without_environment_block": 0,
+        "unanimous": true
+      },
+      "source_path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.redis_storage_backing, from docker inspect at run construction"
+          ],
+          "value": {
+            "container": "aep-phase2-redis72",
+            "mount_type": "volume",
+            "name": "aep-phase2_redis-data",
+            "read_only": false,
+            "source": "/var/lib/docker/volumes/aep-phase2_redis-data/_data"
+          }
+        },
+        "results_root_filesystem": {
+          "confidence": "DETERMINED",
+          "evidence": [
+            "the runs' own environment.results_root_filesystem, recorded at run construction, unanimous across 30 runs"
+          ],
+          "value": {
+            "device": "/dev/sdd",
+            "is_drvfs": false,
+            "mount_point": "/",
+            "path": "/root/aep-phase10/ext4-2026-09-02-arbb30",
+            "type": "ext2/ext3"
+          }
+        }
+      }
+    },
+    "voided": {
+      "absolute_paths_in_artifacts": {},
+      "inode_evidence": {
+        "ctime_first": "2026-08-07T12:42:03Z",
+        "ctime_last": "2026-08-07T12:42:03Z",
+        "ctime_minus_mtime_seconds": {
+          "max": 0.0,
+          "median": 0.0,
+          "min": 0.0
+        },
+        "mtime_first": "2026-08-07T12:42:03Z",
+        "mtime_last": "2026-08-07T12:42:03Z",
+        "runs": 1,
+        "written_in_place": true
+      },
+      "mount_now": {
+        "device": "/dev/sdd",
+        "mount_point": "/",
+        "options": "rw,relatime,discard,errors=remount-ro,data=ordered",
+        "type": "ext4"
+      },
+      "recorded": {
+        "distinct_filesystems": 0,
+        "distinct_redis_storage_backings": 0,
+        "distinct_results_root_values": {
+          "experiments/results/matrix": 1
+        },
+        "filesystem": null,
+        "redis_storage_backing": null,
+        "runs": 1,
+        "runs_without_environment_block": 1,
+        "unanimous": true
+      },
+      "source_path": "/root/aep/experiments/results/voided",
+      "verdict": {
+        "redis_storage_backing": {
+          "confidence": "UNDETERMINED",
+          "evidence": [
+            "no environment block: provenance.py did not exist when this was collected, and nothing else in a run artifact names the AOF's storage"
+          ],
+          "value": null
+        },
+        "results_root_filesystem": {
+          "confidence": "INFERRED",
+          "evidence": [
+            "ctime == mtime across every run, so the collection was written where it sits rather than copied here"
+          ],
+          "value": null
+        }
+      }
+    }
+  },
+  "summary": {
+    "redis_storage_backing:DETERMINED": 13,
+    "redis_storage_backing:UNDETERMINED": 7,
+    "results_root_filesystem:DETERMINED": 13,
+    "results_root_filesystem:INFERRED": 3,
+    "results_root_filesystem:UNDETERMINED": 4
+  }
+}

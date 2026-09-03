@@ -1,0 +1,12 @@
+=== fc2ed65  2026-08-07T19:51:16+05:00 Phase 4B G3: B4 and B4b complete on POSITIVE_ONLY and NO_READBACK ===
+    figure-1-undetected-vs-ambiguity.pdf                 DIFFERS from the 84-run partial
+    figure-2-duplicates-by-crash-point.pdf               DIFFERS from the 84-run partial
+=== 118731c  2026-08-07T14:55:14+05:00 Phase 4: matrix closeout -- complete E3 comparison, fsync curve, frozen results ===
+    figure-1-undetected-vs-ambiguity.pdf                 DIFFERS from the 84-run partial
+    figure-2-duplicates-by-crash-point.pdf               DIFFERS from the 84-run partial
+=== b94eff1  2026-08-10T11:49:55+05:00 Phase 5A G3-gap: complete the AUTH column, and correct a number it exposed ===
+    figure-1-undetected-vs-ambiguity.pdf                 DIFFERS from the 84-run partial
+    figure-2-duplicates-by-crash-point.pdf               DIFFERS from the 84-run partial
+=== c2fffa6  2026-08-12T00:56:58+05:00 Close Stage 2 verification and typesetting ===
+    figure-1-undetected-vs-ambiguity.pdf                 DIFFERS from the 84-run partial
+    figure-2-duplicates-by-crash-point.pdf               DIFFERS from the 84-run partial
