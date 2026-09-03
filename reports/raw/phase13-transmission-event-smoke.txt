@@ -1,0 +1,46 @@
+
+
+########## make reproduce-smoke (7 systems, real SIGKILL) ##########
+B2_CAS_ONLY                                    2/2           0/2            0/2
+B3_INTENT_NO_BARRIER                           0/2           0/2            2/2
+B4B_DURABLE_WORKFLOW_AT_MOST_ONCE              0/2           2/2            0/2
+B4_DURABLE_WORKFLOW                            2/2           0/2            0/2
+
+reproduce-smoke: OK. New data is under .scratch/reproduce/smoke; the frozen tree was not touched.
+
+=== tearing down ===
+ Container aep-phase2-toxiproxy Stopping 
+ Container aep-phase2-toxiproxy Stopped 
+ Container aep-phase2-toxiproxy Removing 
+ Container aep-phase2-toxiproxy Removed 
+ Container aep-phase2-redis72 Stopping 
+ Container aep-phase2-redis72 Stopped 
+ Container aep-phase2-redis72 Removing 
+ Container aep-phase2-redis72 Removed 
+ Volume aep-phase2_redis-data Removing 
+ Network aep-phase2_default Removing 
+ Volume aep-phase2_redis-data Removed 
+ Network aep-phase2_default Removed 
+exit=0
+
+
+########## does provider_request_transmitted appear, and where? ##########
+runs: 8
+runs whose logs carry the event: 2
+
+--- one verbatim record ---
+{"event": "provider_request_transmitted", "execution_id": "da459fa7-40e5-469b-9696-2232e8f97c20", "intent_id": "df6709ca-44da-4f90-a860-9e75a8ae1d3f", "monotonic_ns": 85400708728408, "pid": 2309, "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "seq": 6, "source": "worker-0#1", "step_id": "charge-card", "wall_iso": "2026-09-03T09:17:36.237992+00:00", "wall_ms": 1788427056237}
+{"event": "provider_request_transmitted", "execution_id": "af16a27e-715f-4fbf-8490-29a5f4f6efd2", "intent_id": "332cdd2f-2ad1-41cb-b3ff-27552243bf18", "monotonic_ns": 85400708340397, "pid": 2310, "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "seq": 6, "source": "worker-1#1", "step_id": "charge-card", "wall_iso": "2026-09-03T09:17:36.237601+00:00", "wall_ms": 1788427056237}
+{"event": "provider_request_transmitted", "execution_id": "da459fa7-40e5-469b-9696-2232e8f97c20", "intent_id": "df6709ca-44da-4f90-a860-9e75a8ae1d3f", "monotonic_ns": 85400708728408, "pid": 2309, "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "seq": 6, "source": "worker-0#1", "step_id": "charge-card", "wall_iso": "2026-09-03T09:17:36.237992+00:00", "wall_ms": 1788427056237}
+
+--- and the response event ---
+
+
+########## the comparability check: a crash-free run must carry NO such event ##########
+  note: faulted run without the event (no dispatch reached): b0_naive_retry-mid_dispatch-notifications-54dae940-r0
+  note: faulted run without the event (no dispatch reached): b1_lease_only-mid_dispatch-notifications-ca6411f0-r0
+  note: faulted run without the event (no dispatch reached): b2_cas_only-mid_dispatch-notifications-acd2c44b-r0
+  note: faulted run without the event (no dispatch reached): b4_durable_workflow-mid_dispatch-notifications-d0007170-r0
+  note: faulted run without the event (no dispatch reached): b4b_durable_workflow_at_most_once-mid_dispatch-notifications-008c2c3e-r0
+  faulted runs WITH the event: 2
+  crash-free runs WITHOUT it : 0

@@ -1,0 +1,10 @@
+matrix                             ok= 282 failed= 150
+    e.g. aep_full-after_barrier_before_dispatch-ledger_postings-b890c
+    fields ABSENT from the saved document: ['redis_kill_delay_ms', 'redis_kill_executions', 'redis_kill_point', 'suspend_disabled_declared']
+fsync-always                       ok=   6 failed=   0
+b2-paired-v2-s1-2026-08-28         ok= 120 failed=   0
+b2-2026-08-21                      ok=  60 failed=   0
+ext4-2026-09-02                    ok=  18 failed=   0
+
+distinct sets of absent fields among the failures:
+   150 runs missing ['redis_kill_delay_ms', 'redis_kill_executions', 'redis_kill_point', 'suspend_disabled_declared']

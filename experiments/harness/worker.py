@@ -54,6 +54,7 @@ from experiments.harness.events import EventLog
 from experiments.harness.injector import (
     DurabilityAckObserver,
     ProcessCrashInjector,
+    TransmissionObserver,
     compose_injectors,
 )
 from experiments.harness.redis_kill import RedisKillInjector, canary_payload
@@ -174,6 +175,13 @@ async def run_worker(
     connector = build_connector(
         config, items=index_by_execution_id(plan_workload(config))
     )
+    # Phase 13 prerequisite. Marks the instant provider bytes leave, so each
+    # arm's post-arming exposure is measured rather than argued. Gated on the
+    # same condition as the acknowledgement observer above and for the same
+    # reason: it puts an EventLog.emit on the dispatch path, and the crash-free
+    # p0 cells are the ones RQ3's cost numbers come from.
+    if observer is not None:
+        connector = TransmissionObserver(connector=connector, emit=log.emit)
     exit_status = 0
     try:
         lock_manager = DistributedLockManager(redis_client)

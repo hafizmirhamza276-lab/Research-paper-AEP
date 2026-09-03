@@ -42,6 +42,7 @@ from __future__ import annotations
 import os
 import signal
 import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Mapping
@@ -379,6 +380,94 @@ class DurabilityAckObserver:
             execution_id=self._execution_id,
             checkpoint=name,
         )
+
+
+@dataclass
+class TransmissionObserver:
+    """Mark the instant provider bytes leave. Change nothing else.
+
+    Phase 13's prerequisite. WS-3 needs to know how long **each arm** is exposed
+    after a fault is armed, because the two exposures are what the experiment
+    contrasts: AEP-full has one extra Redis-dependent step, ``WAITAOF``, that B3
+    does not, and the fault has to land in a window B3 has already left and
+    AEP-full is still inside. Without a record of when B3 left it, the arming
+    delay can only be argued for, and Phase 13 exists to stop arguing about
+    timings and measure them.
+
+    **What the event marks, precisely.** ``provider_request_transmitted`` is
+    emitted on entry to :meth:`MockLegacyApiConnector.mutate`. That call is the
+    instruction *immediately after*
+    ``_checkpoint("AFTER_PREFLIGHT_BEFORE_REQUEST_TRANSMISSION")``
+    (``aep_core/core/intent_workflow.py:579``) and *before* the exact request
+    bytes are constructed, let alone sent. `intent_workflow.py:574-578` states
+    the same boundary from the other side: a process cut before that line has
+    provably not dispatched, and one after it may have. So the event is the last
+    observable point at which no provider byte can have left, not an
+    approximation of it.
+
+    ``provider_response_received`` closes the interval, so the transmission
+    itself is measurable rather than inferred from the two ends of a run.
+
+    **It changes no protocol behaviour.** Every attribute other than ``mutate``
+    is delegated untouched by ``__getattr__``; ``mutate`` returns exactly what
+    the wrapped connector returned and re-raises exactly what it raised, with no
+    ``except`` clause that could convert an exception into a different one. The
+    workflow classifies connector exceptions as ambiguous
+    (``intent_workflow.py:616-624``), so swallowing or retyping one here would
+    silently change an outcome class; it does neither.
+
+    **It is attached only where a fault injector already exists**, for the
+    reason :class:`DurabilityAckObserver` gives at ``worker.py:140-152`` and for
+    one more. ``EventLog.emit`` serialises and flushes -- a real syscall, 5.4 us
+    median on ext4 -- and it would sit on the dispatch path of the crash-free
+    ``p0`` cells, which are the only cells RQ3's cost numbers may use. Adding a
+    syscall there would change those cells' conditions relative to every
+    crash-free run already collected. Fault-bearing cells already carry the
+    observer machinery, so nothing about their comparability moves.
+
+    **The recovery service's connector is deliberately not wrapped.** Recovery
+    runs in another process with its own connector (``recovery.py:58``); the
+    window this measures is the worker's, and instrumenting recovery would add
+    events that no analysis here reads.
+    """
+
+    connector: Any
+    emit: Any
+
+    def __getattr__(self, name: str) -> Any:
+        # Delegation, so read-back, aclose and anything added later reach the
+        # real connector without this class having to know they exist.
+        return getattr(self.connector, name)
+
+    async def mutate(self, **kwargs: Any) -> Any:
+        dispatch = kwargs.get("dispatch")
+        binding = getattr(dispatch, "binding", None)
+        self.emit(
+            "provider_request_transmitted",
+            execution_id=getattr(binding, "execution_id", None),
+            intent_id=getattr(binding, "intent_id", None),
+            step_id=getattr(binding, "step_id", None),
+        )
+        started = time.monotonic_ns()
+        try:
+            response = await self.connector.mutate(**kwargs)
+        except BaseException as error:
+            # Recorded and re-raised unchanged. BaseException because the
+            # simulated process death the crash injector raises derives from it
+            # and must not be caught here -- only witnessed.
+            self.emit(
+                "provider_request_failed",
+                execution_id=getattr(binding, "execution_id", None),
+                error=type(error).__name__,
+                elapsed_ns=time.monotonic_ns() - started,
+            )
+            raise
+        self.emit(
+            "provider_response_received",
+            execution_id=getattr(binding, "execution_id", None),
+            elapsed_ns=time.monotonic_ns() - started,
+        )
+        return response
 
 
 @dataclass
