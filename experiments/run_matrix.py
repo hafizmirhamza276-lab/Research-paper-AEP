@@ -278,6 +278,38 @@ REGIME_REDIS_KILL_INFLIGHT = Regime(
     keyings=(ReadbackKeying.CALLER_REFERENCE,),
 )
 
+#: WS-4 / backlog B1. The same shape as :data:`REGIME_REDIS_KILL_PREACK` with the
+#: fault swapped: instead of killing the server at the checkpoint, the device
+#: stops accepting writes while Redis keeps running.
+#:
+#: **The six regimes above are not modified.** This is a seventh Regime object;
+#: the frozen cells are what this one is read against, and a change there would
+#: make them incomparable to themselves.
+#:
+#: **The mechanism is selected by the environment**, exactly as Phase 13 Arm A's
+#: was: ``AEP_HARNESS_REDIS_FAULT_MECHANISM=write-loss`` plus
+#: ``AEP_HARNESS_WRITE_LOSS_DEVICE``. Neither is a ``RunConfig`` field, so no
+#: collected run's ``config_digest`` changes.
+#:
+#: **NO_READBACK only**, which is where ``docs/24`` B1 and the pre-registration
+#: both scope it. **Ten executions per run**, unlike the kill regimes' one: B1
+#: asks what the protocol does across a sequence once its record is destroyed.
+REGIME_WRITE_LOSS_PREACK = Regime(
+    name="write-loss-preack",
+    label="block-level write loss at the intent CAS, before the barrier (B1)",
+    crash_probability=0.0,
+    iterates_crash_points=False,
+    redis_kill_point="after_intent_before_barrier",
+    redis_kill_delay_ms=0,
+    redis_kill_executions=1,
+    runs_per_cell=30,
+    executions_per_run=10,
+    workers=1,
+    systems=ABLATION_SYSTEMS,
+    endpoints=("ledger_postings",),
+    keyings=(ReadbackKeying.CALLER_REFERENCE,),
+)
+
 #: Phase 13 Arm A (WS-3). The SAME fault class as
 #: :data:`REGIME_REDIS_KILL_PREACK` -- F3 crash-stop of the state store,
 #: delivered at the same instruction boundary -- with the injector's own
@@ -327,6 +359,7 @@ REGIMES: tuple[Regime, ...] = (
     REGIME_CRASH_SOMETIMES,
     REGIME_REDIS_KILL_PREACK,
     REGIME_REDIS_KILL_INFLIGHT,
+    REGIME_WRITE_LOSS_PREACK,
     REGIME_REDIS_PAUSE_KILL_PREACK,
 )
 
@@ -1188,7 +1221,7 @@ def main(argv: list[str] | None = None) -> int:
         action="append",
         help=(
             "collect only these regimes: session-3, p0, p30, "
-            "redis-kill-preack, redis-kill-inflight"
+            "redis-kill-preack, redis-kill-inflight, write-loss-preack"
         ),
     )
     parser.add_argument("--crash-delay-ms", type=int, default=400)

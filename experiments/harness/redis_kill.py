@@ -132,6 +132,18 @@ MECHANISM_KILL = "kill"
 #: Phase 13 Arm A. Freeze first, then kill.
 MECHANISM_PAUSE_THEN_KILL = "pause-then-kill"
 
+#: WS-4 / backlog B1. Not a kill at all: the device stops accepting writes while
+#: Redis keeps running and keeps serving reads. Registered here so the existing
+#: arming, watchdog and event machinery is reused rather than duplicated -- the
+#: fault point, the delay and the scoped executions all keep the meaning they
+#: already have, and only what happens at the checkpoint differs.
+MECHANISM_WRITE_LOSS = "write-loss"
+
+#: The dm-flakey device the write-loss mechanism arms. Read from the environment
+#: for the same reason the mechanism is: it must not enter ``config_digest``
+#: (``docs/31-transmission-event.md`` section 4).
+WRITE_LOSS_DEVICE_VARIABLE = "AEP_HARNESS_WRITE_LOSS_DEVICE"
+
 
 def pause_then_kill(container: str, *, timeout: float = 30.0) -> dict[str, Any]:
     """Freeze the container, then SIGKILL it. Same end state, narrower race.
@@ -207,10 +219,54 @@ def killer_for(mechanism: str | None) -> Callable[[str], dict[str, Any]]:
         return kill_redis
     if mechanism == MECHANISM_PAUSE_THEN_KILL:
         return pause_then_kill
+    if mechanism == MECHANISM_WRITE_LOSS:
+        return drop_writes_on_device
     raise ValueError(
         f"unknown {REDIS_FAULT_MECHANISM_VARIABLE}={mechanism!r}; expected "
-        f"{MECHANISM_KILL!r} or {MECHANISM_PAUSE_THEN_KILL!r}"
+        f"{MECHANISM_KILL!r}, {MECHANISM_PAUSE_THEN_KILL!r} or "
+        f"{MECHANISM_WRITE_LOSS!r}"
     )
+
+
+def drop_writes_on_device(container: str) -> dict[str, Any]:
+    """WS-4's fault: stop the device accepting writes.
+
+    The container is deliberately not touched -- that is the whole difference
+    from the two kill mechanisms, and it is why B1 can separate "the record was
+    destroyed" from "the server died".
+
+    ``container`` is accepted and ignored so this matches the callable shape
+    :func:`killer_for` returns. The device comes from the environment, because a
+    run cannot know which dm-flakey mapping the session provisioned and because a
+    ``RunConfig`` field would change every collected run's ``config_digest``.
+
+    Returns the ``issued``/``command_ms`` shape the kill mechanisms return, plus
+    both table lines, so the run log records what the device was before and after
+    without a second code path. ``issued`` follows the table read back rather
+    than the exit codes, so it is a delivery signal and not a hopeful one.
+    """
+    from experiments.harness import write_loss
+
+    device = os.environ.get(WRITE_LOSS_DEVICE_VARIABLE, "").strip()
+    if not device:
+        return {
+            "issued": False,
+            "mechanism": MECHANISM_WRITE_LOSS,
+            "error": f"{WRITE_LOSS_DEVICE_VARIABLE} is not set",
+            "command_ms": 0,
+        }
+
+    record = write_loss.arm_drop_writes(device)
+    return {
+        "issued": record.armed,
+        "mechanism": MECHANISM_WRITE_LOSS,
+        "device": record.device,
+        "table_before": record.table_before,
+        "table_after": record.table_after,
+        "armed": record.armed,
+        "error": record.error,
+        "command_ms": record.arm_ms,
+    }
 
 
 def start_redis(container: str, *, timeout: float = 60.0) -> dict[str, Any]:
