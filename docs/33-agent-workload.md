@@ -1,6 +1,10 @@
 # The agent workload — design
 
-**WS-1 Option B, task 1B.1. Design only; nothing here is implemented.**
+**WS-1 Option B, task 1B.1.**
+
+**Status.** §2 (WS-1a, attribution) is **built and verified** — see its own
+status line and `reports/phase-report-ws1a-2026-09-04.md`. §§1 and 3–5
+(WS-1b, the agent workload) are **design only; none of it is implemented.**
 
 `docs/26-journal-readiness-direction.md` §4 names this file `27-agent-workload.md`;
 that number was taken by `27-measurement-host.md` before this was written, so it
@@ -38,9 +42,9 @@ a ledger schema change and a construct-validity threat inside a workload task.
 | **WS-1a · Attribution** | the execution-id repair, its four proofs, and the §VIII threat statement | **§2** |
 | **WS-1b · The agent workload** | tools, planners, plan drift, collection | §§1, 3–5 |
 
-**WS-1a blocks WS-1b entirely.** No agent code is written until §2.11 is
-complete. Recorded in `docs/26-journal-readiness-direction.md` §4 and §5 so the
-direction document does not drift from this one.
+**WS-1a blocked WS-1b entirely, and is now complete**, so WS-1b is unblocked
+and not started. Recorded in `docs/26-journal-readiness-direction.md` §4 and §5
+so the direction document does not drift from this one.
 
 ---
 
@@ -154,12 +158,67 @@ replayability.
 
 ## 2. Prerequisite workstream: the duplicate-metric repair
 
-**This is its own workstream item and it lands before any agent code.** It
-touches `undetected_duplicate_applications`, a headline metric in
-`\cref{tab:outcomes}` and in the B4 duplicate claim. Nothing in §§1, 3–5 may be
-implemented until it is done and the four proofs in §2.8 hold.
+**Status: WS-1a is complete.** It was its own workstream item and it landed
+before any agent code, as required — it touches
+`undetected_duplicate_applications`, a headline metric in `\cref{tab:outcomes}`
+and in the B4 duplicate claim. The four proofs in §2.8 hold. Closing report:
+`reports/phase-report-ws1a-2026-09-04.md`. WS-1b is unblocked.
 
-### 2.0 Correction: the first version of this section named the wrong function
+### The design, in short
+
+> An applied effect is attributed to an execution by a **harness-supplied
+> execution id**, carried on `X-AEP-Execution-Id`, recorded in
+> `applied_mutations`, and read by the analysis — falling back to `target` for
+> any ledger collected before the column existed.
+>
+> It is **excluded from `F(r)`**, the provider exposes **no accessor keyed on
+> it**, and it is **never an input to duplicate detection**. It is
+> instrumentation, not a protocol capability.
+
+**Why that key and not another.** It is the only one that satisfies all three
+constraints at once:
+
+| constraint | `target` | `client_reference` | execution id |
+|---|---|---|---|
+| attributes an execution that died before recording anything | yes | **no** | **yes** |
+| survives two executions sharing a resource | **no** | yes | **yes** |
+| present for all seven systems | yes | **no** | **yes** |
+
+**The principle underneath it — two identifiers, two owners.** Identity and
+attribution are different questions with different trust models, and every wrong
+design in this section collapsed them into one:
+
+> The **oracle** owns *identity* — "are these the same mutation?" — and must
+> answer it **taking nothing from the caller**, because the caller is the system
+> under measurement.
+>
+> The **analysis** owns *attribution* — "which execution caused this row?" — and
+> may take it **from the harness**, because the harness is not under measurement.
+
+The execution id is admissible precisely because it is the harness's and not the
+protocol's: the system under test cannot read it back, condition on it, or vary
+it to its advantage.
+
+### How to read the rest of this section
+
+| | |
+|---|---|
+| **the problem** | §2.1 why `target` attribution is sound today · §2.2 why the agent workload breaks it for every system |
+| **the design** | §2.4 the repair · §2.5 the schema bump · §2.6 the §VIII threat · §2.9 the workload invariant |
+| **the evidence** | §2.8 the four proofs · §2.10 what breaks if this lands late · §2.11 acceptance |
+| **the record** | §2.0, §2.3, §2.7 — three designs that were written down and refuted |
+
+**§§2.0, 2.3 and 2.7 are not the design.** They are kept because they are the
+reason the design is what it is: each was refuted by the code rather than by
+argument, and two of the three were caught by tests and comments that already
+existed. A reader who wants only the answer can stop after §2.9. The subsection
+numbering is unchanged because `experiments/mock_api/ledger.py`,
+`experiments/harness/plan_invariant.py`, `experiments/analyze.py` and the proof
+tests all cite these numbers.
+
+### 2.0 REFUTED DESIGN 1 — the first version of this section named the wrong function
+
+> **Superseded by §2.4.** Kept as the record of why the design is what it is.
 
 The first draft of this document said the repair was to partition
 `GroundTruthLedger.duplicate_groups()` on `client_reference`. **That was wrong,
@@ -214,7 +273,10 @@ it would have been partial. `target` is populated for **all seven**, so
 target-keyed attribution breaks for all seven — including the baselines, and
 including the B4 duplicate rate the paper leans on.
 
-### 2.3 The repair that was chosen first, and why it fails
+### 2.3 REFUTED DESIGN 2 — the repair that was chosen first, and why it fails
+
+> **Superseded by §2.4.** Kept as the record of why the design is what it is,
+> and because its *proof* would have passed while proving nothing.
 
 **Attributing by the caller reference was chosen and then rejected.** It is
 recorded because the reason it fails is the reason the design below is what it
@@ -251,7 +313,10 @@ never exercised. A byte-identical result would have been produced by code that
 never ran the branch it was there to validate. **A vacuous proof is worse than no
 proof**, and catching that is why the design changed.
 
-### 2.4 The repair: a protocol-independent execution id in the ledger
+### 2.4 THE DESIGN — a protocol-independent execution id in the ledger
+
+> **This is the design that was built.** Summarised at the head of §2; stated
+> in full here.
 
 **The mock API records the harness's planned-execution identifier on every
 applied mutation, and the analysis attributes effects by it.**
@@ -342,7 +407,10 @@ workload are not byte-identical to the baselines elsewhere in the paper. The
 honest position is that the field is inert by construction and that its inertness
 is enforced by test.
 
-### 2.7 Correction: the secondary repair was also a wrong design
+### 2.7 REFUTED DESIGN 3 — the secondary repair was also a wrong design
+
+> **Not implemented.** `duplicate_groups()` still groups on fingerprint
+> alone, which is correct. Kept as the record of why.
 
 **This section previously said `duplicate_groups()` should be partitioned on
 `client_reference`.** It should not, and the reason is recorded here rather than
