@@ -84,33 +84,63 @@ non-copyable, single-use, scope-bound in-process dispatch guard that the
 pre-dispatch script refuses to proceed without. Put those together and the
 uncomfortable reading is available: our
 most novel mechanism serves the claim with the \emph{narrowest} evidence --- one
-capability class, one crash point, and an effect size whose host-dependence we
-suspect and have not established --- while the claim with the
+crash point, one host, and an effect size whose host-dependence we have now
+measured rather than merely suspected --- while the claim with the
 strongest evidence rests on write-ahead logging, which is decades old, plus a
 state-machine property that is a few lines of Lua. Narrowest is not weakest:
 within that scope the effect replicated across \ReplicationSessions{} further
 sessions at [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects
 prevented, the only session-clustered interval in this paper that excludes zero.
 
-The cell is no longer collected only once: \cref{sec:eval-prevention} reports
-\ReplicationSessions{} further collections under an identical configuration, and
-they sharpen the limitation rather than removing it. The \emph{direction} held
-in all five --- B3 committed effects AEP-full withheld every time, and B3's own
-count did not move by a single execution --- but the \emph{magnitude} ranged
+The cell is no longer one collection under one injector.
+\Cref{sec:eval-prevention} now leads with a \emph{controlled} fault --- the
+container frozen before it is killed, landing in \ControlledLanding{}\,ms
+against \UncontrolledLanding{}\,ms and with a third of the spread --- collected
+over \ArmASessions{} sessions and all \ArmAClasses{} capability classes. Under
+it AEP-full's unwanted-applied rate is \ArmAAepRate{} against B3's
+\ArmABthreeRate{}, and the between-session spread in AEP-full's count collapses
+to \ArmASpreadMax{} count per class. \textbf{The magnitude is now a measured
+quantity with a stated between-session spread, where before it was one draw
+from a distribution we could only name.}
+
+\textbf{It is bounded by measurement rather than by prediction, and that
+distinction cost us a pre-registration.} We registered a bound of
+[\ArmABoundLow{},\,\ArmABoundHigh{}] before collecting, derived from the
+injector's landing latency as a fraction of the \texttt{WAITAOF} window. The
+observed \ArmAAepRate{} fell \emph{below} it. The model behind the bound fails
+on two premises we have since measured: the exposure window is not the
+bench-measured landing latency --- \ModelAcksPastLanding{} of \ModelAckN{}
+uncontrolled runs acknowledged after that landing had supposedly passed, and
+the same injector call timed in situ runs \ModelInSituRatio{}$\times$ the bench
+figure with non-overlapping ranges --- and the \texttt{WAITAOF} wait is not
+uniform, with \ModelEmpiricalWindow{} of waits falling under
+\ControlledLanding{}\,ms where uniformity assigns \ModelUniformWindow{}. A
+reader should take the measured rate and its spread, and not the bound we
+predicted for it.
+
+\textbf{The residual is real, and it is irreducible under this fault class.}
+AEP-full still applied \ArmAAepApplied{} effects in \ArmAAepN{} executions, and
+no crash-class fault can drive that to zero: freezing Redis synchronously at
+the checkpoint would make \texttt{WAITAOF} unanswerable, but B3 reaches the same
+checkpoint and still needs two further Redis calls, so the same freeze would
+stop B3 dispatching too and the contrast would vanish because the injector had
+disabled both arms. What has changed is not that the residual went away but
+that it is bounded by a measurement with a stated spread instead of by this
+host's \texttt{docker} latency.
+
+The uncontrolled cell remains the replication that agrees in direction, and its
+magnitude still moves: \ReplicationSessions{} further collections ranged
 \ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
-\AepKillRuns{}. The protocol's own logic offers a reason --- whether AEP-full
-dispatches is decided by whether \texttt{WAITAOF} returns before the kill lands,
-so the effect size should be a function of the host's kill-latency distribution
---- but our measurement of that reason does not establish it. The four sessions
-separate the two outcomes by \KillLatencyPerSession{}\,ms, mean
-\KillLatencyMean{}\,ms, 95\% interval
+\AepKillRuns{}, with a session-clustered interval of
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects. Our attempt
+to attribute that movement to kill latency did not succeed at this design's
+precision: the four sessions separate the two outcomes by
+\KillLatencyPerSession{}\,ms, mean \KillLatencyMean{}\,ms, 95\% interval
 [\KillLatencyLow{},\,\KillLatencyHigh{}], a half-width
-\KillLatencyPrecisionRatio{} times that mean: an interval that contains zero and
-is wider than the effect it brackets, because the sessions disagree.
-A reader should therefore treat \UnwantedPrevented{} as one draw from that
-distribution and not as a property of AEP. A second host would not replicate the
-number; it would sample a different distribution, and the prediction this paper
-is willing to make about it is directional only.
+\KillLatencyPrecisionRatio{} times that mean --- containing zero and wider than
+the effect it brackets, because the sessions disagree. \UnwantedPrevented{} is
+one draw from that distribution. \ArmAAepRate{} is not, and the difference
+between those two sentences is what the controlled fault bought.
 
 We think that reading is correct and that it is the paper's contribution
 rather than a hole in it. The composition being novel was never the argument;
@@ -383,13 +413,18 @@ What that leaves uncovered, precisely:
       five for B0--B2, which have no window between writing a record and
       acknowledging it durable because they write no record
       (\cref{tab:crashpoints}).
-\item \textbf{The prevention result rests on one cell.} The hard-Redis-kill
-      ablation of \cref{sec:eval-prevention} was collected on
-      \textsc{no-readback} only, at one crash point, at
-      \AepKillRuns{} runs per system, on one host --- and, as we say there,
-      its effect size may be a function of that host's \texttt{docker kill}
-      latency, which our measurement does not establish. It is the whole of
-      the barrier's measured case. We predicted
+\item \textbf{The prevention result no longer rests on one cell; it still
+      rests on one host.} The original hard-Redis-kill ablation was collected
+      on \textsc{no-readback} only, at one crash point, at \AepKillRuns{} runs
+      per system, and was the whole of the barrier's measured case.
+      \Cref{sec:eval-prevention} now leads with a controlled-fault collection
+      over \ArmASessions{} sessions and all \ArmAClasses{} capability classes,
+      whose between-session spread is \ArmASpreadMax{} count per class. What
+      has not changed is the machine: every collection here comes from one
+      host, so the effect size's dependence on host timing is now measured
+      \emph{on} that host rather than established \emph{across} hosts, and a
+      second machine would still be sampling something we have not observed.
+      We predicted
       that the other two capability classes would move the
       \emph{declared-ambiguity} column and not the applied-effect column,
       because whether an effect reached the provider is not something a
@@ -421,10 +456,18 @@ What that leaves uncovered, precisely:
       alone.} The argument above is no longer unsupported: it is contradicted
       in the data, and untested at adequate power.
 \item \textbf{The in-flight Redis-kill variant} (kill during transmission
-      rather than before acknowledgement) is implemented and was not
-      collected. Our own analysis predicts it ties, since neither system's
-      barrier is in the path there --- but a predicted tie that is inferred is
-      an assumption, not evidence.
+      rather than before acknowledgement) \textbf{is now collected, and it
+      ties.} Over \InflightSessions{} sessions the two arms differ by at most
+      \InflightMaxDiff{} count in any capability class, both at ceiling: the
+      tie our analysis predicted, measured rather than inferred. Two
+      qualifications travel with it. The second session is a \emph{deterministic
+      replay} of the first rather than an independent draw --- the harness
+      assigns seeds per cell and repetition, so where no race remains the second
+      collection reproduces the first exactly, which is itself the clearest
+      evidence that none does. And B3's lowest cell is
+      \InflightBthreeFloor{}/\AepKillRuns{}, exactly the floor below which we
+      would have read the result as a mis-timed injector rather than as a tie;
+      it is the boundary, not headroom.
 \item \textbf{The $30\%$ crash-probability regime} is implemented and not
       collected, so every rate here comes from either an all-crash or a
       no-crash regime and nothing in between.
