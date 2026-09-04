@@ -342,13 +342,42 @@ workload are not byte-identical to the baselines elsewhere in the paper. The
 honest position is that the field is inert by construction and that its inertness
 is enforced by test.
 
-### 2.7 The secondary repair, and the structural boundary
+### 2.7 Correction: the secondary repair was also a wrong design
 
-`duplicate_groups()` still needs partitioning on `client_reference`, for its own
-sake: under an agent workload its fingerprint groups become ambiguous between
-"one intent applied twice" and "two intents chose the same mutation". It does not
-feed the manuscript, but it is the oracle's published Definition 3 and it should
-not be left wrong.
+**This section previously said `duplicate_groups()` should be partitioned on
+`client_reference`.** It should not, and the reason is recorded here rather than
+replaced, as with §2.0 and §2.3.
+
+The argument was that under an agent workload a fingerprint group becomes
+ambiguous between "one intent applied twice" and "two intents chose the same
+mutation", so grouping should include the caller reference. Implementing it broke
+`test_a_client_reference_is_never_an_input_to_duplicate_detection`, which exists
+for a reason that defeats the proposal outright:
+
+> Two applications of the same mutation carrying *different* client references
+> are still one duplicate — otherwise a protocol could hide its duplicates simply
+> by minting a fresh reference per attempt.
+
+**The caller reference is protocol-generated.** AEP sends its own
+`binding.request_fingerprint`. Partitioning the oracle's duplicate
+classification on it would let the system under test decide how many duplicates
+the oracle reports about it — the opposite of oracle independence, and a defect
+the ledger's design already anticipated.
+
+**The oracle must decide identity without trusting the caller at all.** That is
+what Definition 3 is for, and it is why `duplicate_groups()` is left grouping on
+fingerprint alone.
+
+**The intent-versus-mutation distinction belongs to the analysis**, which
+attributes by the harness-supplied `execution_id` — instrumentation the system
+under test does not choose, cannot read back, and cannot vary to its advantage
+(§2.4, §2.6). Two identifiers, two owners: the oracle owns *identity* and takes
+nothing from the caller; the analysis owns *attribution* and takes it from the
+harness. Collapsing them into one is what each of the three wrong designs in
+this section did, in a different direction each time.
+
+`duplicate_groups()` now carries this reasoning in its docstring, so it is not
+re-derived by the next reader.
 
 That partition is bounded by a structural fact. `sends_client_reference` is a
 declared per-system capability in `experiments/baselines/contract.py`, and across
@@ -396,10 +425,16 @@ and recorded by the provider; it is not a `RunConfig` field
 
 **Proof 3 — the schema bump does not reach the analysis.** Two checkable claims
 from §2.5: `analyze.py` contains no reference to `ledger_meta` or to a schema
-version, and its entire read surface on a frozen ledger is the single statement
-`SELECT target, COUNT(*) FROM applied_mutations GROUP BY target`. Both are
+version, and on a ledger *without* the column its read surface is a `PRAGMA
+table_info` probe plus the unchanged `SELECT target, COUNT(*) FROM
+applied_mutations GROUP BY target` — the new column is never named. Both are
 assertable directly against the source, and both should be, because "we did not
 change how frozen data is read" is exactly the kind of claim that rots silently.
+
+*(The probe is what the earlier wording missed: attributing by execution id
+requires asking whether the column exists, so the read surface is two statements
+rather than one. The claim that matters — a frozen ledger is read exactly as
+before — is unchanged.)*
 
 **Proof 4 — the execution id is inert.** It never enters `F(r)`; the provider
 exposes no accessor keyed on it, in contrast to
