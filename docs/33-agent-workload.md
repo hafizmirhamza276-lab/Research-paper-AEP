@@ -134,53 +134,204 @@ replayability.
 ## 2. Prerequisite workstream: the duplicate-metric repair
 
 **This is its own workstream item and it lands before any agent code.** It
-touches `undetected_duplicate_applications`, which is a headline metric in
+touches `undetected_duplicate_applications`, a headline metric in
 `\cref{tab:outcomes}` and in the B4 duplicate claim. Nothing in §§1, 3–5 may be
-implemented until it is done and verified.
+implemented until it is done and the four proofs in §2.8 hold.
 
-### 2.1 What breaks
+### 2.0 Correction: the first version of this section named the wrong function
 
-Once two *different* intents can share a fingerprint (§1.3), a duplicate group is
-ambiguous:
+The first draft of this document said the repair was to partition
+`GroundTruthLedger.duplicate_groups()` on `client_reference`. **That was wrong,
+and the error is recorded here rather than silently replaced**, because the
+reasoning that produced it is a trap the next reader can fall into.
 
-* one intent applied twice — the protocol failed, which is what the metric claims
-  to count; or
-* two intents that chose the same mutation — the *planner* acted twice, which is
-  not a protocol failure at all.
-
-A `GROUP BY fingerprint` cannot tell these apart. Left unrepaired, the agent
-workload would inflate `undetected_duplicate_applications` with planner
-behaviour and the paper's duplicate numbers would stop meaning what they say.
-
-### 2.2 The repair
-
-`applied_mutations` already records what is needed
-(`experiments/mock_api/ledger.py`): `fingerprint`, `client_reference`, `call_id`,
-`target`, `endpoint`. Partition each duplicate group by `client_reference`:
-
-| group shape | meaning | column |
-|---|---|---|
-| >1 row, **one** `client_reference` | one intent applied more than once | `undetected_duplicate_applications` — unchanged meaning |
-| >1 row, **several** `client_reference`s | distinct intents, same mutation | **plan drift, applied** (§4) |
-
-No oracle change is required; this is a classification change in the analysis.
-
-### 2.3 The repair is partial, and the boundary is structural
-
-**`client_reference` is not populated by every system, and that is by design.**
-Measured across the frozen 432-run matrix:
+`duplicate_groups()` implements Definition 3 and groups by *fingerprint*. It is
+the oracle's own classification and it is used by the mock API's tests and
+consistency reporting. **It does not produce any number in the manuscript.** The
+published metric comes from a different path entirely:
 
 ```
-total applied rows            : 4782
-NULL client_reference         : 4171 (87.2%)
-duplicate groups              : 1401
-duplicate groups touching NULL: 1401
+analyze.py:255   is_undetected_duplicate = applied_effects > 1 and outcome != DECLARED_AMBIGUOUS
+analyze.py:526   applied_effects = effects[target]
+analyze.py:199   oracle_effects_by_target:  SELECT target, COUNT(*) ... GROUP BY target
 ```
 
-`experiments/baselines/contract.py` declares why: `sends_client_reference` is a
-per-system capability, and the baselines pass `client_reference=None`
-deliberately. Across all seven systems it takes exactly two values, and it
-**coincides exactly with `can_declare_ambiguity`**:
+The metric attributes ledger rows to executions **by `target`** — never by
+fingerprint, never by `client_reference`. Partitioning `duplicate_groups()`
+would have left the paper's numbers untouched while appearing to repair them.
+
+### 2.1 Why target attribution is sound today
+
+`target` is `account-{execution_id}`: **it encodes the execution**. Each
+execution owns its resource — the *"distinct targets"* decision in
+`experiments/harness/workload.py` — so counting rows per target is counting rows
+per execution, and `applied_effects > 1` means one intent was applied more than
+once.
+
+Measured on the frozen 432-run matrix rather than assumed:
+
+```
+applied rows                       : 4782
+targets carrying >1 row            : 1401
+  ...of which >1 client_reference  : 0
+```
+
+1401 targets carry more than one row — those are the real duplicates — and **not
+one carries rows from two distinct intents**. Per-execution attribution by target
+is sound on all existing data.
+
+### 2.2 Why the agent workload breaks it, for every system
+
+The agent workload removes exactly the property that makes it sound. A planner
+that re-plans onto a target another execution used makes `effects[target]`
+count rows from *both*, and the earlier execution is flagged as an undetected
+duplicate although the protocol applied it exactly once.
+
+**This is worse than a `client_reference` problem, and it is worse in a specific
+way.** `client_reference` is NULL for five of seven systems, so a repair keyed on
+it would have been partial. `target` is populated for **all seven**, so
+target-keyed attribution breaks for all seven — including the baselines, and
+including the B4 duplicate rate the paper leans on.
+
+### 2.3 The repair that was chosen first, and why it fails
+
+**Attributing by the caller reference was chosen and then rejected.** It is
+recorded because the reason it fails is the reason the design below is what it
+is, and because a reader who reaches for the obvious key should find out here
+rather than after collection.
+
+The proposal was: emit the caller reference on the harness's per-execution event
+record, attribute applied effects by it, and fall back to target where there is
+none. `experiments/harness/reconcile.py:7-13` had already considered and
+rejected exactly this:
+
+> **How an effect is attributed to an execution.** By `target`. The workload
+> gives every execution its own resource (`account-<execution_id>`), so an
+> applied mutation names the execution that caused it **without any cooperation
+> from the protocol** — which matters, because the executions this harness cares
+> most about are the ones **whose worker died before it could record anything**.
+> A `client_reference` would only attribute the effects of executions that lived
+> long enough to resolve […]
+
+The fallback appears to cover that case, and today it does: a worker `SIGKILL`ed
+before recording anything is still attributed, because its target encodes its
+execution id. **The agent workload is exactly what removes that.** Under target
+reuse, an execution that died before recording has
+
+* no harness-recorded caller reference — it died first — and
+* a target it may share with another execution,
+
+so it is attributable by **neither**. Those are the executions every crash regime
+in this paper is built on.
+
+**Worse, the proof would have passed anyway.** On the frozen matrix targets are
+still unique, so the fallback fires on every row and the caller-reference path is
+never exercised. A byte-identical result would have been produced by code that
+never ran the branch it was there to validate. **A vacuous proof is worse than no
+proof**, and catching that is why the design changed.
+
+### 2.4 The repair: a protocol-independent execution id in the ledger
+
+**The mock API records the harness's planned-execution identifier on every
+applied mutation, and the analysis attributes effects by it.**
+
+It is the only key that satisfies both constraints at once:
+
+| constraint | `target` | `client_reference` | execution id |
+|---|---|---|---|
+| attributes an execution that died before recording anything | yes | **no** | **yes** |
+| survives two executions sharing a resource | **no** | yes | **yes** |
+| present for all seven systems | yes | **no** | **yes** |
+
+It requires no cooperation from the system under test — the harness supplies it
+on the call, exactly as it supplies the target today — so it keeps the property
+`reconcile.py` was protecting while surviving the property the agent workload
+removes.
+
+**It must not enter the fingerprint.** `F(r)` is computed over the endpoint,
+target and the endpoint's declared identity fields
+(`experiments/mock_api/fingerprint.py`, Definition 1). If the execution id
+entered it, every call would acquire a distinct identity, no two mutations would
+ever share a fingerprint, and the duplicate metric would read zero everywhere.
+The id is a recorded column, never an identity field.
+
+### 2.5 The `LEDGER_SCHEMA_VERSION` bump, and why the frozen matrix is untouched
+
+Adding a column to `applied_mutations` bumps `LEDGER_SCHEMA_VERSION`, which the
+ledger states is *"a statement that previously collected result databases are not
+comparable to new ones"*. That statement is about **collection**, and the
+question here is about **analysis**: are the published numbers, which are derived
+by re-reading those frozen databases, affected?
+
+**They are not, and the reason is checkable rather than argued.** The analysis
+never opens a frozen ledger through `GroundTruthLedger` — `analyze.py:199` says
+so and gives the reason (*"that class is part of the apparatus under test's
+environment"*). Its entire read surface on a frozen database is **one read-only
+connection issuing one statement**:
+
+```
+SELECT target, COUNT(*) FROM applied_mutations GROUP BY target
+```
+
+Two consequences follow, and each is a proof obligation in §2.7 rather than an
+assertion here:
+
+1. **`LEDGER_SCHEMA_VERSION` is never consulted by the analysis.** It is read in
+   `experiments/mock_api/ledger.py` and nowhere else; `analyze.py` contains no
+   reference to `ledger_meta` or to a schema version. A bump is therefore
+   invisible to every published number.
+2. **The one statement names only `target`**, a column that exists unchanged in
+   the frozen schema. A frozen database lacking the new column is read exactly as
+   it is read today, because nothing in the statement mentions it.
+
+The new column is consulted only where it exists. Frozen databases are read under
+the old shape by a statement that predates the change, and are not migrated,
+rewritten or re-derived.
+
+### 2.6 Baselines carrying measurement metadata — a real threat, and §VIII must say so
+
+Five of the seven systems are *defined* not to send a caller reference
+(`experiments/baselines/contract.py`, `sends_client_reference=False`). Making
+them send an execution id is a change to what a baseline transmits, and that is a
+construct-validity threat to the baseline comparison. **It belongs in §VIII as a
+stated threat, not in a design document where a reviewer will not find it.**
+
+The precise claim, which §VIII should carry in these terms:
+
+> The execution id is **harness instrumentation, not a protocol capability**. It
+> is supplied by the measurement harness on every call for every system, exactly
+> as the target resource already is; it is recorded by the provider and **never
+> returned to the caller, never queryable by it, and never used by the provider
+> to decide whether a mutation is a repeat**. No system under test can read it
+> back, condition on it, or deduplicate with it.
+
+That distinction is what separates it from `client_reference`, and the separation
+is structural rather than stipulated: `client_reference` **is** queryable —
+`ledger.applications_for_client_reference()` exists and `service.py:269` calls it
+to serve read-backs under `CALLER_REFERENCE` keying. That accessor is what makes
+a caller reference a *capability*. **The execution id gets no such accessor**, and
+its absence is the thing to test.
+
+**What remains a genuine threat, and should be conceded rather than argued away:**
+the baselines now transmit a field they would not transmit in a real deployment.
+It gives them no ability they lacked — the paper's premise is providers *without*
+idempotency keys, and a write-only field the provider ignores for identity is not
+one — but a reviewer is entitled to note that the baselines under the agent
+workload are not byte-identical to the baselines elsewhere in the paper. The
+honest position is that the field is inert by construction and that its inertness
+is enforced by test.
+
+### 2.7 The secondary repair, and the structural boundary
+
+`duplicate_groups()` still needs partitioning on `client_reference`, for its own
+sake: under an agent workload its fingerprint groups become ambiguous between
+"one intent applied twice" and "two intents chose the same mutation". It does not
+feed the manuscript, but it is the oracle's published Definition 3 and it should
+not be left wrong.
+
+That partition is bounded by a structural fact. `sends_client_reference` is a
+declared per-system capability in `experiments/baselines/contract.py`, and across
+all seven systems it coincides **exactly** with `can_declare_ambiguity`:
 
 | system | `can_declare_ambiguity` | `sends_client_reference` |
 |---|---|---|
@@ -192,79 +343,96 @@ deliberately. Across all seven systems it takes exactly two values, and it
 | `B4_DURABLE_WORKFLOW` | False | False |
 | `B4B_DURABLE_WORKFLOW_AT_MOST_ONCE` | False | False |
 
-**That coincidence is not luck and it resolves the problem.** Plan drift is
-*defined* as re-planning after a declared ambiguity (§4.2), so it can only occur
-in a system that can declare one. The discriminator the metric needs
-(`client_reference`) exists in exactly the systems where the metric is
-meaningful. Both follow from the same underlying property: a pre-dispatch intent
-record the caller can name.
+**That coincidence is not luck.** Plan drift is defined as re-planning after a
+declared ambiguity (§4.2), so it can only occur in a system that can declare one
+— and the discriminator it needs exists in exactly those systems. Both follow
+from having a pre-dispatch intent record the caller can name.
 
-The consequence for the five systems that send no reference is therefore **not**
-that their duplicate metric is unrepairable. It is that they never generate the
-ambiguous case, provided the workload guarantees it — which is §2.4.
+### 2.8 The proofs
 
-### 2.4 The workload invariant that makes the repair sufficient
+None is asserted; each has a test. **§2.3 is the reason each is stated as
+something to falsify rather than to confirm** — the proof that was nearly shipped
+would have passed without exercising the code it existed to validate.
+
+**Proof 1 — the frozen numbers do not move.** Re-running the analysis over the
+frozen 432-run matrix produces **byte-identical** duplicate numbers before and
+after the repair. **This proof is only available while the frozen data is the
+only data**: once agent cells exist, a reader can no longer distinguish "the
+repair changed nothing" from "the repair changed nothing on the cells that
+predate it".
+
+*And it must be shown non-vacuous.* On frozen databases the new column does not
+exist, so byte-identity there demonstrates only that the fallback is intact. The
+test must therefore be paired with a constructed fixture in which two executions
+share a target, where old and new attribution **disagree** — proving the new path
+is reached and does something. A test that only ever exercises the fallback is
+the §2.3 mistake repeated.
+
+**Proof 2 — `config_digest` is unaffected.** Every frozen run's recorded
+`config_digest` is unchanged, because the execution id is supplied on the call
+and recorded by the provider; it is not a `RunConfig` field
+(`docs/31-transmission-event.md` §4).
+
+**Proof 3 — the schema bump does not reach the analysis.** Two checkable claims
+from §2.5: `analyze.py` contains no reference to `ledger_meta` or to a schema
+version, and its entire read surface on a frozen ledger is the single statement
+`SELECT target, COUNT(*) FROM applied_mutations GROUP BY target`. Both are
+assertable directly against the source, and both should be, because "we did not
+change how frozen data is read" is exactly the kind of claim that rots silently.
+
+**Proof 4 — the execution id is inert.** It never enters `F(r)`; the provider
+exposes no accessor keyed on it, in contrast to
+`ledger.applications_for_client_reference()`; and no system under test can read
+it back. This is what §2.6 asks §VIII to claim, so it is what a test must pin.
+
+### 2.9 The workload invariant
 
 > **Invariant.** The planner may emit a tool call whose fingerprint equals one it
 > has already emitted **only** in response to a step whose declared outcome was
 > `PERMANENTLY_AMBIGUOUS`.
 
 Under this invariant a repeated fingerprint can only arise where an ambiguity was
-declared, so it can only arise in a system with `can_declare_ambiguity=True`, so
-it can only arise where `client_reference` is populated and the partition of §2.2
-applies. For the other five systems, fingerprints remain distinct exactly as they
-are today and their duplicate numbers keep their current meaning with no change
-at all.
+declared, so only in a system with `can_declare_ambiguity=True`, so only where a
+caller reference is present and §2.4's primary path applies. For the other five
+systems fingerprints and targets stay distinct exactly as they are today.
 
-The invariant is checkable from the recorded plan and should be asserted in the
-harness rather than trusted.
+The invariant is checkable from the recorded plan and is asserted rather than
+trusted.
 
-### 2.5 Effect on existing frozen cells: none, and this is measured
+### 2.10 What breaks if this lands late
 
-The metric must mean the same thing before and after, or every prior number
-changes meaning. Checked against the frozen matrix rather than argued:
-
-```
-runs scanned            : 432
-runs with a duplicate   : 185
-duplicate groups        : 1401
-groups w/ >1 reference  : 0
-```
-
-**No duplicate group in any frozen run has more than one `client_reference`**, so
-the partition of §2.2 moves nothing: every existing group stays in
-`undetected_duplicate_applications`, and every published duplicate number is
-byte-identical after the repair. That is the property that makes this safe to
-land, and it is why the repair must land *first* — proving it on frozen data is
-only possible while the frozen data is the only data.
-
-### 2.6 What breaks if this lands late
-
-* **Collected agent cells would be unanalysable.** A run collected before the
-  partition exists records the rows, but the classification would be made by
-  code that cannot distinguish the two cases, and re-running the analysis later
-  is not equivalent to having collected under a checked invariant (§2.4).
-* **The frozen no-op proof becomes impossible.** §2.5 is provable now because
-  every existing group has one reference. Once agent cells are in the tree, a
-  reader can no longer distinguish "the repair changed nothing" from "the repair
-  changed nothing *on the cells that predate it*", and the byte-identical check
-  in `scripts/check_paper_numbers.py` would be comparing against numbers already
-  produced under the new rule.
+* **Collected agent cells would be unanalysable.** The rows are recorded, but the
+  attribution would be made by code that cannot tell the two cases apart, and
+  re-running the analysis later is not equivalent to having collected under a
+  checked invariant.
+* **Proof 1 becomes impossible.** It is provable now because every frozen target
+  carries one intent. Once agent cells are in the tree the comparison is against
+  numbers already produced under the new rule.
 * **The B4 duplicate claim silently changes population.** B4 duplicates at the
-  highest rate in the study and that is a load-bearing comparison. If agent cells
-  enter `per-cell-metrics.csv` before the invariant is enforced, that rate mixes
-  protocol duplicates with planner repetitions and the paper's sharpest
-  duplicate sentence stops being true.
+  highest rate in the study and that is a load-bearing comparison. Target-keyed
+  attribution breaking for baselines (§2.2) is exactly what would corrupt it.
 
-### 2.7 Acceptance for this item
+### 2.11 Acceptance
 
-1. Duplicate-group classification partitions on `client_reference`.
-2. The §2.4 invariant is asserted in the harness, not assumed.
-3. Re-running the analysis over the frozen matrix reproduces every duplicate
-   number **byte-identically** — the check `scripts/check_paper_numbers.py`
-   already performs for generated artifacts.
-4. A test pins the two-case classification against a constructed fixture with
-   both shapes, since the frozen data contains only one of them.
+1. `applied_mutations` carries a harness-supplied execution id, and
+   `LEDGER_SCHEMA_VERSION` is bumped (§2.4, §2.5).
+2. The analysis attributes applied effects by that id, falling back to `target`
+   for databases that predate the column.
+3. The execution id is excluded from `F(r)` and from every endpoint's identity
+   fields (§2.4).
+4. No provider accessor is keyed on the execution id (§2.6).
+5. `duplicate_groups()` partitions on `client_reference` (§2.7).
+6. The §2.9 invariant is asserted in code, not assumed.
+7. **Proof 1** — frozen duplicate numbers byte-identical — has a test, *and* a
+   paired fixture test in which old and new attribution disagree, so Proof 1 is
+   shown non-vacuous.
+8. **Proof 2** — `config_digest` unchanged — has a test.
+9. **Proof 3** — the analysis reads no schema version and issues one statement —
+   has a test.
+10. **Proof 4** — the execution id is inert — has a test.
+11. **§VIII carries the baseline-fidelity threat** in the terms of §2.6. This is
+    a manuscript obligation, not a code one, and the workstream is not complete
+    without it.
 
 ---
 
@@ -488,7 +656,7 @@ reviewer asks.
 
 1. **§2, the duplicate-metric repair.** Blocks everything else. Ends with the
    frozen matrix reproducing byte-identically.
-2. Planner interface and the scripted planner (§3), with the §2.4 invariant
+2. Planner interface and the scripted planner (§3), with the §2.9 invariant
    asserted.
 3. Pre-registration (§4.4), committed before any agent cell is collected.
 4. Collection, then the local-model arm as a secondary.
