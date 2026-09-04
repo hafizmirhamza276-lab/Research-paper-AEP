@@ -423,3 +423,64 @@ experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/*
 !experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/coverage.json
 !experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-cell-metrics.csv
 !experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-execution.csv
+
+# Phase 13 (WS-3 and step 4). Arm A is the controlled-fault collection that
+# sec:eval-prevention now leads with; the in-flight sessions are the M9 cell.
+# Same rule as every block above: the derived analysis products are tracked
+# because the manuscript's macros are generated from them, and the raw run
+# directories are not -- they are ~150 MB and belong in the archive.
+
+!experiments/results/phase13-armA-s1-2026-09-03/
+experiments/results/phase13-armA-s1-2026-09-03/*
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/
+experiments/results/phase13-armA-s1-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-armA-s2-2026-09-03/
+experiments/results/phase13-armA-s2-2026-09-03/*
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/
+experiments/results/phase13-armA-s2-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-armA-s3-2026-09-03/
+experiments/results/phase13-armA-s3-2026-09-03/*
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/
+experiments/results/phase13-armA-s3-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-inflight-s1-2026-09-04/
+experiments/results/phase13-inflight-s1-2026-09-04/*
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/
+experiments/results/phase13-inflight-s1-2026-09-04/analysis/*
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/coverage.json
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/latency-and-throughput.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/per-cell-metrics.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/per-execution.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-inflight-s2-2026-09-04/
+experiments/results/phase13-inflight-s2-2026-09-04/*
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/
+experiments/results/phase13-inflight-s2-2026-09-04/analysis/*
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/coverage.json
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/latency-and-throughput.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-cell-metrics.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-execution.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/redis-kill-ablation.csv

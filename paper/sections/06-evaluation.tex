@@ -337,29 +337,106 @@ That is a different guarantee, it is worth stating in its own metric, and no
 worker-crash fault can exercise it --- which is why \cref{sec:eval-detection}
 returns a null. The fault that exercises it is loss of Redis itself.
 
-The scope of this prevention result is one pre-acknowledgement crash point and
-one host. The \textsc{authoritative-readback} class was subsequently collected
-over \ClassSessions{} sessions (\cref{sec:threats}); that comparison did not
-reach a precision adequate to the question and does not extend the prevention
-result, which remains a \textsc{no-readback} measurement. We
-hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
-boundary between the intent CAS and the acknowledgement. AEP-full is inside
-\texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
-that round trip. One execution per run, \AepKillRuns{} runs per system, no
-worker crash --- the fault under study is Redis dying.
-
 The metric is the \emph{unwanted-applied-effect rate}: the fraction of
 executions in which a real, non-idempotent mutation reached the provider while
 the durability of its own intent record could no longer be established. It is
 not the same quantity as an undetected duplicate and it is not measured on the
 same regime; keeping the two apart is the whole point of this subsection.
 
+We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
+boundary between the intent CAS and the acknowledgement. AEP-full is inside
+\texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
+that round trip. One execution per run, no worker crash --- the fault under
+study is Redis dying.
+
+\paragraph{The controlled fault} The result below is collected under a
+\emph{controlled} injector, and that is the change that makes it worth
+reporting. \texttt{docker kill} alone lands \UncontrolledLanding{}\,ms after it
+is issued on this host; freezing the container first with \texttt{docker pause}
+and killing it afterwards lands in \ControlledLanding{}\,ms, with a third of the
+spread, and leaves the container in the same end state. The fault class does not
+change --- it is the same F3 crash-stop at the same instruction boundary --- so
+the two are comparable, and the injector's own contribution to the race is
+narrowed by measurement rather than argued away.
+
+Over \ArmASessions{} sessions and all \ArmAClasses{} capability classes,
+AEP-full's unwanted-applied rate is \ArmAAepRate{} (\ArmAAepApplied{} of
+\ArmAAepN{} executions) and B3's is \ArmABthreeRate{}
+(\ArmABthreeApplied{}/\ArmABthreeN{}), on the same injected fault. The
+between-session spread in AEP-full's count --- the quantity a single collection
+cannot see, and the one the earlier version of this result was criticised for
+not reporting --- collapses to \ArmASpreadMax{} count per class across the
+\ArmASessions{} sessions. B3 stays at its ceiling throughout, never below
+\ArmABthreeFloor{} of \AepKillRuns{} in any class in any session, which is what
+rules out the reading that the injector simply disabled both arms.
+
+\paragraph{The result fell below its own pre-registered bound, and we report
+that as a surprise rather than a success} The prediction was registered before
+the data existed: \ArmAPredicted{}, bounded [\ArmABoundLow{},
+\ArmABoundHigh{}], derived from the measured landing distribution as the
+fraction of a $1\,000$\,ms \texttt{WAITAOF} window the injector leaves open.
+The observed \ArmAAepRate{} is \emph{below} that bound. The pre-registration
+fixed in advance what a rate outside the bound would mean --- the protocol
+behaving unexpectedly, not the mechanism succeeding --- and we honour that here
+rather than presenting a lower-than-predicted number as a better result.
+
+The reason the bound was wrong is measurable, and it is not calibration: the
+model behind it fails on two independent premises that push in opposite
+directions. First, it treats the exposure window as the injector's bench-measured
+landing latency. That does not survive contact with a collection:
+\ModelAcksPastLanding{} of \ModelAckN{} uncontrolled AEP-full runs received a
+genuine \texttt{WAITAOF} acknowledgement \emph{after} the bench landing had
+supposedly passed, and a \texttt{WAITAOF} acknowledgement requires a live
+server. Timed during the collections themselves, the same injector call takes
+\ModelInSituKill{}\,ms against the bench's \ModelBenchKill{}\,ms ---
+\ModelInSituRatio{}$\times$, with ranges that do not overlap. Second, it treats
+the \texttt{WAITAOF} wait as uniform on $U(0, 1\,000)$\,ms. Measured over the
+runs the model was calibrated against, the fraction of waits under
+\ControlledLanding{}\,ms is \ModelEmpiricalWindow{}, where uniformity assigns
+\ModelUniformWindow{} --- \ModelUniformOverstates{}$\times$ too generous, and
+worse the narrower the window. The two errors partly cancelled at the
+uncontrolled window and could not at the controlled one.
+
+The calibration that appeared to license the bound compared the wrong two
+quantities. The model predicts \emph{dispatch}; the estimand is an
+\emph{applied effect}, and dispatch is necessary for one without being
+sufficient. On the same runs the dispatch rate is \ModelDispatchRate{} and the
+applied rate is \ModelAppliedRate{}. Against the quantity it actually predicts,
+the model was already wrong on its own calibration data. We record this because
+a pre-registered bound that agrees for the wrong reason is worse than one that
+disagrees, and only the second kind is visible without looking.
+
+\paragraph{What this does and does not license us to say} We report a rate and
+its mechanism, not a guarantee. \textbf{We do not claim that AEP-full prevents
+the unwanted effect.} The residual is non-zero and is irreducible under this
+fault class: freezing Redis synchronously at the checkpoint would make
+\texttt{WAITAOF} unanswerable, but B3 reaches the same checkpoint and still
+needs two further Redis calls, so the same freeze would stop B3 dispatching too
+and the contrast would vanish because the injector had disabled both arms. What
+the controlled fault buys is that the residual is now bounded by something we
+measured rather than by this host's \texttt{docker} latency --- and, as above,
+the bound we derived from that measurement was itself wrong in a way the data
+can show. The magnitude is not a constant of the protocol and this paper does
+not offer it as one.
+
+\paragraph{The uncontrolled cell replicates the direction, and is not pooled
+with the controlled one} The original collection used \texttt{docker kill}
+alone, and is kept as the uncontrolled replication. It is reported separately
+rather than pooled: the two injectors have different landing distributions, and
+combining them would trade a stated limitation for an unstated confound. The
+scope of that cell is one pre-acknowledgement crash point and one host; the
+\textsc{authoritative-readback} class was subsequently collected over
+\ClassSessions{} sessions (\cref{sec:threats}), a comparison that did not reach
+a precision adequate to the question.
+
 \begin{table}[t]
 \centering
-\caption{The hard-Redis-kill ablation, and the barrier's own metric. Identical
-faults; the only difference is whether the system waits for the durability
-acknowledgement before dispatching. The rate is over executions, one per run.
-Source: \texttt{redis-kill-ablation.csv}, regime \texttt{redis-kill-preack},
+\caption{The \emph{uncontrolled} hard-Redis-kill ablation --- the original
+\texttt{docker kill} cell, retained as the replication that agrees in direction
+with the controlled result above. Identical faults; the only difference is
+whether the system waits for the durability acknowledgement before dispatching.
+The rate is over executions, one per run. Source:
+\texttt{redis-kill-ablation.csv}, regime \texttt{redis-kill-preack},
 \textsc{no-readback}.}
 \label{tab:killablation}
 \small
@@ -374,57 +451,36 @@ B3 (no barrier) & \BthreeKillRuns{} & \BthreeKillApplied{} & \BthreeUnwantedRate
 \end{tabular}
 \end{table}
 
-The unwanted-applied-effect rate is \AepUnwantedRate{} for AEP-full and
-\BthreeUnwantedRate{} for B3 (Fisher's exact test, two-tailed,
-$p = \UnwantedP{}$). That is \textbf{\UnwantedPrevented{} real, non-idempotent
-effects} that AEP-full did not commit and B3 did, on the same injected fault,
-bought by one round trip --- and note that this is the only fault in the study
-under which the two systems diverge. Everywhere else they differ by at most
-$\BthreeVsAepAmbDelta{}$ executions in \BthreeVsAepN{} (\cref{tab:ablation}).
+There the rate is \AepUnwantedRate{} for AEP-full and \BthreeUnwantedRate{} for
+B3 (Fisher's exact test, two-tailed, $p = \UnwantedP{}$), a difference of
+\UnwantedPrevented{} executions on the same injected fault --- the same
+direction as the controlled cell, at a magnitude the uncontrolled injector
+sets. Note that this is the only fault in the study under which the two systems
+diverge; everywhere else they differ by at most $\BthreeVsAepAmbDelta{}$
+executions in \BthreeVsAepN{} (\cref{tab:ablation}). Both systems declared
+ambiguity on all \AepKillRuns{} runs: the endpoint is \textsc{no-readback}, so
+neither can resolve what it does not know, and both fail closed. The difference
+between them is not in what they \emph{say} --- that is the detection
+guarantee, and \cref{sec:eval-detection} already showed it does not depend on
+the barrier --- it is in what they did to the outside world before saying it.
 
-Two honest qualifications. First, \emph{AEP-full still applied
-\AepKillApplied{}}. The kill is asynchronous --- the same \texttt{docker kill}
-mechanism took \ProcessKillWindowMin{}--\ProcessKillWindowMax{}\,ms to land on
-this host when we timed it directly (\cref{sec:eval-durability}) --- so in
-roughly a third of runs \texttt{WAITAOF} completed before Redis
-died and AEP-full held a genuine acknowledgement and dispatched correctly. That
-is the race the fault creates, not a protocol failure, and we report it as it
-came out rather than widening the window until it looks better. Second, and for
-the same reason, \emph{the effect size may be a property of this host's
-\texttt{docker} latency}. A faster kill pushes AEP-full toward $0$ and widens
-the gap; a slower one narrows it. The \emph{direction} is structural --- B3
-cannot be protected by a barrier it does not wait for --- but the magnitude
-should not be read as a constant of the protocol.
-
-Third: \emph{both systems declared ambiguity on all \AepKillRuns{}}. The
-endpoint is \textsc{no-readback}, so neither can resolve what it does not know,
-and both fail closed. The difference between them is not in what they
-\emph{say} --- that is the detection guarantee, and \cref{sec:eval-detection}
-already showed it does not depend on the barrier --- it is in what they did to
-the outside world before saying it.
-
-\paragraph{The magnitude was measured five times and moved; the direction did
-not} Because that second qualification is a limitation rather than a result, we
-tested it instead of asserting it. The cell was re-collected
-\ReplicationSessions{} further times under an identical configuration --- same
-cell identity hash, same per-run seed, same pinned Redis image --- for
-\ReplicationRuns{} executions per arm. AEP-full's unwanted-applied count ranged
-\ReplicationAepMin{}--\ReplicationAepMax{} out of \AepKillRuns{}. B3 recorded
-\ReplicationBthreeApplied{}/\AepKillRuns{} in every one of them, a range of
+That magnitude moves, which is why the controlled cell exists. The uncontrolled
+cell was re-collected \ReplicationSessions{} further times under an identical
+configuration --- same cell identity hash, same per-run seed, same pinned Redis
+image --- for \ReplicationRuns{} executions per arm. AEP-full's unwanted-applied
+count ranged \ReplicationAepMin{}--\ReplicationAepMax{} out of \AepKillRuns{};
+B3 recorded \ReplicationBthreeApplied{}/\AepKillRuns{} in every one, a range of
 \ReplicationBthreeRange{}. Taking the session rather than the execution as the
-unit, the barrier withheld \ReplicationPreventedMean{} effects on average, 95\%
-interval [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}], and the
-\UnwantedPrevented{} of \cref{tab:killablation} falls inside it. We report a
-session-clustered interval rather than pooling the executions, which would treat
-runs sharing a session's host-timing state as independent draws.
+unit, the difference averaged \ReplicationPreventedMean{} effects, 95\% interval
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}], and the
+\UnwantedPrevented{} of \cref{tab:killablation} falls inside it. Against that
+spread, the controlled cell's \ArmASpreadMax{}-count per-class spread over
+\ArmASessions{} sessions is the change worth reporting.
 
 The variation has a candidate cause --- the race itself --- and the replication
-set cannot establish it. The harness records how long each \texttt{docker kill}
-took to return, and whether AEP-full dispatches is decided by whether
-\texttt{WAITAOF} returns first, so runs that applied an effect should be the
-ones whose kill was slower. Taking the session as the unit here too, the four
-sessions separate the two groups by \KillLatencyPerSession{}\,ms:
-mean \KillLatencyMean{}\,ms, 95\% interval
+set cannot establish it. Taking the session as the unit, the four sessions
+separate the runs that applied an effect from those that did not by
+\KillLatencyPerSession{}\,ms: mean \KillLatencyMean{}\,ms, 95\% interval
 [\KillLatencyLow{},\,\KillLatencyHigh{}]. \textbf{The half-width is
 \KillLatencyHalfWidth{}\,ms, \KillLatencyPrecisionRatio{} times the mean it
 brackets}, and the interval contains zero. We give the four session differences
@@ -433,9 +489,7 @@ three times the mean and effects of the opposite sign, and this design does not
 distinguish them. We give no $p$, and we do not put a count of sessions on one
 side of zero in place of one. Over \KillLatencySessions{} sessions a two-sided
 sign test cannot return below \KillLatencySignFloor{}, so no outcome this design
-admits could have reached significance; a count of sessions is that same test
-with its $p$ removed; and a test pooling the \ReplicationRuns{} executions would
-assume exactly the independence we decline in the paragraph above.
+admits could have reached significance.
 
 \textbf{B3 is not the negative control this paper previously reported.} Pooled
 over the same \ReplicationRuns{} executions it read as a clean null, and pooling
@@ -445,26 +499,30 @@ is what made it read that way. At the session level it is uninformative:
 \KillLatencyBthreeHalfWidth{}\,ms and \KillLatencyBthreePrecisionRatio{} times
 its own mean. A comparison that wide could not have contradicted the mechanism
 whatever B3 had done, so its failure to contradict it was never evidence for it.
-
 The original cell was collected on a different filesystem from the four
 replications, a difference no run configuration records, so we report it
-separately rather than pooling it. It agrees in direction, at
-\KillLatencyOrigDiff{}\,ms over \KillLatencyOrigN{} runs
-($p = \KillLatencyOrigP{}$), with its own control at
+separately: it agrees in direction at \KillLatencyOrigDiff{}\,ms over
+\KillLatencyOrigN{} runs ($p = \KillLatencyOrigP{}$), with its own control at
 \KillLatencyBthreeOrigDiff{}\,ms ($p = \KillLatencyBthreeOrigP{}$,
 $n = \KillLatencyBthreeOrigN{}$). \textbf{It is one session: it pools nothing,
-and it replicates nothing.} Its $p$ carries no between-session variance
-component at all, and being a single-session rank test over runs collected in
-sequence it is the one figure here that within-session drift in kill latency can
-reach. That is what the mechanism now rests on, and it is thinner than the
-pooled figure it replaces.
+and it replicates nothing.}
 
-\UnwantedPrevented{} is therefore not a constant of the protocol and this paper
-does not offer it as one: it is one draw from a distribution that
-\ReplicationSessions{} further collections of the same cell resampled at
-\ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
-\AepKillRuns{}. What is structural is that the
-race exists for
+\paragraph{Where the fault lands after the branch point, the arms tie} The
+same fault delivered \emph{after} dispatch separates nothing, and we collected
+that rather than inferring it. Arming the kill at the last instruction before
+transmission and delivering it $200$\,ms later puts it in flight, after both
+arms have already dispatched. Over \InflightSessions{} sessions the two arms
+differ by at most \InflightMaxDiff{} count in any capability class, and both sit
+at their ceiling. Two qualifications belong with that number. The second session
+is a deterministic replay of the first rather than an independent draw --- the
+harness assigns seeds per cell and repetition, so where no race remains the
+second collection reproduces the first exactly, which is itself the clearest
+evidence that no race remains. And B3's lowest cell is
+\InflightBthreeFloor{}/\AepKillRuns{}, exactly the floor below which the result
+would have been read as a mis-timed injector rather than a tie; it is the
+boundary, not headroom.
+
+What is structural, across all three faults, is that the race exists for
 AEP-full at all and cannot exist for B3.
 
 \subsubsection{The barrier's durability claim, under the fault that can

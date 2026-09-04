@@ -549,11 +549,104 @@
 % reports/raw/e1-kill-latency-by-run.csv | ext4 | B3_INTENT_NO_BARRIER | runs
 \newcommand{\KillLatencyBthreeOrigN}{30}
 
+% experiments/results/phase13-armA-*/analysis/redis-kill-ablation.csv | sessions of the controlled-fault collection
+% separate collections in separate roots, so between-session variance is measurable -- which is the estimand
+\newcommand{\ArmASessions}{3}
+
+% phase13-armA-*/ | capability classes collected
+% all three, which the uncontrolled cell deliberately does not reach
+\newcommand{\ArmAClasses}{3}
+
+% phase13-armA-*/analysis/redis-kill-ablation.csv | AEP_FULL | sum of executions_with_an_applied_effect over all classes and sessions
+\newcommand{\ArmAAepApplied}{3}
+
+% phase13-armA-*/ | AEP_FULL | executions
+\newcommand{\ArmAAepN}{269}
+
+% phase13-armA-*/ | AEP_FULL | applied / executions
+% = 3/269
+\newcommand{\ArmAAepRate}{0.0112}
+
+% phase13-armA-*/analysis/redis-kill-ablation.csv | B3_INTENT_NO_BARRIER | sum over all classes and sessions
+\newcommand{\ArmABthreeApplied}{264}
+
+% phase13-armA-*/ | B3_INTENT_NO_BARRIER | executions
+\newcommand{\ArmABthreeN}{270}
+
+% phase13-armA-*/ | B3_INTENT_NO_BARRIER | applied / executions
+% = 264/270
+\newcommand{\ArmABthreeRate}{0.9778}
+
+% phase13-armA-*/ | AEP_FULL | worst per-class between-session spread (max count - min count over sessions)
+% per class: (0, 1, 1)
+\newcommand{\ArmASpreadMax}{1}
+
+% phase13-armA-*/ | B3_INTENT_NO_BARRIER | lowest per-class count in any session, out of 30
+\newcommand{\ArmABthreeFloor}{29}
+
+% experiments/results/phase13-inflight-*/analysis/redis-kill-ablation.csv | collections of the in-flight cell
+\newcommand{\InflightSessions}{2}
+
+% phase13-inflight-*/ | max over classes and sessions of |AEP_FULL applied - B3 applied|
+% per class-session: (1, 1, 1, 1)
+\newcommand{\InflightMaxDiff}{1}
+
+% phase13-inflight-*/ | B3_INTENT_NO_BARRIER | lowest per-class count in any session, out of 30
+% exactly the pre-registered floor of 27/30, not headroom
+\newcommand{\InflightBthreeFloor}{27}
+
+% reports/raw/phase13-fault-landing.json | docker-pause | landing_ms median, n=100 bench trials
+\newcommand{\ControlledLanding}{58.3}
+
+% reports/raw/phase13-fault-landing.json | docker-kill | landing_ms median, n=100 bench trials
+\newcommand{\UncontrolledLanding}{368.4}
+
+% phase13-fault-landing.json | docker-pause landing median / 1000 ms | the pre-registered point prediction
+\newcommand{\ArmAPredicted}{0.058}
+
+% phase13-fault-landing.json | docker-pause landing min / 1000 ms
+\newcommand{\ArmABoundLow}{0.045}
+
+% phase13-fault-landing.json | docker-pause landing max / 1000 ms
+\newcommand{\ArmABoundHigh}{0.081}
+
+% reports/raw/phase13-model-gap.json | docker-kill | bench command_ms median, the number the model used as the window
+\newcommand{\ModelBenchKill}{368.3}
+
+% phase13-model-gap.json | the SAME call timed during the collections, redis_kill_latency_ms median
+\newcommand{\ModelInSituKill}{1\,038.5}
+
+% phase13-model-gap.json | in-situ median / bench median
+% the bench maximum is below the in-situ minimum: the ranges do not overlap
+\newcommand{\ModelInSituRatio}{2.8}
+
+% phase13-model-gap.json | uncontrolled AEP-full runs whose WAITAOF acknowledgement arrived after the bench landing
+% a WAITAOF ack requires a live server, so each one is direct evidence the window was wider than the bench measured
+\newcommand{\ModelAcksPastLanding}{106}
+
+% phase13-model-gap.json | uncontrolled AEP-full runs examined
+\newcommand{\ModelAckN}{240}
+
+% phase13-model-gap.json | measured fraction of AEP-full runs whose WAITAOF wait was under 58 ms
+\newcommand{\ModelEmpiricalWindow}{0.0042}
+
+% phase13-model-gap.json | what U(0,1000) assigns to the same window
+\newcommand{\ModelUniformWindow}{0.0580}
+
+% phase13-model-gap.json | uniform / measured at 58 ms
+\newcommand{\ModelUniformOverstates}{13.9}
+
+% phase13-model-gap.json | uncontrolled | AEP-full DISPATCH rate (durability_ack_observed), the quantity the model predicts
+\newcommand{\ModelDispatchRate}{0.596}
+
+% phase13-model-gap.json | uncontrolled | AEP-full APPLIED rate, the estimand -- not the same quantity
+\newcommand{\ModelAppliedRate}{0.546}
+
 % lines of Python under aep_core/, excluding __pycache__
 % 14 files; regenerated on every run of this script
 \newcommand{\CoreLoc}{6\,862}
 
 % lines of Python under experiments/, excluding __pycache__
-% 91 files; regenerated on every run of this script
-\newcommand{\HarnessLoc}{23\,243}
+% 93 files; regenerated on every run of this script
+\newcommand{\HarnessLoc}{23\,803}
 

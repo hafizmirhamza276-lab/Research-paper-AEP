@@ -2448,6 +2448,260 @@ def emit_numbers(
                 f"reports/raw/{latency_path.name} | ext4 | {system} | runs",
             )
 
+    # --- Phase 13 (WS-3): the controlled fault, and what it cost the model --
+    # sec:eval-prevention now leads with Arm A, so these macros are the ones
+    # the claim rests on. Three things are kept apart deliberately, because
+    # collapsing any two of them is how the previous version of that section
+    # went wrong:
+    #
+    #   * the CONTROLLED result (Arm A, docker pause -> docker kill),
+    #   * the UNCONTROLLED replication (the frozen docker-kill cells), which
+    #     agrees in direction and is NOT pooled with it -- different injector,
+    #     different landing distribution,
+    #   * the IN-FLIGHT cell, which is a different fault position entirely and
+    #     is reported as a tie rather than as evidence about the barrier.
+    #
+    # The pre-registered prediction and bound are derived from the measured
+    # landing distribution rather than restated by hand: they are the landing
+    # latency as a fraction of the 1000 ms WAITAOF window, which is exactly
+    # what reports/phase-report-13-prediction-armA-2026-09-03.md fixed.
+    ARM_A_ROOTS = (
+        "phase13-armA-s1-2026-09-03",
+        "phase13-armA-s2-2026-09-03",
+        "phase13-armA-s3-2026-09-03",
+    )
+    INFLIGHT_ROOTS = (
+        "phase13-inflight-s1-2026-09-04",
+        "phase13-inflight-s2-2026-09-04",
+    )
+
+    def phase13_cells(directories: Iterable[str]) -> list[dict[str, dict[str, int]]]:
+        """Per session: {response_class: {system: (applied, executions)}}."""
+        collected = []
+        for directory in directories:
+            path = (
+                ROOT / "experiments" / "results" / directory
+                / "analysis" / "redis-kill-ablation.csv"
+            )
+            if not path.is_file():
+                return []
+            session: dict[str, dict[str, int]] = {}
+            for row in read_rows(path):
+                session.setdefault(row["response_class"], {})[row["system"]] = {
+                    "applied": int(row["executions_with_an_applied_effect"]),
+                    "executions": int(row["executions"]),
+                }
+            collected.append(session)
+        return collected
+
+    arm_a = phase13_cells(ARM_A_ROOTS)
+    inflight = phase13_cells(INFLIGHT_ROOTS)
+
+    if arm_a:
+        aep_applied = sum(
+            cell["AEP_FULL"]["applied"] for s in arm_a for cell in s.values()
+        )
+        aep_executions = sum(
+            cell["AEP_FULL"]["executions"] for s in arm_a for cell in s.values()
+        )
+        b3_applied = sum(
+            cell["B3_INTENT_NO_BARRIER"]["applied"] for s in arm_a for cell in s.values()
+        )
+        b3_executions = sum(
+            cell["B3_INTENT_NO_BARRIER"]["executions"]
+            for s in arm_a for cell in s.values()
+        )
+        # The estimand of the pre-registration: the between-session spread in
+        # AEP-full's count, per capability class. Reported per class and then
+        # as the worst of them, because a collapse in two classes and not the
+        # third would have to be reported as exactly that.
+        spreads = []
+        for klass in sorted({k for s in arm_a for k in s}):
+            counts = [s[klass]["AEP_FULL"]["applied"] for s in arm_a if klass in s]
+            spreads.append(max(counts) - min(counts))
+        b3_minimum = min(
+            cell["B3_INTENT_NO_BARRIER"]["applied"] for s in arm_a for cell in s.values()
+        )
+
+        macro(
+            "ArmASessions",
+            str(len(arm_a)),
+            "experiments/results/phase13-armA-*/analysis/redis-kill-ablation.csv | "
+            "sessions of the controlled-fault collection",
+            "separate collections in separate roots, so between-session "
+            "variance is measurable -- which is the estimand",
+        )
+        macro(
+            "ArmAClasses",
+            str(len(spreads)),
+            "phase13-armA-*/ | capability classes collected",
+            "all three, which the uncontrolled cell deliberately does not reach",
+        )
+        macro(
+            "ArmAAepApplied", str(aep_applied),
+            "phase13-armA-*/analysis/redis-kill-ablation.csv | AEP_FULL | "
+            "sum of executions_with_an_applied_effect over all classes and sessions",
+        )
+        macro(
+            "ArmAAepN", str(aep_executions),
+            "phase13-armA-*/ | AEP_FULL | executions",
+        )
+        macro(
+            "ArmAAepRate", rate(aep_applied, aep_executions),
+            "phase13-armA-*/ | AEP_FULL | applied / executions",
+            f"= {aep_applied}/{aep_executions}",
+        )
+        macro(
+            "ArmABthreeApplied", str(b3_applied),
+            "phase13-armA-*/analysis/redis-kill-ablation.csv | "
+            "B3_INTENT_NO_BARRIER | sum over all classes and sessions",
+        )
+        macro(
+            "ArmABthreeN", str(b3_executions),
+            "phase13-armA-*/ | B3_INTENT_NO_BARRIER | executions",
+        )
+        macro(
+            "ArmABthreeRate", rate(b3_applied, b3_executions),
+            "phase13-armA-*/ | B3_INTENT_NO_BARRIER | applied / executions",
+            f"= {b3_applied}/{b3_executions}",
+        )
+        macro(
+            "ArmASpreadMax", str(max(spreads)),
+            "phase13-armA-*/ | AEP_FULL | worst per-class between-session "
+            "spread (max count - min count over sessions)",
+            f"per class: {tuple(spreads)}",
+        )
+        macro(
+            "ArmABthreeFloor", str(b3_minimum),
+            "phase13-armA-*/ | B3_INTENT_NO_BARRIER | lowest per-class count "
+            "in any session, out of 30",
+        )
+
+    if inflight:
+        # One cell observed twice, not two independent observations: the
+        # harness assigns seeds per (system, endpoint, repetition), so the
+        # second session replays the first exactly wherever nothing in the run
+        # is non-deterministic. reports/raw/phase13-inflight-verdict.md carries
+        # the measurement; the macro names say "session" and the manuscript
+        # says which kind.
+        differences = [
+            abs(cell["AEP_FULL"]["applied"] - cell["B3_INTENT_NO_BARRIER"]["applied"])
+            for session in inflight for cell in session.values()
+        ]
+        macro(
+            "InflightSessions", str(len(inflight)),
+            "experiments/results/phase13-inflight-*/analysis/"
+            "redis-kill-ablation.csv | collections of the in-flight cell",
+        )
+        macro(
+            "InflightMaxDiff", str(max(differences)),
+            "phase13-inflight-*/ | max over classes and sessions of "
+            "|AEP_FULL applied - B3 applied|",
+            f"per class-session: {tuple(differences)}",
+        )
+        macro(
+            "InflightBthreeFloor",
+            str(min(
+                cell["B3_INTENT_NO_BARRIER"]["applied"]
+                for s in inflight for cell in s.values()
+            )),
+            "phase13-inflight-*/ | B3_INTENT_NO_BARRIER | lowest per-class "
+            "count in any session, out of 30",
+            "exactly the pre-registered floor of 27/30, not headroom",
+        )
+
+    # The landing distribution both arms' predictions were derived from.
+    landing_path = ROOT / "reports" / "raw" / "phase13-fault-landing.json"
+    if landing_path.is_file():
+        landing = json.loads(landing_path.read_text(encoding="utf-8"))
+        by_mechanism = {entry["mechanism"]: entry for entry in landing["results"]}
+        for name, key in (("Controlled", "docker-pause"), ("Uncontrolled", "docker-kill")):
+            entry = by_mechanism.get(key)
+            if not entry:
+                continue
+            macro(
+                f"{name}Landing", tex_number(entry["landing_ms"]["median"]),
+                f"reports/raw/phase13-fault-landing.json | {key} | "
+                "landing_ms median, n=100 bench trials",
+            )
+        pause = by_mechanism.get("docker-pause")
+        if pause:
+            # The pre-registered prediction and bound, re-derived rather than
+            # restated: landing as a fraction of the 1000 ms WAITAOF window.
+            macro(
+                "ArmAPredicted", f"{pause['landing_ms']['median'] / 1000:.3f}",
+                "phase13-fault-landing.json | docker-pause landing median / "
+                "1000 ms | the pre-registered point prediction",
+            )
+            macro(
+                "ArmABoundLow", f"{pause['landing_ms']['min'] / 1000:.3f}",
+                "phase13-fault-landing.json | docker-pause landing min / 1000 ms",
+            )
+            macro(
+                "ArmABoundHigh", f"{pause['landing_ms']['max'] / 1000:.3f}",
+                "phase13-fault-landing.json | docker-pause landing max / 1000 ms",
+            )
+
+    # Why the pre-registered bound was missed. These are the two premises the
+    # model rests on, each measured against the runs it was calibrated on.
+    gap_path = ROOT / "reports" / "raw" / "phase13-model-gap.json"
+    if gap_path.is_file():
+        gap = json.loads(gap_path.read_text(encoding="utf-8"))
+        uncontrolled_gap = gap["uncontrolled"]
+        macro(
+            "ModelBenchKill", tex_number(gap["bench"]["docker-kill"]["command_ms_median"]),
+            "reports/raw/phase13-model-gap.json | docker-kill | bench "
+            "command_ms median, the number the model used as the window",
+        )
+        macro(
+            "ModelInSituKill", tex_number(uncontrolled_gap["in_situ_kill_latency_ms"]["median"]),
+            "phase13-model-gap.json | the SAME call timed during the "
+            "collections, redis_kill_latency_ms median",
+        )
+        macro(
+            "ModelInSituRatio", f"{gap['ratios']['in_situ_kill_over_bench']:.1f}",
+            "phase13-model-gap.json | in-situ median / bench median",
+            "the bench maximum is below the in-situ minimum: the ranges do "
+            "not overlap",
+        )
+        macro(
+            "ModelAcksPastLanding", str(uncontrolled_gap["acks_after_bench_landing"]),
+            "phase13-model-gap.json | uncontrolled AEP-full runs whose "
+            "WAITAOF acknowledgement arrived after the bench landing",
+            "a WAITAOF ack requires a live server, so each one is direct "
+            "evidence the window was wider than the bench measured",
+        )
+        macro(
+            "ModelAckN", str(uncontrolled_gap["aep_full_runs"]),
+            "phase13-model-gap.json | uncontrolled AEP-full runs examined",
+        )
+        cdf = uncontrolled_gap["empirical_cdf"].get("58")
+        if cdf:
+            macro(
+                "ModelEmpiricalWindow", f"{cdf['empirical']:.4f}",
+                "phase13-model-gap.json | measured fraction of AEP-full runs "
+                "whose WAITAOF wait was under 58 ms",
+            )
+            macro(
+                "ModelUniformWindow", f"{cdf['uniform']:.4f}",
+                "phase13-model-gap.json | what U(0,1000) assigns to the same "
+                "window",
+            )
+            macro(
+                "ModelUniformOverstates", f"{cdf['uniform_overstates_by']:.1f}",
+                "phase13-model-gap.json | uniform / measured at 58 ms",
+            )
+        macro(
+            "ModelDispatchRate", f"{uncontrolled_gap['ack_rate']:.3f}",
+            "phase13-model-gap.json | uncontrolled | AEP-full DISPATCH rate "
+            "(durability_ack_observed), the quantity the model predicts",
+        )
+        macro(
+            "ModelAppliedRate", f"{uncontrolled_gap['applied_rate']:.3f}",
+            "phase13-model-gap.json | uncontrolled | AEP-full APPLIED rate, "
+            "the estimand -- not the same quantity",
+        )
+
     # --- Implementation size, counted rather than remembered -------------
     # These were hand-written with a shell command in a comment beside them,
     # and the harness figure had drifted by 1,359 lines by the time anyone

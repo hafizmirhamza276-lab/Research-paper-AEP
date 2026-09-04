@@ -1,0 +1,7 @@
+regime,metric,system,reference,system_successes,system_total,system_rate,reference_successes,reference_total,reference_rate,fisher_p_value,system_runs,reference_runs,fisher_unit,difference_rate,difference_ci_low,difference_ci_high,difference_confidence,difference_method,difference_strata,system_clusters,reference_clusters,equivalence_margin,equivalent_within_margin,equivalence_margin_preregistered
+redis-kill-preack,undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,90,0.0,0,90,0.0,1.0,90,90,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,30,90,0.3333333333333333,60,90,0.6666666666666666,1.3018352430253805e-05,90,90,execution (cluster-unadjusted),-0.3333333333333333,-0.3333333333333333,-0.3333333333333333,0.9,stratified run-cluster percentile bootstrap,3,90,90,0.05,False,False
+redis-kill-preack,lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,90,0.0,0,90,0.0,1.0,90,90,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,90,0.0,0,90,0.0,1.0,90,90,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,90,0.0,0,90,0.0,1.0,90,90,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-preack,recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,0,0.0,0,0,0.0,1.0,90,90,execution (cluster-unadjusted),,,,,,,,,,,
