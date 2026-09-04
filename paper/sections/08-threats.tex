@@ -75,6 +75,41 @@ $p=\UnwantedP{}$, replicated at
 and not durability}, and any reading of the barrier as
 protecting the record from a crashed Redis process is wrong.
 
+\paragraph{The barrier is evaluated under crash faults only, and one fault
+class that would separate the arms by construction was deliberately not run}
+Every prevention measurement in this paper --- controlled and uncontrolled ---
+delivers an F3 crash-stop of the state store. In that class the two arms are
+separated by a \emph{timing} difference and nothing else: AEP-full has one
+extra Redis-dependent step, \texttt{WAITAOF}, and the fault must land in a
+window B3 has already left while AEP-full is still inside it. That window can
+be narrowed and its boundary measured --- \cref{sec:eval-prevention} does both
+--- but it cannot be closed, because a fault that guarantees \texttt{WAITAOF}
+cannot return also blocks the two Redis calls B3 makes after the same
+checkpoint, and both arms would stop dispatching because the injector disabled
+them.
+
+There is one mechanism that would avoid this. Making durability
+\emph{unattainable} rather than contended --- disabling the fsync at the
+checkpoint while leaving every other Redis call working --- would separate the
+arms by construction: B3 would be untouched and AEP-full would time out
+deterministically. \textbf{We designed that arm and did not run it}, and we
+record the decision rather than leaving it as an unexplained absence. It is not
+a crash and arguably not a fault: it is a configuration change that makes a
+guarantee unavailable, and it would instantiate a failure class this paper's
+model does not contain. Adding it to obtain a cleaner separation would answer a
+different question from the one \cref{sec:eval-prevention} asks, and the
+controlled fault already reduced the between-session spread to
+\ArmASpreadMax{} count per class, so the gain would have been presentational.
+
+\textbf{The scope this fixes is explicit.} The barrier's prevention guarantee
+is evaluated where durability is \emph{raced for} and lost to a crash. It is
+not evaluated where durability is simply \emph{unavailable} --- a degraded or
+misconfigured store that answers every other call while never acknowledging an
+fsync. We make no claim about that regime. A reader who needs one should treat
+it as untested rather than as covered by the crash-fault result, and the
+residual reported in \cref{sec:eval-prevention} is a property of the crash
+class, not a bound that carries over to it.
+
 \paragraph{The decomposition weakens our own novelty claim, and we would
 rather say so than let a reader find it} \Cref{sec:eval-detection} attributes
 the detection guarantee to the pre-dispatch record and the
