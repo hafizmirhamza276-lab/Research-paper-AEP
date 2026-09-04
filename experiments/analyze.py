@@ -254,6 +254,16 @@ def oracle_effects_by_execution(ledger_path: Path) -> Counter[str] | None:
     Returns ``None`` for a ledger predating the column, so the caller makes the
     fallback explicit and a test can prove the two paths disagree where they
     should.
+
+    **It also returns ``None`` when the column exists but no row carries a
+    value.** That state is reachable -- it is exactly what a ledger looks like
+    between adding the column and teaching the provider to populate it -- and
+    without this branch an empty mapping would be returned, the caller would
+    take the by-execution path, and every execution would be attributed zero
+    applied effects. Every duplicate, lost-effect and applied-effect number in
+    the paper would silently become zero. A ledger that carries the column but
+    has nothing in it tells us nothing, so it is treated as a ledger that does
+    not carry it.
     """
     if not ledger_path.is_file():
         raise AnalysisError(f"no ground-truth ledger at {ledger_path}")
@@ -270,6 +280,8 @@ def oracle_effects_by_execution(ledger_path: Path) -> Counter[str] | None:
         raise AnalysisError(f"cannot read {ledger_path}: {error}") from None
     finally:
         connection.close()
+    if not rows:
+        return None
     return Counter({str(execution): int(count) for execution, count in rows})
 
 
