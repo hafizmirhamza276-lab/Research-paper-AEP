@@ -4,9 +4,11 @@
 The four traces below are not hypotheticals. Each is a run of our harness
 (\cref{sec:evaluation}), replayed from its event log and cross-checked against
 the mock provider's ground-truth ledger --- an independently written record of
-every mutation the provider \emph{actually applied}. In each, the agent
+every mutation the provider \emph{actually applied}. In each, the
 workload is the same: acquire work, call one non-idempotent endpoint, record
-the outcome.
+the outcome. It is a scripted caller, not an agent --- the traces show what
+the endpoint does to a caller that crashes, which is the property an agent
+deployment would inherit.
 
 \subsection{Trace 1 --- the duplicate nobody sees (B0, naive retry)}
 

@@ -2,8 +2,12 @@
 \label{sec:introduction}
 
 An autonomous agent is asked to post a journal entry, issue a refund, or file a
-regulatory notification. It calls an enterprise API written years before agents
-existed. The call times out. The agent does not know whether the money moved.
+regulatory notification. It calls an enterprise API written years before any of
+this. The call times out, and nothing on either side can say whether the money
+moved. Autonomous agents are the setting in which this is now most visible, and
+we use them throughout as the motivating example; the problem belongs to the
+endpoint, and any caller that can fail mid-call inherits it --- a workflow
+engine, a retrying batch job, a human operator with a script.
 
 This is an old problem in a new setting, and the new setting removes the
 assumption that the old solutions rest on. Durable-execution engines, workflow
@@ -14,8 +18,8 @@ transaction~\cite{helland2007apostate,burckhardt2021durable,zhuang2023exoflow}.
 Temporal's own documentation is explicit about the precondition: ``You should
 always make your business logic Activities idempotent in Temporal. Because
 Activities may be retried, these functions may be executed more than
-once''~\cite{temporal-activity-definition}. The legacy endpoints that agents are
-now being pointed at satisfy none of this. They are non-idempotent, they accept
+once''~\cite{temporal-activity-definition}. The legacy endpoints at issue satisfy
+none of this. They are non-idempotent, they accept
 no idempotency key, and --- the property that does the real damage --- many of
 them cannot be asked afterwards whether a mutation was applied.
 
