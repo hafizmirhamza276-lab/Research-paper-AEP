@@ -153,64 +153,31 @@ Legacy APIs Without Idempotency Keys}
 
 \IEEEtitleabstractindextext{%
 \begin{abstract}
-Autonomous software agents increasingly invoke legacy enterprise APIs that are
-non-idempotent, accept no idempotency key, and cannot be asked, after the
-fact, whether a mutation was applied. When an agent crashes around such a call,
-every available strategy loses something. Retrying risks a second real-world
-effect that nobody observes. Not retrying risks an effect that exists and that
-no record accounts for. We argue that the choice between these is not a
-question of engineering quality but a three-way trade, and that a system's
-obligation is to make the third corner reachable: to convert silent failure
-into \emph{declared, durable, bounded ambiguity} that an operator can act on.
-We present the Agent Execution Protocol (AEP), a fail-closed execution protocol
-in which every external side effect is preceded by a durably acknowledged
-write-ahead intent, every state write is fenced by lock ownership and an exact
-expected-version compare-and-swap in one atomic script, and every unresolvable
-outcome halts and escalates rather than guessing. We evaluate AEP against five
-baseline designs, one of them in two configurations --- naive retry,
-lease-only, CAS-only, an ablation without the durability barrier, and a
-durable-execution engine in both its vendor-default and at-most-once settings
---- under real \texttt{SIGKILL} process faults, across three endpoint
-reconciliation capabilities. Two narrower faults target the barrier and its
-premise: a hard Redis kill, which we use as an AEP-versus-ablation comparison on
-one capability class, and block-level write loss, which we use to test that
-premise on durable records rather than on the protocol's outcomes.
+Many enterprise APIs are non-idempotent, accept no idempotency key, and cannot be
+asked afterwards whether a mutation was applied. A caller that crashes
+around such a call --- an autonomous agent, a workflow engine, a retrying job
+--- has no safe option: retrying risks a second real-world effect nobody
+observes, and not retrying risks an effect that exists and that no record
+accounts for. We argue this is not a question of engineering quality but a
+three-way trade whose third corner a system is obliged to make reachable:
+converting silent failure into \emph{declared, durable, bounded ambiguity} an
+operator can act on.
 
-Our central result separates two claims that the write-ahead pattern is usually
-sold as one. \emph{Detection} --- no undetected duplicate and no lost effect,
-with a residual of declared ambiguity whose rate is set by what the endpoint
-can be asked --- is produced by the pre-dispatch record and a transition table
-that prohibits re-entry into dispatch. In the crashed regime, the B3 ablation
-and AEP-full each have \BthreeVsAepN{} executions: both record
-$\BthreeVsAepDupCount{}$ undetected duplicates and
-$\BthreeVsAepLostCount{}$ lost effects. Taking the run as the unit throughout,
-the individual one-sided 95\% Wilson upper bound for either zero-event rate is
-\AblationZeroUpperRun{}\% over \BthreeVsAepRuns{} run clusters per arm. Declared
-ambiguity is \BthreeAmbCount{}/\BthreeVsAepN{} versus
-\AepAmbCount{}/\BthreeVsAepN{} (B3 minus AEP-full,
-\BthreeVsAepAmbDiffPP{} percentage points; stratified run-cluster
-\BthreeVsAepAmbDiffConfidence{}\% interval
-[\BthreeVsAepAmbDiffLow{},\,\BthreeVsAepAmbDiffHigh{}] percentage points).
-\emph{Prevention} is what the barrier contributes, and the current evidence is
-narrower: in one \textsc{no-readback} capability class, at one pre-acknowledgement
-Redis-kill point, on one host, its unwanted-applied-effect rate is
-\AepUnwantedRate{} versus \BthreeUnwantedRate{} over \AepKillRuns{} runs per
-system ($\AepKillApplied{}/\AepKillRuns{}$ versus
-$\BthreeKillApplied{}/\BthreeKillRuns{}$, Fisher $p = \UnwantedP{}$) ---
-\UnwantedPrevented{} real non-idempotent effects not committed, replicated over
-\ReplicationSessions{} further sessions at
-[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented.
+We present a fail-closed execution protocol in which every external side effect
+is preceded by a durably acknowledged write-ahead intent, every state write is
+fenced by lock ownership and an expected-version compare-and-swap in one atomic
+script, and every unresolvable outcome halts and escalates rather than guessing.
+We evaluate it against five baseline designs under real \texttt{SIGKILL} process
+faults, across endpoint capabilities differing in what a read-back can settle.
 
-The barrier's durability claim, which a process kill cannot exercise at all
-because \texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not the
-\texttt{write(2)}, we test directly by making the block device stop accepting
-writes: across \FlakeyReplications{} independent replications, separation is
-perfect in every one --- acknowledged records survive \FlakeyAckSurvived{} and
-unacknowledged ones are destroyed \FlakeyUnackLost{} --- against
-$\ProcessKillUnackLost{}$ lost under a process kill on the same probe. Because
-detection does not
-depend on the barrier, its cost is a deployment choice rather than the
-protocol's price, and we give three measured points on that curve.
+Our central result separates two claims the write-ahead pattern is usually sold
+as one. \emph{Detection} --- no undetected duplicate and no lost effect, leaving
+a residual of declared ambiguity --- comes from the pre-dispatch record and a
+transition table that forbids re-entry into dispatch, not from the durability
+barrier. \emph{Prevention} is what the barrier contributes, and its evidence is
+narrower: a single capability class, crash point and host. Because detection
+does not depend on the barrier, its cost is a deployment choice rather than the
+protocol's price.
 \end{abstract}
 
 \begin{IEEEkeywords}
