@@ -141,6 +141,7 @@ class Transmitter(Protocol):
         *,
         exact_request_bytes: bytes,
         client_reference: str | None,
+        execution_id: str | None,
         client_timeout: float,
     ) -> MutationResponse: ...
 
@@ -163,6 +164,7 @@ async def transmit_once(
     *,
     exact_request_bytes: bytes,
     client_reference: str | None,
+    execution_id: str | None,
     client_timeout: float,
 ) -> Verdict:
     """Send once and classify the answer conservatively.
@@ -176,6 +178,7 @@ async def transmit_once(
         response = await connector.transmit(
             exact_request_bytes=exact_request_bytes,
             client_reference=client_reference,
+            execution_id=execution_id,
             client_timeout=client_timeout,
         )
     except MockLegacyApiAmbiguity:

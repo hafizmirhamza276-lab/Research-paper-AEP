@@ -47,7 +47,10 @@ from aep_core.core.request_binding import (
     consume_verified_dispatch,
 )
 
-from experiments.mock_api.service import CLIENT_REFERENCE_HEADER
+from experiments.mock_api.service import (
+    CLIENT_REFERENCE_HEADER,
+    EXECUTION_ID_HEADER,
+)
 
 
 class MutationEvidence(str, Enum):
@@ -163,6 +166,7 @@ class MockLegacyApiConnector:
         return await self.transmit(
             exact_request_bytes=exact_request_bytes,
             client_reference=client_reference,
+            execution_id=binding.execution_id,
             client_timeout=client_timeout,
         )
 
@@ -171,6 +175,7 @@ class MockLegacyApiConnector:
         *,
         exact_request_bytes: bytes,
         client_reference: str | None,
+        execution_id: str | None,
         client_timeout: float,
     ) -> MutationResponse:
         """Put one already-built request on the wire and read one answer.
@@ -193,6 +198,12 @@ class MockLegacyApiConnector:
         headers = {"content-type": "application/json"}
         if client_reference is not None:
             headers[CLIENT_REFERENCE_HEADER] = client_reference
+        # WS-1a instrumentation. Sent for EVERY system, including the
+        # baselines that send no client_reference: attributing an execution
+        # whose worker died before recording anything is the whole point,
+        # and that is exactly the case a caller-supplied reference misses.
+        if execution_id is not None:
+            headers[EXECUTION_ID_HEADER] = execution_id
         try:
             response = await http.post(
                 f"{self.base_url}/v1/endpoints/{self.endpoint}/mutations",
