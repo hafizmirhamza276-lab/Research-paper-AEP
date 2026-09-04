@@ -1,0 +1,43 @@
+
+
+########## did the mechanism fire, and was it recorded? ##########
+  runs: 120
+  environment.redis_fault_mechanism: {'kill': 120}
+  kills with paused=true : 0
+  kills with paused=false: 0
+  runs with no kill event: 0
+
+
+########## E5 clock gate for this session ##########
+  runs 120 executions 120
+  dropped for clock suspension: 0
+  worst suspension seconds  : 0.195
+  all real SIGKILL          : True
+  regimes                   : ['redis-kill-inflight']
+
+
+########## THE ESTIMAND -- unwanted applied effects, per capability class ##########
+regime,system,response_class,runs,executions,executions_with_an_applied_effect,applied_effects_total,declared_ambiguous,confirmed_not_applied,undetected_duplicates,lost_effects,canary_survived,canary_lost
+redis-kill-inflight,AEP_FULL,AUTHORITATIVE_READBACK,30,30,29,29,0,1,0,0,30,0
+redis-kill-inflight,AEP_FULL,NO_READBACK,30,30,28,28,30,0,0,0,30,0
+redis-kill-inflight,B3_INTENT_NO_BARRIER,AUTHORITATIVE_READBACK,30,30,30,30,0,0,0,0,30,0
+redis-kill-inflight,B3_INTENT_NO_BARRIER,NO_READBACK,30,30,27,27,30,0,0,0,30,0
+
+
+########## interleaving actually realised (first 12 runs, by start time) ##########
+  A A B B A A B B A A B B A A B B A A B B A A B B A A B B A A B B A A B B A A B B
+  adjacent same-arm pairs: 60 of 119
+
+
+########## final per-run cost, full n ##########
+runs observed          : 120
+inter-run intervals (n): 119
+  min       38.4 s
+  median    42.7 s
+  mean      45.2 s
+  p95       61.9 s
+  max       83.8 s
+
+harness fitted estimate for this regime: 36.0 s/run
+observed / fitted                      : 1.18x
+implied REDIS_KILL_SECONDS if the rest of the model holds: 11.7 s (currently 5.0)

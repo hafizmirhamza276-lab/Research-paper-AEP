@@ -1,0 +1,6056 @@
+{
+ "comparison": [
+  {
+   "aep_full_applied": {
+    "AUTHORITATIVE_READBACK": 0,
+    "NO_READBACK": 1,
+    "POSITIVE_ONLY_READBACK": 0
+   },
+   "name": "armA-s1-2026-09-03",
+   "seeds": [
+    68356775,
+    1589580403,
+    1819800743,
+    466688041,
+    723532595,
+    73073743,
+    1825533734,
+    326531759,
+    1428402252,
+    1235212709,
+    808747415,
+    2109783456,
+    1544522412,
+    437314372,
+    1555252504,
+    1836096370,
+    782911428,
+    880032032,
+    2071419674,
+    2083604064,
+    798091627,
+    375278566,
+    13274447,
+    456681591,
+    1032392618,
+    260107273,
+    624720937,
+    1743476308,
+    910649365,
+    1129348861,
+    1753772374,
+    1060983846,
+    474599454,
+    837754755,
+    1829185788,
+    1849490017,
+    1491045395,
+    1351611441,
+    368469946,
+    1353381387,
+    1755257859,
+    568603126,
+    1159566768,
+    1252124774,
+    2129661717,
+    163760149,
+    1294880550,
+    407370803,
+    1099297230,
+    1414731913,
+    199254492,
+    454706414,
+    388712620,
+    169630201,
+    551954546,
+    826862170,
+    395119423,
+    107529241,
+    1761204972,
+    2096619165,
+    1134270560,
+    1125481302,
+    332173001,
+    1833984780,
+    1745285310,
+    536763519,
+    1064047777,
+    479174872,
+    919939969,
+    21735616,
+    419498779,
+    1241936599,
+    383152780,
+    1634720989,
+    498190659,
+    875161659,
+    2019115893,
+    959095983,
+    424334404,
+    1171638658,
+    293740785,
+    1471996616,
+    884672780,
+    1252164924,
+    27972311,
+    457279512,
+    519066807,
+    1182596121,
+    60638089,
+    249413342,
+    2115938733,
+    63711400,
+    1420023445,
+    1592293658,
+    1655909613,
+    117249838,
+    509243608,
+    424254244,
+    333947311,
+    2037469826,
+    990133105,
+    782731749,
+    1780796721,
+    1446666932,
+    519570205,
+    1168037129,
+    1121823742,
+    935739696,
+    739193556,
+    410126506,
+    2047731035,
+    335412124,
+    170353902,
+    2100019528,
+    1526972219,
+    1465334452,
+    393566743,
+    222492097,
+    1633730853,
+    1458831772,
+    15839930,
+    342123179,
+    1442846518,
+    348834184,
+    204090347,
+    967112453,
+    1070540734,
+    105916053,
+    2092080246,
+    1067604931,
+    1509312186,
+    539791740,
+    1899045145,
+    1783582810,
+    1638371506,
+    964598375,
+    871306145,
+    1083756608,
+    528959361,
+    1571076416,
+    1562573209,
+    569513156,
+    460379,
+    786950617,
+    1292219142,
+    1226459128,
+    421729847,
+    1263667211,
+    1319272616,
+    888256717,
+    102276357,
+    989772339,
+    2018431876,
+    706300159,
+    1385513975,
+    1565276197,
+    1437488657,
+    950406377,
+    897361490,
+    2017463014,
+    730790906,
+    1454369585,
+    990935291,
+    750794781,
+    2118690121,
+    2108791907,
+    1603464525,
+    2075716979,
+    697802561,
+    1170860533,
+    1252221999,
+    24543392,
+    1939298172,
+    1813904884,
+    2090489745,
+    1340993334,
+    65766302,
+    342215578,
+    1421384701,
+    99452431
+   ]
+  },
+  {
+   "aep_full_applied": {
+    "AUTHORITATIVE_READBACK": 0,
+    "NO_READBACK": 0,
+    "POSITIVE_ONLY_READBACK": 0
+   },
+   "name": "armA-s2-2026-09-03",
+   "seeds": [
+    68356775,
+    1589580403,
+    1819800743,
+    466688041,
+    723532595,
+    73073743,
+    1825533734,
+    326531759,
+    1428402252,
+    1235212709,
+    808747415,
+    2109783456,
+    1544522412,
+    437314372,
+    1555252504,
+    1836096370,
+    782911428,
+    880032032,
+    2071419674,
+    2083604064,
+    798091627,
+    375278566,
+    13274447,
+    456681591,
+    1032392618,
+    260107273,
+    624720937,
+    1743476308,
+    910649365,
+    1129348861,
+    1753772374,
+    1060983846,
+    474599454,
+    837754755,
+    1829185788,
+    1849490017,
+    1491045395,
+    1351611441,
+    368469946,
+    1353381387,
+    1755257859,
+    568603126,
+    1159566768,
+    1252124774,
+    2129661717,
+    163760149,
+    1294880550,
+    407370803,
+    1099297230,
+    1414731913,
+    199254492,
+    454706414,
+    388712620,
+    169630201,
+    551954546,
+    826862170,
+    395119423,
+    107529241,
+    1761204972,
+    2096619165,
+    1134270560,
+    1125481302,
+    332173001,
+    1833984780,
+    1745285310,
+    536763519,
+    1064047777,
+    479174872,
+    919939969,
+    21735616,
+    419498779,
+    1241936599,
+    383152780,
+    1634720989,
+    498190659,
+    875161659,
+    2019115893,
+    959095983,
+    424334404,
+    1171638658,
+    293740785,
+    1471996616,
+    884672780,
+    1252164924,
+    27972311,
+    457279512,
+    519066807,
+    1182596121,
+    60638089,
+    249413342,
+    2115938733,
+    63711400,
+    1420023445,
+    1592293658,
+    1655909613,
+    117249838,
+    509243608,
+    424254244,
+    333947311,
+    2037469826,
+    990133105,
+    782731749,
+    1780796721,
+    1446666932,
+    519570205,
+    1168037129,
+    1121823742,
+    935739696,
+    739193556,
+    410126506,
+    2047731035,
+    335412124,
+    170353902,
+    2100019528,
+    1526972219,
+    1465334452,
+    393566743,
+    222492097,
+    1633730853,
+    1458831772,
+    15839930,
+    342123179,
+    1442846518,
+    348834184,
+    204090347,
+    967112453,
+    1070540734,
+    105916053,
+    2092080246,
+    1067604931,
+    1509312186,
+    539791740,
+    1899045145,
+    1783582810,
+    1638371506,
+    964598375,
+    871306145,
+    1083756608,
+    528959361,
+    1571076416,
+    1562573209,
+    569513156,
+    460379,
+    786950617,
+    1292219142,
+    1226459128,
+    421729847,
+    1263667211,
+    1319272616,
+    888256717,
+    102276357,
+    989772339,
+    2018431876,
+    706300159,
+    1385513975,
+    1565276197,
+    1437488657,
+    950406377,
+    897361490,
+    2017463014,
+    730790906,
+    1454369585,
+    990935291,
+    750794781,
+    2118690121,
+    2108791907,
+    1603464525,
+    2075716979,
+    697802561,
+    1170860533,
+    1252221999,
+    24543392,
+    1939298172,
+    1813904884,
+    2090489745,
+    1340993334,
+    65766302,
+    342215578,
+    1421384701,
+    99452431
+   ]
+  },
+  {
+   "aep_full_applied": {
+    "AUTHORITATIVE_READBACK": 0,
+    "NO_READBACK": 1,
+    "POSITIVE_ONLY_READBACK": 1
+   },
+   "name": "armA-s3-2026-09-03",
+   "seeds": [
+    68356775,
+    1589580403,
+    1819800743,
+    466688041,
+    723532595,
+    73073743,
+    1825533734,
+    326531759,
+    1428402252,
+    1235212709,
+    808747415,
+    2109783456,
+    1544522412,
+    437314372,
+    1555252504,
+    1836096370,
+    782911428,
+    880032032,
+    2071419674,
+    2083604064,
+    798091627,
+    375278566,
+    13274447,
+    456681591,
+    1032392618,
+    260107273,
+    624720937,
+    1743476308,
+    910649365,
+    1129348861,
+    1753772374,
+    1060983846,
+    474599454,
+    837754755,
+    1829185788,
+    1849490017,
+    1491045395,
+    1351611441,
+    368469946,
+    1353381387,
+    1755257859,
+    568603126,
+    1159566768,
+    1252124774,
+    2129661717,
+    163760149,
+    1294880550,
+    407370803,
+    1099297230,
+    1414731913,
+    199254492,
+    454706414,
+    388712620,
+    169630201,
+    551954546,
+    826862170,
+    395119423,
+    107529241,
+    1761204972,
+    2096619165,
+    1134270560,
+    1125481302,
+    332173001,
+    1833984780,
+    1745285310,
+    536763519,
+    1064047777,
+    479174872,
+    919939969,
+    21735616,
+    419498779,
+    1241936599,
+    383152780,
+    1634720989,
+    498190659,
+    875161659,
+    2019115893,
+    959095983,
+    424334404,
+    1171638658,
+    293740785,
+    1471996616,
+    884672780,
+    1252164924,
+    27972311,
+    457279512,
+    519066807,
+    1182596121,
+    60638089,
+    249413342,
+    2115938733,
+    63711400,
+    1420023445,
+    1592293658,
+    1655909613,
+    117249838,
+    509243608,
+    424254244,
+    333947311,
+    2037469826,
+    990133105,
+    782731749,
+    1780796721,
+    1446666932,
+    519570205,
+    1168037129,
+    1121823742,
+    935739696,
+    739193556,
+    410126506,
+    2047731035,
+    335412124,
+    170353902,
+    2100019528,
+    1526972219,
+    1465334452,
+    393566743,
+    222492097,
+    1633730853,
+    1458831772,
+    15839930,
+    342123179,
+    1442846518,
+    348834184,
+    204090347,
+    967112453,
+    1070540734,
+    105916053,
+    2092080246,
+    1067604931,
+    1509312186,
+    539791740,
+    1899045145,
+    1783582810,
+    1638371506,
+    964598375,
+    871306145,
+    1083756608,
+    528959361,
+    1571076416,
+    1562573209,
+    569513156,
+    460379,
+    786950617,
+    1292219142,
+    1226459128,
+    421729847,
+    1263667211,
+    1319272616,
+    888256717,
+    102276357,
+    989772339,
+    2018431876,
+    706300159,
+    1385513975,
+    1565276197,
+    1437488657,
+    950406377,
+    897361490,
+    2017463014,
+    730790906,
+    1454369585,
+    990935291,
+    750794781,
+    2118690121,
+    2108791907,
+    1603464525,
+    2075716979,
+    697802561,
+    1170860533,
+    1252221999,
+    24543392,
+    1939298172,
+    1813904884,
+    2090489745,
+    1340993334,
+    65766302,
+    342215578,
+    1421384701,
+    99452431
+   ]
+  }
+ ],
+ "sessions": [
+  {
+   "ablation": [
+    {
+     "applied_effects_total": "29",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "1",
+     "declared_ambiguous": "0",
+     "executions": "30",
+     "executions_with_an_applied_effect": "29",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "AUTHORITATIVE_READBACK",
+     "runs": "30",
+     "system": "AEP_FULL",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "28",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "30",
+     "executions": "30",
+     "executions_with_an_applied_effect": "28",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "NO_READBACK",
+     "runs": "30",
+     "system": "AEP_FULL",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "30",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "0",
+     "executions": "30",
+     "executions_with_an_applied_effect": "30",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "AUTHORITATIVE_READBACK",
+     "runs": "30",
+     "system": "B3_INTENT_NO_BARRIER",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "27",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "30",
+     "executions": "30",
+     "executions_with_an_applied_effect": "27",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "NO_READBACK",
+     "runs": "30",
+     "system": "B3_INTENT_NO_BARRIER",
+     "undetected_duplicates": "0"
+    }
+   ],
+   "coverage": {
+    "all_runs_used_real_sigkill": true,
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260806,
+    "cells": 4,
+    "crash_free_runs": 0,
+    "crash_points": [
+     "none"
+    ],
+    "executions": 120,
+    "readback_keyings": [
+     "CALLER_REFERENCE"
+    ],
+    "regimes": [
+     "redis-kill-inflight"
+    ],
+    "response_classes": [
+     "AUTHORITATIVE_READBACK",
+     "NO_READBACK"
+    ],
+    "runs": 120,
+    "runs_dropped_for_clock_suspension": 0,
+    "runs_dropped_for_undeclared_suspend_policy": 0,
+    "runs_with_a_hard_redis_kill": 120,
+    "runs_with_usable_timing": 120,
+    "systems": [
+     "AEP_FULL",
+     "B3_INTENT_NO_BARRIER"
+    ],
+    "worst_suspension_seconds": 0.195
+   },
+   "name": "inflight-s1-2026-09-04",
+   "progress": [
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r0",
+     "seed": 865604681,
+     "started_at": 163256.653348103,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "aep_full-none-payments-77581e22-r0",
+     "seed": 722388287,
+     "started_at": 163326.843429975,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r0",
+     "seed": 912614563,
+     "started_at": 163378.363049524,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r0",
+     "seed": 1139125534,
+     "started_at": 163423.855307257,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r1",
+     "seed": 1261351850,
+     "started_at": 163471.615409368,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "aep_full-none-payments-77581e22-r1",
+     "seed": 2001273409,
+     "started_at": 163514.820943198,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r1",
+     "seed": 974440056,
+     "started_at": 163558.814035792,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r1",
+     "seed": 407064363,
+     "started_at": 163600.690687996,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r2",
+     "seed": 276139870,
+     "started_at": 163642.774923452,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "aep_full-none-payments-77581e22-r2",
+     "seed": 1475811662,
+     "started_at": 163687.859620928,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r2",
+     "seed": 966720377,
+     "started_at": 163728.459534435,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r2",
+     "seed": 48381842,
+     "started_at": 163770.396748439,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r3",
+     "seed": 1963779176,
+     "started_at": 163811.411242393,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "aep_full-none-payments-77581e22-r3",
+     "seed": 966137940,
+     "started_at": 163850.154919123,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r3",
+     "seed": 9755501,
+     "started_at": 163892.292227638,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r3",
+     "seed": 1237613466,
+     "started_at": 163933.241306473,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r4",
+     "seed": 966253196,
+     "started_at": 163977.149359369,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "aep_full-none-payments-77581e22-r4",
+     "seed": 1530984081,
+     "started_at": 164018.130155958,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r4",
+     "seed": 87518173,
+     "started_at": 164057.978987263,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r4",
+     "seed": 1301526458,
+     "started_at": 164110.944834064,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r5",
+     "seed": 259241583,
+     "started_at": 164151.882291352,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "aep_full-none-payments-77581e22-r5",
+     "seed": 1245908125,
+     "started_at": 164190.932511622,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r5",
+     "seed": 912763169,
+     "started_at": 164229.643946267,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r5",
+     "seed": 934681400,
+     "started_at": 164270.589031722,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r6",
+     "seed": 1599116288,
+     "started_at": 164309.814343373,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "aep_full-none-payments-77581e22-r6",
+     "seed": 1225796824,
+     "started_at": 164353.302167348,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r6",
+     "seed": 1631196967,
+     "started_at": 164392.657788083,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r6",
+     "seed": 1327077411,
+     "started_at": 164431.652738418,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r7",
+     "seed": 1855533185,
+     "started_at": 164470.526405469,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "aep_full-none-payments-77581e22-r7",
+     "seed": 1680480217,
+     "started_at": 164509.518809629,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r7",
+     "seed": 152737174,
+     "started_at": 164548.438203697,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r7",
+     "seed": 1568984148,
+     "started_at": 164589.682144687,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r8",
+     "seed": 766129845,
+     "started_at": 164629.244290712,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "aep_full-none-payments-77581e22-r8",
+     "seed": 73062179,
+     "started_at": 164674.541232481,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r8",
+     "seed": 495095435,
+     "started_at": 164716.251279022,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r8",
+     "seed": 1251227968,
+     "started_at": 164758.124276234,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r9",
+     "seed": 1476113492,
+     "started_at": 164800.331327951,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "aep_full-none-payments-77581e22-r9",
+     "seed": 573933733,
+     "started_at": 164843.220388801,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r9",
+     "seed": 2063237341,
+     "started_at": 164886.11966515,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r9",
+     "seed": 722080126,
+     "started_at": 164928.724579824,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r10",
+     "seed": 1593919703,
+     "started_at": 164970.77379245,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "aep_full-none-payments-77581e22-r10",
+     "seed": 635495462,
+     "started_at": 165023.85457276,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r10",
+     "seed": 1706518155,
+     "started_at": 165065.758364758,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r10",
+     "seed": 1854925388,
+     "started_at": 165106.67396063,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r11",
+     "seed": 1618661113,
+     "started_at": 165147.536958782,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "aep_full-none-payments-77581e22-r11",
+     "seed": 1653777903,
+     "started_at": 165192.979349392,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r11",
+     "seed": 997277100,
+     "started_at": 165234.500586434,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r11",
+     "seed": 704248318,
+     "started_at": 165281.345068321,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r12",
+     "seed": 2054310398,
+     "started_at": 165324.330815454,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "aep_full-none-payments-77581e22-r12",
+     "seed": 95632613,
+     "started_at": 165369.366868047,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r12",
+     "seed": 1684199352,
+     "started_at": 165412.133574673,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r12",
+     "seed": 641628830,
+     "started_at": 165457.354780374,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r13",
+     "seed": 2118049385,
+     "started_at": 165499.149595391,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "aep_full-none-payments-77581e22-r13",
+     "seed": 1917248140,
+     "started_at": 165542.921048541,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r13",
+     "seed": 1481083738,
+     "started_at": 165587.879714272,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r13",
+     "seed": 848181513,
+     "started_at": 165630.044388301,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r14",
+     "seed": 177669079,
+     "started_at": 165674.717035481,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "aep_full-none-payments-77581e22-r14",
+     "seed": 1797453868,
+     "started_at": 165716.629405148,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r14",
+     "seed": 1180124453,
+     "started_at": 165764.803838439,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r14",
+     "seed": 794824093,
+     "started_at": 165890.425126547,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r15",
+     "seed": 1277066349,
+     "started_at": 165935.270325176,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "aep_full-none-payments-77581e22-r15",
+     "seed": 49164742,
+     "started_at": 165978.197678305,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r15",
+     "seed": 1479695777,
+     "started_at": 166024.537206683,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r15",
+     "seed": 490174123,
+     "started_at": 166098.350717915,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r16",
+     "seed": 274403830,
+     "started_at": 166150.734265384,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "aep_full-none-payments-77581e22-r16",
+     "seed": 1119115370,
+     "started_at": 166278.525687218,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r16",
+     "seed": 842711784,
+     "started_at": 166336.928452266,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r16",
+     "seed": 48434880,
+     "started_at": 166384.878176449,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r17",
+     "seed": 2100074187,
+     "started_at": 166435.251397662,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "aep_full-none-payments-77581e22-r17",
+     "seed": 981819665,
+     "started_at": 166482.576758841,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r17",
+     "seed": 208162005,
+     "started_at": 166530.538872562,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r17",
+     "seed": 1039976814,
+     "started_at": 166578.469733605,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r18",
+     "seed": 2090622842,
+     "started_at": 166628.445925025,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "aep_full-none-payments-77581e22-r18",
+     "seed": 531009311,
+     "started_at": 166670.274312037,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r18",
+     "seed": 1341528989,
+     "started_at": 166712.02937025,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r18",
+     "seed": 1712889735,
+     "started_at": 166754.25612143,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r19",
+     "seed": 285318090,
+     "started_at": 166803.99609884,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "aep_full-none-payments-77581e22-r19",
+     "seed": 1189705834,
+     "started_at": 166845.028471162,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r19",
+     "seed": 953085810,
+     "started_at": 166885.944560376,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r19",
+     "seed": 1905354212,
+     "started_at": 166926.970374785,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r20",
+     "seed": 1058537728,
+     "started_at": 166970.081921803,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "aep_full-none-payments-77581e22-r20",
+     "seed": 1986925502,
+     "started_at": 167010.679281763,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r20",
+     "seed": 1555380418,
+     "started_at": 167054.909869884,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r20",
+     "seed": 1569444681,
+     "started_at": 167097.58887323,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r21",
+     "seed": 1502298397,
+     "started_at": 167137.553588502,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "aep_full-none-payments-77581e22-r21",
+     "seed": 1623566885,
+     "started_at": 167177.531693396,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r21",
+     "seed": 320842827,
+     "started_at": 167217.433394886,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r21",
+     "seed": 402322726,
+     "started_at": 167257.340825923,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r22",
+     "seed": 57866849,
+     "started_at": 167297.3646187,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "aep_full-none-payments-77581e22-r22",
+     "seed": 1302761618,
+     "started_at": 167339.356300824,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r22",
+     "seed": 2098956028,
+     "started_at": 167386.398709902,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r22",
+     "seed": 1513609512,
+     "started_at": 167428.672937783,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r23",
+     "seed": 265155994,
+     "started_at": 167470.368071898,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "aep_full-none-payments-77581e22-r23",
+     "seed": 529837522,
+     "started_at": 167511.990985917,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r23",
+     "seed": 423271508,
+     "started_at": 167554.867089255,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r23",
+     "seed": 1846674227,
+     "started_at": 167601.951042955,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r24",
+     "seed": 462005021,
+     "started_at": 167647.744920192,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "aep_full-none-payments-77581e22-r24",
+     "seed": 687113958,
+     "started_at": 167704.699214912,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r24",
+     "seed": 208183713,
+     "started_at": 167759.883807749,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r24",
+     "seed": 552813195,
+     "started_at": 167804.498349651,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r25",
+     "seed": 268539099,
+     "started_at": 167847.315984051,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "aep_full-none-payments-77581e22-r25",
+     "seed": 67210676,
+     "started_at": 167907.778369995,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r25",
+     "seed": 1700025669,
+     "started_at": 167974.247584825,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r25",
+     "seed": 521174515,
+     "started_at": 168019.158275035,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r26",
+     "seed": 117740946,
+     "started_at": 168063.929813514,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "aep_full-none-payments-77581e22-r26",
+     "seed": 211156194,
+     "started_at": 168106.077344017,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r26",
+     "seed": 163439693,
+     "started_at": 168149.962051014,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r26",
+     "seed": 2000237421,
+     "started_at": 168191.757533032,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r27",
+     "seed": 958502778,
+     "started_at": 168234.696421092,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "aep_full-none-payments-77581e22-r27",
+     "seed": 902716683,
+     "started_at": 168278.56687065,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r27",
+     "seed": 1142641868,
+     "started_at": 168322.423498817,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r27",
+     "seed": 1416373369,
+     "started_at": 168365.615613874,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r28",
+     "seed": 951893525,
+     "started_at": 168408.537572302,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "aep_full-none-payments-77581e22-r28",
+     "seed": 957561412,
+     "started_at": 168450.298072471,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r28",
+     "seed": 779729329,
+     "started_at": 168493.064845727,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r28",
+     "seed": 1033686426,
+     "started_at": 168537.879105906,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r29",
+     "seed": 2113887578,
+     "started_at": 168580.176137529,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "aep_full-none-payments-77581e22-r29",
+     "seed": 1530205404,
+     "started_at": 168622.080914605,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r29",
+     "seed": 38753171,
+     "started_at": 168663.948593333,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r29",
+     "seed": 1362816931,
+     "started_at": 168706.88759511,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    }
+   ],
+   "runs": [
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r9"
+    }
+   ]
+  },
+  {
+   "ablation": [
+    {
+     "applied_effects_total": "29",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "1",
+     "declared_ambiguous": "0",
+     "executions": "30",
+     "executions_with_an_applied_effect": "29",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "AUTHORITATIVE_READBACK",
+     "runs": "30",
+     "system": "AEP_FULL",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "28",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "30",
+     "executions": "30",
+     "executions_with_an_applied_effect": "28",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "NO_READBACK",
+     "runs": "30",
+     "system": "AEP_FULL",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "30",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "0",
+     "executions": "30",
+     "executions_with_an_applied_effect": "30",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "AUTHORITATIVE_READBACK",
+     "runs": "30",
+     "system": "B3_INTENT_NO_BARRIER",
+     "undetected_duplicates": "0"
+    },
+    {
+     "applied_effects_total": "27",
+     "canary_lost": "0",
+     "canary_survived": "30",
+     "confirmed_not_applied": "0",
+     "declared_ambiguous": "30",
+     "executions": "30",
+     "executions_with_an_applied_effect": "27",
+     "lost_effects": "0",
+     "regime": "redis-kill-inflight",
+     "response_class": "NO_READBACK",
+     "runs": "30",
+     "system": "B3_INTENT_NO_BARRIER",
+     "undetected_duplicates": "0"
+    }
+   ],
+   "coverage": {
+    "all_runs_used_real_sigkill": true,
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260806,
+    "cells": 4,
+    "crash_free_runs": 0,
+    "crash_points": [
+     "none"
+    ],
+    "executions": 120,
+    "readback_keyings": [
+     "CALLER_REFERENCE"
+    ],
+    "regimes": [
+     "redis-kill-inflight"
+    ],
+    "response_classes": [
+     "AUTHORITATIVE_READBACK",
+     "NO_READBACK"
+    ],
+    "runs": 120,
+    "runs_dropped_for_clock_suspension": 0,
+    "runs_dropped_for_undeclared_suspend_policy": 0,
+    "runs_with_a_hard_redis_kill": 120,
+    "runs_with_usable_timing": 120,
+    "systems": [
+     "AEP_FULL",
+     "B3_INTENT_NO_BARRIER"
+    ],
+    "worst_suspension_seconds": 0.195
+   },
+   "name": "inflight-s2-2026-09-04",
+   "progress": [
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r0",
+     "seed": 865604681,
+     "started_at": 168774.607032061,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "aep_full-none-payments-77581e22-r0",
+     "seed": 722388287,
+     "started_at": 168816.788794305,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r0",
+     "seed": 912614563,
+     "started_at": 168860.801934986,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 0,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r0",
+     "seed": 1139125534,
+     "started_at": 168899.695085797,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r1",
+     "seed": 1261351850,
+     "started_at": 168942.185540494,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "aep_full-none-payments-77581e22-r1",
+     "seed": 2001273409,
+     "started_at": 168981.4658319,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r1",
+     "seed": 974440056,
+     "started_at": 169020.429790321,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 1,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r1",
+     "seed": 407064363,
+     "started_at": 169059.327321814,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r2",
+     "seed": 276139870,
+     "started_at": 169099.144071904,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "aep_full-none-payments-77581e22-r2",
+     "seed": 1475811662,
+     "started_at": 169141.245098273,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r2",
+     "seed": 966720377,
+     "started_at": 169181.979942562,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 2,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r2",
+     "seed": 48381842,
+     "started_at": 169221.989038741,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r3",
+     "seed": 1963779176,
+     "started_at": 169262.025872224,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "aep_full-none-payments-77581e22-r3",
+     "seed": 966137940,
+     "started_at": 169301.92354559,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r3",
+     "seed": 9755501,
+     "started_at": 169340.755781346,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 3,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r3",
+     "seed": 1237613466,
+     "started_at": 169379.707243649,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r4",
+     "seed": 966253196,
+     "started_at": 169418.748295699,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "aep_full-none-payments-77581e22-r4",
+     "seed": 1530984081,
+     "started_at": 169457.578555836,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r4",
+     "seed": 87518173,
+     "started_at": 169499.542113,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 4,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r4",
+     "seed": 1301526458,
+     "started_at": 169549.465917207,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r5",
+     "seed": 259241583,
+     "started_at": 169588.282214257,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "aep_full-none-payments-77581e22-r5",
+     "seed": 1245908125,
+     "started_at": 169626.388106945,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r5",
+     "seed": 912763169,
+     "started_at": 169668.105754525,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 5,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r5",
+     "seed": 934681400,
+     "started_at": 169710.036362623,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r6",
+     "seed": 1599116288,
+     "started_at": 169750.067989566,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "aep_full-none-payments-77581e22-r6",
+     "seed": 1225796824,
+     "started_at": 169794.319943493,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r6",
+     "seed": 1631196967,
+     "started_at": 169834.955978295,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 6,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r6",
+     "seed": 1327077411,
+     "started_at": 169875.804604548,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r7",
+     "seed": 1855533185,
+     "started_at": 169919.848829915,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "aep_full-none-payments-77581e22-r7",
+     "seed": 1680480217,
+     "started_at": 169963.509373083,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r7",
+     "seed": 152737174,
+     "started_at": 170007.586071475,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 7,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r7",
+     "seed": 1568984148,
+     "started_at": 170054.317182223,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r8",
+     "seed": 766129845,
+     "started_at": 170099.454484009,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "aep_full-none-payments-77581e22-r8",
+     "seed": 73062179,
+     "started_at": 170147.867511124,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r8",
+     "seed": 495095435,
+     "started_at": 170194.262681539,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 8,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r8",
+     "seed": 1251227968,
+     "started_at": 170291.170989902,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r9",
+     "seed": 1476113492,
+     "started_at": 170334.97219416,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "aep_full-none-payments-77581e22-r9",
+     "seed": 573933733,
+     "started_at": 170381.250708822,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r9",
+     "seed": 2063237341,
+     "started_at": 170426.87003385,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 9,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r9",
+     "seed": 722080126,
+     "started_at": 170475.531865653,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r10",
+     "seed": 1593919703,
+     "started_at": 170521.527779611,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "aep_full-none-payments-77581e22-r10",
+     "seed": 635495462,
+     "started_at": 170569.552187068,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r10",
+     "seed": 1706518155,
+     "started_at": 170615.604563807,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 10,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r10",
+     "seed": 1854925388,
+     "started_at": 170661.531707834,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r11",
+     "seed": 1618661113,
+     "started_at": 170774.259195441,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "aep_full-none-payments-77581e22-r11",
+     "seed": 1653777903,
+     "started_at": 170825.71155293,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r11",
+     "seed": 997277100,
+     "started_at": 170873.023563177,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 11,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r11",
+     "seed": 704248318,
+     "started_at": 170923.596415822,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r12",
+     "seed": 2054310398,
+     "started_at": 170969.89865399,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "aep_full-none-payments-77581e22-r12",
+     "seed": 95632613,
+     "started_at": 171016.915044026,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r12",
+     "seed": 1684199352,
+     "started_at": 171060.739427292,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 12,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r12",
+     "seed": 641628830,
+     "started_at": 171106.480741883,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r13",
+     "seed": 2118049385,
+     "started_at": 171151.540232104,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "aep_full-none-payments-77581e22-r13",
+     "seed": 1917248140,
+     "started_at": 171197.449037877,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r13",
+     "seed": 1481083738,
+     "started_at": 171239.335842195,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 13,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r13",
+     "seed": 848181513,
+     "started_at": 171284.203494511,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r14",
+     "seed": 177669079,
+     "started_at": 171329.086537911,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "aep_full-none-payments-77581e22-r14",
+     "seed": 1797453868,
+     "started_at": 171373.080357926,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r14",
+     "seed": 1180124453,
+     "started_at": 171413.053115984,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 14,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r14",
+     "seed": 794824093,
+     "started_at": 171452.941393333,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r15",
+     "seed": 1277066349,
+     "started_at": 171492.879056503,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "aep_full-none-payments-77581e22-r15",
+     "seed": 49164742,
+     "started_at": 171532.786325944,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r15",
+     "seed": 1479695777,
+     "started_at": 171574.969313513,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 15,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r15",
+     "seed": 490174123,
+     "started_at": 171613.631288565,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r16",
+     "seed": 274403830,
+     "started_at": 171654.366635789,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "aep_full-none-payments-77581e22-r16",
+     "seed": 1119115370,
+     "started_at": 171693.505528502,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r16",
+     "seed": 842711784,
+     "started_at": 171732.398015845,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 16,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r16",
+     "seed": 48434880,
+     "started_at": 171771.189371425,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r17",
+     "seed": 2100074187,
+     "started_at": 171811.997433689,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "aep_full-none-payments-77581e22-r17",
+     "seed": 981819665,
+     "started_at": 171850.057988472,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r17",
+     "seed": 208162005,
+     "started_at": 171888.9750017,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 17,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r17",
+     "seed": 1039976814,
+     "started_at": 171928.893891516,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r18",
+     "seed": 2090622842,
+     "started_at": 171966.982268838,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "aep_full-none-payments-77581e22-r18",
+     "seed": 531009311,
+     "started_at": 172005.832157019,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r18",
+     "seed": 1341528989,
+     "started_at": 172045.769380537,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 18,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r18",
+     "seed": 1712889735,
+     "started_at": 172089.059310249,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r19",
+     "seed": 285318090,
+     "started_at": 172129.633281857,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "aep_full-none-payments-77581e22-r19",
+     "seed": 1189705834,
+     "started_at": 172170.549254757,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r19",
+     "seed": 953085810,
+     "started_at": 172210.342126168,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 19,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r19",
+     "seed": 1905354212,
+     "started_at": 172251.384266466,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r20",
+     "seed": 1058537728,
+     "started_at": 172294.001799381,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "aep_full-none-payments-77581e22-r20",
+     "seed": 1986925502,
+     "started_at": 172333.092227336,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r20",
+     "seed": 1555380418,
+     "started_at": 172378.911343681,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 20,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r20",
+     "seed": 1569444681,
+     "started_at": 172418.078797957,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r21",
+     "seed": 1502298397,
+     "started_at": 172456.992774934,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "aep_full-none-payments-77581e22-r21",
+     "seed": 1623566885,
+     "started_at": 172496.822480663,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r21",
+     "seed": 320842827,
+     "started_at": 172539.790804985,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 21,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r21",
+     "seed": 402322726,
+     "started_at": 172582.859952588,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r22",
+     "seed": 57866849,
+     "started_at": 172624.704383682,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "aep_full-none-payments-77581e22-r22",
+     "seed": 1302761618,
+     "started_at": 172666.564996611,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r22",
+     "seed": 2098956028,
+     "started_at": 172710.987002687,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 22,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r22",
+     "seed": 1513609512,
+     "started_at": 172754.911801961,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r23",
+     "seed": 265155994,
+     "started_at": 172798.377930405,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "aep_full-none-payments-77581e22-r23",
+     "seed": 529837522,
+     "started_at": 172839.311894925,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r23",
+     "seed": 423271508,
+     "started_at": 172880.987046708,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 23,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r23",
+     "seed": 1846674227,
+     "started_at": 172923.286741675,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r24",
+     "seed": 462005021,
+     "started_at": 172965.943100173,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "aep_full-none-payments-77581e22-r24",
+     "seed": 687113958,
+     "started_at": 173007.946069156,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r24",
+     "seed": 208183713,
+     "started_at": 173052.176792823,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 24,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r24",
+     "seed": 552813195,
+     "started_at": 173095.904227322,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r25",
+     "seed": 268539099,
+     "started_at": 173179.66604211,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "aep_full-none-payments-77581e22-r25",
+     "seed": 67210676,
+     "started_at": 173226.473393342,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r25",
+     "seed": 1700025669,
+     "started_at": 173269.446537498,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 25,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r25",
+     "seed": 521174515,
+     "started_at": 173310.422005928,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r26",
+     "seed": 117740946,
+     "started_at": 173355.081639067,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "aep_full-none-payments-77581e22-r26",
+     "seed": 211156194,
+     "started_at": 173401.262508892,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r26",
+     "seed": 163439693,
+     "started_at": 173449.177615528,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 26,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r26",
+     "seed": 2000237421,
+     "started_at": 173497.042034066,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r27",
+     "seed": 958502778,
+     "started_at": 173543.919134834,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "aep_full-none-payments-77581e22-r27",
+     "seed": 902716683,
+     "started_at": 173591.787492267,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r27",
+     "seed": 1142641868,
+     "started_at": 173688.653951151,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 27,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r27",
+     "seed": 1416373369,
+     "started_at": 173734.677053904,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r28",
+     "seed": 951893525,
+     "started_at": 173783.368157225,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "aep_full-none-payments-77581e22-r28",
+     "seed": 957561412,
+     "started_at": 173835.40725587,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r28",
+     "seed": 779729329,
+     "started_at": 173883.357554758,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 28,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r28",
+     "seed": 1033686426,
+     "started_at": 173933.366762385,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "aep_full-none-ledger_postings-8f8aef74-r29",
+     "seed": 2113887578,
+     "started_at": 173981.164479111,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "aep_full-none-payments-77581e22-r29",
+     "seed": 1530205404,
+     "started_at": 174045.945372434,
+     "status": "collected",
+     "system": "AEP_FULL"
+    },
+    {
+     "endpoint": "ledger_postings",
+     "outcome": [
+      1,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r29",
+     "seed": 38753171,
+     "started_at": 174095.746899229,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    },
+    {
+     "endpoint": "payments",
+     "outcome": [
+      0,
+      0,
+      0,
+      true
+     ],
+     "repetition": 29,
+     "run_id": "b3_intent_no_barrier-none-payments-daa2c0b7-r29",
+     "seed": 1362816931,
+     "started_at": 174140.863709576,
+     "status": "collected",
+     "system": "B3_INTENT_NO_BARRIER"
+    }
+   ],
+   "runs": [
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-ledger_postings-8f8aef74-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "aep_full-none-payments-77581e22-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-ledger_postings-772e83d4-r9"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r0"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r1"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r10"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r11"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r12"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r13"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r14"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r15"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r16"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r17"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r18"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r19"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r2"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r20"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r21"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r22"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r23"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r24"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r25"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r26"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r27"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r28"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r29"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r3"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r4"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r5"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r6"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r7"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r8"
+    },
+    {
+     "has_kill_event": true,
+     "redis_fault_mechanism": "kill",
+     "redis_kill_delay_ms": 200,
+     "redis_kill_point": "mid_dispatch",
+     "run": "b3_intent_no_barrier-none-payments-daa2c0b7-r9"
+    }
+   ]
+  }
+ ]
+}
