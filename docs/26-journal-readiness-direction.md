@@ -108,6 +108,26 @@ Each workstream: goal → why → tasks → acceptance criteria → effort → d
 
 ### WS-1 · Framing decision (T6) — the author decides, the LLM helps cost it
 
+**DECIDED 2026-09-04: Option B.** The agent workload goes ahead; design in
+`docs/33-agent-workload.md` (numbered 33, not the 27 named below — 27 was taken
+by `27-measurement-host.md`).
+
+**Option B has since been split into two workstreams.** Designing it surfaced a
+prerequisite that is not part of the workload and is much larger than "a metric
+repair": the published duplicate metric attributes ledger rows to executions by
+`target`, which is sound only because each execution owns its resource — and the
+agent workload removes that property for all seven systems. Fixing it needs a
+ledger schema change, four proofs and a §VIII threat statement.
+
+* **WS-1a · Attribution** — the execution-id repair. `docs/33` §2. Blocks WS-1b
+  entirely. Eleven acceptance items, four of them proofs, one of them a
+  manuscript change.
+* **WS-1b · The agent workload** — tools, planners, plan drift. `docs/33` §§1,
+  3–5. Task list 1B.1–1B.5 below belongs here.
+
+The two options below are retained as the record of the decision, not as an open
+question.
+
 Two options. **Pick one within the first week; every prose task downstream depends on it.**
 
 **Option A — Retitle around the API problem (recommended if time < 6 weeks).**
@@ -223,6 +243,8 @@ Do this **after** WS-3/4/5 land, because the tone problem is downstream of the e
 | Week | Workstreams | Output |
 |---|---|---|
 | 1 | WS-0, WS-1 decision, WS-2.1–2.3 | Linux host live; framing decided; archive + DOI |
+| 1+ | **WS-1a (attribution)** — blocks WS-1b | Execution-id attribution; four proofs; §VIII threat stated |
+| 2+ | **WS-1b (agent workload)** — only after WS-1a | Agent cells; plan-drift metric; §VI-F |
 | 2 | WS-3 (controlled prevention), WS-5 collection running unattended | Controlled prevention cells; timing intervals |
 | 3 | WS-4 (write loss), WS-6 (real Temporal) | System-level durability result; real-engine baseline |
 | 4 | WS-7 (TLA+), WS-8 (related work) | Model checked in CI; 65+ refs |

@@ -26,9 +26,21 @@ Option B makes the agent load-bearing: a planner chooses which non-idempotent
 tool to call and with what arguments, drives the existing harness, and is
 measured on the existing three outcomes plus one new one.
 
-**§2 is a prerequisite and blocks all agent code.** It is not part of the
-workload; it is a repair to an existing metric that the workload would otherwise
-silently change. Read it before writing anything.
+### The workstream is split in two
+
+**§2 is not a prerequisite tucked inside this workstream; it is its own.** It
+grew to eleven acceptance items, four of them proofs and one a manuscript
+change, which is not a metric repair. Keeping it inside WS-1 would have hidden
+a ledger schema change and a construct-validity threat inside a workload task.
+
+| | scope | this document |
+|---|---|---|
+| **WS-1a · Attribution** | the execution-id repair, its four proofs, and the §VIII threat statement | **§2** |
+| **WS-1b · The agent workload** | tools, planners, plan drift, collection | §§1, 3–5 |
+
+**WS-1a blocks WS-1b entirely.** No agent code is written until §2.11 is
+complete. Recorded in `docs/26-journal-readiness-direction.md` §4 and §5 so the
+direction document does not drift from this one.
 
 ---
 
@@ -89,7 +101,16 @@ F(r) = SHA-256( C({ v, method, endpoint, operation, operation_version,
 **This is the load-bearing property of the schema.** Because the agent's whole
 action space is inside the fingerprint, two actions are the same mutation *to the
 oracle* exactly when the agent chose the same tool, target, action and amount. No
-new identity function is needed, and §4 gets its metric for free.
+new identity function is needed.
+
+**That buys identity, not attribution, and the difference is the whole of WS-1a.**
+An earlier draft said §4 got its metric "for free". It does not. The fingerprint
+answers *"are these the same mutation?"*; the metric also needs *"which execution
+caused this row?"*, and the agent workload is precisely what breaks the existing
+answer to the second question. §2.4 goes further and requires the execution id to
+be **excluded** from `F(r)` — so the two identifiers are deliberately disjoint,
+and keeping them so costs a ledger schema change, four proofs and a §VIII threat
+statement.
 
 ### 1.3 The modelling decision that has to change
 
