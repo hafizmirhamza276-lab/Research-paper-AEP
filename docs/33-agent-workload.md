@@ -14,10 +14,38 @@ is **33**. Nothing else about the task changes.
 
 ## 0. The decision, and what this document is
 
-**Option B is decided: the agent workload goes ahead.** This document is its
-design. The A-versus-B question is closed and is not reopened below; where the
-comparison to Option A appears it is to record what B costs, not to reconsider
-it.
+> ### SUPERSEDED 2026-09-04: Option A was executed instead
+>
+> **Option B was designed in full and not executed.** The framing decision was
+> subsequently reversed in favour of **Option A**: the paper is retitled around
+> the API problem — *"Declared Ambiguity: Fail-Closed Execution for
+> Non-Idempotent Legacy APIs Without Idempotency Keys"* — and autonomous agents
+> become the motivating deployment context in §I and §II rather than the
+> subject.
+>
+> **Why the design is kept.** `docs/26` §4 requires picking one option and says
+> every downstream prose task depends on the choice; it does not require
+> discarding the other. This document is the record of what Option B would have
+> involved, costed rather than estimated, and it is the reason the choice
+> between them can be defended: B was not rejected as vague, it was specified to
+> the point where its cost was visible.
+>
+> **What was nevertheless built.** §2 (WS-1a, attribution) was implemented and
+> verified before the reversal — the execution-id repair, its four proofs, and
+> the §VIII threat statement. It is in the codebase. Under Option A it has no
+> beneficiary, because the workload it exists to enable is not being collected,
+> and §7 of `reports/phase-report-ws1a-2026-09-04.md` should be read with that
+> in mind. **Whether to keep or revert it is an open decision**, and it is not
+> settled by this note: the §VIII paragraph currently concedes a
+> construct-validity threat that was accepted in exchange for making plan drift
+> measurable, and under Option A that exchange no longer happens.
+>
+> **§§1 and 3–5 below are unexecuted design.** Nothing in them was built.
+
+**Option B was decided, and this document is its design.** The A-versus-B
+question was closed at the time of writing and is not reopened below; where the
+comparison to Option A appears it is to record what B costs. The banner above
+records the later reversal.
 
 The blocker being answered is **A1**:
 

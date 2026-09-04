@@ -1,7 +1,7 @@
 # Cover letter — IEEE Transactions on Software Engineering
 
-**Manuscript:** *Declared Ambiguity: The Agent Execution Protocol (AEP) for
-Autonomous Agents Calling Non-Idempotent Legacy APIs*
+**Manuscript:** *Declared Ambiguity: Fail-Closed Execution for Non-Idempotent
+Legacy APIs Without Idempotency Keys*
 
 **Type:** Regular paper
 
@@ -9,8 +9,8 @@ Autonomous Agents Calling Non-Idempotent Legacy APIs*
 
 Dear Editor-in-Chief,
 
-We submit *Declared Ambiguity: The Agent Execution Protocol (AEP) for Autonomous
-Agents Calling Non-Idempotent Legacy APIs* for consideration as a regular paper
+We submit *Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy
+APIs Without Idempotency Keys* for consideration as a regular paper
 in IEEE Transactions on Software Engineering.
 
 ## The problem, and why it is a software-engineering problem

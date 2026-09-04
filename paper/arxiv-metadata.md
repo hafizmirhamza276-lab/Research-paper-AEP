@@ -14,7 +14,7 @@
 ## Title
 
 ```
-Declared Ambiguity: The Agent Execution Protocol (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs
+Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy APIs Without Idempotency Keys
 ```
 
 ## Categories
