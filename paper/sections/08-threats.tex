@@ -228,40 +228,6 @@ mutation shape. A real legacy endpoint may also \emph{misdeclare} its
 capability, which the protocol cannot detect (\cref{sec:model-endpoint}); we
 validate the capability's shape, never its truthfulness.
 
-\paragraph{Every system transmits a measurement identifier it would not send in
-deployment} The harness supplies a per-execution identifier on every provider
-call, for every system including the baselines that deliberately send no caller
-reference of their own. It exists so that an applied effect can be attributed to
-the execution that caused it even when that execution's worker died before it
-could record anything --- the case the crash regimes are built on, and the one
-an attribution keyed on the caller's own reference would miss, since a caller
-that never resolved never sent one.
-
-\textbf{It is instrumentation, not a protocol capability, and the distinction is
-enforced rather than asserted.} The provider records the identifier and never
-returns it, exposes no read-back or query keyed on it, and never uses it to
-decide whether two applications are the same mutation. That last clause is the
-one that matters: mutation identity is computed from the endpoint, the target
-and the endpoint's declared identity fields, and the measurement identifier is
-excluded from it, so two applications of one mutation under different identifiers
-are still one duplicate. The contrast is with the caller reference, which
-\emph{is} a capability precisely because the provider exposes a read-back keyed
-on it. No such accessor exists for this one, and its absence is checked by test
-rather than left as a design intention. A baseline therefore gains nothing it
-lacked: it cannot read the identifier back, cannot condition on it, and cannot
-deduplicate with it --- and the paper's premise is providers without idempotency
-keys, which a write-only field the provider ignores for identity does not
-create.
-
-\textbf{What remains, and we concede it rather than argue it away:} the
-baselines as measured under this instrumentation are not byte-identical to the
-baselines as they would be deployed, nor to the baselines elsewhere in this
-paper before the identifier existed. The field is inert by construction and its
-inertness is tested, but a reviewer is entitled to note that the systems under
-comparison now carry something the model they stand for would not, and that
-inertness established by our own tests is inertness established by the same
-party that wrote the instrument.
-
 \paragraph{B4 is not Temporal} B4 shares exactly one mechanism with a
 production durable-execution engine: durable history, replay, and at-least-once
 activity re-execution. It does not model heartbeating, backoff timing, task

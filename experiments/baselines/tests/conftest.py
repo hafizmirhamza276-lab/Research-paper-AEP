@@ -40,9 +40,6 @@ class Transmission:
     exact_request_bytes: bytes
     client_reference: str | None
     client_timeout: float
-    # WS-1a. Recorded so a test can assert every system sends it,
-    # including the baselines that send no client_reference.
-    execution_id: str | None = None
 
 
 @dataclass
@@ -73,7 +70,6 @@ class RecordingConnector:
         exact_request_bytes: bytes,
         client_reference: str | None,
         client_timeout: float,
-        execution_id: str | None = None,
     ) -> MutationResponse:
         index = len(self.transmissions)
         self.transmissions.append(
@@ -81,7 +77,6 @@ class RecordingConnector:
                 exact_request_bytes=exact_request_bytes,
                 client_reference=client_reference,
                 client_timeout=client_timeout,
-                execution_id=execution_id,
             )
         )
         if self.on_transmit is not None:

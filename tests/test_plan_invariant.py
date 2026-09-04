@@ -1,25 +1,21 @@
-r"""The §2.9 repeat invariant, and the attribution fallback it protects.
+r"""The §2.9 repeat invariant from `docs/33-agent-workload.md`.
 
-Two things are pinned here, both from `docs/33-agent-workload.md`:
+A planner may repeat a fingerprint only in response to a step declared
+`PERMANENTLY_AMBIGUOUS`. A violation does not mean a planner behaved oddly; it
+means a published duplicate number has quietly changed population.
 
-* **§2.9** — a planner may repeat a fingerprint only in response to a step
-  declared `PERMANENTLY_AMBIGUOUS`. A violation means a published duplicate
-  number has changed population, not that a planner behaved oddly.
-* **§2.4** — `oracle_effects_by_execution` must return `None` for a ledger that
-  cannot answer, so the caller falls back to `target`. The dangerous case is a
-  ledger that *carries* the column with nothing in it: returning an empty
-  mapping there would attribute zero applied effects to every execution and
-  silently zero every duplicate, lost-effect and applied-effect number in the
-  paper.
+**This file once had a second half**, pinning the WS-1a execution-id attribution
+fallback. That machinery — the ledger column, its reader and its four proofs —
+was reverted when the framing decision moved from Option B to Option A, since it
+served an agent workload nothing collects. The invariant is kept because it is a
+statement about a *plan*, independent of whether a planner exists to produce
+one, and because §2.9 remains the reasoning record either way.
 """
 
 from __future__ import annotations
 
-import sqlite3
-
 import pytest
 
-from experiments.analyze import oracle_effects_by_execution
 from experiments.harness.plan_invariant import (
     PERMANENTLY_AMBIGUOUS,
     PlannedStep,
@@ -101,72 +97,3 @@ def test_assert_holds_raises_with_the_offending_steps_named():
 
 def test_assert_holds_is_silent_on_a_valid_plan():
     assert_holds([step(0, "aaa", PERMANENTLY_AMBIGUOUS), step(1, "aaa")])
-
-
-# ===========================================================================
-# §2.4 -- the fallback, including the state that would zero every number
-# ===========================================================================
-
-
-def _ledger(path, *, column: bool, values: list[str | None] | None = None):
-    connection = sqlite3.connect(path)
-    extra = ", execution_id TEXT" if column else ""
-    connection.execute(
-        f"CREATE TABLE applied_mutations (id INTEGER PRIMARY KEY, target TEXT{extra})"
-    )
-    for index, value in enumerate(values or []):
-        if column:
-            connection.execute(
-                "INSERT INTO applied_mutations (target, execution_id) VALUES (?, ?)",
-                (f"account-{index}", value),
-            )
-        else:
-            connection.execute(
-                "INSERT INTO applied_mutations (target) VALUES (?)", (f"account-{index}",)
-            )
-    connection.commit()
-    connection.close()
-    return path
-
-
-def test_a_ledger_without_the_column_returns_none(tmp_path):
-    """Every database collected before WS-1a. Attribution stays on target."""
-    path = _ledger(tmp_path / "old.sqlite3", column=False, values=[None, None])
-
-    assert oracle_effects_by_execution(path) is None
-
-
-def test_a_ledger_with_the_column_but_no_values_returns_none(tmp_path):
-    """The hazard: column added, provider not yet plumbed.
-
-    Returning an empty mapping here would make the caller take the
-    by-execution path and attribute zero applied effects to everything.
-    """
-    path = _ledger(tmp_path / "empty.sqlite3", column=True, values=[None, None])
-
-    assert oracle_effects_by_execution(path) is None
-
-
-def test_a_populated_ledger_counts_by_execution(tmp_path):
-    path = _ledger(
-        tmp_path / "new.sqlite3", column=True, values=["exec-a", "exec-a", "exec-b"]
-    )
-
-    counts = oracle_effects_by_execution(path)
-
-    assert counts is not None
-    assert counts["exec-a"] == 2
-    assert counts["exec-b"] == 1
-
-
-def test_partially_populated_counts_only_what_it_can_attribute(tmp_path):
-    """A NULL row is not attributable; it must not be counted against anyone."""
-    path = _ledger(
-        tmp_path / "mixed.sqlite3", column=True, values=["exec-a", None, "exec-a"]
-    )
-
-    counts = oracle_effects_by_execution(path)
-
-    assert counts is not None
-    assert counts["exec-a"] == 2
-    assert sum(counts.values()) == 2

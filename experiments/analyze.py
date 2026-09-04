@@ -196,23 +196,6 @@ def events_of(records: Iterable[Mapping[str, Any]], event: str) -> list[dict[str
     return [dict(record) for record in records if record.get("event") == event]
 
 
-#: The column WS-1a adds to ``applied_mutations``. Absent from every database
-#: collected before it, which is why every read below is conditional on it.
-EXECUTION_ID_COLUMN = "execution_id"
-
-
-def _has_execution_id(connection: sqlite3.Connection) -> bool:
-    """Does this ledger carry the WS-1a attribution column?
-
-    Asked of the database rather than of ``LEDGER_SCHEMA_VERSION``: the
-    analysis never reads that constant (``docs/33`` §2.5, Proof 3), and a
-    column check is a statement about what can be selected rather than about
-    what a writer claimed.
-    """
-    rows = connection.execute("PRAGMA table_info(applied_mutations)").fetchall()
-    return any(str(row[1]) == EXECUTION_ID_COLUMN for row in rows)
-
-
 def oracle_effects_by_target(ledger_path: Path) -> Counter[str]:
     """How many times each resource was actually mutated.
 
@@ -234,74 +217,6 @@ def oracle_effects_by_target(ledger_path: Path) -> Counter[str]:
     finally:
         connection.close()
     return Counter({str(target): int(count) for target, count in rows})
-
-
-def oracle_effects_by_execution(ledger_path: Path) -> Counter[str] | None:
-    """How many times each *execution* actually mutated the world.
-
-    WS-1a (``docs/33`` §2.4). ``target`` names the execution only while each
-    execution owns its resource; an agent workload that re-plans onto a used
-    target breaks that for **every** system, because unlike ``client_reference``
-    the target is populated for all of them.
-
-    The execution id is the only key that attributes an execution which died
-    before it could record anything *and* survives two executions sharing a
-    resource. ``client_reference`` fails the first — ``experiments/harness/
-    reconcile.py`` rejected it for exactly that reason — and the failure is
-    invisible on data where targets are still unique, which is why this
-    function returns ``None`` rather than silently falling back inside itself.
-
-    Returns ``None`` for a ledger predating the column, so the caller makes the
-    fallback explicit and a test can prove the two paths disagree where they
-    should.
-
-    **It also returns ``None`` when the column exists but no row carries a
-    value.** That state is reachable -- it is exactly what a ledger looks like
-    between adding the column and teaching the provider to populate it -- and
-    without this branch an empty mapping would be returned, the caller would
-    take the by-execution path, and every execution would be attributed zero
-    applied effects. Every duplicate, lost-effect and applied-effect number in
-    the paper would silently become zero. A ledger that carries the column but
-    has nothing in it tells us nothing, so it is treated as a ledger that does
-    not carry it.
-    """
-    if not ledger_path.is_file():
-        raise AnalysisError(f"no ground-truth ledger at {ledger_path}")
-    connection = sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True)
-    try:
-        if not _has_execution_id(connection):
-            return None
-        rows = connection.execute(
-            f"SELECT {EXECUTION_ID_COLUMN}, COUNT(*) FROM applied_mutations "
-            f"WHERE {EXECUTION_ID_COLUMN} IS NOT NULL "
-            f"GROUP BY {EXECUTION_ID_COLUMN}"
-        ).fetchall()
-    except sqlite3.DatabaseError as error:
-        raise AnalysisError(f"cannot read {ledger_path}: {error}") from None
-    finally:
-        connection.close()
-    if not rows:
-        return None
-    return Counter({str(execution): int(count) for execution, count in rows})
-
-
-def applied_effects_for(
-    execution_id: str,
-    target: str,
-    by_execution: Counter[str] | None,
-    by_target: Counter[str],
-) -> int:
-    """Attribute applied effects to one execution.
-
-    By execution id where the ledger carries it; by target otherwise. The
-    fallback is not a convenience -- it is how every database collected before
-    WS-1a is read, and ``docs/33`` §2.8 Proof 1 requires a fixture in which the
-    two disagree, so that byte-identity on frozen data cannot be mistaken for
-    the new path having been exercised.
-    """
-    if by_execution is not None:
-        return int(by_execution.get(execution_id, 0))
-    return int(by_target.get(target, 0))
 
 
 # ===========================================================================
@@ -517,9 +432,6 @@ def load_run(directory: Path) -> RunRecord | None:
     )
 
     effects = oracle_effects_by_target(ledger_path)
-    # WS-1a. None for every ledger collected before the column existed, in
-    # which case attribution stays exactly as it was (docs/33 §2.4).
-    effects_by_execution = oracle_effects_by_execution(ledger_path)
 
     # The workload plan is echoed into the log, so the execution -> target
     # mapping comes out of the log rather than being recomputed from the seed.
@@ -611,9 +523,7 @@ def load_run(directory: Path) -> RunRecord | None:
                 execution_id=execution_id,
                 outcome_class=outcome_class,
                 status=str(classification.get("status", "")),
-                applied_effects=applied_effects_for(
-                    execution_id, target, effects_by_execution, effects
-                ),
+                applied_effects=int(effects.get(target, 0)),
                 crashed=crash_ms is not None,
                 dispatch_attempts=int(
                     (resolution or {}).get(

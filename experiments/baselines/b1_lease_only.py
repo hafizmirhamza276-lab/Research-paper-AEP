@@ -126,11 +126,6 @@ class LeaseOnlyRunner(CheckpointMixin):
                     self.connector,
                     exact_request_bytes=payload,
                     client_reference=None,
-# WS-1a instrumentation, sent by every system. It is not a
-# client_reference and gives this baseline no capability:
-# the provider records it, never returns it, and never uses
-# it to decide whether two applications are the same.
-                    execution_id=execution_id,
                     client_timeout=self.policy.client_timeout_seconds,
                 )
                 await self._checkpoint("AFTER_RESPONSE_BEFORE_RECORD")

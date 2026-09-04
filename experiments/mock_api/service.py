@@ -87,24 +87,6 @@ TIMEOUT_HOLD_SECONDS = 30.0
 #: Header carrying the caller's own request identifier. Opaque to the oracle.
 CLIENT_REFERENCE_HEADER = "X-AEP-Client-Reference"
 
-#: Header carrying the measurement harness's execution identifier (WS-1a,
-#: ``docs/33-agent-workload.md`` §2.4).
-#:
-#: **This is instrumentation, not a protocol capability**, and the distinction
-#: is what keeps it out of the systems under test. The provider records it and
-#: never returns it, never exposes an accessor keyed on it, and never uses it to
-#: decide whether two applications are the same mutation. Contrast
-#: ``CLIENT_REFERENCE_HEADER``, which *is* a capability precisely because
-#: ``GroundTruthLedger.applications_for_client_reference`` exists and serves
-#: read-backs from it. No such method exists for this one, and its absence is a
-#: property to be tested rather than a detail.
-#:
-#: It is supplied by the harness on every call for every system, exactly as the
-#: target resource already is, so it attributes an execution whose worker died
-#: before recording anything -- which ``experiments/harness/reconcile.py``
-#: records as the reason ``client_reference`` cannot be the attribution key.
-EXECUTION_ID_HEADER = "X-AEP-Execution-Id"
-
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
@@ -218,7 +200,6 @@ class MockLegacyAPI:
         fingerprint: str,
         digest: str,
         client_reference: str | None,
-        execution_id: str | None,
         delivery_index: int,
     ):
         """Record one applied mutation. Blocking: run it off the event loop."""
@@ -230,7 +211,6 @@ class MockLegacyAPI:
             fingerprint=fingerprint,
             payload_digest=digest,
             client_reference=client_reference,
-            execution_id=execution_id,
             response_class=endpoint.response_class.value,
             delivery_index=delivery_index,
             applied_at_ms=_now_ms(),
@@ -365,7 +345,6 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
         endpoint_name: str,
         request: Request,
         x_aep_client_reference: str | None = Header(default=None),
-        x_aep_execution_id: str | None = Header(default=None),
     ) -> Response:
         try:
             endpoint = api.config.endpoint(endpoint_name)
@@ -422,7 +401,6 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
             fingerprint=fingerprint,
             digest=digest,
             client_reference=x_aep_client_reference,
-            execution_id=x_aep_execution_id,
             delivery_index=1,
         )
         if duplicate:
@@ -435,7 +413,6 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
                 fingerprint=fingerprint,
                 digest=digest,
                 client_reference=x_aep_client_reference,
-                execution_id=x_aep_execution_id,
                 delivery_index=2,
             )
 

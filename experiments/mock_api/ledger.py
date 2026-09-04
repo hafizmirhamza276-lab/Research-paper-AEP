@@ -72,7 +72,7 @@ from typing import Callable
 
 #: Written into ``ledger_meta``. Bumping it is a statement that previously
 #: collected result databases are not comparable to new ones.
-LEDGER_SCHEMA_VERSION = "aep.mock-legacy-api.ledger/2"
+LEDGER_SCHEMA_VERSION = "aep.mock-legacy-api.ledger/1"
 
 #: Digests are lower-case hex SHA-256. Enforced rather than assumed: a mixed
 #: case digest would silently form its own duplicate group.
@@ -98,7 +98,6 @@ _SCHEMA = (
         fingerprint        TEXT NOT NULL,
         payload_digest     TEXT NOT NULL,
         client_reference   TEXT,
-        execution_id       TEXT,
         response_class     TEXT NOT NULL,
         delivery_index     INTEGER NOT NULL,
         applied_at_ms      INTEGER NOT NULL,
@@ -146,7 +145,6 @@ class AppliedMutation:
     fingerprint: str
     payload_digest: str
     client_reference: str | None
-    execution_id: str | None
     response_class: str
     delivery_index: int
     applied_at_ms: int
@@ -333,13 +331,6 @@ class GroundTruthLedger:
         fingerprint: str,
         payload_digest: str,
         client_reference: str | None,
-        # WS-1a. Optional so that a caller which does not supply one
-        # records NULL rather than failing: the analysis treats a ledger
-        # whose column is entirely NULL as one that does not carry the
-        # column at all, and falls back to target attribution. A forgotten
-        # id therefore degrades to the previous behaviour instead of
-        # silently attributing zero effects to every execution.
-        execution_id: str | None = None,
         response_class: str,
         delivery_index: int,
         applied_at_ms: int,
@@ -383,7 +374,6 @@ class GroundTruthLedger:
                 fingerprint=fingerprint,
                 payload_digest=payload_digest,
                 client_reference=client_reference,
-                execution_id=execution_id,
                 response_class=response_class,
                 delivery_index=delivery_index,
                 applied_at_ms=applied_at_ms,
@@ -402,7 +392,6 @@ class GroundTruthLedger:
             fingerprint=fingerprint,
             payload_digest=payload_digest,
             client_reference=client_reference,
-            execution_id=execution_id,
             response_class=response_class,
             delivery_index=delivery_index,
             applied_at_ms=applied_at_ms,
@@ -420,7 +409,6 @@ class GroundTruthLedger:
         fingerprint: str,
         payload_digest: str,
         client_reference: str | None,
-        execution_id: str | None,
         response_class: str,
         delivery_index: int,
         applied_at_ms: int,
@@ -447,9 +435,9 @@ class GroundTruthLedger:
                 """
                 INSERT INTO applied_mutations (
                     call_id, endpoint, target, fingerprint, payload_digest,
-                    client_reference, execution_id, response_class,
-                    delivery_index, applied_at_ms, external_reference
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    client_reference, response_class, delivery_index,
+                    applied_at_ms, external_reference
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     call_id,
@@ -458,7 +446,6 @@ class GroundTruthLedger:
                     fingerprint,
                     payload_digest,
                     client_reference,
-                    execution_id,
                     response_class,
                     delivery_index,
                     applied_at_ms,
@@ -482,8 +469,7 @@ class GroundTruthLedger:
     ]:
         rows = self._require_connection().execute(
             "SELECT id, call_id, endpoint, target, fingerprint, payload_digest, "
-            "client_reference, execution_id, response_class, delivery_index, "
-            "applied_at_ms, "
+            "client_reference, response_class, delivery_index, applied_at_ms, "
             f"external_reference FROM applied_mutations {where} ORDER BY id",
             parameters,
         ).fetchall()
@@ -496,7 +482,6 @@ class GroundTruthLedger:
                 fingerprint=row["fingerprint"],
                 payload_digest=row["payload_digest"],
                 client_reference=row["client_reference"],
-                execution_id=row["execution_id"],
                 response_class=row["response_class"],
                 delivery_index=int(row["delivery_index"]),
                 applied_at_ms=int(row["applied_at_ms"]),
@@ -544,21 +529,21 @@ class GroundTruthLedger:
     def duplicate_groups(self) -> tuple[DuplicateGroup, ...]:
         """Definition 3, as one query plus an explicit classification.
 
-        **Not partitioned by caller reference, deliberately.** WS-1a
-        (``docs/33-agent-workload.md`` §2.7) proposed grouping by fingerprint
-        *and* ``client_reference`` so that a group would be one intent's
-        repeats. That is wrong here and the reason is oracle independence: the
-        caller reference is protocol-generated -- AEP sends its own
-        ``binding.request_fingerprint`` -- so a system that partitioned the
-        oracle's duplicate classification on it could hide its duplicates by
-        minting a fresh reference per attempt. Pinned by
+        **Not partitioned by caller reference, deliberately.** Grouping by
+        fingerprint *and* ``client_reference`` -- so that a group would be one
+        intent's repeats rather than every intent that chose the same mutation
+        -- was designed and rejected. The caller reference is
+        protocol-generated: AEP sends its own ``binding.request_fingerprint``.
+        A system that could partition the oracle's duplicate classification on
+        it could hide its duplicates by minting a fresh reference per attempt.
+        Pinned by
         ``test_a_client_reference_is_never_an_input_to_duplicate_detection``.
 
-        Distinguishing "one intent applied twice" from "two intents that chose
-        the same mutation" therefore belongs to the *analysis*, which attributes
-        by the harness-supplied ``execution_id`` -- instrumentation the system
-        under test does not choose -- and not to the oracle, which must decide
-        identity without trusting the caller at all.
+        The oracle decides *identity* and must do so taking nothing from the
+        caller, because the caller is the system under measurement. Telling
+        "one intent applied twice" from "two intents that chose the same
+        mutation" is an *attribution* question, and attribution belongs to the
+        analysis, not here.
         """
         rows = self._require_connection().execute(
             """
