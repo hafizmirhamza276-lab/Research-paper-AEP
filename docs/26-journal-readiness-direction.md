@@ -88,6 +88,15 @@ Include these verbatim (or by reference to this section) in every prompt. They a
 10. **Every phase ends with a report** in `reports/phase-report-<N>-<slug>-<date>.md` stating: what was asked, what was done, what changed in the paper, what was *not* done and why, raw command outputs for headline numbers.
 11. **Tone rule for prose edits.** Honest and precise, never apologetic. State the scope of a result once, in the place it belongs (limitations), not three times.
 12. **One bounded task per prompt.** Claude Code should not "also fix" unrelated things. If it finds a defect outside scope, it records it in the report as a finding and stops.
+13. **A gate that cannot fail is decoration.** Before a check is treated as evidence, exercise the branch on which it *fails* and confirm it does. A check only ever run against data that satisfies it establishes nothing, and reads exactly like one that works. Applies to test assertions, verification scripts, self-tests, and any "we confirmed X" in a report.
+14. **A script whose output is load-bearing lives in `scripts/` with a test.** If a number reaches a report, a commit message, or the manuscript, the thing that produced it is committed and pinned. A number only one machine can reproduce is not evidence, and a one-off that is going to be re-run is a hand-assembly defect waiting to happen.
+
+**Rules 13 and 14 came from practice, not from the original list**, and are recorded here because §3 says these rules go into every prompt verbatim or by reference — so a rule that is *not* here does not propagate, however consistently it is being followed. That gap has already had a visible consequence: a prompt cited "rule 13" as though it existed when §3 stopped at 12, because the practice was real and the text had never caught up.
+
+*Where each was learned.*
+
+- **13** — WS-1a §2.3. An attribution repair was about to ship with a proof that would have *passed* while never exercising the code it existed to validate: on the frozen data the fallback fires on every row, so the new path is never reached. The fix was a paired fixture in which the two attributions disagree. The same shape recurred three times afterwards — the WS-4 delivery gate (built by proving it *rejects* a drop that did not take effect), the `dm-flakey` self-test restore (proven by forcing the reload to fail), and the write-loss injector's malformed table, which returned exit 0 from every call while arming nothing. `docs/25` R3 states the collection-tooling form of this; rule 13 is the general one.
+- **14** — Phase 13. The Arm A session-results files were assembled by hand, and `scripts/render_session_results.py` was promoted only afterwards, once it could be shown to reproduce them byte-for-byte. `distil_session_fixture.py` closed the same defect one level down, and `analyse_model_gap.py` closed it for a note whose every number had come from throwaway probes. Each promotion was prompted by the same observation: the artefact was already being relied on.
 
 ---
 

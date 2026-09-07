@@ -246,3 +246,61 @@ Only assertions have to move together.
 4. **If the search returns a site you did not know about, say so in the commit
    message.** That is the rule working, and it is the only evidence anyone gets
    that it ran.
+
+---
+
+## R8. A teardown that reports success is not evidence the device is gone.
+
+`scripts/provision_write_loss.py teardown` printed `torn down` and exited 0
+while the mapping was still present:
+
+```
+dmsetup ls   -> aep-ws4-flakey	(254:0)
+losetup -a   -> /dev/loop0: [2096]:224042 (/var/tmp/aep-ws4/backing.img (deleted))
+```
+
+The backing file had been unlinked, so the path was gone and the *directory*
+looked clean, while the kernel still held the mapping over a deleted file. The
+teardown's own `dmsetup remove` had been a no-op because the mapping still had a
+holder at the moment it ran, and nothing checked afterwards.
+
+**Verify the device, not the teardown's exit code.** After any teardown of a
+device-mapper target, assert all three:
+
+```sh
+dmsetup ls   | grep -c '<name>'   # 0
+losetup -a   | grep -ci '<name>'  # 0
+dmsetup info '<name>' 2>/dev/null | grep State   # absent; if present, see below
+```
+
+The third matters independently: a mapping left in `State: SUSPENDED` blocks
+every I/O against it, so the next `mount` **hangs** rather than failing. That was
+observed in this project — a proof script hung instead of erroring — and it is
+why `write_loss._reload_table` resumes in a `finally`. A hang is worse than a
+crash: the collection makes no progress and reports nothing.
+
+A stray mapping is not merely untidy. The next session provisions a device with
+the same name, and `dmsetup create` against an existing name fails — or worse,
+succeeds against a different backing file than the record names.
+
+## R9. Known flake: `test_a_kill_after_commit_keeps_both_and_tells_the_caller_nothing`
+
+**Observed once, 2026-09-04**, in the full-suite run immediately preceding commit
+`9ae9a73` (tree at `4d0fc84` plus two new untracked files). Result that run:
+`1 failed, 1899 passed, 34 skipped`. Re-run immediately afterwards: **5/5
+passed**. No tracked file was modified in that change — the surface was two new
+files, neither touching the mock API — so it was not caused by the work in
+progress.
+
+**Do not chase it.** It is recorded so that a second sighting is recognised as a
+second sighting rather than investigated from scratch.
+
+**But it is not automatically noise.** It lives in
+`experiments/mock_api/tests/test_service_crash_safety.py` and asserts what
+survives a `SIGKILL` delivered *after* the ledger commit — a timing-sensitive
+crash-safety property, exercised by the same mechanism WS-4 collection uses.
+A recurrence **during or around a WS-4 collection** should be treated as a
+signal about the collection's fault delivery, not dismissed by pointing at this
+entry. The zero-skip gate (`scripts/check_pytest_gates.py`) makes any failure
+loud, which is the desired behaviour; this entry does not license suppressing
+it.
