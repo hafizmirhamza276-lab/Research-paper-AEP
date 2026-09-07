@@ -5,7 +5,7 @@ commit, per `docs/26-journal-readiness-direction.md` §3 rule 4.
 
 **WS-4 was issued as a sequence of bounded prompts rather than one**, each
 gating the next, so all of them are recorded here in the order they were given.
-Rule 12 (*one bounded task per prompt*) is why there are six.
+Rule 12 (*one bounded task per prompt*) is why there are eleven rather than one. Prompts 1-6 were recorded at `a207dc4`; 7-11 were appended before this phase's first data commit, which is the same rule applied a second time.
 
 The pre-registration (`reports/phase-report-ws4-prediction-2026-09-04.md`, commit
 `d8b2ca5`, pushed before any data) is a **prediction** and satisfies rule 5. It
@@ -123,6 +123,196 @@ is for.
 >
 > Stop when the data is committed. Do not analyse it, do not write the verdict,
 > do not touch the paper.
+
+## Prompt 7 — close the device lifecycle
+
+> Close the write-loss device lifecycle. Do not collect, and do not touch the
+> shared post-fault path.
+>
+> Two defects, one cause: nothing owns restoring the flakey table.
+>
+> First, provision_write_loss.py lines 105-107 restore pass mode with three
+> unchecked run() calls, and the verdict at 111-122 can return valid=True whether
+> or not that restore worked. Line 158 then prints table_pass as read at line 85,
+> not as read back from the device. So the gate can approve a device that is
+> already dropping. Make the restore checked and re-read, and make a failed
+> restore fail the self-test. Prove it can fail: force the reload to fail and show
+> provision exits non-zero.
+>
+> Second, write_loss.py has arm_drop_writes and no inverse, so a run that arms
+> leaves the device armed. Give the arm a matching restore, and make the regime
+> restore between runs so every run begins in pass mode. A run that begins with
+> table_before declaring drop must abort, not proceed.
+>
+> Then settle which of the two produced the drop_writes on run 1's table_before,
+> from the provision record and the first run's event log. Say which, and say if
+> it means the run-1 tree is contaminated too rather than only the runs after it.
+>
+> up_write_loss.py does not set aep:test-instance-marker and rule 9 wants it.
+> Fold that in if it belongs to this task; say so if it doesn't.
+>
+> Report and stop. runner.py:541 is the next prompt, not this one.
+
+## Prompt 8 — the runner's post-fault path
+
+> Make the runner's post-fault path correct for a fault class that does not kill.
+> Do not collect.
+>
+> Two changes, one path, so one proof serves both.
+>
+> First, runner.py:541 calls restart_after_hard_kill whenever
+> config.redis_kill_point is set. The comment above it states the premise plainly:
+> a worker killed Redis and cannot have restarted it. Write loss does not kill
+> Redis, so the premise is false and the guard refuses every run. Make the call
+> conditional on whether the fault class kills the server.
+>
+> Read the mechanism the way killer_for does, from the environment. Do not add a
+> field to RunConfig. The mechanism lives in the environment precisely so no
+> collected run's config_digest moves, and a new field would move all 432 frozen
+> matrix runs against docs/32's generation-aware check.
+>
+> Second, add the per-run restore the last prompt could not: the device returns to
+> pass mode before each run arms, so every run begins clean. Keep the abort as the
+> backstop. A run whose table_before declares drop must still refuse.
+>
+> Prove three things, not two: the guard still fires for kill and pause-then-kill,
+> it does not fire for write-loss, and the restore actually runs between runs
+> rather than the abort merely not firing. Rule 13 applies to the restore.
+>
+> Then verify the frozen six are unaffected by running them, not by reading the
+> diff. config_digest unchanged is necessary and not sufficient.
+>
+> Also record the r0 correction in the phase-14 report: add it alongside the
+> original claim, do not edit the claim.
+>
+> Report and stop.
+
+## Prompt 9 — the verdict script
+
+> Write the WS-4 verdict script. Do not collect.
+>
+> d8b2ca5 pre-registers the cell. Write the script that applies it now, from the
+> pre-registration alone, while no data exists to fit to. Phase 13's verdict
+> script landed after session 1; this one does not have to, and that is the whole
+> reason to do it in this order.
+>
+> It reads a session root and returns the pre-registered verdict: AEP-full at or
+> near 0 applied effects of 300 executions, B3 at or near ceiling, no lost effects
+> for AEP-full, no undetected duplicates for either. Attribute by execution, not
+> by target -- WS-1a changed what the duplicate metric means. Unit of analysis is
+> the run, per docs/26 rule 6.
+>
+> d8b2ca5 names three plausible Redis behaviours when its AOF device fails, one of
+> which complicates the reading. The script must report which one it observed, not
+> only whether the prediction held. A verdict that cannot say "the prediction held
+> for a reason the pre-registration did not anticipate" is not applying the
+> pre-registration, it is scoring it.
+>
+> Prove it non-vacuously with fixtures: the predicted outcome, its negation, and
+> the complicating behaviour. Each must produce a different verdict. A script that
+> returns the same answer for all three is decoration.
+>
+> It is load-bearing, so it goes in scripts/ with a test, per the promotion rule.
+>
+> Commit it, and push. Roughly 20 commits are now unpushed on main.
+>
+> Report and stop. Nothing collected.
+
+## Prompt 10 — the documentation pass
+
+> One documentation pass. No code changes.
+>
+> Add to docs/26 §3 the two rules the project has been operating by that the file
+> does not contain: a gate that cannot fail is decoration, and any script whose
+> output is load-bearing must be promoted to scripts/ with a test. Both came from
+> practice rather than the original list -- say so, and name where each was
+> learned. §3 instructs that these be included verbatim in every prompt, so a rule
+> absent from it does not propagate, which is how a prompt cited a rule 13 that
+> does not exist.
+>
+> Record two operational findings in docs/25 alongside R1-R7:
+>
+>   A stray dm mapping survived a clean teardown of the write-loss device and
+>   needed force-removal. Teardown reporting success is not evidence the mapping
+>   is gone. State what to verify instead.
+>
+>   test_a_kill_after_commit_keeps_both_and_tells_the_caller_nothing failed once
+>   in a full suite run and passed 5/5 on re-run with no tracked file modified.
+>   Record it as a known flake with the date and the commit it was seen at. Do not
+>   chase it. Note that it is a SIGKILL-timing crash-safety test, so a recurrence
+>   during WS-4 collection is not automatically noise.
+>
+> Do not renumber docs/25's R-rules or docs/26's existing twelve.
+>
+> Commit and push. Report and stop.
+
+## Prompt 11 — the collection (this one)
+
+> Collect WS-4, the write-loss cell. Nothing else.
+>
+> Rule 4 first. prompts/phase-14-write-loss.md holds the six prompts issued as of
+> a207dc4. Four more have been issued since -- device lifecycle, runner post-fault
+> path, verdict script, docs pass. Append them verbatim and commit, before any data
+> commit. Corrections recorded alongside, never applied silently.
+>
+> Then collect exactly what d8b2ca5 pre-registered and no more: 60 runs, 30 x 10,
+> both arms, ledger_postings only, under REGIME_WRITE_LOSS_PREACK, into a new
+> dated directory. Frozen results are immutable. Follow the pre-registered
+> stopping rule as written; do not adjust it mid-collection.
+>
+> Launch with nohup setsid. Record the environment with
+> verify_measurement_host.py. Do not run the test suite against the Redis being
+> collected on. Record the per-run cost you observe. The estimator under-predicted
+> pause-then-kill and this regime runs ten executions per run rather than one, so
+> do not back-solve the constant.
+>
+> Do NOT run analyse_write_loss.py. It exists and it is fixed; running it in this
+> pass is what makes a later decision to void outcome-contaminated. The 152/180
+> session was voided cleanly only because the run count was seen and the outcomes
+> were not. Preserve that property.
+>
+> If the R9 flake recurs, R9 applies: it is a signal about fault delivery in this
+> regime, not an entry to point at. Report it, do not wave it off.
+>
+> Tear down per R8 -- base compose alone or AEP_WS4_REDIS_DIR set, never -v, and
+> verify the mapping and loop are actually gone rather than trusting the exit
+> code.
+>
+> Stop when the data is committed and pushed. No analysis, no verdict, paper
+> untouched.
+
+---
+
+# Notes recorded with prompts 7-11, not applied silently
+
+**Prompt 8 cited a rule that did not exist.** "Rule 13 applies to the restore" —
+`docs/26` §3 held twelve rules and `docs/25` uses R1–R7, so there was no rule 13.
+The work was done to the strictest available reading (`docs/25` R2 and R3) and
+the gap was reported rather than guessed at. **Prompt 10 then closed it**, adding
+rules 13 and 14 to §3 and recording that a rule absent from §3 does not propagate
+into prompts — which is how the citation arose.
+
+**Prompt 9 carried a false premise.** *"Attribute by execution, not by target —
+WS-1a changed what the duplicate metric means."* WS-1a's attribution machinery
+**was reverted** in `74ea31f`, when the framing decision moved to Option A;
+`analyze.py` has no execution-id attribution and the ledger has no such column.
+Verified before writing the script. The premise's *intent* is satisfied
+structurally instead — this workload gives every execution its own resource, so
+the target encodes the execution — and that is recorded in the script's own
+docstring rather than left implicit.
+
+**Prompt 7's question changed a published claim.** It asked which of the two
+defects produced the `drop_writes` on run 1's `table_before`. The answer was
+defect 2 (the missing inverse), and establishing it showed the phase-14 report
+had described the evidence loosely: the first arming *ever recorded* saw pass
+mode, and the `r0` the report cited was the first run of the **last** voided
+tree, not of the collection. Recorded as §9 of that report, **alongside** §3.2
+rather than editing it, per the prompt.
+
+**Prompt 11 forbids running the verdict script**, which exists and is tested, so
+that a later decision to void this collection cannot be contaminated by knowing
+its outcomes. That constraint is the reason the collection below reports run
+counts, statuses and cost, and reports no applied-effect number at all.
 
 ---
 
