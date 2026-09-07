@@ -17,7 +17,28 @@ TEXINPUT="main.tex"
 if [ "${1:-}" = "--anonymous" ]; then
   ANON=1
   JOB="main-anon"
-  TEXINPUT='\def\ANONYMOUS{}\input{main.tex}'
+  # Two pdfTeX primitives, and they are here rather than in main.tex so the
+  # public build is untouched by construction -- it is not anonymous and does
+  # not need to be.
+  #
+  # \pdfsuppressptexinfo=-1 stops pdfTeX writing /PTEX.FileName, /PTEX.PageNumber
+  # and /PTEX.InfoDict into each embedded PDF figure. Those recorded the
+  # ABSOLUTE build path, which carries the repository name and so resolves by
+  # search to the author's account. It is in neither the text layer nor DocInfo,
+  # so pdftotext and pdfinfo both miss it.
+  #
+  # \pdfinfoomitdate=1 omits /CreationDate and /ModDate, whose +05'00' offset is
+  # a weaker locality hint of the same kind. \pdftrailerid{} removes the last
+  # per-build varying identifier.
+  #
+  # Chosen over the alternatives after testing all of them on this toolchain
+  # (pdfTeX 1.40.25): relative figure paths do not work because TEXINPUTS
+  # resolves figures through an absolute "${PAPER}//" and the resolved path is
+  # what gets recorded; a post-process strip would have to rewrite PDF objects
+  # and shift the xref table, risking corruption of the artifact it is meant to
+  # protect. These primitives remove the strings at the source, need no external
+  # tool, and cannot produce an invalid PDF.
+  TEXINPUT='\pdfsuppressptexinfo=-1 \pdfinfoomitdate=1 \pdftrailerid{}\def\ANONYMOUS{}\input{main.tex}'
 elif [ "$#" -ne 0 ]; then
   echo "usage: $0 [--anonymous]" >&2
   exit 2
@@ -39,24 +60,25 @@ for required in "${required_commands[@]}"; do
   fi
 done
 
+# Resolved for BOTH builds. It used to be public-only, because only the public
+# build ran check_paper_numbers.py; the anonymous build now also writes a
+# provenance stamp, and needs the same runner to do it.
 NUMBER_RUNNER=()
-if [ "$ANON" -eq 0 ]; then
-  if [ -n "${AEP_NUMBER_PYTHON:-}" ]; then
-    if ! command -v "$AEP_NUMBER_PYTHON" >/dev/null 2>&1; then
-      echo "configured paper-number Python not found: $AEP_NUMBER_PYTHON" >&2
-      exit 127
-    fi
-    NUMBER_RUNNER=("$AEP_NUMBER_PYTHON")
-  elif command -v uv >/dev/null 2>&1; then
-    NUMBER_RUNNER=(uv run --frozen python)
-  elif [ -x "${HOME}/.local/bin/uv" ]; then
-    NUMBER_RUNNER=("${HOME}/.local/bin/uv" run --frozen python)
-  elif command -v python3 >/dev/null 2>&1; then
-    NUMBER_RUNNER=(python3)
-  else
-    echo "required paper-number command not found: uv or python3" >&2
+if [ -n "${AEP_NUMBER_PYTHON:-}" ]; then
+  if ! command -v "$AEP_NUMBER_PYTHON" >/dev/null 2>&1; then
+    echo "configured paper-number Python not found: $AEP_NUMBER_PYTHON" >&2
     exit 127
   fi
+  NUMBER_RUNNER=("$AEP_NUMBER_PYTHON")
+elif command -v uv >/dev/null 2>&1; then
+  NUMBER_RUNNER=(uv run --frozen python)
+elif [ -x "${HOME}/.local/bin/uv" ]; then
+  NUMBER_RUNNER=("${HOME}/.local/bin/uv" run --frozen python)
+elif command -v python3 >/dev/null 2>&1; then
+  NUMBER_RUNNER=(python3)
+else
+  echo "required paper-number command not found: uv or python3" >&2
+  exit 127
 fi
 
 SCRATCH_PARENT="${ROOT}/.scratch/paper-build"
@@ -92,10 +114,8 @@ export BIBINPUTS="${PAPER}:${BIBINPUTS:-}"
 # build actually read rather than whatever the tree holds once it finishes. It
 # is staged here and promoted only with the artifacts, so a failed build leaves
 # the previous stamp exactly as it was -- the same discipline as the PDF.
-if [ "$ANON" -eq 0 ]; then
-  "${NUMBER_RUNNER[@]}" "${ROOT}/scripts/paper_provenance.py" \
-    write "$PAPER" "$STAGED_PROV" >/dev/null
-fi
+"${NUMBER_RUNNER[@]}" "${ROOT}/scripts/paper_provenance.py" \
+  write "$PAPER" "$STAGED_PROV" >/dev/null
 
 cd "$BUILD_DIR"
 
@@ -225,6 +245,8 @@ mv -f -- "$STAGED_BLG" "$PAPER/${JOB}.blg"
 # PDF beside a stamp that does not describe it.
 if [ "$ANON" -eq 0 ]; then
   mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance.json"
+else
+  mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance-anon.json"
 fi
 mv -f -- "$STAGED_PDF" "$PAPER/${JOB}.pdf"
 

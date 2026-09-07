@@ -1,0 +1,28 @@
+{
+  "sources": {
+    ".ai/track.md": "9db6cb1033a18a98b71770ed376e6653e2fae85da78e4e0d2d4db2f76197b18c",
+    "arxiv-metadata.md": "c1ae0478c01fafc6ff225b897fc96559ca37d910b80e96d0ba283b60008c29fa",
+    "cover-letter-tse.md": "c18a84db4c72088be4336bfe6b648d51a17b1c25eb4d5ef2efa98e2f2ff29ca5",
+    "figures/figure-1-undetected-vs-ambiguity.pdf": "7c22bb28c634d46894199de471891f6de2e524940efdac46613e768440fe29ad",
+    "figures/figure-2-duplicates-by-crash-point.pdf": "b823694a46f2a78a1871bb843f64cf48bda7be68317ee4c5eaf063013c005d9f",
+    "figures/state-machine.tex": "b95618e4d67d44dd40911b1f2544046bd62fd6c06ea7ac30eafb0e36fda5ced8",
+    "generated/numbers.tex": "406867e19aadb882298c6dd91e9ab9d577dc1d82ec1f021671feb9fd53bbef9e",
+    "generated/table-ablation.tex": "2338e6f83cd84e8af72b0d70181b498cae47d5c396a1be682248dbb5d7b08cb4",
+    "generated/table-ambiguity-by-crashpoint.tex": "1e8e92a28a9b29b126e31d5e418a2717a30f2f16103c74bfc5b8f4e1bec363e6",
+    "generated/table-deployment-choice.tex": "3b5d42ef205dec2be431744edee946ac6d5a5d29b70ef69794ed0528caf870e2",
+    "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
+    "generated/table-outcomes.tex": "57b6a4bf989e5cf75f85756dc0b2b91df8a4925b9cd12c813cc67eefa92e6f44",
+    "main.tex": "37821118da1383e7657b1bc6364155aea9ddd584c20c5c300174680b3d3b2635",
+    "refs.bib": "3e27d38db03ea256c257f6bc7e75733ffd77e037fc2acacc0f2ae0432c0ab378",
+    "sections/01-introduction.tex": "3606d151c422f7dc3338778906bb4af1b4d486fd9e651721877ed375ef3a4f9c",
+    "sections/02-motivating.tex": "f759ff9f8b7efd05b1d13ce4ce6ea9b8d80c355abb95c5e7882af31c5170b313",
+    "sections/03-model.tex": "6d64dc9dd1a68b1e7cb7dcf7fa1cfb7d66aef244964423fb641926189283e5e6",
+    "sections/04-protocol.tex": "371a3f97eab6956ba04323238f7d43f558f0d2d52c925696e8598dc518e2ab89",
+    "sections/05-implementation.tex": "b2517f5ddb176bc0a1ae7246b4ca3dfccf19eac03270204b4fde3e54bef635df",
+    "sections/06-evaluation.tex": "eaba03ebac01b70f48ccd3057b05f235b494928c5a07964cd057b304d04fbc6b",
+    "sections/07-related.tex": "beef1010b36fb3bd92c724039f1d719ed13b3babb52ab95f459741aa64b757db",
+    "sections/08-threats.tex": "d815cf7598245def92030e8a72ab51f223e346d17a4299cf4fac3987e2946ea0",
+    "sections/09-artifact.tex": "5be04a5c247b8795afda8153ff65b5dd26f35142200b42f98c02eac1cc7d9882"
+  },
+  "version": 1
+}

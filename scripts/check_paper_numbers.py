@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -219,6 +220,113 @@ def check_state_machine(result: Result, paper: Path) -> None:
     )
 
 
+#: DocInfo keys that must be present-but-empty in the anonymous PDF. A value
+#: here is a name, a tool version, or a date, and all three are identifying.
+_DOCINFO_KEYS = (b"Author", b"Title", b"Subject", b"Keywords", b"Creator", b"Producer")
+
+
+def check_anonymous_build(result: Result, paper: Path) -> None:
+    """WS-10 step 3, as a gate rather than as something someone remembers to do.
+
+    `main-anon.pdf` sat three days behind section VIII while this script
+    reported 19 passed, because nothing here ever looked at it. Two failures
+    were possible and both are now checked: the artifact being stale, and the
+    leak class that `pdftotext` and `pdfinfo` cannot see.
+
+    **Every needle is derived, not hard-coded.** The build path comes from
+    ``ROOT``; the byline comes from the public PDF's own title page. Writing the
+    author's name into a public repository to check that it is absent would
+    reintroduce, in this file, the leak the check exists to prevent.
+    """
+    anon = paper / "main-anon.pdf"
+    if not anon.is_file():
+        result.check(False, "anonymous build exists", f"missing {anon}")
+        return
+
+    fresh, reason = paper_provenance.verify(
+        paper, paper_provenance.ANON_STAMP_NAME
+    )
+    result.check(fresh, "anonymous build is not stale", reason)
+
+    raw = anon.read_bytes()
+
+    # 1. Absolute build paths. pdfTeX writes /PTEX.FileName for every embedded
+    #    PDF figure, recording the path it resolved -- which carries the
+    #    repository name and resolves by search to the author's account.
+    leaked = []
+    if b"/PTEX.FileName" in raw:
+        leaked.append("/PTEX.FileName present")
+    for needle in (str(ROOT).encode(), ROOT.name.encode()):
+        if needle in raw:
+            leaked.append(f"build path {needle.decode(errors='replace')!r}")
+    result.check(
+        not leaked,
+        "anonymous build leaks no absolute build path",
+        "; ".join(leaked),
+    )
+
+    # 2. DocInfo present-but-empty, and no dates. The +05'00' offset on
+    #    /CreationDate is a locality hint of the same class.
+    # [^)]+ and not (.+?): pdfTeX writes the empty keys adjacently, as
+    # "/Author()/Title()/Subject()", so a dot-matching group starting inside
+    # /Author() runs past its own ")" and closes on /Title()'s -- reporting
+    # every empty key as populated. Caught only because the first run of this
+    # check failed on a PDF already verified clean by hand.
+    dirty = [
+        key.decode()
+        for key in _DOCINFO_KEYS
+        if re.search(rb"/" + key + rb"\s*\(([^)]+)\)", raw)
+    ]
+    if re.search(rb"/(Creation|Mod)Date\s*\(", raw):
+        dirty.append("CreationDate/ModDate present")
+    result.check(
+        not dirty, "anonymous build DocInfo is clean", ", ".join(dirty)
+    )
+
+    # 3. The byline. Needs the text layer, which is compressed, so this is the
+    #    one part that needs pdftotext. If it is absent the check FAILS rather
+    #    than passing quietly: "I could not look" and "I looked and it is clean"
+    #    must never render the same (paper_provenance's rule, applied here).
+    public = paper / "main.pdf"
+    if not shutil.which("pdftotext"):
+        result.check(
+            False,
+            "anonymous build carries no byline",
+            "pdftotext not installed; cannot verify -- failing closed",
+        )
+        return
+
+    def first_page(path: Path) -> str:
+        done = subprocess.run(
+            ["pdftotext", "-f", "1", "-l", "1", str(path), "-"],
+            capture_output=True, text=True,
+        )
+        return done.stdout if done.returncode == 0 else ""
+
+    anon_text = first_page(anon)
+    byline = ""
+    if public.is_file():
+        lines = [line.strip() for line in first_page(public).splitlines()]
+        lines = [line for line in lines if line]
+        # The byline is the line after the last title line and before the
+        # abstract -- located by structure, so no name appears in this file.
+        for index, line in enumerate(lines):
+            if line.startswith("Abstract") and index:
+                byline = lines[index - 1]
+                break
+
+    problems = []
+    if "Anonymous" not in anon_text:
+        problems.append("no 'Anonymous' byline on page 1")
+    if byline and byline in anon_text:
+        problems.append("public byline appears verbatim in the anonymous build")
+    if not byline:
+        problems.append("could not locate the public byline to compare against")
+    result.check(
+        not problems, "anonymous build carries no byline", "; ".join(problems)
+    )
+
+
 def check_bibliography(result: Result, build_dir: Path) -> None:
     """A blank bibliography compiles clean. Check the artifact, not the log."""
     bbl = build_dir / "main.bbl"
@@ -339,6 +447,9 @@ def main() -> int:
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
     check_state_machine(result, arguments.paper)
+    # Always against paper/, never against --build-dir: the anonymous PDF is
+    # never staged there, and the artifact that ships is the promoted one.
+    check_anonymous_build(result, arguments.paper)
 
     # B21 item 3. The two checks below read main.bbl/main.blg/main.log. When
     # --build-dir was not given they come from paper/, where build_paper.sh

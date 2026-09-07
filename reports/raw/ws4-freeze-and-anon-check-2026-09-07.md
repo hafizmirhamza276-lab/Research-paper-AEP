@@ -224,3 +224,160 @@ That is precisely how `main-anon.pdf` came to sit three days behind §VIII.
 **Not fixed here**, as instructed. The fix would extend the provenance check to
 the anonymous artefact and add the anonymity assertions above as gates, so the
 leak class is caught by the checker rather than by someone remembering to look.
+
+---
+
+# 4. Both findings closed (added after the above, same day)
+
+## 4.1 The `/PTEX.FileName` leak: mechanism, and why this route
+
+Four routes were considered and the first three tested on this toolchain
+(pdfTeX 3.141592653-2.6-1.40.25, TeX Live 2023):
+
+| route | result |
+|---|---|
+| **`\pdfsuppressptexinfo=-1`** | **works** — suppresses `/PTEX.FileName`, `/PTEX.PageNumber`, `/PTEX.InfoDict` at source |
+| **`\pdfinfoomitdate=1`** | **works** — omits `/CreationDate` and `/ModDate` entirely, taking the `+05'00'` with them |
+| relative figure paths | **rejected** — `TEXINPUTS` resolves figures through an absolute `${PAPER}//`, and pdfTeX records the path it *resolved*, so the absolute form is what lands regardless |
+| post-process strip | **rejected** — would have to rewrite PDF objects and shift the xref table, risking corruption of the very artefact it protects, and needs a tool the build does not currently require |
+
+Verified on a minimal document before touching the build: baseline had
+`/PTEX.FileName` ×1 and `/CreationDate (D:20260907163703+05'00')`; with the
+primitives both went to **0**, and the figure still rendered.
+
+`\pdftrailerid{}` was added alongside them — it removes the last per-build
+varying identifier and costs nothing.
+
+**They live in `build_paper.sh`'s anonymous `TEXINPUT` string, not in
+`main.tex`.** That is the whole reason for the choice: the public build is
+untouched *by construction* rather than by a conditional someone could get
+wrong. The public PDF is not anonymous and does not need to be.
+
+**Result after rebuild** (`main-anon.pdf`, 22 pages, byline still
+`Anonymous Author(s)`, figures still rendering):
+
+| string | before | after |
+|---|---|---|
+| `/PTEX.FileName` | 2 | **0** |
+| `Research-paper-AEP` | 2 | **0** |
+| `/mnt/d/personal/…` | 2 | **0** |
+| `/CreationDate` | 1 | **0** |
+| `/ModDate` | 1 | **0** |
+
+And the public build is confirmed unchanged: `main.pdf` still carries
+`/PTEX.FileName` ×2 and `/CreationDate` ×1, exactly as before.
+
+## 4.2 The checker now inspects the anonymous build
+
+`main-anon.pdf` had no provenance stamp at all — `build_paper.sh` wrote one only
+for the public build, which is why nothing could tell it was stale. It now gets
+its own, `.build-provenance-anon.json`. A **separate** file, deliberately: with
+one shared stamp, rebuilding `main.pdf` would silently vouch for a
+`main-anon.pdf` nobody had rebuilt, which is the exact failure being closed.
+
+Four new checks in `check_paper_numbers.py`, all against the promoted artefact
+rather than a staged one:
+
+1. **not stale** — `paper_provenance.verify(paper, ANON_STAMP_NAME)`
+2. **no absolute build path** — `/PTEX.FileName`, the build root, and the repo
+   directory name, scanned in raw bytes
+3. **DocInfo clean** — `Author`/`Title`/`Subject`/`Keywords`/`Creator`/`Producer`
+   present-but-empty, and no `/CreationDate` or `/ModDate`
+4. **no byline** — `Anonymous` present, and the public byline absent
+
+**Every needle is derived, never hard-coded.** The build path comes from `ROOT`;
+the byline is located *structurally* in `main.pdf` (the line before `Abstract`)
+and compared. Writing the author's name into a public repository to check that it
+is absent would reintroduce, in the checker, the leak the checker exists to
+prevent.
+
+`pdftotext` is required for the byline check because the text layer is
+compressed. If it is missing the check **fails closed** — *"I could not look"*
+and *"I looked and it is clean"* must never render the same.
+
+## 4.3 Rule 13: the gate was proved able to fail
+
+`scripts/prove_anonymous_gate.sh`. It backs up the good artefacts, reintroduces
+each leak, and restores.
+
+**Leak reintroduced** — rebuilt with no primitives and no `\ANONYMOUS`
+(`/PTEX.FileName` ×2, `/CreationDate` ×1, byline `Hamza Khan`):
+
+```
+PASS  anonymous build is not stale
+FAIL  anonymous build leaks no absolute build path
+        /PTEX.FileName present; build path '/mnt/d/personal/AEP/Research-paper-AEP';
+        build path 'Research-paper-AEP'
+FAIL  anonymous build DocInfo is clean
+        Creator, Producer, CreationDate/ModDate present
+FAIL  anonymous build carries no byline
+        no 'Anonymous' byline on page 1; public byline appears verbatim
+```
+
+**Staleness, proved separately** — good PDF restored, one source modified:
+
+```
+FAIL  anonymous build is not stale
+        build artifacts predate the current sources: 1 changed (sections/08-threats.tex)
+```
+
+**Restored** — source reverted (0 modifications), artefacts replaced, checker
+back to **23 passed, 0 failed**.
+
+All four checks fire on the leak they exist to catch. None is decoration.
+
+## 4.4 The scanner defect, recorded as `docs/25` R13
+
+`grep -c` prints `0` **and exits 1** on no match, so `C=$(grep -c … || echo 0)`
+appended a second line: `C` became `"0\n0"`, every `[ "$C" != "0" ]` was true,
+and **all sixteen clean needles rendered as hits** on the first anonymity script.
+
+That run was noisy rather than dangerous — the direction was false-positive. One
+refactor away (`[ "$C" = "0" ]` for "clean") it reports **clean for everything**,
+and a scan that always says clean is precisely what a deanonymised PDF ships
+behind.
+
+A second instance appeared in the replacement, in the opposite direction: the
+DocInfo regex `(.+?)` with `re.S` ran past its own `)` and closed on the next
+key's, so `/Author()/Title()` reported both as populated. It failed on a PDF
+verified clean by hand ten minutes earlier, which is the only reason it was
+caught rather than "fixed" in the PDF. Repaired with `[^)]+`.
+
+Recorded as **R13** in `docs/25`, cross-referenced to R1 (the `pgrep`/`pkill`
+self-match), R2 and R3 — same class: a tool reporting confidently about something
+it never measured. Anything that scans for leaks and cannot tell zero from one is
+worse than no scan.
+
+## 4.5 A third defect, found *by* the new check
+
+The first public build after wiring the check in failed:
+
+```
+- anonymous build is not stale: build artifacts predate the current sources:
+  1 added (.provenance.stage.699)
+```
+
+`build_paper.sh` stages its promoted artefacts **inside** `paper/` as
+`.<job>.<ext>.stage.<pid>` and `.provenance.stage.<pid>`, so they exist under
+`paper/` for the duration of a build. `source_digests()` excluded only the names
+in `ARTIFACT_NAMES`, so it counted the build's own scaffolding as a **source** —
+and the check failed on it.
+
+This was latent, not introduced: the public provenance check only ever ran with
+`build_dir == paper`, which is never true *during* a build. The anonymous check
+always runs against `paper/`, so it was the first caller to see the staging files
+at all.
+
+Fixed in `paper_provenance.py` with a `^\..+\.stage\.\d+$` exclusion, and the
+staleness gate was re-proved afterwards to confirm the exclusion was not too
+broad: a modified `sections/08-threats.tex` is still reported as
+`1 changed`.
+
+## 4.6 Final state
+
+| | |
+|---|---|
+| `check_paper_numbers.py` | **23 passed, 0 failed** |
+| `main-anon.pdf` | `/PTEX.FileName` 0, repo name 0, `/CreationDate` 0 |
+| `main.pdf` | `/PTEX.FileName` 2, repo name 2, `/CreationDate` 1 — **unchanged** |
+| both builds | `build clean … promoted atomically` |

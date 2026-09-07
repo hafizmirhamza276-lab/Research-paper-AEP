@@ -34,15 +34,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
 STAMP_NAME = ".build-provenance.json"
+#: The anonymous build gets its own stamp. Its *payload* is identical to the
+#: public one -- both builds read the same sources -- but it must be a separate
+#: file, because what the stamp records is when THAT artifact was produced. With
+#: one shared stamp, rebuilding main.pdf would silently vouch for a main-anon.pdf
+#: that had not been rebuilt, which is exactly how main-anon.pdf sat three days
+#: behind section VIII while the checker reported 19 passed.
+ANON_STAMP_NAME = ".build-provenance-anon.json"
 STAMP_VERSION = 1
 
 # Top-level build products. Everything else under paper/ is an input.
 ARTIFACT_NAMES = {
     STAMP_NAME,
+    ANON_STAMP_NAME,
     "main.pdf", "main.aux", "main.bbl", "main.blg", "main.log",
     "main.out", "main.toc", "main.synctex.gz",
     "main-anon.pdf", "main-anon.aux", "main-anon.bbl", "main-anon.blg",
@@ -50,10 +59,21 @@ ARTIFACT_NAMES = {
 }
 
 
+#: build_paper.sh stages its promoted artifacts inside paper/ as
+#: ".<job>.<ext>.stage.<pid>" and ".provenance.stage.<pid>", so they exist under
+#: paper/ for the duration of a build. They are products mid-flight, not
+#: sources. Counting them as sources made the anonymous-build staleness check
+#: report "1 added (.provenance.stage.699)" whenever it ran during a public
+#: build -- a check failing on the build's own scaffolding.
+_STAGING = re.compile(r"^\..+\.stage\.\d+$")
+
+
 def _is_artifact(rel: str) -> bool:
     # Only at the top level: paper/figures/figure-1-....pdf is an INPUT, and
     # excluding it by extension would drop a real source from coverage.
-    return "/" not in rel and rel in ARTIFACT_NAMES
+    if "/" in rel:
+        return False
+    return rel in ARTIFACT_NAMES or bool(_STAGING.match(rel))
 
 
 def source_digests(paper: Path) -> dict[str, str]:
@@ -94,32 +114,36 @@ def write_stamp(paper: Path, out: Path | None = None) -> Path:
     return target
 
 
-def verify(paper: Path) -> tuple[bool, str]:
+def verify(paper: Path, stamp_name: str = STAMP_NAME) -> tuple[bool, str]:
     """(artifacts match current sources, reason).
 
     EVERY ambiguous outcome returns False. There is no path to True that does
     not require a complete, readable, exactly-matching set.
+
+    ``stamp_name`` selects which build is being verified: the public artifacts
+    against :data:`STAMP_NAME`, the anonymous PDF against
+    :data:`ANON_STAMP_NAME`.
     """
-    stamp = paper / STAMP_NAME
+    stamp = paper / stamp_name
     if not stamp.is_file():
         return False, (
-            f"no {STAMP_NAME} in {paper}; the artifacts there were not "
+            f"no {stamp_name} in {paper}; the artifacts there were not "
             f"recorded as produced from any source tree. Run "
             f"scripts/build_paper.sh, or pass --build-dir for a staged build."
         )
     try:
         payload = json.loads(stamp.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
-        return False, f"{STAMP_NAME} unreadable or malformed: {exc}"
+        return False, f"{stamp_name} unreadable or malformed: {exc}"
 
     if payload.get("version") != STAMP_VERSION:
         return False, (
-            f"{STAMP_NAME} version {payload.get('version')!r}, expected "
+            f"{stamp_name} version {payload.get('version')!r}, expected "
             f"{STAMP_VERSION}"
         )
     recorded = payload.get("sources")
     if not isinstance(recorded, dict) or not recorded:
-        return False, f"{STAMP_NAME} records no sources"
+        return False, f"{stamp_name} records no sources"
 
     try:
         current = source_digests(paper)
@@ -143,7 +167,7 @@ def verify(paper: Path) -> tuple[bool, str]:
         return False, (
             "build artifacts predate the current sources: " + "; ".join(parts)
         )
-    return True, f"{len(current)} sources match {STAMP_NAME}"
+    return True, f"{len(current)} sources match {stamp_name}"
 
 
 def main(argv: list[str]) -> int:

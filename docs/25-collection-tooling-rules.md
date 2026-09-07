@@ -456,3 +456,56 @@ throughout.
 removed it as a blocker was making the marker durable (`a994023`), so a restart
 no longer destroys it — not an explanation. Recorded here so a fourth occurrence
 is recognised as a pattern rather than met fresh.
+
+## R13. A leak scanner that cannot distinguish zero from one is worse than no scanner.
+
+**Observed 2026-09-07**, twice in one pass, in the anonymity checks themselves.
+
+**First, a false negative shape.** The needle loop was
+
+```bash
+C=$(grep -c -- "$N" anon.txt || echo 0)
+```
+
+`grep -c` prints `0` **and exits 1** when there are no matches, so `|| echo 0`
+appends a *second* line. `C` becomes the two-line string `"0\n0"`, every
+`[ "$C" != "0" ]` is true, and **every clean needle rendered as a hit**. The
+first run reported `HIT Hamza (0 0)`, `HIT github (0 0)`, and so on for sixteen
+needles.
+
+That run happened to be noisy rather than dangerous, because the direction was
+false-positive. The same construction one refactor away — `[ "$C" = "0" ]` for
+"clean" — reports **clean for everything**, and an anonymity scan that always
+says clean is exactly the artefact you would ship a deanonymised PDF behind.
+
+**Second, a false positive, in the replacement.** The DocInfo check used
+
+```python
+re.search(rb"/" + key + rb"\s*\((.+?)\)", raw, re.S)
+```
+
+pdfTeX writes the empty keys adjacently — `/Author()/Title()/Subject()` — so a
+dot-matching group opening inside `/Author()` runs past its own `)` and closes
+on `/Title()`'s, capturing `")/Title("`. **Every empty key was reported as
+populated.** It was caught only because it failed on a PDF that had already been
+verified clean by hand ten minutes earlier; on a first-ever run it would have
+been read as a real leak and "fixed" in the PDF. The repair is `[^)]+`, which
+cannot cross the delimiter.
+
+**The rule.** Any scanner whose output is *"nothing found"* must be shown to say
+something else on a case that contains the thing. This is **R3** applied to
+searches rather than gates, and **R2** applied to counts: run it against a known
+positive before trusting a negative.
+
+For the anonymity checks specifically that proof is
+`scripts/prove_anonymous_gate.sh`, which rebuilds the manuscript *without*
+`\pdfsuppressptexinfo`, `\pdfinfoomitdate` and `\ANONYMOUS`, shows all three
+content checks fail on it (naming `/PTEX.FileName`, `Creator, Producer,
+CreationDate/ModDate`, and the real byline), modifies a source to show the
+staleness check fail, then restores and re-runs to `23 passed, 0 failed`.
+
+**Same class as R1.** There the failure was `pgrep`/`pkill` matching their own
+command line, so *"is it still running?"* answered yes forever. Here it is a
+scanner miscounting its own matches. Both are tools reporting confidently about
+something they never actually measured, and in both the report is what gets
+believed.
