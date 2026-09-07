@@ -5,7 +5,7 @@ commit, per `docs/26-journal-readiness-direction.md` §3 rule 4.
 
 **WS-4 was issued as a sequence of bounded prompts rather than one**, each
 gating the next, so all of them are recorded here in the order they were given.
-Rule 12 (*one bounded task per prompt*) is why there are seventeen rather than one. Prompts 1-6 were recorded at `a207dc4`; 7-11 at `ed1c7ff`; 12-17 before this phase's first data commit, which is the same rule applied a second time.
+Rule 12 (*one bounded task per prompt*) is why there are nineteen rather than one. Prompts 1-6 were recorded at `a207dc4`; 7-11 at `ed1c7ff`; 12-17 at `e392ea0`; 18-19 before this phase's first data commit, which is the same rule applied a second time.
 
 The pre-registration (`reports/phase-report-ws4-prediction-2026-09-04.md`, commit
 `d8b2ca5`, pushed before any data) is a **prediction** and satisfies rule 5. It
@@ -401,6 +401,75 @@ is for.
 > is torn down.
 >
 > Stop when the data is committed and pushed.
+
+## Prompt 18 — close R10, then collect (attempt 5)
+
+> Make the test-instance marker survive a restart, then collect WS-4. This is
+> attempt 5 of a maximum of 6 under the phase-14 report §10 cut condition.
+>
+> **Part 1 — close R10.** R10 is the established cause of attempt 4's abort.
+> Seed the marker so it survives a restart. R10 names seeding it into the base
+> RDB as the most plausible route and says it has not been designed. Design it
+> now. Two constraints: whatever you seed must not perturb what the cell
+> measures, and you must say why it cannot; and do not change appendonly,
+> appendfsync, or anything else in redis/phase2.conf. If seeding an RDB turns
+> out not to work on this image, say so with the evidence and propose the
+> alternative rather than forcing it. Prove durability before collecting, by
+> rule 13, and force the seeding to fail and show the session refuses. Both
+> branches on a real device. Also fix the sampler defect you flagged.
+>
+> **Part 2 — establish the SIGTERM, or bound it.** Spend one cycle, not more.
+>
+> **Part 3 — collect.** Rule 4 first. Then 60 runs, 30 x 10, both arms,
+> ledger_postings only, today's real date. Do NOT run analyse_write_loss.py.
+> R9, R8, R8a, R8b apply.
+>
+> Commit and push at the end of each part. Report which part you reached.
+
+## Prompt 19 — run attempt 5 (this one)
+
+> Run WS-4 attempt 5. Part 1 is complete and pushed as a994023 -- do not redo it.
+> This is attempt 5 of a maximum of 6 under phase-14 report §10.
+>
+> BEFORE ANYTHING: verify the state Part 1 left behind rather than assuming it.
+> Bring the stack up on a freshly provisioned device, confirm through the
+> runner's own Redis.from_url client that the seeded marker is visible, restart
+> the container, confirm it is still visible. If it is not, stop and report --
+> do not proceed to collect on a marker you have not just seen survive.
+>
+> PART 2 -- bound the SIGTERM from the observers that ran across the bring-up
+> cycle you just did. Bound it, do not solve it. Do not spend a second cycle.
+>
+> PART 3 -- rule 4 first: append the prompts issued since e392ea0. Then collect
+> exactly what d8b2ca5 pre-registered. Launch with nohup setsid. Record the
+> environment. Do not run the test suite against the Redis being collected on.
+> Record the per-run cost; the estimator's 64.5 s/run is untested and no constant
+> is to be edited. Do NOT run analyse_write_loss.py. R9 applies. R8, R8a and R8b
+> apply to teardown.
+>
+> If the collection completes, commit and push the data and stop there.
+>
+> Report which part you reached and, if you did not reach Part 3, say plainly
+> whether this counts as a spent attempt under §10.
+
+---
+
+# Notes recorded with prompts 18-19, not applied silently
+
+**Prompt 18's proposed route did not work, and the correction is on the record.**
+It said to seed "into the base RDB". Tested on the pinned image, a plain
+`dump.rdb` written into `dir` is **ignored** by a server started with
+`appendonly yes`, which creates a fresh empty AOF instead — `marker seen = 0`.
+The prompt anticipated this ("if seeding an RDB turns out not to work, say so
+with the evidence and propose the alternative"), and the alternative is what
+shipped: let a throwaway server with `appendonly yes` write a real
+`appendonlydir`, which the collection's server then loads — `marker seen = 1`,
+`db15 size = 1`, `db0 size = 0`. Committed as `a994023`.
+
+**Prompt 19's verification requirement changed nothing but was not redundant.**
+The marker was re-verified as surviving a `docker restart`, through the runner's
+own client, on a freshly provisioned device, immediately before collecting —
+rather than relying on `a994023`'s proof having held.
 
 ---
 
