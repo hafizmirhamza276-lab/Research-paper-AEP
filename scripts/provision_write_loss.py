@@ -51,6 +51,76 @@ BACKING_MEGABYTES = 512
 
 DEVICE_NAME = "aep-ws4-flakey"
 
+#: The pinned image, read from compose so it cannot drift from the one the
+#: collection runs. Seeding must use the SAME Redis that will read the seed.
+PINNED_IMAGE_PATTERN = "redis:7.2.5-alpine@sha256:"
+
+#: rule 9's key. Seeded durably at provision time (R10).
+TEST_INSTANCE_MARKER = "aep:test-instance-marker"
+
+
+def pinned_image() -> str | None:
+    """The image reference from compose.phase2.yml, not a literal."""
+    import re
+    text = (Path(__file__).resolve().parents[1] / "compose.phase2.yml").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(r"(redis:[\w.-]+@sha256:[0-9a-f]{64})", text)
+    return match.group(1) if match else None
+
+
+def seed_marker(redis_dir: Path) -> str:
+    """Write the marker into the device's AOF so it survives a restart.
+
+    **Why this exists.** `docs/25` R10: on this regime Redis comes up on a
+    freshly provisioned device whose AOF is empty, so a marker set afterwards
+    lives only in RAM and any restart loses it -- which aborted attempt 4 after
+    47 runs.
+
+    **Why not a plain `dump.rdb`.** R10 proposed seeding "the base RDB". Tested
+    on the pinned image: a `dump.rdb` written into `dir` is **ignored** by a
+    server started with `appendonly yes`, which creates a fresh empty AOF
+    instead (`marker seen = 0`). The route that works is to let a throwaway
+    server with `appendonly yes` write a real `appendonlydir` -- manifest, base
+    RDB and incr -- which the collection's server then loads (`marker seen = 1`).
+
+    **Why it cannot perturb the measurement.** The seeded state is exactly one
+    key, `aep:test-instance-marker`, in db 15: verified `DBSIZE 15 == 1` and
+    `DBSIZE 0 == 0`. It is not in any keyspace the protocol reads or writes --
+    the intent ledger, locks and vault all use their own prefixes -- it is not
+    the oracle, which is a separate SQLite ledger the protocol cannot see, and
+    it is not the fault, which acts at the block device. The cell measures what
+    happens to *intent records* under write loss; a key no participant consults
+    cannot enter that.
+
+    **`redis/phase2.conf` is not touched.** The seeding server takes its settings
+    on the command line; the collection's server keeps the pinned conf, so the
+    fsync behaviour under test is unchanged.
+
+    Returns an error string, or "" on success.
+    """
+    image = pinned_image()
+    if image is None:
+        return "cannot resolve the pinned Redis image from compose.phase2.yml"
+
+    script = (
+        "redis-server --daemonize yes --dir /data --appendonly yes "
+        "--appendfsync everysec >/dev/null 2>&1; sleep 2; "
+        f"redis-cli -n 15 SET {TEST_INSTANCE_MARKER} 1 >/dev/null; "
+        "redis-cli BGREWRITEAOF >/dev/null; sleep 1; "
+        "redis-cli SHUTDOWN 2>/dev/null || true; sleep 1"
+    )
+    completed = run(
+        "docker", "run", "--rm", "-v", f"{redis_dir}:/data", image, "sh", "-c", script
+    )
+    if completed.returncode != 0:
+        return f"seeding container failed: {completed.stderr.strip()[:200]}"
+
+    aof = redis_dir / "appendonlydir"
+    if not aof.is_dir() or not any(aof.iterdir()):
+        return f"seeding produced no appendonlydir under {redis_dir}"
+    return ""
+
 
 def run(*args: str, check: bool = False) -> subprocess.CompletedProcess:
     return subprocess.run(list(args), capture_output=True, text=True, check=check)
@@ -189,6 +259,16 @@ def provision(root: Path) -> int:
     (mount / "redis").mkdir(exist_ok=True)
     for name in ("selftest-before", "selftest-after"):
         (mount / name).unlink(missing_ok=True)
+
+    # R10: seed the marker so it survives a restart mid-collection.
+    seed_error = seed_marker(mount / "redis")
+    if seed_error:
+        print()
+        print(f"SEEDING FAILED: {seed_error}")
+        print("THE SESSION DOES NOT RUN. Tearing the device down.")
+        teardown(root)
+        return 1
+    print(f"marker seeded durably into {mount / 'redis' / 'appendonlydir'}")
     print()
     print("Provisioned. Export before collecting:")
     print("  AEP_HARNESS_REDIS_FAULT_MECHANISM=write-loss")

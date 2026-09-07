@@ -319,24 +319,22 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"container id       : {identifier[:12]}")
 
-    marked = run("docker", "exec", identifier, "redis-cli", "-n", "15",
-                 "SET", TEST_INSTANCE_MARKER, "1")
-    if marked.returncode != 0:
-        print(f"could not set {TEST_INSTANCE_MARKER}: {marked.stderr.strip()[:200]}",
-              file=sys.stderr)
-        teardown_on_refusal(arguments.root)
-        return 1
-
-    # THE READ-BACK, through the consumer's route. A failure here refuses the
-    # session rather than warning: a marker the runner cannot see is exactly the
-    # condition that aborted 60 runs on 2026-09-07.
+    # THE MARKER IS NO LONGER SET HERE. It is seeded durably into the device's
+    # AOF by `provision_write_loss.py` (R10), so it survives the restarts that
+    # aborted attempt 4. Setting it here as well would mask a failed seed behind
+    # a RAM-only copy -- which is precisely the defect being closed.
+    #
+    # THE READ-BACK, through the consumer's route, is therefore now a gate on
+    # the SEEDING. A failure refuses the session rather than warning: a marker
+    # the runner cannot see is the condition that aborted 60 runs on 2026-09-07
+    # and 47 more on attempt 4.
     reason = assert_marker_visible_to_the_runner(arguments.redis_url)
     if reason:
         print(f"REFUSED: {reason}", file=sys.stderr)
         print("THE SESSION DOES NOT RUN. Tearing the device down.", file=sys.stderr)
         teardown_on_refusal(arguments.root)
         return 1
-    print(f"{TEST_INSTANCE_MARKER}: set by id and READ BACK at "
+    print(f"{TEST_INSTANCE_MARKER}: seeded at provision, READ BACK at "
           f"{arguments.redis_url} (rule 9)")
 
     try:
