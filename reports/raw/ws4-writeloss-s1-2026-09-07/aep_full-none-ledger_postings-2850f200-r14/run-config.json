@@ -1,0 +1,95 @@
+{
+  "run_id": "aep_full-none-ledger_postings-2850f200-r14",
+  "seed": 750992915,
+  "workers": 1,
+  "executions_per_worker": 10,
+  "endpoint": "ledger_postings",
+  "mock_api_config_path": "/root/aep-phase14/writeloss-s1-2026-09-07-a5/aep_full-none-ledger_postings-2850f200-r14/mock-api.yaml",
+  "mock_api_base_url": "http://127.0.0.1:8099",
+  "redis_url": "redis://127.0.0.1:6381/15",
+  "results_root": "/root/aep-phase14/writeloss-s1-2026-09-07-a5",
+  "dispatch_mode": "EVALUATION",
+  "readback_keying": "CALLER_REFERENCE",
+  "system": "AEP_FULL",
+  "resume_policy": null,
+  "max_dispatch_attempts": 3,
+  "crash_point": null,
+  "crash_style": null,
+  "crash_delay_ms": 400,
+  "crash_probability": 0.0,
+  "poisoned_executions": 0,
+  "redis_restarts": 0,
+  "partition_seconds": 0.0,
+  "redis_kill_point": "after_intent_before_barrier",
+  "redis_kill_delay_ms": 0,
+  "redis_kill_executions": 1,
+  "suspend_disabled_declared": true,
+  "client_timeout_seconds": 5.0,
+  "settlement_lag_seconds": 0.0,
+  "buffer_margin_seconds": 15.0,
+  "lock_ttl_seconds": 25,
+  "durability_timeout_ms": 2000,
+  "lease_acquire_attempts": 3,
+  "recovery_pass_interval_seconds": 2.0,
+  "recovery_deadline_seconds": 120.0,
+  "compose_file": "compose.phase2.yml",
+  "redis_container": "aep-phase2-redis72",
+  "redis_service": "redis-phase2",
+  "toxiproxy_api_url": "http://127.0.0.1:8474",
+  "toxiproxy_proxy_name": "aep-redis",
+  "toxiproxy_listen": "0.0.0.0:6382",
+  "toxiproxy_upstream": "redis-phase2:6379",
+  "worker_redis_url": null,
+  "config_version": "aep.harness.run-config/1",
+  "resolved_crash_point": null,
+  "config_digest": "b80a77be7537d03c606763e816bfbd6838e203d70db2192e062620a466584468",
+  "environment": {
+    "results_root_filesystem": {
+      "path": "/root/aep-phase14/writeloss-s1-2026-09-07-a5",
+      "type": "ext2/ext3",
+      "mount_point": "/",
+      "device": "/dev/sdd",
+      "is_drvfs": false
+    },
+    "harness_version": {
+      "commit": "9061848047127cdf03afd81cb7c92cf2bce70a1c",
+      "dirty": true
+    },
+    "docker": {
+      "client_version": "29.4.3",
+      "server_version": "29.4.3"
+    },
+    "docker_kill_latency": {
+      "cache": "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/measurement-host-kill-latency.json",
+      "measured_at_utc": "2026-09-02T10:00:45Z",
+      "target_mode": "pre-existing",
+      "comparable_to_collected_runs": true,
+      "runtimes": {
+        "aep-native": {
+          "trials_counted": 100,
+          "min": 264.0,
+          "median": 317.0,
+          "p95": 361.0,
+          "max": 397.0,
+          "median_ci_low": 312.5,
+          "median_ci_high": 327.0,
+          "context": "aep-native",
+          "server_version": "29.4.3"
+        }
+      }
+    },
+    "platform_release": "6.6.114.1-microsoft-standard-WSL2",
+    "redis_fault_mechanism": "write-loss",
+    "redis_storage_backing": {
+      "container": "aep-phase2-redis72",
+      "mount_type": "bind",
+      "source": "/var/tmp/aep-ws4/mnt/redis",
+      "name": null,
+      "read_only": false
+    },
+    "redis_container_state": {
+      "started_at": "2026-09-07T10:00:38.026258437Z",
+      "restart_count": "0"
+    }
+  }
+}

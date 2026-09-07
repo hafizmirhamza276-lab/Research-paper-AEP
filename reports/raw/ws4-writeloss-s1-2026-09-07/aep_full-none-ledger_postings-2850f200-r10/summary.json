@@ -1,0 +1,36 @@
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 7,
+    "PERMANENTLY_AMBIGUOUS": 3
+  },
+  "config_digest": "e4196ffa39027c17b9453b2723b23dd06e936e6ca71b72b89f396ec264ce0390",
+  "crash_injections": 0,
+  "declared_ambiguous_executions": 3,
+  "disagreements": [],
+  "duplicate_prediction_applies": true,
+  "executions_planned": 10,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 7,
+  "expected_effect_executions_upper": 10,
+  "keys_removed": 12,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 10,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 10,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 7,
+    "DECLARED_AMBIGUOUS": 3
+  },
+  "poisoned_detection": [],
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "aep_full-none-ledger_postings-2850f200-r10",
+  "settled": true,
+  "system": "AEP_FULL",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}
