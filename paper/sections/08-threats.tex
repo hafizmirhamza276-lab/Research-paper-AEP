@@ -43,8 +43,41 @@ under write loss is true. Extending it to the full systems needs the harness's
 Redis to run on the flakey device, and the harness's Redis is a container
 whose bind mounts this Docker resolves in the Windows filesystem
 (\cref{sec:threats}, platform), so the two do not currently compose. We regard
-that as the most worthwhile single extension to this evaluation and we have
-not done it.
+that as the most worthwhile single extension to this evaluation. We have since
+run it, on one host, and the paragraph below reports what it found.
+
+\paragraph{We ran the extension, and the fault is deliverable while the
+durability signal above it is not trustworthy} The obstacle above was solved:
+the harness's Redis now runs with its append-only file on the flakey device,
+and a full session --- both arms, thirty runs each, ten executions per run,
+\texttt{drop\_writes} armed at the intent checkpoint --- was collected without
+a delivery failure. So the first half of the question is answered for this
+host: \textbf{the fault is deliverable}, reliably, for a whole session.
+
+The second half is answered in a way we did not predict, and it is the more
+useful half. \textbf{\texttt{WAITAOF} returned success for every durability
+acknowledgement requested after the device had stopped accepting writes.}
+\texttt{dm-flakey}'s \texttt{drop\_writes} discards each write bio and reports
+success, so the kernel sees no error, \texttt{fsync(2)} succeeds, and Redis has
+no way to learn otherwise. The barrier withholds dispatch on a \emph{failed or
+absent} durability acknowledgement; it was handed a successful one and
+dispatched, behaving exactly as specified on an input that was false. Both arms
+finished at ceiling.
+
+The scope of that is narrow and we state it narrowly. \textbf{It is not
+evidence that the barrier fails to withhold under write loss}: the condition
+the experiment exists to create --- the barrier meeting an acknowledgement that
+fails or never arrives --- was never reached, so no run exercised withholding.
+\textbf{Neither is it evidence that the barrier works.} What it establishes is
+that the protocol's durability guarantee rests on an unstated premise ---
+that a \texttt{WAITAOF} success means the record reached the device --- and
+that under storage which discards writes \emph{silently} the premise is false
+and the protocol cannot detect it. A storage stack that returned \texttt{EIO}
+would let the acknowledgement fail and would put the barrier back on the input
+its guarantee is defined over; this result therefore bounds the guarantee to
+storage that reports its own failures, and says nothing about storage that does
+not. It is one host and one Redis version (7.2.5, \texttt{appendfsync
+everysec}), and we claim it for no other.
 
 \paragraph{The write-loss probe runs several layers above hardware, and does
 not need to be closer} Our \texttt{dm-flakey} target sits on a loop device
