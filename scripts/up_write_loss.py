@@ -58,6 +58,58 @@ CONTAINER = "aep-phase2-redis72"
 #: every write-loss session would otherwise abort on its first run.
 TEST_INSTANCE_MARKER = "aep:test-instance-marker"
 
+#: The URL the collection will use. Must match `run_matrix.py`'s default, because
+#: the whole point of the read-back below is that the *consumer's* route is the
+#: one that gets checked.
+RUNNER_REDIS_URL = "redis://127.0.0.1:6381/15"
+
+
+def container_id() -> str | None:
+    """The container's id, resolved once, after compose has settled.
+
+    Addressing by **id** rather than by name is the fix for an observed race:
+    `docker exec <name>` issued while Compose is replacing the container can
+    reach the container that is being destroyed. The instrumented diagnostic of
+    2026-09-07 caught exactly that -- a sampler's `docker exec` by name returned
+    *"container b140c5d1643c... is not running"* during the recreate that this
+    script itself triggers, because `/data` changes from a named volume to a
+    bind. A marker set on a dying container would be lost seconds later.
+    """
+    completed = run("docker", "inspect", "-f", "{{.Id}}", CONTAINER)
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip() or None
+
+
+def assert_marker_visible_to_the_runner(url: str) -> str:
+    """Read the marker back through the runner's own client. Returns a reason
+    on failure, or an empty string on success.
+
+    **The write route and the check route must be the same route.** Setting via
+    `docker exec` and confirming via `docker exec` establishes that the write
+    happened; it says nothing about what a different client, at a different
+    address, on a different connection, will observe. That is the agreement the
+    collection actually depends on, and it is what this checks --
+    `Redis.from_url` on the same URL string `run_matrix.py` passes to the runner.
+    """
+    try:
+        from redis import Redis
+    except Exception as error:  # noqa: BLE001
+        return f"cannot import the runner's redis client: {error}"
+    try:
+        client = Redis.from_url(url, decode_responses=True,
+                                socket_connect_timeout=5, socket_timeout=5)
+        present = client.exists(TEST_INSTANCE_MARKER)
+    except Exception as error:  # noqa: BLE001
+        return f"cannot reach {url!r} as the runner would: {error}"
+    if not present:
+        return (
+            f"the marker is not visible at {url!r}, which is the exact address "
+            "and database the runner opens. It was written, and the consumer "
+            "cannot see it."
+        )
+    return ""
+
 
 class Refused(RuntimeError):
     """A precondition failed, so the session does not start."""
@@ -188,10 +240,47 @@ def verify_running_stack(record: dict) -> list[str]:
     return findings
 
 
+def teardown_on_refusal(root: Path) -> None:
+    """A refused session leaves no device behind.
+
+    Mirrors `provision_write_loss.py`'s failure path: if the session will not
+    run, the dm-flakey mapping and its loop must not be left for the next one to
+    trip over (`docs/25` R8).
+    """
+    # Release the bind FIRST. While the container is running with /data bound
+    # into the device's mount, umount and `dmsetup remove` both fail and the
+    # teardown reports success over a device that is still there -- R8's failure
+    # mode, which the read-back proof reproduced in this very function.
+    #
+    # Base compose file alone, never -v: the named volume must survive.
+    subprocess.run(
+        ["docker", "compose", "-f", BASE_COMPOSE, "up", "-d", "--wait"],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+    )
+    completed = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "provision_write_loss.py"),
+         "teardown", "--root", str(root)],
+        capture_output=True, text=True,
+    )
+    print(f"teardown: {completed.stdout.strip()[:120]}", file=sys.stderr)
+
+    # Verify per R8 rather than trust the exit code.
+    left = subprocess.run(["dmsetup", "ls"], capture_output=True, text=True).stdout
+    if "aep-ws4" in left:
+        subprocess.run(["dmsetup", "remove", "--force", "aep-ws4-flakey"],
+                       capture_output=True, text=True)
+        print("teardown: mapping survived the first attempt; forced",
+              file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", type=Path, default=Path("/var/tmp/aep-ws4"))
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--redis-url", default=RUNNER_REDIS_URL,
+        help="the URL the collection will use; the marker is read back through it",
+    )
     arguments = parser.parse_args(argv)
 
     try:
@@ -221,13 +310,34 @@ def main(argv: list[str] | None = None) -> int:
     # Rule 9. Asserted only for the Redis this script just pointed at a
     # provisioned flakey device -- a throwaway loop device created seconds ago --
     # and never for an arbitrary instance.
-    marked = run("docker", "exec", CONTAINER, "redis-cli", "-n", "15",
+    #
+    # BY ID, not by name, and resolved only after `compose up --wait` returned.
+    identifier = container_id()
+    if identifier is None:
+        print(f"cannot resolve the container id for {CONTAINER}", file=sys.stderr)
+        teardown_on_refusal(arguments.root)
+        return 1
+    print(f"container id       : {identifier[:12]}")
+
+    marked = run("docker", "exec", identifier, "redis-cli", "-n", "15",
                  "SET", TEST_INSTANCE_MARKER, "1")
     if marked.returncode != 0:
         print(f"could not set {TEST_INSTANCE_MARKER}: {marked.stderr.strip()[:200]}",
               file=sys.stderr)
+        teardown_on_refusal(arguments.root)
         return 1
-    print(f"{TEST_INSTANCE_MARKER}: set (rule 9)")
+
+    # THE READ-BACK, through the consumer's route. A failure here refuses the
+    # session rather than warning: a marker the runner cannot see is exactly the
+    # condition that aborted 60 runs on 2026-09-07.
+    reason = assert_marker_visible_to_the_runner(arguments.redis_url)
+    if reason:
+        print(f"REFUSED: {reason}", file=sys.stderr)
+        print("THE SESSION DOES NOT RUN. Tearing the device down.", file=sys.stderr)
+        teardown_on_refusal(arguments.root)
+        return 1
+    print(f"{TEST_INSTANCE_MARKER}: set by id and READ BACK at "
+          f"{arguments.redis_url} (rule 9)")
 
     try:
         for finding in verify_running_stack(record):
