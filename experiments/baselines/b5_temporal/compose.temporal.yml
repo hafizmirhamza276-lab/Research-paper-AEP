@@ -1,0 +1,93 @@
+# WS-6 / B5 — Temporal server for the real-durable-execution baseline.
+#
+# DESIGN ONLY. This stack has NOT been brought up and these images have NOT been
+# pulled. Nothing in this pass ran.
+#
+# ---------------------------------------------------------------------------
+# THESE ARE TAGS, NOT PINS. THIS FILE IS NOT READY TO COLLECT AGAINST.
+# ---------------------------------------------------------------------------
+# The rest of this project pins by digest -- redis/phase2 runs a digested image
+# precisely so a rebuild cannot silently change the system under test. A version
+# tag is mutable and is not a pin. Before ANY B5 data is collected, each image
+# below must be resolved to a sha256 digest and that digest committed, in the
+# same commit-before-data discipline the pre-registration follows.
+# Recorded as open question 1 in B5_SEMANTICS.md section 7.
+#
+# Port choices avoid every port the existing stacks use: Redis 6381,
+# toxiproxy 8474/8666, mock provider 8099.
+
+name: aep-ws6-b5
+
+services:
+  # --------------------------------------------------------------- datastore
+  # Temporal's own persistence. Deliberately NOT the Redis the harness measures
+  # on: sharing it would put the engine's history in the store whose failure
+  # modes other cells inject, and no result from either would mean anything.
+  b5-postgres:
+    image: postgres:16.3          # TODO(pin): resolve to sha256 before collecting
+    container_name: aep-ws6-postgres
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    # No host port published: only the Temporal server needs to reach it, and
+    # not publishing keeps it off the measurement host's port surface.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    tmpfs:
+      # The engine's durability is not what B5 measures -- the provider ledger
+      # is the oracle. Keeping persistence in tmpfs makes every run start from a
+      # clean history without a volume to remember to remove, which is the
+      # failure mode docs/25 R8 exists for.
+      - /var/lib/postgresql/data
+
+  # ------------------------------------------------------------------ server
+  b5-temporal:
+    image: temporalio/auto-setup:1.24.2   # TODO(pin): resolve to sha256
+    container_name: aep-ws6-temporal
+    depends_on:
+      b5-postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: b5-postgres
+      # Single-node dev topology. B5 measures activity re-execution after a
+      # worker crash, not the engine's HA behaviour, and a multi-node cluster
+      # would add failure modes the experiment does not control.
+      ENABLE_ES: "false"
+    ports:
+      - "127.0.0.1:7233:7233"     # gRPC, the only port the worker needs
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "b5-temporal:7233", "cluster", "health"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 40s
+
+  # ---------------------------------------------------------------------- UI
+  # Diagnosis only. A crashed-worker history is far easier to read here than in
+  # a log, and attempt 4 of WS-4 showed how expensive it is to lack a view of
+  # what the system actually did. Not required for collection.
+  b5-temporal-ui:
+    image: temporalio/ui:2.26.2   # TODO(pin): resolve to sha256
+    container_name: aep-ws6-temporal-ui
+    depends_on:
+      b5-temporal:
+        condition: service_healthy
+    environment:
+      TEMPORAL_ADDRESS: b5-temporal:7233
+    ports:
+      - "127.0.0.1:8233:8080"
+    profiles: ["diagnose"]        # not started by default
+
+# The worker is NOT a service here. It runs on the host, as the existing harness
+# workers do, because the crash injector must SIGKILL it at a named point and
+# delivering that into a container adds a layer between the injector and the
+# process whose death is the fault. Same reason experiments/harness/worker.py is
+# a host process today.
