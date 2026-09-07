@@ -585,7 +585,15 @@ def load_run(directory: Path) -> RunRecord | None:
         suspend_disabled_declared=bool(
             config.get("suspend_disabled_declared", False)
         ),
-        regime=_regime_of(crash_probability, redis_kill_point),
+        regime=_regime_of(
+            crash_probability,
+            redis_kill_point,
+            # From the run's own events, not from a field the matrix wrote --
+            # the same discipline the rest of this function follows. A run
+            # collected before the mechanism existed has no such key, and
+            # ``None`` takes the pre-existing branch unchanged.
+            str(issued[-1].get("mechanism")) if issued else None,
+        ),
         crash_probability=crash_probability,
         redis_kill_point=redis_kill_point,
         redis_kill_canary=(
@@ -598,13 +606,35 @@ def load_run(directory: Path) -> RunRecord | None:
     )
 
 
-def _regime_of(crash_probability: float, redis_kill_point: str | None) -> str:
+def _regime_of(
+    crash_probability: float,
+    redis_kill_point: str | None,
+    mechanism: str | None = None,
+) -> str:
     """The matrix regime a run belongs to, read back from its own config.
 
     Deliberately derived rather than trusted from a field the matrix wrote:
     the analysis reads what the *run* did, and a mislabelled cell would then
     be a disagreement rather than a silently pooled result.
+
+    ``mechanism`` is why this needed a third argument. WS-4's write-loss cell
+    shares ``redis_kill_point`` with the hard-kill cell -- the fault is
+    delivered at the same instruction boundary -- and differs only in *how*.
+    That choice is made by the environment rather than by ``RunConfig``, so
+    that no collected run's ``config_digest`` changes, and the consequence is
+    that the kill point alone cannot tell the two apart. It did not: 60
+    write-loss runs were labelled ``redis-kill-preack``, a fault class naming
+    a fault that never happened.
+
+    **Frozen results cannot move.** The mechanism is read from the run's own
+    ``redis_kill_issued`` event, which carries it only for runs collected
+    after the write-loss injector existed. Every earlier run yields ``None``
+    and takes exactly the branch it took before, so this is additive by
+    construction rather than by a promise.
     """
+    if mechanism == "write-loss":
+        # Same boundary, different fault. Named for what it is.
+        return "write-loss-preack"
     if redis_kill_point == "after_intent_before_barrier":
         return "redis-kill-preack"
     if redis_kill_point is not None:

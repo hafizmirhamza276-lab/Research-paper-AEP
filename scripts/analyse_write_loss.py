@@ -33,6 +33,19 @@ be under an agent workload that re-plans onto a used target.
 **Unit of analysis: the run** (`docs/26` §3 rule 6). Per-run counts are reported
 and the run is what the spread is taken over; executions are never pooled as
 independent draws.
+
+**That sentence was false for as long as this script had run on real data**, and
+it is repaired rather than deleted because the data to make it true was there all
+along. :func:`per_run_applied` read a key that does not exist in the file it read
+it from, defaulted every miss to zero, and printed thirty zeros beneath a total of
+285; no spread was taken over anything. It now reads each run's own
+``summary.json``, reports min/median/max/spread/sd, and **reconciles the per-run
+sum against the arm total read from the ablation CSV** -- two independent sources
+for one quantity, compared rather than merely both printed.
+
+None of that touches the verdict. :func:`classify_numbers` reads the ablation CSV
+and :func:`classify_reading` takes the verdict and the behaviour, so the repair
+was made and the WS-4 result re-derived unchanged (`1d13868`).
 """
 
 from __future__ import annotations
@@ -198,18 +211,40 @@ def observe_behaviour(root: Path) -> tuple[Behaviour, dict]:
 
 
 def per_run_applied(root: Path) -> dict[str, list[int]]:
-    """Applied effects per run. The run is the unit (rule 6)."""
-    path = root / "matrix-progress.jsonl"
-    if not path.is_file():
-        return {}
+    """Applied effects per run. The run is the unit (rule 6).
+
+    **Read from each run's own ``summary.json``**, because that is the only
+    place a per-run count exists. The first version of this read
+    ``applied_effects_total`` from ``matrix-progress.jsonl``, where no such key
+    is present -- a progress row's ``summary`` is a *path string*, and the
+    column of that name lives in ``analysis/redis-kill-ablation.csv``, which is
+    aggregated over the whole arm and so has no per-run breakdown at all.
+    ``dict.get(..., 0)`` turned every one of those misses into a zero, and the
+    display printed thirty zeros directly beneath a total of 285.
+
+    ``oracle_effect_executions`` is the per-run form of the ablation CSV's
+    ``executions_with_an_applied_effect``: summed over the arm it reproduces
+    285 and 287 exactly, which is how the field was identified rather than
+    assumed.
+    """
     out: dict[str, list[int]] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        record = json.loads(line)
-        if record.get("status") != "collected":
+    for run in sorted(root.iterdir()):
+        if not run.is_dir() or run.name == "analysis":
             continue
-        out.setdefault(record["system"], []).append(
-            int(record.get("applied_effects_total", 0))
-        )
+        summary = run / "summary.json"
+        if not summary.is_file():
+            continue
+        body = json.loads(summary.read_text(encoding="utf-8"))
+        applied = body.get("oracle_effect_executions")
+        if applied is None:
+            # Never silently zero: a run whose count cannot be read must not
+            # render as a run that applied nothing. That confusion is the whole
+            # defect this function is a repair for.
+            raise SystemExit(
+                f"{summary} has no oracle_effect_executions; refusing to "
+                f"report a per-run count this script cannot actually read"
+            )
+        out.setdefault(str(body["system"]), []).append(int(applied))
     return out
 
 
@@ -353,7 +388,37 @@ def render(report: dict) -> str:
     lines.append("")
     lines.append("--- per-run applied effects (the run is the unit, rule 6) ---")
     for name, runs in sorted(report["per_run_applied"].items()):
-        lines.append(f"  {name:22s} n={len(runs):3d} {runs[:12]}{' ...' if len(runs) > 12 else ''}")
+        lines.append(
+            f"  {name:22s} n={len(runs):3d} "
+            f"{runs[:12]}{' ...' if len(runs) > 12 else ''}"
+        )
+        if not runs:
+            continue
+        # The spread the module docstring claims. It said the run was what the
+        # spread is taken over while no spread was taken over anything -- a
+        # docstring asserting an analysis the code did not perform, which is
+        # the same class as a gate that cannot fail.
+        spread = max(runs) - min(runs)
+        lines.append(
+            f"  {'':22s} min={min(runs)} median={statistics.median(runs):g} "
+            f"max={max(runs)} spread={spread}"
+            + (
+                f" sd={statistics.stdev(runs):.3f}"
+                if len(runs) > 1 else ""
+            )
+        )
+        # Reconcile against the estimand, which is read from a different file.
+        # Two sources for one quantity that are never compared is how the old
+        # per-run column printed thirty zeros under a total of 285 for as long
+        # as it did.
+        arm = report["arms"].get(name)
+        if arm is not None:
+            total = sum(runs)
+            agrees = total == arm["applied"]
+            lines.append(
+                f"  {'':22s} sum={total} vs ablation CSV {arm['applied']}"
+                f"  {'reconciles' if agrees else '** DISAGREES **'}"
+            )
     lines.append("")
     lines.append("--- which Redis behaviour was observed ---")
     lines.append(f"  {report['behaviour']}")

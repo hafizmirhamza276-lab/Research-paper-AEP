@@ -5,8 +5,12 @@
   B3_INTENT_NO_BARRIER   applied  287/300  = 0.9567  lost=0 dupes=0
 
 --- per-run applied effects (the run is the unit, rule 6) ---
-  AEP_FULL               n= 30 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] ...
-  B3_INTENT_NO_BARRIER   n= 30 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] ...
+  AEP_FULL               n= 30 [10, 9, 10, 9, 9, 9, 10, 10, 10, 9, 10, 9] ...
+                         min=7 median=10 max=10 spread=3 sd=0.682
+                         sum=285 vs ablation CSV 285  reconciles
+  B3_INTENT_NO_BARRIER   n= 30 [10, 9, 9, 8, 10, 9, 9, 10, 10, 10, 10, 10] ...
+                         min=8 median=10 max=10 spread=2 sd=0.679
+                         sum=287 vs ablation CSV 287  reconciles
 
 --- which Redis behaviour was observed ---
   SILENT_APPEND_FAILURE

@@ -12,7 +12,7 @@
     "CALLER_REFERENCE"
   ],
   "regimes": [
-    "redis-kill-preack"
+    "write-loss-preack"
   ],
   "response_classes": [
     "NO_READBACK"
