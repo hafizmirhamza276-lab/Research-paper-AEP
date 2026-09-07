@@ -1,9 +1,11 @@
 # B5 semantics: what the vendor's engine can be crashed at, and what it cannot
 
-**Design only. Nothing here has been run.** No image was pulled, no stack was
-brought up, and no test was executed in the pass that wrote this file. Every
-statement about Temporal's behaviour below is from documentation or from
-structural argument, and each is marked for confirmation in the collection pass.
+**Written as design only; §6a now carries what was measured.** The mapping below
+was written before anything ran, from documentation and structural argument. Two
+of its claims have since been checked on the real stack and the results are in
+**§6a** — point 6 is observable (so it stays *approximate*, not *absent*), and
+B5 needs a worker supervisor it does not have. Everything not marked there is
+still unconfirmed against a running server.
 
 Structured to be read side by side with
 [`../B4_SEMANTICS.md`](../B4_SEMANTICS.md), which uses the same six sections.
@@ -258,6 +260,36 @@ bound** on what a tuned deployment would show.
    already required re-verification before submission; this pass did not do it.
 6. **No B5 latency number is Temporal's recovery latency.** Same caveat as B4,
    and stronger: the timeout and backoff are configured by us.
+
+---
+
+## 6a. Two things measured on the real stack (added 2026-09-07)
+
+**Point 6 is observable, so it stays approximate rather than absent.** Eight of
+eight trials reached `DURING_COMPLETE_RPC`, fired, and had already called the
+provider. Section 2.4's *other* caveat is untouched: the window is a network RPC
+plus a server-side transaction, its width set by the server and the loopback and
+not by the harness, so a rate measured there is **not like-for-like with B4's**
+fsync-width window.
+
+Had it proved unhittable, B5 would have been crashable at only **four of six**
+roadmap points, missing **both** `*_before_barrier` positions -- the two that
+name the window AEP's durability argument is entirely about -- and the comparison
+would have reduced to *agreement where neither engine has a durability window to
+be cut in*. That cost is **not** incurred, and it is recorded here because it was
+one measurement away from being.
+
+**B5 needs a worker supervisor, and does not have one.** Temporal schedules the
+retry after the worker dies, but a retry needs a **live worker** to poll for it.
+The probe kills its single worker and never respawns it, so across three
+Start-To-Close values (2.5 s, 4 s, 8 s) every run sat `PENDING_AT_DEADLINE` at
+150 s with **zero provider calls** -- a measurement of the harness, not of the
+engine.
+
+**No B5 cell can measure a duplicate until this exists**, because a duplicate is
+by definition what the *second* attempt does. B4's harness respawns after
+`SIGKILL`, which is what makes its replay observable; B5 needs the equivalent.
+This is a prerequisite for collection that four earlier rounds did not surface.
 
 ---
 

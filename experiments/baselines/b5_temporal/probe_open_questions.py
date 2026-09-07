@@ -254,7 +254,14 @@ async def main() -> int:
     parser.add_argument("--address", default="127.0.0.1:7233")
     parser.add_argument("--provider", default="http://127.0.0.1:8099")
     parser.add_argument("--out", default="/var/tmp/b5-probe")
+    # Run a subset. Stages already closed with evidence are not re-run: each
+    # costs minutes on a stack that has twice gone away mid-probe (R12a), and
+    # re-running a closed stage is exposure without information.
+    parser.add_argument("--stages", default="",
+                        help="comma-separated stage names; empty means all")
     arguments = parser.parse_args()
+    global WANTED
+    WANTED = {s for s in arguments.stages.split(",") if s}
     OUT = Path(arguments.out)
     OUT.mkdir(parents=True, exist_ok=True)
     provider = arguments.provider
