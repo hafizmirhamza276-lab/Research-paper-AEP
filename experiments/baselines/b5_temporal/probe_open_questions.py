@@ -1,11 +1,26 @@
 """Close WS-6's open questions 2-5 by measurement on the real stack.
 
 Not a collection. Nothing here writes a run directory, and no result from it may
-appear as a B5 rate. It exists to answer questions the pre-registration says must
-be closed before any data commit, each by running the real engine rather than by
-reading documentation.
+appear as a B5 rate.
 
-Run with the stack up and a mock provider listening.
+**This module is subject to `docs/25` R14, and two earlier versions of it are
+instance 5 in that rule.** Every readiness and sampling path below must be able
+to report three outcomes, not two: the thing is there, the thing is not there,
+and *I could not look, or I looked in the wrong place*. Concretely:
+
+* :func:`precheck` sends a **canary mutation** and requires ``2xx``. A health
+  endpoint answering 200 proves the process is up, not that this probe speaks the
+  provider's contract -- one earlier version polled a route that does not exist,
+  reported ``000``, and ran anyway; the next sent an envelope missing ``target``
+  and recorded thirty ``422``s as a latency distribution. The canary is what
+  separates those from a healthy provider, and the probe **refuses to measure**
+  if it fails.
+* :func:`provider_latency` accepts only ``2xx`` and reports refusals **by status
+  code**, so a wrong request shape cannot masquerade as a slow provider.
+* Every stage is wrapped and **findings are written after each one**, so a death
+  mid-run leaves evidence of how far it got. The previous run exited after one
+  line with no findings file and no traceback, which is why its cause was never
+  established.
 """
 
 from __future__ import annotations
@@ -18,6 +33,7 @@ import statistics
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 from pathlib import Path
 
@@ -36,15 +52,81 @@ ALL_POINTS = (
     "DURING_COMPLETE_RPC",
 )
 
+OUT: Path = Path("/var/tmp/b5-probe")
+FINDINGS: dict = {}
+
+
+def say(text: str = "") -> None:
+    print(text, flush=True)
+
 
 def emit(label: str, **fields) -> None:
-    print(f"  {label:34s} " + "  ".join(f"{k}={v}" for k, v in fields.items()),
-          flush=True)
+    say(f"  {label:32s} " + "  ".join(f"{k}={v}" for k, v in fields.items()))
+
+
+def save() -> None:
+    (OUT / "findings.json").write_text(
+        json.dumps(FINDINGS, indent=2, sort_keys=True, default=str),
+        encoding="utf-8",
+    )
+
+
+def envelope(target: str) -> dict:
+    """The shape the oracle can fingerprint.
+
+    All four keys of ``fingerprint._REQUIRED_ENVELOPE_KEYS``, with ``target`` at
+    the TOP level as well as inside ``public_fields``. Two earlier versions of
+    this probe omitted one or more and were refused 422 in under 2 ms.
+    """
+    return {
+        "connector_operation": "post_ledger_entry",
+        "operation_version": "1",
+        "target": target,
+        "public_fields": [
+            {"name": "target", "value": target},
+            {"name": "action", "value": "post"},
+            {"name": "amount_minor", "value": 100},
+        ],
+    }
+
+
+async def precheck(url: str, endpoint: str) -> tuple[bool, str]:
+    """Three outcomes: speaking the contract, provider down, or wrong shape."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            health = await client.get(f"{url}/v1/health")
+    except Exception as exc:                                   # noqa: BLE001
+        return False, f"provider unreachable at {url}/v1/health: {exc!r}"
+    if health.status_code != 200:
+        return False, f"/v1/health returned {health.status_code}, expected 200"
+
+    # The decisive check: a canary mutation must be ACCEPTED, not merely answered.
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(
+                f"{url}/v1/endpoints/{endpoint}/mutations",
+                headers={"X-Aep-Client-Reference": f"canary-{uuid.uuid4()}"},
+                json=envelope(f"canary-{uuid.uuid4()}"),
+            )
+        except httpx.TimeoutException:
+            # An injected timeout is a configured fault (15%), not a contract
+            # error. Reachable, contract not refuted.
+            return True, "canary timed out (injected fault); contract not refuted"
+    if 200 <= response.status_code < 300:
+        return True, f"canary accepted ({response.status_code})"
+    if response.status_code == 503:
+        return True, "canary drew an injected 503; contract not refuted"
+    return False, (
+        f"canary REFUSED {response.status_code}: {response.text[:200]} -- this "
+        f"probe is not speaking the provider's contract, so nothing it measured "
+        f"would be about the provider"
+    )
 
 
 async def provider_latency(url: str, endpoint: str, n: int) -> dict:
-    ok, timed_out, errored = [], 0, 0
-    refusals: dict[int, int] = {}
+    ok: list[float] = []
+    timed_out = 0
+    refusals: dict[str, int] = {}
     async with httpx.AsyncClient(timeout=25.0) as client:
         for index in range(n):
             started = time.monotonic()
@@ -52,31 +134,18 @@ async def provider_latency(url: str, endpoint: str, n: int) -> dict:
                 response = await client.post(
                     f"{url}/v1/endpoints/{endpoint}/mutations",
                     headers={"X-Aep-Client-Reference": f"probe-{uuid.uuid4()}"},
-                    json={
-                        "connector_operation": "post_ledger_entry",
-                        "target": f"probe-lat-{index}",
-                        "operation_version": "1",
-                        "public_fields": [
-                            {"name": "target", "value": f"probe-lat-{index}"},
-                            {"name": "action", "value": "post"},
-                            {"name": "amount_minor", "value": 100},
-                        ],
-                    },
+                    json=envelope(f"probe-lat-{index}"),
                 )
-                elapsed = (time.monotonic() - started) * 1000.0
-                # 2xx ONLY. The first version accepted anything under 500, so a
-                # 422 "unidentifiable envelope" returned in 1.8 ms counted as a
-                # healthy sample and the measured p50 was the rejection path.
-                if 200 <= response.status_code < 300:
-                    ok.append(elapsed)
-                else:
-                    errored += 1
-                    refusals[response.status_code] = refusals.get(
-                        response.status_code, 0) + 1
             except httpx.TimeoutException:
                 timed_out += 1
-    return {"answered_ms": ok, "timed_out": timed_out, "errored": errored,
-            "refusals": refusals, "n": n}
+                continue
+            elapsed = (time.monotonic() - started) * 1000.0
+            if 200 <= response.status_code < 300:
+                ok.append(elapsed)
+            else:
+                key = str(response.status_code)
+                refusals[key] = refusals.get(key, 0) + 1
+    return {"answered_ms": ok, "timed_out": timed_out, "refusals": refusals, "n": n}
 
 
 async def run_one(
@@ -86,14 +155,13 @@ async def run_one(
     maximum_attempts: int,
     start_to_close_ms: int,
     provider_url: str,
-    out: Path,
     deadline_s: float,
     injector_disabled: bool = False,
     retry_interval_ms: int = 200,
 ) -> dict:
-    trace = out / "trace.jsonl"
+    trace = OUT / "trace.jsonl"
     trace.write_text("", encoding="utf-8")
-    ready = out / "ready"
+    ready = OUT / "ready"
     ready.unlink(missing_ok=True)
 
     env = dict(os.environ)
@@ -106,11 +174,11 @@ async def run_one(
     if injector_disabled:
         env["B5_INJECTOR_DISABLED"] = "1"
 
-    worker = subprocess.Popen(
-        [sys.executable, str(HERE / "worker.py"), "--ready-file", str(ready)],
-        env=env, stdout=subprocess.DEVNULL,
-        stderr=open(out / "worker.err", "ab"),
-    )
+    with open(OUT / "worker.err", "ab") as errlog:
+        worker = subprocess.Popen(
+            [sys.executable, str(HERE / "worker.py"), "--ready-file", str(ready)],
+            env=env, stdout=subprocess.DEVNULL, stderr=errlog,
+        )
     worker_ready = False
     for _ in range(400):
         if ready.exists():
@@ -136,7 +204,7 @@ async def run_one(
             settled = True
         except asyncio.TimeoutError:
             settled = False
-        except Exception as exc:                              # noqa: BLE001
+        except Exception as exc:                               # noqa: BLE001
             settled, result = True, f"FAILED:{type(exc).__name__}"
         elapsed = time.monotonic() - started
 
@@ -146,14 +214,13 @@ async def run_one(
     except Exception:                                          # noqa: BLE001
         pass
 
-    events = []
+    names: list[str] = []
     if trace.exists():
         for line in trace.read_text(errors="replace").splitlines():
             try:
-                events.append(json.loads(line))
-            except ValueError:
+                names.append(json.loads(line)["event"])
+            except (ValueError, KeyError):
                 pass
-    names = [e["event"] for e in events]
     verdict = classify(armed_point=crash_point, settled=settled,
                        worker_ready=worker_ready, events=names)
     return {
@@ -161,103 +228,132 @@ async def run_one(
         "reason": verdict.reason,
         "is_void": verdict.is_void,
         "settled": settled,
-        "result": result,
+        "result": str(result)[:120],
         "elapsed_s": round(elapsed, 2),
-        "provider_calls": sum(1 for n in names if n == "b5_provider_returned"),
+        "provider_calls": names.count("b5_provider_returned"),
         "reached": "b5_point_reached" in names,
         "fired": "b5_crash_firing" in names,
     }
 
 
+async def stage(name: str, coro) -> None:
+    """Run one stage; record a failure instead of dying silently."""
+    say(f"\n=== {name} ===")
+    try:
+        FINDINGS[name] = await coro
+    except Exception:                                          # noqa: BLE001
+        FINDINGS[name] = {"STAGE_FAILED": traceback.format_exc()[-1500:]}
+        say("  STAGE FAILED -- recorded, continuing:")
+        say(traceback.format_exc()[-700:])
+    save()
+
+
 async def main() -> int:
+    global OUT
     parser = argparse.ArgumentParser()
     parser.add_argument("--address", default="127.0.0.1:7233")
     parser.add_argument("--provider", default="http://127.0.0.1:8099")
     parser.add_argument("--out", default="/var/tmp/b5-probe")
     arguments = parser.parse_args()
+    OUT = Path(arguments.out)
+    OUT.mkdir(parents=True, exist_ok=True)
+    provider = arguments.provider
 
-    out = Path(arguments.out)
-    out.mkdir(parents=True, exist_ok=True)
-    findings: dict = {}
+    say("=== R14 precheck: is this probe speaking the provider's contract? ===")
+    ok, why = await precheck(provider, "ledger_postings")
+    emit("precheck", ok=ok)
+    say(f"    {why}")
+    FINDINGS["precheck"] = {"ok": ok, "reason": why}
+    save()
+    if not ok:
+        say("\nREFUSING TO MEASURE: a probe that cannot get one mutation accepted "
+            "would report the rejection path as a provider distribution.")
+        return 2
+
     client = await Client.connect(arguments.address)
-    print("connected\n", flush=True)
+    say("connected to Temporal")
 
-    # ------------------------------------------------------------------ Q2a
-    print("=== Q2a: provider response-time distribution (n=30) ===", flush=True)
-    dist = await provider_latency(arguments.provider, "ledger_postings", 30)
-    answered = dist["answered_ms"]
-    p50 = statistics.median(answered) if answered else None
-    p95 = sorted(answered)[int(0.95 * (len(answered) - 1))] if answered else None
-    emit("provider", n=dist["n"], answered=len(answered),
-         timed_out=dist["timed_out"], refused=dist["refusals"],
-         p50_ms=round(p50, 1) if p50 else None,
-         p95_ms=round(p95, 1) if p95 else None,
-         max_ms=round(max(answered), 1) if answered else None)
-    findings["q2a_provider"] = {**dist, "p50": p50, "p95": p95}
+    async def q2a():
+        dist = await provider_latency(provider, "ledger_postings", 30)
+        answered = dist["answered_ms"]
+        p50 = statistics.median(answered) if answered else None
+        p95 = sorted(answered)[int(0.95 * (len(answered) - 1))] if answered else None
+        emit("provider", n=dist["n"], answered=len(answered),
+             timed_out=dist["timed_out"], refused=dist["refusals"],
+             p50_ms=round(p50, 1) if p50 else None,
+             p95_ms=round(p95, 1) if p95 else None)
+        return {**dist, "p50_ms": p50, "p95_ms": p95}
+    await stage("q2a_provider_distribution", q2a())
 
-    # ------------------------------------------------------------------ Q5
-    print("\n=== Q5: does the injector reach each of the five points? ===",
-          flush=True)
-    reach = {}
-    for point in ALL_POINTS:
-        r = await run_one(client, crash_point=point, maximum_attempts=1,
-                          start_to_close_ms=8000, provider_url=arguments.provider,
-                          out=out, deadline_s=40)
-        reach[point] = r
-        emit(point, reached=r["reached"], fired=r["fired"],
-             verdict=r["verdict"], calls=r["provider_calls"])
-    findings["q5_reach"] = reach
+    async def gate_proof():
+        out: dict = {}
+        silent = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+                               maximum_attempts=1, start_to_close_ms=8000,
+                               provider_url=provider, deadline_s=45)
+        emit("branch A reachable", verdict=silent["verdict"], void=silent["is_void"],
+             reached=silent["reached"], fired=silent["fired"])
+        voided = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+                               maximum_attempts=1, start_to_close_ms=8000,
+                               provider_url=provider, deadline_s=45,
+                               injector_disabled=True)
+        emit("branch B unreachable", verdict=voided["verdict"], void=voided["is_void"],
+             reached=voided["reached"], fired=voided["fired"])
+        say(f"    void reason: {voided['reason'][:200]}")
+        out["silent"], out["voided"] = silent, voided
+        out["rule13_satisfied"] = bool(
+            (not silent["is_void"]) and voided["is_void"]
+        )
+        emit("rule 13 both branches", satisfied=out["rule13_satisfied"])
+        return out
+    await stage("q5b_gate_both_branches", gate_proof())
 
-    # ------------------------------------------- Q5 gate, both branches
-    print("\n=== Q5 gate, rule 13: BOTH branches on the real stack ===",
-          flush=True)
-    silent = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
-                           maximum_attempts=1, start_to_close_ms=8000,
-                           provider_url=arguments.provider, out=out, deadline_s=40)
-    emit("reachable -> gate silent", verdict=silent["verdict"],
-         void=silent["is_void"])
-    voided = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
-                           maximum_attempts=1, start_to_close_ms=8000,
-                           provider_url=arguments.provider, out=out, deadline_s=40,
-                           injector_disabled=True)
-    emit("unreachable -> gate voids", verdict=voided["verdict"],
-         void=voided["is_void"])
-    print(f"    reason: {voided['reason'][:150]}", flush=True)
-    findings["q5_gate"] = {"silent": silent, "voided": voided}
+    async def points():
+        out: dict = {}
+        for point in ALL_POINTS:
+            r = await run_one(client, crash_point=point, maximum_attempts=1,
+                              start_to_close_ms=8000, provider_url=provider,
+                              deadline_s=45)
+            out[point] = r
+            emit(point, reached=r["reached"], fired=r["fired"],
+                 calls=r["provider_calls"], verdict=r["verdict"])
+            FINDINGS["q5c_five_points"] = out
+            save()
+        return out
+    await stage("q5c_five_points", points())
 
-    # ------------------------------------------------------------- Q2b / Q3
-    print("\n=== Q2b/Q3: does the retry land, and inside what deadline? ===",
-          flush=True)
-    timing = {}
-    for stc in (3000, 8000, 15000):
-        r = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
-                          maximum_attempts=0, start_to_close_ms=stc,
-                          provider_url=arguments.provider, out=out,
-                          deadline_s=150)
-        timing[stc] = r
-        emit(f"start_to_close={stc}ms", verdict=r["verdict"],
-             settled=r["settled"], elapsed_s=r["elapsed_s"])
-    findings["q2b_timing"] = timing
+    async def retry_lands():
+        out: dict = {}
+        for stc in (2500, 4000, 8000):
+            r = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+                              maximum_attempts=0, start_to_close_ms=stc,
+                              provider_url=provider, deadline_s=150)
+            out[str(stc)] = r
+            emit(f"start_to_close={stc}ms", verdict=r["verdict"],
+                 settled=r["settled"], elapsed_s=r["elapsed_s"],
+                 calls=r["provider_calls"])
+            FINDINGS["q2b_retry_lands"] = out
+            save()
+        return out
+    await stage("q2b_retry_lands", retry_lands())
 
-    # ------------------------------------------------------------------ Q4
-    print("\n=== Q4: is point 6's race observable on loopback? (n=8) ===",
-          flush=True)
-    hits = []
-    for _ in range(8):
-        r = await run_one(client, crash_point="DURING_COMPLETE_RPC",
-                          maximum_attempts=1, start_to_close_ms=8000,
-                          provider_url=arguments.provider, out=out, deadline_s=40)
-        hits.append(r)
-    landed = sum(1 for r in hits if r["fired"] and r["provider_calls"] >= 1)
-    emit("point 6", trials=len(hits), fired=sum(1 for r in hits if r["fired"]),
-         with_provider_call=landed,
-         voids=sum(1 for r in hits if r["is_void"]))
-    findings["q4_point6"] = hits
+    async def point6():
+        trials: list[dict] = []
+        for _ in range(8):
+            r = await run_one(client, crash_point="DURING_COMPLETE_RPC",
+                              maximum_attempts=1, start_to_close_ms=8000,
+                              provider_url=provider, deadline_s=45)
+            trials.append(r)
+            FINDINGS["q4_point6_race"] = trials
+            save()
+        emit("point 6", trials=len(trials),
+             reached=sum(1 for r in trials if r["reached"]),
+             fired=sum(1 for r in trials if r["fired"]),
+             after_provider_call=sum(1 for r in trials if r["provider_calls"] >= 1),
+             voids=sum(1 for r in trials if r["is_void"]))
+        return trials
+    await stage("q4_point6_race", point6())
 
-    (out / "findings.json").write_text(
-        json.dumps(findings, indent=2, sort_keys=True, default=str),
-        encoding="utf-8")
-    print(f"\nwrote {out / 'findings.json'}", flush=True)
+    say(f"\nwrote {OUT / 'findings.json'}")
     return 0
 
 
