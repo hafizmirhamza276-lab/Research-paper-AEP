@@ -152,3 +152,57 @@ collected on.
 * §VIII-A(b)'s *"we have not done it"* sentence stands, and remains true.
 * The pre-registration at `d8b2ca5` stands unmodified and unused. It is still the
   prediction for this cell whenever the instrument can deliver it.
+
+---
+
+## 9. Correction (added 2026-09-04, after §3.2 was written)
+
+**§3.2 above is left exactly as written.** This section is added beside it
+rather than editing it, so the record shows both what was claimed and what the
+evidence supports.
+
+### What §3.2 says
+
+> `table_before` on the **first** run already reads `drop_writes` […]
+> `arm_drop_writes` has no counterpart that returns the table to pass mode
+
+### What the evidence actually shows
+
+The attribution — **defect 2, the missing inverse** — is correct. The
+description of the evidence was loose in two ways.
+
+All twelve arming events across the voided trees were examined in `wall_ms`
+order. **The first arming ever recorded saw `table_before` in PASS mode:**
+
+```
+arming #1  (VOID-marker-and-stale-provider)  ...-r19
+    table_before: 0 1048576 flakey 7:0 0 1 0 2 error_reads error_writes
+    table_after : 0 1048576 flakey 7:0 0 0 1 1 drop_writes
+arming #2  (same tree)                       ...-r0
+    table_before: 0 1048576 flakey 7:0 0 0 1 1 drop_writes
+```
+
+So:
+
+1. **Provisioning restored correctly.** The device was handed over in pass mode,
+   and the first run to arm found it that way. §3.2's phrasing invited the
+   reading that provisioning left it dropping; it did not.
+2. **"The first run" was not the first run.** The `r0` §3.2 cites is the first
+   run of the *last* voided tree. That tree's device arrived already dropping
+   from the tree before it. The genuinely first arming, in an earlier tree, was
+   clean.
+
+### What it means for contamination
+
+**In the voided trees, run 1 is contaminated too — not only the runs after it.**
+The device was already dropping before `r0` began, so `r0`'s pre-fault portion
+also ran under write loss. §3.2 did not say this either way and it should have.
+
+**In a clean single collection the picture differs**: provisioning hands over a
+device in pass mode, run 1 begins clean and only runs 2..N inherit the previous
+run's arming. The observed pattern is worse than the general case because
+several collections ran back-to-back against one device.
+
+Both cases are now prevented: the per-run restore returns the device to pass
+mode before each run arms, and the abort in `drop_writes_on_device` refuses any
+run that still finds it dropping.

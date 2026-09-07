@@ -208,6 +208,41 @@ def pause_then_kill(container: str, *, timeout: float = 30.0) -> dict[str, Any]:
     }
 
 
+#: The mechanisms that kill the Redis *server*.
+#:
+#: ``restart_after_hard_kill`` restarts the container and then verifies the
+#: server actually died, via ``uptime_in_seconds``. That verification is only
+#: meaningful for a fault that kills: under ``write-loss`` Redis keeps running
+#: by design -- the device stops accepting writes while the server keeps serving
+#: reads -- so the check can never pass and would refuse every run.
+SERVER_KILLING_MECHANISMS = frozenset({MECHANISM_KILL, MECHANISM_PAUSE_THEN_KILL})
+
+#: The mechanisms that do NOT kill the server. Membership of this set, rather
+#: than absence from the set above, is what skips the restart -- so an unknown or
+#: misspelled mechanism is treated as killing and the guard fires, instead of
+#: silently skipping a verification that should have run.
+NON_KILLING_MECHANISMS = frozenset({MECHANISM_WRITE_LOSS})
+
+
+def mechanism_kills_server(mechanism: str | None = None) -> bool:
+    """Does the configured fault kill the server?
+
+    Read from the environment exactly as :func:`killer_for` reads it, and for
+    the same reason: the mechanism lives in the environment so that no collected
+    run's ``config_digest`` moves. A ``RunConfig`` field would change the digest
+    of all 432 frozen matrix runs against ``docs/32``'s generation-aware check.
+
+    Unknown mechanisms are treated as killing, which is the conservative
+    direction: the guard fires, the run is refused, and the operator is told --
+    rather than silently skipping a verification that should have run.
+    """
+    if mechanism is None:
+        mechanism = os.environ.get(REDIS_FAULT_MECHANISM_VARIABLE)
+    if mechanism in (None, ""):
+        return True  # the default mechanism is MECHANISM_KILL
+    return mechanism not in NON_KILLING_MECHANISMS
+
+
 def killer_for(mechanism: str | None) -> Callable[[str], dict[str, Any]]:
     """Resolve the named mechanism, refusing anything unrecognised.
 

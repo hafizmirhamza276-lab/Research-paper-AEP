@@ -66,6 +66,10 @@ from experiments.harness.injector import (
 )
 from experiments.harness.redis_kill import (
     CANARY_PREFIX,
+    MECHANISM_WRITE_LOSS,
+    REDIS_FAULT_MECHANISM_VARIABLE,
+    WRITE_LOSS_DEVICE_VARIABLE,
+    mechanism_kills_server,
     REDIS_KILL_CONTAINER_VARIABLE,
     REDIS_KILL_DELAY_VARIABLE,
     REDIS_KILL_EXECUTIONS_VARIABLE,
@@ -525,6 +529,32 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
 
         # Worker slots run concurrently; each is a serial chain of lifetimes,
         # so a thread per slot is the whole of the concurrency needed here.
+        # WS-4. The device returns to pass mode BEFORE this run arms, so every
+        # run begins clean. Without it the first run's arming leaves the device
+        # dropping and every later run's pre-fault portion also runs under write
+        # loss -- a different experiment from the one the regime declares, and
+        # one that completes and looks like data.
+        #
+        # The abort in `drop_writes_on_device` stays as the backstop: this makes
+        # the common case correct, that makes a failure loud.
+        if config.redis_kill_point and os.environ.get(
+            REDIS_FAULT_MECHANISM_VARIABLE
+        ) == MECHANISM_WRITE_LOSS:
+            from experiments.harness import write_loss
+
+            device = os.environ.get(WRITE_LOSS_DEVICE_VARIABLE, "").strip()
+            if device:
+                restored = write_loss.restore_pass_mode(device)
+                log.emit(
+                    "write_loss_restored",
+                    device=device,
+                    table_before=restored.table_before,
+                    table_after=restored.table_after,
+                    still_dropping=restored.armed,
+                    error=restored.error,
+                    restore_ms=restored.arm_ms,
+                )
+
         await asyncio.gather(
             *(
                 asyncio.to_thread(run_worker_slot, config, index, log)
@@ -538,7 +568,13 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
         # (settling, recovery, classification) reads Redis, so the restart has
         # to happen here and has to be verified before anything believes what
         # it reads.
-        if config.redis_kill_point:
+        # The comment above states the premise: a worker killed Redis and
+        # cannot have restarted it. That premise is FALSE for a fault class that
+        # does not kill -- under write loss Redis keeps running, so the
+        # verification inside `restart_after_hard_kill` (uptime_in_seconds shows
+        # the server died) can never pass and refuses every run. The restart is
+        # therefore conditional on the fault class actually killing the server.
+        if config.redis_kill_point and mechanism_kills_server():
             canary_key = f"{CANARY_PREFIX}{config.run_id}"
             kill_record = await restart_after_hard_kill(
                 config, redis_client=redis_client, canary_key=canary_key
