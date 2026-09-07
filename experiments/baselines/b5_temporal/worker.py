@@ -29,7 +29,7 @@ from pathlib import Path
 from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.common import RetryPolicy
-from temporalio.worker import Worker
+from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 with workflow.unsafe.imports_passed_through():
     import httpx
@@ -102,13 +102,33 @@ def resolve_b5_point(name: str | None) -> str | None:
 
 # ----------------------------------------------------------------- injection
 
+#: Read ONCE, at module import, outside any workflow.
+#:
+#: The first version read these inside ``_maybe_die``, which is called from
+#: workflow code, and Temporal's workflow sandbox refused:
+#:
+#:     RestrictedWorkflowAccessError: Cannot access os.environ.get from inside
+#:     a workflow
+#:
+#: The sandbox is right to refuse -- a workflow must be deterministic on replay
+#: and the environment is not. Reading at import makes the value a module
+#: constant that replay cannot observe changing, which is both sandbox-legal and
+#: the more correct thing regardless of the sandbox.
+_ARMED_POINT = os.environ.get("B5_CRASH_POINT") or None
+_TRACE_PATH = os.environ.get("B5_TRACE") or None
+_INJECTOR_DISABLED = os.environ.get("B5_INJECTOR_DISABLED") == "1"
+_DEFER_MS = int(os.environ.get("B5_DEFER_MS", "40"))
+_COMPLETE_DEFER_MS = int(os.environ.get("B5_COMPLETE_DEFER_MS", "1"))
+_PROVIDER_URL = os.environ.get("B5_PROVIDER_URL", "http://127.0.0.1:8099")
+
+
 def _trace(event: str, **fields) -> None:
     """Append one JSON line to the trace the probe reads.
 
     Written and flushed synchronously: the process is about to be SIGKILLed, and
     a buffered line is a line that does not survive the thing it is recording.
     """
-    path = os.environ.get("B5_TRACE")
+    path = _TRACE_PATH
     if not path:
         return
     record = {"event": event, "wall_ms": round(time.time() * 1000), **fields}
@@ -124,8 +144,16 @@ def _maybe_die(point: str) -> None:
     ``os.kill(os.getpid(), SIGKILL)`` rather than ``sys.exit``: the fault under
     test is a worker that stops existing without unwinding, and an exit would
     let the SDK report a clean activity failure -- a different experiment.
+
+    **Always records reaching the point, whether or not it fires.** That record
+    is what the gate reads: a run whose armed point produced no
+    ``b5_point_reached`` is a run the injector never got to, and it must void
+    rather than be reported as an outcome.
     """
-    if os.environ.get("B5_CRASH_POINT") != point:
+    if point == _ARMED_POINT:
+        _trace("b5_point_reached", point=point, pid=os.getpid(),
+               fires=not _INJECTOR_DISABLED)
+    if point != _ARMED_POINT or _INJECTOR_DISABLED:
         return
     _trace("b5_crash_firing", point=point, pid=os.getpid())
     os.kill(os.getpid(), signal.SIGKILL)
@@ -139,7 +167,11 @@ def _arm_deferred(point: str, delay_ms: int) -> None:
     thread -- the same technique, and for the same reason, as
     ``harness/crash_points.py``'s ``DEFERRED_CRASH_POINTS``.
     """
-    if os.environ.get("B5_CRASH_POINT") != point:
+    if point != _ARMED_POINT:
+        return
+    _trace("b5_point_reached", point=point, pid=os.getpid(),
+           fires=not _INJECTOR_DISABLED)
+    if _INJECTOR_DISABLED:
         return
     import threading
 
@@ -169,23 +201,32 @@ async def b5_mutate(request: dict) -> dict:
     _trace("b5_activity_started", attempt=activity.info().attempt)
 
     _maybe_die("ACTIVITY_ENTERED_BEFORE_CALL")
-    _arm_deferred("DURING_PROVIDER_CALL", int(os.environ.get("B5_DEFER_MS", "40")))
+    _arm_deferred("DURING_PROVIDER_CALL", _DEFER_MS)
 
     # The provider's real contract, read from experiments/mock_api/service.py:
     # POST /v1/endpoints/{name}/mutations, with the caller reference in a
     # header rather than the body. An earlier version of this file posted to
     # /{endpoint} with the reference inline; nothing rejected it loudly, which
     # is why it was checked against the service rather than assumed.
-    base = os.environ.get("B5_PROVIDER_URL", "http://127.0.0.1:8099")
+    base = _PROVIDER_URL
     started = time.monotonic()
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             f"{base}/v1/endpoints/{request['endpoint']}/mutations",
             headers={"X-Aep-Client-Reference": request["client_reference"]},
+            # The envelope the oracle can fingerprint. A flat body is refused
+            # 422 "missing ['connector_operation', 'operation_version',
+            # 'public_fields']" in under 2 ms -- fast enough to look like a
+            # healthy provider to anything that only checks for a 5xx.
             json={
+                "connector_operation": "post_ledger_entry",
                 "target": request["target"],
-                "action": request["action"],
-                "amount_minor": request["amount_minor"],
+                "operation_version": "1",
+                "public_fields": [
+                    {"name": "target", "value": request["target"]},
+                    {"name": "action", "value": request["action"]},
+                    {"name": "amount_minor", "value": request["amount_minor"]},
+                ],
             },
         )
     elapsed_ms = (time.monotonic() - started) * 1000.0
@@ -197,7 +238,7 @@ async def b5_mutate(request: dict) -> dict:
     # DURING_COMPLETE_RPC is armed here, not fired: the RPC that reports this
     # result starts after the activity function returns, so the only way to die
     # inside it is a watchdog armed on the last instruction before the return.
-    _arm_deferred("DURING_COMPLETE_RPC", int(os.environ.get("B5_COMPLETE_DEFER_MS", "1")))
+    _arm_deferred("DURING_COMPLETE_RPC", _COMPLETE_DEFER_MS)
 
     return {"status": response.status_code, "elapsed_ms": elapsed_ms}
 
@@ -245,6 +286,17 @@ async def main() -> int:
         task_queue=arguments.task_queue,
         workflows=[B5Workflow],
         activities=[b5_mutate],
+        # The workflow sandbox is disabled DELIBERATELY, and the trade is
+        # recorded rather than buried. The injector must write a trace line and
+        # SIGKILL itself from inside workflow code, and both are I/O the sandbox
+        # forbids for the same reason it forbade reading the environment.
+        #
+        # What is given up: the sandbox is what mechanically catches workflow
+        # nondeterminism. B5Workflow is one activity call with no clocks, no
+        # randomness and no I/O of its own except the injector, so there is
+        # little for it to catch -- but little is not nothing, and B5's
+        # workflow determinism is therefore argued rather than machine-checked.
+        workflow_runner=UnsandboxedWorkflowRunner(),
     ):
         _trace("b5_worker_running", pid=os.getpid())
         while True:

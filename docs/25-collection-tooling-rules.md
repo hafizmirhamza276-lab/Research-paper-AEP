@@ -509,3 +509,73 @@ command line, so *"is it still running?"* answered yes forever. Here it is a
 scanner miscounting its own matches. Both are tools reporting confidently about
 something they never actually measured, and in both the report is what gets
 believed.
+
+## R14. Hold the checking code to the standard of the code it checks.
+
+**Five instances now, four of them in a single session.** It has stopped being an
+observation and become the most reliable defect generator in this project, so it
+is a rule.
+
+The shape is always the same: the instrument is written quickly *because it is
+"just" a check*, and then it becomes the thing every other conclusion is believed
+on. In every instance below the defect surfaced only because a result looked
+wrong against something already known by hand — **never** because the instrument
+caught it.
+
+### The instances
+
+1. **The anonymity scan** (`docs/25` R13, `309c4e5`). `C=$(grep -c … || echo 0)`
+   made every clean needle read as a hit, because `grep -c` prints `0` *and*
+   exits 1. Noisy in that direction; one refactor from a scan that reports clean
+   for everything.
+2. **The DocInfo regex, written to replace it.** `(.+?)` with `re.S` ran past its
+   own `)` onto the next key's, reporting every empty field as populated. Caught
+   only because it failed on a PDF verified clean by hand ten minutes earlier.
+3. **The rule-13 proof** (`309c4e5`). `prove_anonymous_gate.sh` asserted by
+   *re-running* the checker rather than on the output it had just printed — so it
+   asserted about a run it had not shown. The R13 shape, inside the proof written
+   to justify R13.
+4. **The WS-4 verification script** (`856d78a` §3). Compared two greps with
+   *different patterns* and reported a difference that did not exist, inside the
+   check that the fix had produced no false result.
+5. **The WS-6 probe** (`a54940a`, and again the pass after it). Its readiness
+   check could say *"not ready"* but never *"I am asking the wrong question"*: it
+   polled `/healthz`, which does not exist, reported `000`, and the probe
+   **proceeded anyway**. Then its latency sampler counted any non-5xx as a
+   healthy sample, so 30 consecutive `422 unidentifiable-envelope` refusals
+   returned in under 2 ms were recorded as a provider p50 of 8.6 ms — against a
+   provider configured with a **2 s** delay. The measurement was not merely
+   imprecise; it was of the rejection path.
+
+### The rule
+
+A checking instrument must be able to report **three** outcomes, not two:
+
+* the thing is there,
+* the thing is not there,
+* **I could not look, or I looked in the wrong place.**
+
+An instrument that can only express the first two will express the second when
+the third is true, and the second is usually the answer that lets work proceed.
+
+Concretely, and each of these is one of the five above:
+
+* **Never let `not found` and `could not ask` render the same.** Verify the probe
+  against a **known positive** before trusting any negative (R2 applied to
+  searches).
+* **Assert on the output you showed**, not on a fresh invocation of the same
+  command (instance 3).
+* **Compare like with like** — if two extracts are to be diffed, build them with
+  the same expression (instance 4).
+* **Check the success shape, not the absence of an error shape.** `< 500` is not
+  success; `2xx` is (instance 5).
+* **A readiness check must fail closed and say which** — `paper_provenance`
+  already states this for artefacts: *"I could not read it" and "it is unchanged"
+  must never render the same*. It applies to every probe.
+
+### Relation to the existing rules
+
+**R3** requires a gate be exercised on its failing branch; **R13** says a gate
+that cannot fail is decoration. R14 is the same demand pointed one level up: the
+*checker* is also code, it also has a failing branch, and nothing in R3 or R13
+compels anyone to exercise it. These five instances are what that gap produced.
