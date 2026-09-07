@@ -197,6 +197,36 @@ def read_table(device: str, *, timeout: float = 10.0) -> str | None:
     return completed.stdout.strip() or None
 
 
+def _reload_table(device: str, table: str, *, timeout: float) -> str | None:
+    """suspend -> reload -> resume, resuming even if the reload fails.
+
+    Returns an error string, or ``None`` on success.
+
+    **The resume is in a `finally` on purpose.** An earlier version returned
+    early when the reload failed and left the device SUSPENDED; a suspended dm
+    device blocks every I/O against it, so the next mount hung forever rather
+    than erroring. A collection would have hung the same way -- silently, with no
+    progress and no failure. Found by the proof that forces a reload to fail.
+    """
+    suspended = _dmsetup(["suspend", device], timeout=timeout)
+    if suspended.returncode != 0:
+        return f"dmsetup suspend failed: {suspended.stderr.strip()[:200]}"
+    try:
+        reloaded = _dmsetup(["reload", device, "--table", table], timeout=timeout)
+        if reloaded.returncode != 0:
+            return f"dmsetup reload failed: {reloaded.stderr.strip()[:200]}"
+    finally:
+        resumed = _dmsetup(["resume", device], timeout=timeout)
+        if resumed.returncode != 0:
+            # Nothing can be done about it here, but it must not be silent: the
+            # device is unusable and every later step will block.
+            print(
+                f"WARNING: dmsetup resume failed for {device}; the device is "
+                f"left SUSPENDED and will block I/O: {resumed.stderr.strip()[:200]}"
+            )
+    return None
+
+
 def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
     """Flip ``device`` into ``drop_writes``: the fault, at the checkpoint.
 
@@ -242,21 +272,14 @@ def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
     drop_table = " ".join([*head, offset, "0", "1", "1", DROP_FEATURE])
 
     try:
-        for step in (["suspend", device],
-                     ["reload", device, "--table", drop_table],
-                     ["resume", device]):
-            completed = _dmsetup(step, timeout=timeout)
-            if completed.returncode != 0:
-                return WriteLossRecord(
-                    device=device, table_before=before, table_after=read_table(device),
-                    armed=False, arm_ms=int((time.monotonic() - started) * 1000),
-                    error=f"dmsetup {step[0]} failed: {completed.stderr.strip()[:200]}",
-                )
+        failure = _reload_table(device, drop_table, timeout=timeout)
     except Exception as error:  # noqa: BLE001
+        failure = f"{type(error).__name__}: {error}"
+    if failure is not None:
         return WriteLossRecord(
             device=device, table_before=before, table_after=read_table(device),
             armed=False, arm_ms=int((time.monotonic() - started) * 1000),
-            error=f"{type(error).__name__}: {error}",
+            error=failure,
         )
 
     after = read_table(device)
@@ -268,4 +291,74 @@ def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
         # commands returned 0.
         armed=table_declares_drop(after),
         arm_ms=int((time.monotonic() - started) * 1000),
+    )
+
+def pass_mode_table(table: str) -> str | None:
+    """The pass-through table for whatever ``table`` currently describes.
+
+    ``up=1, down=0`` with no features: the device passes every read and write
+    through untouched. Built from the live geometry rather than from a
+    remembered string, so a restore cannot reinstate a stale length or offset.
+    """
+    if not table:
+        return None
+    fields = table.split()
+    if FLAKEY_TARGET not in fields:
+        return None
+    target_at = fields.index(FLAKEY_TARGET)
+    head = fields[: target_at + 2]
+    offset = fields[target_at + 2] if len(fields) > target_at + 2 else "0"
+    return " ".join([*head, offset, "1", "0"])
+
+
+def restore_pass_mode(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
+    """The inverse of :func:`arm_drop_writes`. Checked, and read back.
+
+    ``arm_drop_writes`` had no counterpart, so a run that armed left the device
+    armed and every later run began with the fault already delivered. That is
+    not a run that measures the fault late -- it is a run whose *pre-fault*
+    portion also ran under write loss, which is a different experiment from the
+    one the regime declares.
+
+    ``armed`` is ``False`` on success here: the field means "the device is
+    dropping writes", so a successful restore clears it. Every dmsetup step is
+    checked and the table is re-read, because issuing a reload and the reload
+    taking effect are different events -- the same distinction ``arm_drop_writes``
+    makes, and the one an unchecked restore silently loses.
+    """
+    started = time.monotonic()
+    before = read_table(device)
+    target = pass_mode_table(before or "")
+    if target is None:
+        return WriteLossRecord(
+            device=device, table_before=before, table_after=before, armed=False,
+            arm_ms=int((time.monotonic() - started) * 1000),
+            error=f"cannot build a pass-mode table for {device!r} from {before!r}",
+        )
+
+    try:
+        failure = _reload_table(device, target, timeout=timeout)
+    except Exception as error:  # noqa: BLE001
+        failure = f"{type(error).__name__}: {error}"
+    if failure is not None:
+        after = read_table(device)
+        return WriteLossRecord(
+            device=device, table_before=before, table_after=after,
+            armed=table_declares_drop(after),
+            arm_ms=int((time.monotonic() - started) * 1000),
+            error=failure,
+        )
+
+    after = read_table(device)
+    still_dropping = table_declares_drop(after)
+    return WriteLossRecord(
+        device=device,
+        table_before=before,
+        table_after=after,
+        armed=still_dropping,
+        arm_ms=int((time.monotonic() - started) * 1000),
+        error=(
+            f"restore reported success but the table still declares drop_writes: {after!r}"
+            if still_dropping else None
+        ),
     )

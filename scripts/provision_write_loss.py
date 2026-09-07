@@ -41,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from experiments.harness.write_loss import (  # noqa: E402
     arm_drop_writes,
     read_table,
+    restore_pass_mode,
     table_declares_drop,
 )
 
@@ -63,6 +64,11 @@ class SelfTest:
     drop_mode_survived: bool | None = None
     table_pass: str | None = None
     table_drop: str | None = None
+    #: The table READ BACK after the self-test restores pass mode -- not the one
+    #: read before arming. The two differ exactly when the restore failed, which
+    #: is the case that used to pass silently.
+    table_pass_restored: str | None = None
+    restore_ok: bool | None = None
     valid: bool = False
     reason: str = "not run"
 
@@ -102,15 +108,27 @@ def self_test(device: str, mount: Path) -> SelfTest:
 
     _write_probe(mount, "selftest-after", "written after the cut\n")
     run("umount", str(mount))
-    run("dmsetup", "suspend", device)
-    run("dmsetup", "reload", device, "--table", result.table_pass or "")
-    run("dmsetup", "resume", device)
+
+    # The restore is CHECKED and READ BACK. Three unchecked dmsetup calls used
+    # to stand here and the verdict below did not consult them: a reload that
+    # failed left the device dropping and the gate still returned valid=True, so
+    # provisioning could hand a session a device that was already armed.
+    restored = restore_pass_mode(device)
+    result.table_pass_restored = restored.table_after
+    result.restore_ok = (restored.error is None) and not restored.armed
+
     if run("mount", f"/dev/mapper/{device}", str(mount)).returncode != 0:
         result.reason = "could not remount after the drop-mode write"
         return result
     result.drop_mode_survived = (mount / "selftest-after").exists()
 
-    if not result.pass_mode_survived:
+    if not result.restore_ok:
+        result.reason = (
+            "the self-test could not restore pass mode "
+            f"({restored.error or 'the table still declares drop_writes'}); the "
+            "device would have been handed to the session already armed"
+        )
+    elif not result.pass_mode_survived:
         result.reason = "a synced write in pass mode did not survive: device is broken"
     elif result.drop_mode_survived:
         result.reason = (
@@ -155,8 +173,11 @@ def provision(root: Path) -> int:
 
     print(json.dumps(record, indent=2, sort_keys=True))
     print()
-    print(f"table (pass): {outcome.table_pass}")
-    print(f"table (drop): {outcome.table_drop}")
+    print(f"table (pass, before arming): {outcome.table_pass}")
+    print(f"table (drop, armed)        : {outcome.table_drop}")
+    # Read back from the device rather than remembered: this is the line that
+    # tells a reader what the session is actually being handed.
+    print(f"table (pass, RESTORED)     : {outcome.table_pass_restored}")
     print(f"self-test   : {'PASS' if outcome.valid else 'FAIL'} -- {outcome.reason}")
 
     if not outcome.valid:

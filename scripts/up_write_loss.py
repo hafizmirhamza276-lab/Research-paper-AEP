@@ -52,6 +52,12 @@ OVERRIDE_COMPOSE = "compose.write-loss.yml"
 
 CONTAINER = "aep-phase2-redis72"
 
+#: Rule 9: the harness refuses destructive cleanup against an instance that has
+#: not asserted it is disposable. A freshly provisioned device is empty, so this
+#: marker -- which lived in the `redis-data` volume -- is necessarily absent, and
+#: every write-loss session would otherwise abort on its first run.
+TEST_INSTANCE_MARKER = "aep:test-instance-marker"
+
 
 class Refused(RuntimeError):
     """A precondition failed, so the session does not start."""
@@ -211,6 +217,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"compose up failed: {completed.stderr.strip()[:400]}", file=sys.stderr)
             return 1
         print("stack up")
+
+    # Rule 9. Asserted only for the Redis this script just pointed at a
+    # provisioned flakey device -- a throwaway loop device created seconds ago --
+    # and never for an arbitrary instance.
+    marked = run("docker", "exec", CONTAINER, "redis-cli", "-n", "15",
+                 "SET", TEST_INSTANCE_MARKER, "1")
+    if marked.returncode != 0:
+        print(f"could not set {TEST_INSTANCE_MARKER}: {marked.stderr.strip()[:200]}",
+              file=sys.stderr)
+        return 1
+    print(f"{TEST_INSTANCE_MARKER}: set (rule 9)")
 
     try:
         for finding in verify_running_stack(record):

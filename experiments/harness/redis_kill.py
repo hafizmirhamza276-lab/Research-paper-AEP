@@ -256,6 +256,29 @@ def drop_writes_on_device(container: str) -> dict[str, Any]:
             "command_ms": 0,
         }
 
+    # A run whose device is ALREADY dropping did not have its fault delivered
+    # late -- its pre-fault portion ran under write loss too, which is a
+    # different experiment from the one this regime declares. Refuse it rather
+    # than arm an already-armed device and produce a run that completes and
+    # looks like data.
+    existing = write_loss.read_table(device)
+    if write_loss.table_declares_drop(existing):
+        return {
+            "issued": False,
+            "mechanism": MECHANISM_WRITE_LOSS,
+            "device": device,
+            "table_before": existing,
+            "table_after": existing,
+            "armed": True,
+            "error": (
+                "the device was already in drop_writes when this run reached the "
+                "fault point, so the run's pre-fault portion also ran under write "
+                "loss. Restore the device to pass mode between runs; a run that "
+                "begins armed is not the experiment this regime declares."
+            ),
+            "command_ms": 0,
+        }
+
     record = write_loss.arm_drop_writes(device)
     return {
         "issued": record.armed,
