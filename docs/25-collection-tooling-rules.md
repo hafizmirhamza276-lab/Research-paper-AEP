@@ -283,6 +283,50 @@ A stray mapping is not merely untidy. The next session provisions a device with
 the same name, and `dmsetup create` against an existing name fails — or worse,
 succeeds against a different backing file than the record names.
 
+### R8a. A teardown that follows a *failure* preserves the container first.
+
+R8 as first written does not distinguish teardown-after-success from
+teardown-after-failure. The second has an evidence obligation the first does not.
+
+On **2026-09-04** a write-loss collection aborted on all 60 runs and the device
+was torn down immediately afterwards — correctly, by R8 as it then stood. The
+teardown ran `docker compose up` on the base file, which **recreated the
+container**, and the only log that would have shown Redis's state at the moment
+of the abort went with it. Two subsequent diagnostic passes could not recover it;
+one of them read `RestartCount`, `OOMKilled` and `ExitCode` off the *replacement*
+container and drew conclusions the rows did not support.
+
+**Before tearing down after a failure, capture what the teardown will destroy:**
+
+```sh
+docker inspect "<container>"            > inspect-at-failure.json
+docker logs    "<container>"            > logs-at-failure.log   # by ID, not name
+docker events --since <window-start>    > events-at-failure.log
+```
+
+Then tear down and verify per R8. The device is reproducible; the container's log
+is not.
+
+### R8b. Return the stack to the base compose file *before* unmounting.
+
+A container holding `/data` bound into the device's mount keeps that mount busy.
+`umount` fails, `dmsetup remove` fails, and — because neither return code is
+checked by default — **the teardown reports success over a device that is still
+there**. That is R8's own failure mode, produced by ordering rather than by
+neglect.
+
+The order that works:
+
+1. `docker compose -f compose.phase2.yml up -d --wait` — base file **alone**,
+   never `-v`. This re-points `/data` at the named volume and releases the bind.
+2. unmount, `dmsetup remove`, `losetup -d`.
+3. verify per R8.
+
+Found in `cf12884`'s own `teardown_on_refusal` — new code, written by the author
+of R8, in the same session R8 was written. The read-back proof caught it: the
+function printed `torn down` while `dmsetup ls` still listed the mapping. R8
+tells you to check; R8b tells you why the check will otherwise fail.
+
 ## R9. Known flake: `test_a_kill_after_commit_keeps_both_and_tells_the_caller_nothing`
 
 **Observed once, 2026-09-04**, in the full-suite run immediately preceding commit
@@ -304,3 +348,58 @@ signal about the collection's fault delivery, not dismissed by pointing at this
 entry. The zero-skip gate (`scripts/check_pytest_gates.py`) makes any failure
 loud, which is the desired behaviour; this entry does not license suppressing
 it.
+
+---
+
+## R10. Finding: on the write-loss regime the test-instance marker lives only in RAM.
+
+**A finding, not a fix.** Recorded so it is not rediscovered as a surprise.
+
+`aep:test-instance-marker` is the key rule 9 requires an instance to advertise
+before the harness will run destructive cleanup against it. Under
+`write-loss-preack` the instance is brought up on a **freshly provisioned
+dm-flakey device whose AOF is empty**, so a marker set after provisioning exists
+in memory and nowhere else. **Any restart during a collection loses it, and every
+remaining run aborts.**
+
+The six frozen regimes never meet this. Their Redis loads the `redis-data`
+volume's AOF, which already carries the marker from an earlier set, so it
+survives restarts without anyone having arranged for it to.
+
+**It fails in the safe direction.** A lost marker makes runs *abort*, not
+proceed: the harness refuses rather than running destructive cleanup against an
+instance that has not asserted it is disposable. The cost is a wasted collection,
+not a contaminated one.
+
+**A durable marker is not obviously available here**, which is why this is a
+finding rather than a fix. The AOF the marker would have to live in is the same
+AOF the experiment exists to destroy — the fault *is* writes not reaching that
+device. Seeding it into the base RDB before the collection starts is the most
+plausible route and has not been designed, let alone tested.
+
+`cf12884` narrowed the adjacent problem — the marker is now set by container id
+and read back through the runner's own client, so a marker the *consumer* cannot
+see stops the session. That closes the write/consumer gap. It does **not** make
+the marker durable.
+
+## R11. The 2026-09-04 dates on several WS-4 artefacts are wrong.
+
+These files carry `2026-09-04` in their names or bodies and were written later:
+
+* `reports/phase-report-ws4-prediction-2026-09-04.md` (the pre-registration, `d8b2ca5`)
+* `reports/raw/ws4-fault-delivery-assessment.md`
+* `reports/phase-report-14-write-loss-blocked-2026-09-04.md`
+* **R9 above**, whose "Observed once, 2026-09-04" is subject to the same drift
+
+The date was carried forward from Phase 13 and the host clock was not checked
+until a directory had to be named, at which point it read **2026-09-07**.
+
+**Git's timestamps and commit order are correct and authoritative.** Nothing
+about what was done, or in what order, is in question — only the strings.
+
+**The files are deliberately not renamed.** `d8b2ca5` is cited by commit in the
+pre-registration, in `scripts/analyse_write_loss.py`, in the phase-14 prompt file
+and in several reports; renaming the artefact a pre-registration lives in is a
+worse defect than a wrong date, because a pre-registration's value is that it can
+be shown unchanged. Read the dates in those four artefacts as approximate and the
+commit history as exact.
