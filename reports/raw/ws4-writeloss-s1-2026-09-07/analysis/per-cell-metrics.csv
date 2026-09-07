@@ -1,0 +1,13 @@
+metric,regime,system,crash_point,response_class,readback_keying,successes,total,rate,runs,ci_low,ci_high,resamples,bootstrap_seed,clusters,observations
+undetected_duplicate_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+known_ambiguity_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,49,300,0.16333333333333333,30,0.12333333333333334,0.20333333333333334,10000,20260806,30,300
+lost_effect_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+unverified_failure_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+state_corruption_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+recovery_success_rate,redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,0,0,0.0,30,0.0,0.0,0,20260806,30,0
+undetected_duplicate_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+known_ambiguity_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,61,300,0.20333333333333334,30,0.16,0.24666666666666667,10000,20260806,30,300
+lost_effect_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+unverified_failure_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+state_corruption_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+recovery_success_rate,redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,0,0,0.0,30,0.0,0.0,0,20260806,30,0

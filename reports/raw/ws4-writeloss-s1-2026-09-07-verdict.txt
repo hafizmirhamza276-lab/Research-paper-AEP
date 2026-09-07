@@ -1,0 +1,23 @@
+=== WS-4 write-loss verdict: writeloss-s1-2026-09-07-a5 ===
+
+--- the estimand, per arm ---
+  AEP_FULL               applied  285/300  = 0.9500  lost=0 dupes=0
+  B3_INTENT_NO_BARRIER   applied  287/300  = 0.9567  lost=0 dupes=0
+
+--- per-run applied effects (the run is the unit, rule 6) ---
+  AEP_FULL               n= 30 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] ...
+  B3_INTENT_NO_BARRIER   n= 30 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] ...
+
+--- which Redis behaviour was observed ---
+  SILENT_APPEND_FAILURE
+    aep_full_runs_examined: 30
+    durability_acks_after_the_fault: 300
+    post_fault_failures: 0
+    post_fault_wait_ms_median: None
+
+--- verdict ---
+  numbers : REFUTED
+    - AEP-full applied 285/300 = 0.9500, above the refutation threshold 0.2
+    - B3 applied 287/300 = 0.9567: at ceiling
+
+  READING : REFUTED, and the third Redis behaviour was observed: WAITAOF acknowledged after the device stopped accepting writes. Whatever the numbers say, they were not produced by the mechanism the prediction describes.

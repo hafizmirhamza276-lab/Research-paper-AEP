@@ -403,3 +403,56 @@ and in several reports; renaming the artefact a pre-registration lives in is a
 worse defect than a wrong date, because a pre-registration's value is that it can
 be shown unchanged. Read the dates in those four artefacts as approximate and the
 commit history as exact.
+
+## R12. A provider process orphaned on port 8099 survives teardown and fails the next session.
+
+**Observed twice**, both times after a teardown that reported success.
+
+* **Attempt 3.** A `kill -9` of the run left `experiments.mock_api` still
+  listening. The next launch failed on the digest gate.
+* **Attempt 5, first collecting launch.** A provider from attempt 4's run
+  `b3_...-r23` was still on `127.0.0.1:8099`, twenty minutes after that
+  collection ended. **All 60 runs failed**, in five seconds:
+
+  > `MockApiStartupError: a provider is already serving http://127.0.0.1:8099
+  > with digest 'b6ccbf3c...', but this run needs '80b14f45...'. Refusing to
+  > collect a run against a configuration it did not ask for.`
+
+**This is a teardown gap, not a gate failure.** The gate did exactly what it is
+for: it refused, loudly, per run, naming both digests, rather than collecting 60
+runs against a configuration they did not ask for. Had it not existed, attempt 5
+would have produced a full-looking session measured against the wrong mock API.
+Nothing about the gate should change.
+
+What was missing is that **nothing owned the listening process**. R8 verifies the
+device is gone. R8a preserves the container after a failure. R8b returns the
+stack to the base compose file before unmounting. All three are about the device
+and the container; a provider is neither, and it outlives both.
+
+**The rule.** A teardown is not complete until the port is verified free:
+
+```bash
+ss -lptn 'sport = :8099' | grep -q LISTEN && { <kill the pid, then re-check> }
+```
+
+Verify, do not assert (R8's standard applies unchanged): re-read the port after
+killing, and refuse to collect if it is still held. Attempt 5's launcher does
+this as a pre-flight check and exits rather than collecting into a gate storm.
+
+### R12a. Unexplained container restarts, third occurrence, not chased
+
+At attempt 5's teardown both containers read `Up 14 seconds`: **something
+restarted them after the collection had ended.** This is the third occurrence of
+the class `reports/raw/ws4-sigterm-bound-2026-09-07.md` bounds — attempt 4's
+SIGTERM, the non-recurrence in the Part 2 observation cycle, and now this.
+
+**It did not touch the data.** The newest file anywhere under the results root is
+`matrix-progress.jsonl`, written at the instant `run_matrix` returned 0; nothing
+was written afterwards. Independently, `coordinator_restarted_unexpectedly` is
+`False` in all 60 rows and the 2 s marker sampler recorded a single container id
+throughout.
+
+**Deliberately not chased.** The origin is unestablished and stays that way. What
+removed it as a blocker was making the marker durable (`a994023`), so a restart
+no longer destroys it — not an explanation. Recorded here so a fourth occurrence
+is recognised as a pattern rather than met fresh.

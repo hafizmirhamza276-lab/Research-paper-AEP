@@ -261,6 +261,27 @@ loss may be made from a cut WS-4, in either direction. A cell that could not be
 collected is not evidence that the barrier does or does not withhold dispatch;
 it is an absence, and §VIII already says so.
 
+### What counts as a spent attempt
+
+**An attempt is a session that collects run data.** A launch that aborts before
+any run directory exists is not an attempt: nothing was measured, so nothing
+about the host was learned that a count of attempts is meant to accumulate.
+
+Attempt 5 had **two such launches** and neither was counted. The first died on a
+wrong compose path with the prior cycle's device still live, so `dmsetup create`
+refused; the second was killed by a stale provider on 8099 that failed all 60
+runs on the `config_digest` gate in five seconds (**R12**). Both produced zero
+run directories. The third launch collected 60/60.
+
+**This definition is written after the fact**, on 2026-09-07, after attempt 5
+completed — it is not a threshold set in advance, and it is recorded here so that
+it is visible as such rather than presented as if it had always been fixed. What
+makes it usable anyway is that it is **not outcome-dependent**: it turns on
+whether run data exists, which was settled before any outcome was read, and it
+**matches how the two launches were actually counted at the time**. Had it been
+written to rescue a failed attempt after seeing a result, it would be worth
+nothing.
+
 ### Why a count and not a deadline
 
 The failures so far were three *different* causes — a missing marker, a stale
