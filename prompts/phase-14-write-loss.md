@@ -5,7 +5,7 @@ commit, per `docs/26-journal-readiness-direction.md` §3 rule 4.
 
 **WS-4 was issued as a sequence of bounded prompts rather than one**, each
 gating the next, so all of them are recorded here in the order they were given.
-Rule 12 (*one bounded task per prompt*) is why there are eleven rather than one. Prompts 1-6 were recorded at `a207dc4`; 7-11 were appended before this phase's first data commit, which is the same rule applied a second time.
+Rule 12 (*one bounded task per prompt*) is why there are seventeen rather than one. Prompts 1-6 were recorded at `a207dc4`; 7-11 at `ed1c7ff`; 12-17 before this phase's first data commit, which is the same rule applied a second time.
 
 The pre-registration (`reports/phase-report-ws4-prediction-2026-09-04.md`, commit
 `d8b2ca5`, pushed before any data) is a **prediction** and satisfies rule 5. It
@@ -280,6 +280,158 @@ is for.
 >
 > Stop when the data is committed and pushed. No analysis, no verdict, paper
 > untouched.
+
+## Prompt 12 — diagnose the restart
+
+> Establish why Redis restarted. Diagnose only. Change nothing, fix nothing,
+> collect nothing.
+>
+> The marker is a Redis key, so an empty AOF wipes it. The missing marker is a
+> symptom; the restart is the thing.
+>
+> Discriminate between candidates, do not name one: docker inspect
+> (RestartCount, State.StartedAt, FinishedAt, ExitCode, OOMKilled), and whether
+> this is the same container id up_write_loss.py created or a recreated one; the
+> container's own log across the window; compose's restart: unless-stopped, and
+> what it was restarting from; whether /data was still the bind at the moment of
+> the restart; the 512MB backing file and ext4 -- dmesg, free space, errors.
+>
+> Report which candidates the evidence rules OUT, not only the one it favours.
+> If it cannot decide, say so and say what would.
+
+## Prompt 13 — settle the marker statically
+
+> Settle the marker question statically before instrumenting anything. Read only.
+> No re-run, no collection, no fix.
+>
+> The restart is ruled out as the cause -- the marker was already gone at t+3s.
+> So the question is why the guard found nothing where it looked.
+>
+> Establish which database up_write_loss.py sets the marker on, and which
+> database the collection's redis_url selected. State both, with the lines. If
+> they differ, show the marker present on one index and absent on the other, on a
+> live instance. If they match, say so plainly and the static route is exhausted.
+>
+> Whichever it is, note that up_write_loss.py did a read-back and the read-back
+> passed. A read-back that queries the same endpoint as the write cannot detect
+> this class of fault. It confirms the write, not the agreement.
+
+## Prompt 14 — the instrumented re-run
+
+> Instrumented diagnostic re-run. Diagnose only. Do not collect, do not fix, and
+> do not tear down before the evidence is captured.
+>
+> First, note that the previous pass's docker inspect rows were read from the
+> container created at 08:05:42, not the one the collection ran on. They do not
+> rule out what they were used to rule out.
+>
+> Run the smallest thing that reproduces the abort. Two runs, not sixty. Its
+> output must not land anywhere that could later be read as a collection.
+>
+> Capture to files that outlive the container: docker events from before
+> provisioning; docker logs -f teed; docker inspect after bring-up and after run
+> 1 with the container id both times; EXISTS on the marker, db 15, sampled every
+> second. The sampling is the measurement.
+>
+> Then inspect. Only then tear down, and verify per R8.
+
+## Prompt 15 — fix the marker, make the gate able to fail
+
+> Fix the marker and make the gate able to fail. Do not collect.
+>
+> Set the marker by container id, captured after compose up --wait returns, not
+> by name. Read it back through the runner's own path -- Redis.from_url on the
+> same redis_url the runner will use -- not through docker exec. Make a failed
+> read-back refuse: exit non-zero, tear the device down, say the session does not
+> run.
+>
+> Prove it can fail, on a real device, with the device gone afterward.
+>
+> State why the undemonstrated cause does not block this: reading back through
+> the runner's own client makes this entire class of fault impossible whatever
+> produced it, and if the abort recurs afterwards that is itself evidence the
+> cause lies outside the class.
+>
+> Do not fix the memory-only marker here. Record it as a finding.
+
+## Prompt 16 — the documentation pass
+
+> Documentation pass. No code changes.
+>
+> Extend R8 in docs/25 with two clauses, both earned since it was written: a
+> teardown that follows a failure preserves the container first; and return the
+> stack to the base compose file before unmounting.
+>
+> Record the memory-only marker as a finding, not a fix. Note that it fails in
+> the safe direction and that a durable marker is not obviously available, since
+> the AOF it would live in is the one the experiment destroys.
+>
+> Record the date drift: the pre-registration, the fault-delivery assessment, the
+> phase-14 report and R9 carry 2026-09-04 and were written later. Do not rename
+> d8b2ca5's artifacts, which are cited by commit.
+
+## Prompt 17 — the collection, fourth attempt (this one)
+
+> Collect WS-4, the write-loss cell. Fourth attempt. Nothing else.
+>
+> Two obligations before any data commit. Rule 4: append the prompts issued since
+> ed1c7ff, verbatim, corrections alongside. And one paragraph in the phase-14
+> report naming the condition under which WS-4 is cut. Arm B was cancelled
+> explicitly and on the record rather than deferred silently; WS-4 has no
+> equivalent written down. Name it now -- a number of further failed attempts, or
+> a class of defect that would mean this host cannot deliver this fault. Write it
+> while no data exists, because it cannot be written credibly once a partial
+> session is sitting there.
+>
+> Then collect exactly what d8b2ca5 pre-registered: 60 runs, 30 x 10, both arms,
+> ledger_postings only, under REGIME_WRITE_LOSS_PREACK, into a new dated
+> directory carrying today's real date, not 2026-09-04. Follow the pre-registered
+> stopping rule as written.
+>
+> Launch with nohup setsid. Record the environment. Do not run the test suite
+> against the Redis being collected on. Record the per-run cost; do not
+> back-solve the estimator.
+>
+> Do NOT run analyse_write_loss.py. Read the run count and the abort reasons if
+> any, and nothing else.
+>
+> R10 applies: if a restart loses the marker, void on the run count alone before
+> looking at any outcome. R9 applies. R8, R8a and R8b apply to teardown -- if
+> this ends in a failure, capture inspect, logs by id, and events before anything
+> is torn down.
+>
+> Stop when the data is committed and pushed.
+
+---
+
+# Notes recorded with prompts 12-17, not applied silently
+
+**Prompt 12's framing was overturned by its own evidence.** It said *"the missing
+marker is a symptom; the restart is the thing."* The diagnosis established the
+opposite: the marker was already absent ~3 s after launch, and the restart it
+named happened at the collection's **end**. The 232-second uptime the previous
+report cited was measured after the collection stopped. The restart is not the
+cause.
+
+**Prompt 13's premise was false.** It said *"up_write_loss.py did a read-back and
+the read-back passed."* It did not read back at all — it checked the exit code of
+`redis-cli SET`. The prompt's *point* held and was sharper than stated: what was
+there confirmed the command ran, not that any key existed. Prompt 15 then made
+the read-back real.
+
+**Prompt 14 corrected a defect in my own previous diagnosis**, and the correction
+stands: `RestartCount`, `OOMKilled` and `ExitCode` had been read off the
+replacement container, so they did not rule out what they were used to rule out.
+`dmesg` and disk-free were host-level and did stand.
+
+**Prompt 15's fix contained the defect prompt 16 then wrote a rule about.** Its
+`teardown_on_refusal` printed `torn down` while the mapping survived, because the
+container still held the bind. Caught by the fix's own proof, and now `docs/25`
+R8b.
+
+**Prompt 17 requires the cut condition to be written before data exists.** It is
+§10 of `reports/phase-report-14-write-loss-blocked-2026-09-04.md`, committed in
+the same commit as these prompts and before any collection.
 
 ---
 

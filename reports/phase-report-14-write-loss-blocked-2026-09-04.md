@@ -206,3 +206,66 @@ several collections ran back-to-back against one device.
 Both cases are now prevented: the per-run restore returns the device to pass
 mode before each run arms, and the abort in `drop_writes_on_device` refuses any
 run that still finds it dropping.
+
+---
+
+## 10. The condition under which WS-4 is cut
+
+**Written 2026-09-07, before the fourth collection attempt, while no write-loss
+data exists.** It is recorded now precisely because it cannot be written credibly
+once a partial session is sitting on disk: a threshold chosen with an outcome in
+view is not a threshold.
+
+Phase 13 cancelled Arm B **explicitly and on the record** rather than letting it
+lapse. WS-4 has had three failed attempts and no equivalent statement. This is it.
+
+### WS-4 is cut if either holds
+
+**(a) Two further complete attempts fail.** Counting from the fourth attempt,
+if attempts 5 and 6 also fail to produce a full 60-run session, WS-4 stops. That
+is three consecutive failures *after* the instrument was completed and its two
+known defects fixed — the post-fault guard (`4d0fc84`) and the marker read-back
+(`cf12884`). Three failures past that point is not bad luck; it is the host
+telling us something.
+
+**(b) A defect of the class "this host cannot deliver this fault" appears.**
+Specifically any of:
+
+* non-delivery above the pre-registered **5%** threshold across a session
+  (`d8b2ca5` §5), which already voids the session and, if it recurs, voids the
+  cell;
+* Redis cannot be kept alive on a `dm-flakey` device for a full session —
+  distinct from (a), because it would be a *reproducible* property of the
+  configuration rather than an intermittent failure;
+* R10's memory-only marker proves unfixable without a durable AOF. The AOF the
+  marker would live in is the one the fault destroys, so if no route is found
+  that does not defeat the experiment, the regime cannot run reliably on this
+  host by construction.
+
+### What being cut means
+
+WS-4 is **not** silently dropped:
+
+* §VIII-A(b)'s *"we have not done it"* sentence **stands and remains true** — it
+  was never removed, so nothing has to be walked back;
+* `docs/24` B1 stays **open**, with this report as the record of what was built,
+  what was attempted, and what stopped it;
+* the instrument stays in the tree. It is complete, tested, and its defects are
+  documented; a second host — which `docs/24` B1 says is *required* for B1's
+  fault delivery to be trustworthy at all — could run it unchanged;
+* the pre-registration `d8b2ca5` stays unmodified and unused, still the
+  prediction for whenever the cell is collected.
+
+**What being cut does not license.** No claim about protocol outcomes under write
+loss may be made from a cut WS-4, in either direction. A cell that could not be
+collected is not evidence that the barrier does or does not withhold dispatch;
+it is an absence, and §VIII already says so.
+
+### Why a count and not a deadline
+
+The failures so far were three *different* causes — a missing marker, a stale
+provider, and a post-fault guard that could not accept a non-killing fault. Each
+was found and fixed. A time limit would have cut the workstream while it was
+still converging. A **count of attempts after the instrument was complete** is
+the honest test: it asks whether the remaining failures are still teaching us
+something, and three that are not is enough.
