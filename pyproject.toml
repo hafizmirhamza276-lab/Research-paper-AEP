@@ -51,6 +51,18 @@ experiments = [
 analysis = [
     "matplotlib>=3.9",
 ]
+# WS-6 / B5 only: the real Temporal SDK, for the vendor-engine baseline.
+#
+# Its own extra rather than an addition to `experiments`, deliberately. Every
+# frozen cell in this paper was collected with the `experiments` extra resolved
+# as it is today; adding a dependency there would change the environment of the
+# collection paths that produced results already in the manuscript, for the sake
+# of a baseline none of them use. `b5` is installed only when B5 is being built
+# or run, and `aep_core` must never import it -- the same rule `experiments`
+# already follows.
+b5 = [
+    "temporalio>=1.7,<2",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

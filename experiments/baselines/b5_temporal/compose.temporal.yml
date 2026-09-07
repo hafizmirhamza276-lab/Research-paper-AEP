@@ -1,17 +1,20 @@
 # WS-6 / B5 — Temporal server for the real-durable-execution baseline.
 #
-# DESIGN ONLY. This stack has NOT been brought up and these images have NOT been
-# pulled. Nothing in this pass ran.
+# Brought up on 2026-09-07 to close WS-6's five open questions by measurement.
+# NO DATA HAS BEEN COLLECTED against it; see the open-questions report.
 #
-# ---------------------------------------------------------------------------
-# THESE ARE TAGS, NOT PINS. THIS FILE IS NOT READY TO COLLECT AGAINST.
-# ---------------------------------------------------------------------------
-# The rest of this project pins by digest -- redis/phase2 runs a digested image
-# precisely so a rebuild cannot silently change the system under test. A version
-# tag is mutable and is not a pin. Before ANY B5 data is collected, each image
-# below must be resolved to a sha256 digest and that digest committed, in the
-# same commit-before-data discipline the pre-registration follows.
-# Recorded as open question 1 in B5_SEMANTICS.md section 7.
+# PINNED BY DIGEST 2026-09-07T12:36:38Z (WS-6 open question 1, closed).
+# Each tag below was pulled and its digest read back from the image store, the
+# same form compose.phase2.yml uses for redis and toxiproxy. The digests are
+# load-bearing: a tag is mutable, so an unpinned rebuild could silently change
+# the system under test between sessions.
+#
+#   postgres:16.3                -> sha256:d0f363f8366f...baf609
+#   temporalio/auto-setup:1.24.2 -> sha256:10e8c557ace5...ef25c
+#   temporalio/ui:2.26.2         -> sha256:bb9e9bc2ecb4...b88bc
+#
+# The proof that these pins RESOLVE is that this stack was brought up from this
+# file; see reports/phase-report-ws6-open-questions-2026-09-07.md Q1.
 #
 # Port choices avoid every port the existing stacks use: Redis 6381,
 # toxiproxy 8474/8666, mock provider 8099.
@@ -24,7 +27,7 @@ services:
   # on: sharing it would put the engine's history in the store whose failure
   # modes other cells inject, and no result from either would mean anything.
   b5-postgres:
-    image: postgres:16.3          # TODO(pin): resolve to sha256 before collecting
+    image: postgres:16.3@sha256:d0f363f8366fbc3f52d172c6e76bc27151c3d643b870e1062b4e8bfe65baf609
     container_name: aep-ws6-postgres
     environment:
       POSTGRES_USER: temporal
@@ -46,7 +49,7 @@ services:
 
   # ------------------------------------------------------------------ server
   b5-temporal:
-    image: temporalio/auto-setup:1.24.2   # TODO(pin): resolve to sha256
+    image: temporalio/auto-setup:1.24.2@sha256:10e8c557ace5fa4aa99217637e7b9969316e89b929a3bfb117853a5417eef25c
     container_name: aep-ws6-temporal
     depends_on:
       b5-postgres:
@@ -75,7 +78,7 @@ services:
   # a log, and attempt 4 of WS-4 showed how expensive it is to lack a view of
   # what the system actually did. Not required for collection.
   b5-temporal-ui:
-    image: temporalio/ui:2.26.2   # TODO(pin): resolve to sha256
+    image: temporalio/ui:2.26.2@sha256:bb9e9bc2ecb4962f43ef72b7f03a3d3f22f0df3eb5ec7c409bcae3d0135b88bc
     container_name: aep-ws6-temporal-ui
     depends_on:
       b5-temporal:
