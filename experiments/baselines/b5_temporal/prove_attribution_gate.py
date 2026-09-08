@@ -70,58 +70,63 @@ async def main() -> int:
     out = Path("/var/tmp/b5-gate-proof")
     out.mkdir(parents=True, exist_ok=True)
     provider = "http://127.0.0.1:8099"
-    mock_config = load_config(Path("/var/tmp/b5-probe/mock-api.yaml"))
-    real_ledger = Path("/var/tmp/b5-probe/ground_truth.sqlite3")
+    TEMPLATE = Path("/var/tmp/b5-probe/mock-api.yaml")
 
-    print("=== branch A: the run's own ledger ===", flush=True)
-    a_root = out / "A"
-    a_config = _config(f"gate-a-{uuid.uuid4().hex[:6]}", a_root)
-    a = await collect.run_once(
-        config=a_config,
-        mock_api_config=mock_config, results_dir=a_config.results_dir,
-        crash_point="ACTIVITY_ENTERED_BEFORE_CALL", provider_url=provider,
-        deadline_s=90, ledger_path=real_ledger,
-    )
-    print(f"  verdict={a['verdict']}  attribution_usable={a['attribution_usable']}",
-          flush=True)
-    print(f"  {a['attribution_reason'][:160]}", flush=True)
+    print("=== branch A: this run's OWN ledger (per-run provider) ===", flush=True)
+    a_config = _config(f"gate-a-{uuid.uuid4().hex[:6]}", out / "A")
+    a_dir = a_config.results_dir
+    a_dir.mkdir(parents=True, exist_ok=True)
+    # The requirement the gate itself surfaced: a ledger belonging to ONE run.
+    # The previous attempt pointed branch A at the shared probe ledger, which
+    # held 129 rows from days of earlier runs, and the gate correctly voided it.
+    a_provider = collect.RunProvider(a_dir, template=TEMPLATE, port=8099)
+    if not a_provider.start():
+        print("  provider for branch A never became healthy", flush=True)
+        return 4
+    try:
+        a = await collect.run_once(
+            config=a_config, mock_api_config=load_config(a_provider.config_path),
+            results_dir=a_dir, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+            provider_url=a_provider.url, deadline_s=90,
+            ledger_path=a_provider.ledger_path,
+        )
+    finally:
+        a_provider.stop()
+    print(f"  verdict={a['verdict']}  attribution_usable={a['attribution_usable']}", flush=True)
+    print(f"  {a['attribution_reason'][:170]}", flush=True)
 
-    print("\n=== branch B: a ledger this run's plan cannot explain ===", flush=True)
-    b_root = out / "B"
+    print("", flush=True)
+    print("=== branch B: a ledger this run's plan cannot explain ===", flush=True)
+    b_config = _config(f"gate-b-{uuid.uuid4().hex[:6]}", out / "B")
+    b_dir = b_config.results_dir
+    b_dir.mkdir(parents=True, exist_ok=True)
+    b_provider = collect.RunProvider(b_dir, template=TEMPLATE, port=8099)
+    if not b_provider.start():
+        print("  provider for branch B never became healthy", flush=True)
+        return 4
     stray = out / "stray-ledger.sqlite3"
     stray.unlink(missing_ok=True)
-    # A ledger with rows from targets no plan of this run contains: build it by
-    # pointing at an empty database the reconciler can open but whose rows (none)
-    # do not match, then force the mismatch by using a ledger from a DIFFERENT
-    # run id whose targets differ.
     from experiments.mock_api.ledger import GroundTruthLedger
-
     ledger = GroundTruthLedger(stray)
     ledger.initialise()
     try:
         ledger.record_applied_mutation(
-            call_id="stray-call",
-            endpoint="ledger_postings",
-            target="target-from-another-run",
-            fingerprint=_STRAY_DIGEST,
-            payload_digest=_STRAY_DIGEST,
-            client_reference="not-in-this-plan",
-            response_class="NO_READBACK",
-            delivery_index=1,   # must be positive (ledger.py:356)
-            applied_at_ms=1,
+            call_id="stray-call", endpoint="ledger_postings",
+            target="target-from-another-run", fingerprint=_STRAY_DIGEST,
+            payload_digest=_STRAY_DIGEST, client_reference="not-in-this-plan",
+            response_class="NO_READBACK", delivery_index=1, applied_at_ms=1,
         )
     finally:
         ledger.close()
-
-    b_config = _config(f"gate-b-{uuid.uuid4().hex[:6]}", b_root)
-    b = await collect.run_once(
-        config=b_config,
-        mock_api_config=mock_config, results_dir=b_config.results_dir,
-        crash_point="ACTIVITY_ENTERED_BEFORE_CALL", provider_url=provider,
-        deadline_s=90, ledger_path=stray,
-    )
-    print(f"  verdict={b['verdict']}  attribution_usable={b['attribution_usable']}",
-          flush=True)
+    try:
+        b = await collect.run_once(
+            config=b_config, mock_api_config=load_config(b_provider.config_path),
+            results_dir=b_dir, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+            provider_url=b_provider.url, deadline_s=90, ledger_path=stray,
+        )
+    finally:
+        b_provider.stop()
+    print(f"  verdict={b['verdict']}  attribution_usable={b['attribution_usable']}", flush=True)
     print(f"  {b['attribution_reason'][:200]}", flush=True)
 
     print("\n=== rule 13 ===", flush=True)

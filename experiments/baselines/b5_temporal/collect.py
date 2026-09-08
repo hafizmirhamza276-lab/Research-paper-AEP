@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import time
 import uuid
 from dataclasses import dataclass
@@ -41,6 +42,7 @@ from pathlib import Path
 
 from experiments.baselines.b5_temporal.gate import (
     AttributionStatus,
+    RunVerdict,
     classify,
 )
 from experiments.baselines.b5_temporal.supervisor import WorkerSupervisor
@@ -118,8 +120,59 @@ async def run_once(
     respawn_enabled: bool = True,
     ledger_path: Path | None = None,
 ) -> dict:
-    """One B5 run: drive the workflow, then reconcile it with B4's reconciler."""
+    """One B5 run: drive the workflow, then reconcile it with B4's reconciler.
+
+    ``crash_point`` is B5's own vocabulary and must be the point this run's
+    label -- ``config.crash_point``, a roadmap name -- resolves to. A run whose
+    two disagree is refused **here**, before a worker is spawned or a provider is
+    called, so no caller can produce one: the defect this guards against is a
+    driver that arms one point for every cell while labelling the cells
+    differently, and it is invisible in the run's own output.
+    """
+    # Imported here, not at module scope: ``worker`` pulls in the Temporal SDK,
+    # and this module is imported by tests and readers that must not need it.
     from temporalio.client import Client
+
+    from experiments.baselines.b5_temporal.worker import resolve_b5_point
+
+    # The label's own resolution, through B5's registered mapping. Raises
+    # B5CrashPointNotApplicable for a moment B5 does not have, which is the
+    # behaviour ``resolve_b5_point`` exists to give and must not be caught here.
+    expected_point = resolve_b5_point(config.crash_point)
+    if crash_point is not None and crash_point != expected_point:
+        results_dir.mkdir(parents=True, exist_ok=True)
+        verdict = classify(
+            armed_point=crash_point, expected_point=expected_point,
+            settled=False, worker_ready=False, events=[],
+        )
+        record = {
+            "run_id": config.run_id,
+            "system": config.system.value,
+            "crash_point": config.crash_point or "none",
+            "armed_point": crash_point,
+            "expected_point": expected_point,
+            "response_class": mock_api_config.endpoint(
+                config.endpoint
+            ).response_class.value,
+            "verdict": RunVerdict.VOID_CRASH_POINT_MISMATCH.value,
+            "reason": verdict.reason,
+            "executions": 0,
+            "attribution_usable": False,
+            "attribution_reason": "not run: the label and the fault disagree",
+            "start_to_close_ms": START_TO_CLOSE_MS,
+            "undetected_duplicate_applications": None,
+            "lost_effect_executions": None,
+            "declared_ambiguous": None,
+        }
+        (results_dir / "b5-run.json").write_text(
+            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
+        )
+        return record
+
+    #: What the injector is actually armed at. ``None`` stays ``None`` -- an
+    #: explicitly unarmed run is a legitimate configuration and must not be
+    #: silently armed from its label.
+    armed_point = crash_point
 
     results_dir.mkdir(parents=True, exist_ok=True)
     events_path = results_dir / "events.jsonl"
@@ -215,18 +268,26 @@ async def run_once(
 
     trace = results_dir / "trace.jsonl"
     names: list[str] = []
+    # The POINT each reach names, not merely that a reach happened. Reading only
+    # the event name is what let a trace naming the wrong point read as success.
+    reached_points: list[str] = []
     if trace.exists():
         for line in trace.read_text(errors="replace").splitlines():
             try:
-                names.append(json.loads(line)["event"])
-            except (ValueError, KeyError):
-                pass
+                entry = json.loads(line)
+                names.append(entry["event"])
+            except (ValueError, KeyError, TypeError):
+                continue
+            if entry["event"] == "b5_point_reached" and "point" in entry:
+                reached_points.append(entry["point"])
 
     verdict = classify(
-        armed_point=crash_point,
+        armed_point=armed_point,
+        expected_point=expected_point,
         settled=bool(outcomes),
         worker_ready=worker_ready,
         events=names,
+        reached_points=reached_points,
         worker_deaths=supervisor.state.deaths,
         respawns=supervisor.state.respawns,
         attribution=status,
@@ -235,7 +296,11 @@ async def run_once(
     record = {
         "run_id": config.run_id,
         "system": config.system.value,
-        "crash_point": crash_point or "none",
+        # The run's LABEL, in the roadmap vocabulary the tables are keyed on --
+        # not the injected point, which is B5's own name for it. These were the
+        # same string only because one crash point was ever collected.
+        "crash_point": config.crash_point or "none",
+        "armed_point": armed_point or "none",
         "response_class": mock_api_config.endpoint(config.endpoint).response_class.value,
         "verdict": verdict.verdict.value,
         "reason": verdict.reason,
@@ -275,3 +340,73 @@ def append_session_record(session_root: Path, record: dict) -> None:
     session_root.mkdir(parents=True, exist_ok=True)
     with (session_root / "b5-runs.jsonl").open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
+# --------------------------------------------------------- per-run provider
+#
+# WS-6's attribution gate voided a run against a ledger holding 129 rows from
+# days of earlier probe runs. That was the gate working, and it named a
+# requirement nobody had written down: **every run gets its own ledger**, as
+# every WS-4 run had its own ``ground_truth.sqlite3`` inside its run directory.
+# A shared ledger makes every run's effects unattributable to that run's plan,
+# which is exactly what the reconciler's join is for.
+
+
+class RunProvider:
+    """A mock provider with a ledger belonging to ONE run.
+
+    R1: the process is killed by the PID recorded when it started, never by
+    pattern. The port is checked free before binding and verified released
+    after, because an orphan on it would silently serve the next run (R12).
+    """
+
+    def __init__(self, results_dir: Path, template: Path, port: int = 8099):
+        self.results_dir = results_dir
+        self.template = template
+        self.port = port
+        self.ledger_path = results_dir / "ground_truth.sqlite3"
+        self.config_path = results_dir / "mock-api.yaml"
+        self._process = None
+
+    @property
+    def url(self) -> str:
+        return f"http://127.0.0.1:{self.port}"
+
+    def start(self, timeout_s: float = 90.0) -> bool:
+        import subprocess
+        import urllib.request
+
+        self.results_dir.mkdir(parents=True, exist_ok=True)
+        text = self.template.read_text(encoding="utf-8")
+        out = []
+        for line in text.splitlines():
+            if line.startswith("ledger_path:"):
+                out.append(f"ledger_path: {self.ledger_path}")
+            else:
+                out.append(line)
+        self.config_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+        self._process = subprocess.Popen(
+            [sys.executable, "-m", "experiments.mock_api",
+             "--config", str(self.config_path),
+             "--host", "127.0.0.1", "--port", str(self.port)],
+            stdout=subprocess.DEVNULL,
+            stderr=open(self.results_dir / "provider.err", "ab"),
+        )
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            try:
+                with urllib.request.urlopen(f"{self.url}/v1/health", timeout=3) as r:
+                    if r.status == 200:
+                        return True
+            except Exception:                                  # noqa: BLE001
+                time.sleep(0.5)
+        return False
+
+    def stop(self) -> None:
+        if self._process is not None and self._process.poll() is None:
+            self._process.kill()
+            try:
+                self._process.wait(timeout=10)
+            except Exception:                                  # noqa: BLE001
+                pass

@@ -39,6 +39,14 @@ class RunVerdict(str, Enum):
     PENDING_AT_DEADLINE = "PENDING_AT_DEADLINE"
     #: The injector never reached the armed point. NOT a measurement.
     VOID_INJECTOR_NEVER_REACHED = "VOID_INJECTOR_NEVER_REACHED"
+    #: The run's LABEL and the fault it actually took name different points.
+    #: NOT a measurement, and the one void here that cannot be detected by
+    #: looking at the run alone: every other verdict asks "did the instrument
+    #: work?", this one asks "did it do what this cell claims it did?". A run
+    #: labelled ``mid_dispatch`` that was cut at ``after_barrier_before_dispatch``
+    #: is internally consistent, settles normally, and produces a full row of
+    #: plausible numbers under the wrong heading.
+    VOID_CRASH_POINT_MISMATCH = "VOID_CRASH_POINT_MISMATCH"
     #: The point was reached but the kill did not fire. NOT a measurement.
     VOID_INJECTOR_DID_NOT_FIRE = "VOID_INJECTOR_DID_NOT_FIRE"
     #: The worker never came up. NOT a measurement.
@@ -60,6 +68,7 @@ class RunVerdict(str, Enum):
 
 VOID_VERDICTS = frozenset(
     {
+        RunVerdict.VOID_CRASH_POINT_MISMATCH,
         RunVerdict.VOID_INJECTOR_NEVER_REACHED,
         RunVerdict.VOID_INJECTOR_DID_NOT_FIRE,
         RunVerdict.VOID_WORKER_NEVER_READY,
@@ -97,12 +106,36 @@ def classify(
     worker_deaths: int = 0,
     respawns: int = 0,
     attribution: "AttributionStatus | None" = None,
+    expected_point: str | None = None,
+    reached_points: list[str] | None = None,
 ) -> GateResult:
     """Decide what a run was. ``events`` is the trace's event names, in order.
 
     ``settled`` means the workflow returned a result before the deadline.
+
+    ``expected_point`` is the point this run's **label** resolves to, and
+    ``reached_points`` the points the worker recorded reaching. Both are
+    optional so the existing callers that arm and label from a single value are
+    unaffected; where they are supplied, the run must agree with its own label.
     """
-    # Attribution is checked FIRST, before the run's own outcome is consulted.
+    # Identity before instrument, and before outcome. Every other verdict below
+    # asks whether the instrument worked. This one asks whether the run belongs
+    # to the cell it will be filed under, and there is no reading of a run that
+    # answers no: its attribution could be perfect and its numbers would still
+    # be published beneath the wrong crash point.
+    if (
+        armed_point is not None
+        and expected_point is not None
+        and armed_point != expected_point
+    ):
+        return GateResult(
+            RunVerdict.VOID_CRASH_POINT_MISMATCH,
+            f"this run is labelled for {expected_point!r} but the injector was "
+            f"armed at {armed_point!r}; the two name different moments, so "
+            f"whatever it measured does not belong to this cell",
+        )
+
+    # Attribution is checked next, before the run's own outcome is consulted.
     # A rate computed over unattributable effects is worse than no rate: it
     # looks like data.
     if attribution is not None and not attribution.usable:
@@ -127,7 +160,26 @@ def classify(
             "no crash point armed",
         )
 
-    reached = "b5_point_reached" in events
+    # The worker only traces a point it was armed at, so a point in the trace
+    # that is not the armed one means the process carried an arming this run did
+    # not ask for -- a stale environment, a shared worker, a respawn that
+    # re-armed. Checked before ``reached``, because otherwise a trace naming the
+    # wrong point still contains the right event name and reads as success.
+    if reached_points:
+        wrong = sorted({p for p in reached_points if p != armed_point})
+        if wrong:
+            return GateResult(
+                RunVerdict.VOID_CRASH_POINT_MISMATCH,
+                f"the injector was armed at {armed_point!r} but the worker "
+                f"recorded reaching {', '.join(repr(p) for p in wrong)}; the "
+                f"fault delivered is not the fault this run names",
+            )
+
+    reached = (
+        armed_point in reached_points
+        if reached_points is not None
+        else "b5_point_reached" in events
+    )
     fired = "b5_crash_firing" in events
 
     if not reached:
