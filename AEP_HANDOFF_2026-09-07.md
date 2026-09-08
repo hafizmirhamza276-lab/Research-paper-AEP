@@ -361,6 +361,20 @@ Rechecked; all six from the 09-04 file are still open and none has been acted on
   instant `run_matrix` returned 0, and `coordinator_restarted_unexpectedly` is
   `False` in all 60 rows. Deliberately not chased; recorded so a fourth
   occurrence is met as a pattern.
+- **The B5 primary session constrains its own outcome, and H1 compares two
+  different quantities.** Added 8 September;
+  `reports/phase-report-ws6-determinism-2026-09-08.md`. All 120 per-run provider
+  configs carry `seed: 20260908`, so every run replayed one fault stream and
+  three of four cells produced a single distinct count across 30 runs. Effective
+  n is one fault pattern, not 30 runs, and the zero-width intervals are not
+  uncertainty estimates. Separately, `analyse_b5_agreement.py` compares B5's
+  `undetected_duplicate_applications` against a frozen rate whose numerator is a
+  per-execution indicator; `undetected_duplicate_executions` is the matching
+  field and is present in all 120 per-run `summary.json`, so no recollection is
+  needed to correct it. **The `DISAGREES` reading does not yet support a claim
+  about B4.** Neither defect is fixed — the repair changes what is measured and
+  needs its own pre-registration.
+
 - **Two `VOID_WORKER_NEVER_READY` runs in the B5 primary session, unexplained.**
   Added 8 September, from `0c6bcf4`. Sequence positions 10 and 21, **both in the
   first cell** (`B5_TEMPORAL` / `ledger_postings`), both with an **empty
