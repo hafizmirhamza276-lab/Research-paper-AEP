@@ -291,6 +291,20 @@ by definition what the *second* attempt does. B4's harness respawns after
 `SIGKILL`, which is what makes its replay observable; B5 needs the equivalent.
 This is a prerequisite for collection that four earlier rounds did not surface.
 
+**Built 2026-09-08** as `supervisor.py`, following `runner.py:201`
+`run_worker_slot` — bounded lifetimes, the fault armed on attempt 1 only
+(`runner.py:244`, so a respawning arm does not take more faults than a
+non-respawning one), and every lifetime recorded. B4's `from_index` resume is
+deliberately **not** carried: what to re-execute is the engine's decision and is
+the thing under measurement.
+
+With it, the retry lands in **23.9–26.7 s** at Start-To-Close values of 2.5 s,
+4 s and 8 s — all COMPLETED, against PENDING_AT_DEADLINE at 150 s with zero
+provider calls without it. At 2.5 s the provider was called **twice**: the
+caller-caused duplicate, produced by the vendor's engine for the first time.
+The 120 s recovery deadline accommodates this with roughly fourfold margin, so
+it does not move for B5 and B5's runs stay comparable to B4's frozen ones.
+
 ---
 
 ## 7. Open questions for the collection pass

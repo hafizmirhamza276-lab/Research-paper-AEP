@@ -42,6 +42,9 @@ from temporalio.client import Client
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from experiments.baselines.b5_temporal.gate import classify  # noqa: E402
+from experiments.baselines.b5_temporal.supervisor import (  # noqa: E402
+    WorkerSupervisor,
+)
 
 HERE = Path(__file__).resolve().parent
 ALL_POINTS = (
@@ -158,33 +161,16 @@ async def run_one(
     deadline_s: float,
     injector_disabled: bool = False,
     retry_interval_ms: int = 200,
+    respawn_enabled: bool = True,
 ) -> dict:
     trace = OUT / "trace.jsonl"
     trace.write_text("", encoding="utf-8")
-    ready = OUT / "ready"
-    ready.unlink(missing_ok=True)
 
-    env = dict(os.environ)
-    env["B5_TRACE"] = str(trace)
-    env["B5_PROVIDER_URL"] = provider_url
-    env.pop("B5_CRASH_POINT", None)
-    env.pop("B5_INJECTOR_DISABLED", None)
-    if crash_point:
-        env["B5_CRASH_POINT"] = crash_point
-    if injector_disabled:
-        env["B5_INJECTOR_DISABLED"] = "1"
-
-    with open(OUT / "worker.err", "ab") as errlog:
-        worker = subprocess.Popen(
-            [sys.executable, str(HERE / "worker.py"), "--ready-file", str(ready)],
-            env=env, stdout=subprocess.DEVNULL, stderr=errlog,
-        )
-    worker_ready = False
-    for _ in range(400):
-        if ready.exists():
-            worker_ready = True
-            break
-        await asyncio.sleep(0.05)
+    sup = WorkerSupervisor(
+        out=OUT, crash_point=crash_point, provider_url=provider_url,
+        respawn_enabled=respawn_enabled, injector_disabled=injector_disabled,
+    )
+    worker_ready = sup.spawn(1)
 
     settled, result, elapsed = False, None, 0.0
     if worker_ready:
@@ -199,20 +185,29 @@ async def run_one(
             id=f"b5-probe-{uuid.uuid4()}", task_queue="b5-ws6",
         )
         started = time.monotonic()
-        try:
-            result = await asyncio.wait_for(handle.result(), timeout=deadline_s)
-            settled = True
-        except asyncio.TimeoutError:
+        waiter = asyncio.ensure_future(handle.result())
+        # Poll rather than a single wait_for: the supervisor has to notice the
+        # worker died and bring one back WHILE the workflow is outstanding.
+        while time.monotonic() - started < deadline_s:
+            done, _ = await asyncio.wait({waiter}, timeout=0.5)
+            if done:
+                break
+            sup.maintain()
+        if waiter.done():
+            try:
+                result, settled = waiter.result(), True
+            except Exception as exc:                           # noqa: BLE001
+                settled, result = True, f"FAILED:{type(exc).__name__}"
+        else:
+            waiter.cancel()
             settled = False
-        except Exception as exc:                               # noqa: BLE001
-            settled, result = True, f"FAILED:{type(exc).__name__}"
         elapsed = time.monotonic() - started
+        if not sup.alive():
+            # A death at the very end must still be counted, or a run that died
+            # and settled would look like one that never died.
+            sup.state.deaths = max(sup.state.deaths, 1)
 
-    worker.kill()
-    try:
-        worker.wait(timeout=10)
-    except Exception:                                          # noqa: BLE001
-        pass
+    sup.stop()
 
     names: list[str] = []
     if trace.exists():
@@ -222,7 +217,9 @@ async def run_one(
             except (ValueError, KeyError):
                 pass
     verdict = classify(armed_point=crash_point, settled=settled,
-                       worker_ready=worker_ready, events=names)
+                       worker_ready=worker_ready, events=names,
+                       worker_deaths=sup.state.deaths,
+                       respawns=sup.state.respawns)
     return {
         "verdict": verdict.verdict.value,
         "reason": verdict.reason,
@@ -233,6 +230,10 @@ async def run_one(
         "provider_calls": names.count("b5_provider_returned"),
         "reached": "b5_point_reached" in names,
         "fired": "b5_crash_firing" in names,
+        "spawns": sup.state.spawns,
+        "deaths": sup.state.deaths,
+        "respawns": sup.state.respawns,
+        "exhausted": sup.state.exhausted,
     }
 
 
@@ -342,6 +343,51 @@ async def main() -> int:
             save()
         return out
     await stage("q2b_retry_lands", retry_lands())
+
+    async def sup_proof():
+        """Rule 13 for the supervisor, both directions."""
+        out: dict = {}
+        on = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+                           maximum_attempts=0, start_to_close_ms=4000,
+                           provider_url=provider, deadline_s=120,
+                           respawn_enabled=True)
+        emit("A respawn ON", verdict=on["verdict"], void=on["is_void"],
+             deaths=on["deaths"], respawns=on["respawns"],
+             calls=on["provider_calls"], settled=on["settled"])
+        off = await run_one(client, crash_point="ACTIVITY_ENTERED_BEFORE_CALL",
+                            maximum_attempts=0, start_to_close_ms=4000,
+                            provider_url=provider, deadline_s=120,
+                            respawn_enabled=False)
+        emit("B respawn OFF", verdict=off["verdict"], void=off["is_void"],
+             deaths=off["deaths"], respawns=off["respawns"],
+             calls=off["provider_calls"])
+        say(f"    void reason: {off['reason'][:190]}")
+        out["respawn_on"], out["respawn_off"] = on, off
+        out["rule13_satisfied"] = bool(
+            (not on["is_void"]) and off["is_void"]
+            and off["verdict"] == "VOID_SUPERVISOR_NEVER_RESPAWNED"
+        )
+        emit("rule 13 supervisor", satisfied=out["rule13_satisfied"])
+        return out
+    await stage("q5d_supervisor_both_branches", sup_proof())
+
+    async def after_response():
+        """Q5c's remaining point, n=8, the treatment Q4 got."""
+        trials = []
+        for _ in range(8):
+            r = await run_one(client, crash_point="AFTER_RESPONSE_BEFORE_RETURN",
+                              maximum_attempts=1, start_to_close_ms=8000,
+                              provider_url=provider, deadline_s=45)
+            trials.append(r)
+            FINDINGS["q5c_after_response_n8"] = trials
+            save()
+        emit("AFTER_RESPONSE_BEFORE_RETURN", trials=len(trials),
+             reached=sum(1 for r in trials if r["reached"]),
+             fired=sum(1 for r in trials if r["fired"]),
+             with_provider_call=sum(1 for r in trials if r["provider_calls"] >= 1),
+             voids=sum(1 for r in trials if r["is_void"]))
+        return trials
+    await stage("q5c_after_response_n8", after_response())
 
     async def point6():
         trials: list[dict] = []

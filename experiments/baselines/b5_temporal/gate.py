@@ -43,6 +43,12 @@ class RunVerdict(str, Enum):
     VOID_INJECTOR_DID_NOT_FIRE = "VOID_INJECTOR_DID_NOT_FIRE"
     #: The worker never came up. NOT a measurement.
     VOID_WORKER_NEVER_READY = "VOID_WORKER_NEVER_READY"
+    #: The injected kill worked, but no worker was brought back, so the engine's
+    #: retry had nothing to poll. NOT a measurement --- and before this verdict
+    #: existed it was indistinguishable from ``PENDING_AT_DEADLINE``, which is
+    #: how three Start-To-Close values were all reported as deadline results
+    #: when in fact none of them was ever exercised.
+    VOID_SUPERVISOR_NEVER_RESPAWNED = "VOID_SUPERVISOR_NEVER_RESPAWNED"
 
 
 VOID_VERDICTS = frozenset(
@@ -50,6 +56,7 @@ VOID_VERDICTS = frozenset(
         RunVerdict.VOID_INJECTOR_NEVER_REACHED,
         RunVerdict.VOID_INJECTOR_DID_NOT_FIRE,
         RunVerdict.VOID_WORKER_NEVER_READY,
+        RunVerdict.VOID_SUPERVISOR_NEVER_RESPAWNED,
     }
 )
 
@@ -70,6 +77,8 @@ def classify(
     settled: bool,
     worker_ready: bool,
     events: list[str],
+    worker_deaths: int = 0,
+    respawns: int = 0,
 ) -> GateResult:
     """Decide what a run was. ``events`` is the trace's event names, in order.
 
@@ -111,7 +120,22 @@ def classify(
             f"injector was disabled or failed to fire",
         )
 
+    # The fault was delivered. Before the run may be called PENDING_AT_DEADLINE,
+    # the engine's retry must have had somewhere to run. Temporal schedules the
+    # retry onto a task queue; if the killed worker was never replaced there is
+    # nothing polling that queue, and the run cannot settle for a reason that has
+    # nothing to do with any timeout.
+    if (not settled) and worker_deaths > 0 and respawns == 0:
+        return GateResult(
+            RunVerdict.VOID_SUPERVISOR_NEVER_RESPAWNED,
+            f"the fault was delivered at {armed_point!r} and the worker died, "
+            f"but no worker was respawned: the engine's retry had no worker to "
+            f"poll, so this run measures the supervisor and not the engine. "
+            f"NOT a deadline result.",
+        )
+
     return GateResult(
         RunVerdict.COMPLETED if settled else RunVerdict.PENDING_AT_DEADLINE,
-        f"fault delivered at {armed_point!r}",
+        f"fault delivered at {armed_point!r}; "
+        f"worker deaths={worker_deaths}, respawns={respawns}",
     )
