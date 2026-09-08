@@ -161,6 +161,7 @@ async def run_once(
             "attribution_reason": "not run: the label and the fault disagree",
             "start_to_close_ms": START_TO_CLOSE_MS,
             "undetected_duplicate_applications": None,
+            "undetected_duplicate_executions": None,
             "lost_effect_executions": None,
             "declared_ambiguous": None,
         }
@@ -293,9 +294,27 @@ async def run_once(
         attribution=status,
     )
 
+    # The seed the provider ACTUALLY ran under, read back from the config that
+    # was rendered for it rather than restated from what the driver intended.
+    # A seed that varies in the driver but never reaches the provider is
+    # indistinguishable, in the outcome, from the fixed-seed defect this
+    # replaces -- so the record carries the value the provider was given.
+    provider_seed = None
+    rendered = results_dir / "mock-api.yaml"
+    if rendered.exists():
+        for line in rendered.read_text(encoding="utf-8").splitlines():
+            if line.startswith("seed:"):
+                try:
+                    provider_seed = int(line.split(":", 1)[1].strip())
+                except ValueError:
+                    provider_seed = None
+                break
+
     record = {
         "run_id": config.run_id,
         "system": config.system.value,
+        "seed": config.seed,
+        "provider_seed": provider_seed,
         # The run's LABEL, in the roadmap vocabulary the tables are keyed on --
         # not the injected point, which is B5's own name for it. These were the
         # same string only because one crash point was ever collected.
@@ -318,6 +337,17 @@ async def run_once(
                 "undetected_duplicate_applications": (
                     report.undetected_duplicate_applications
                 ),
+                # The EXECUTIONS-based count, which is what the frozen B4 rate
+                # is built from: analyze.py's numerator is
+                # int(execution.is_undetected_duplicate), a per-execution 0/1
+                # indicator. The applications count above is a different
+                # quantity -- an execution with three duplicate applications
+                # contributes 3 to it and 1 to this -- and comparing the two
+                # was H1's units defect. Both are written so the record says
+                # which is which rather than leaving the reader to infer it.
+                "undetected_duplicate_executions": (
+                    report.undetected_duplicate_executions
+                ),
                 "lost_effect_executions": report.lost_effect_executions,
                 "declared_ambiguous": report.declared_ambiguous_executions,
             }
@@ -327,6 +357,7 @@ async def run_once(
         # is already VOID_ATTRIBUTION_UNAVAILABLE and the fields are absent
         # rather than zero, so nothing downstream can average them in.
         record.update({"undetected_duplicate_applications": None,
+                       "undetected_duplicate_executions": None,
                        "lost_effect_executions": None,
                        "declared_ambiguous": None})
     (results_dir / "b5-run.json").write_text(
@@ -350,20 +381,47 @@ def append_session_record(session_root: Path, record: dict) -> None:
 # every WS-4 run had its own ``ground_truth.sqlite3`` inside its run directory.
 # A shared ledger makes every run's effects unattributable to that run's plan,
 # which is exactly what the reconciler's join is for.
+#
+# **And every run gets its own SEED.** The first version of this class rewrote
+# ``ledger_path`` and nothing else, so all 120 runs of the 2026-09-08 session
+# ran a provider seeded ``20260908``. ``MockLegacyAPI`` draws its three fault
+# decisions from one ``random.Random(config.seed)`` per process, so every run
+# replayed one fault stream: three of the four cells produced a single distinct
+# outcome across thirty runs, and the bootstrap correctly reported a zero-width
+# interval over thirty identical numbers.
+#
+# That is the ledger half of Session 3's D0(ii) lesson kept and the seed half
+# dropped -- and ``mock_api/supervisor.py`` had already written both down:
+#
+#     One provider process per run, one ledger per run, one freshly seeded
+#     generator per run. A run's fault stream is then a function of its seed
+#     alone, and its reconciliation sees only its own effects.
+#
+# So this now calls that module's ``render_config`` rather than hand-rolling a
+# line rewrite. Recorded in
+# ``reports/phase-report-ws6-determinism-2026-09-08.md``.
 
 
 class RunProvider:
-    """A mock provider with a ledger belonging to ONE run.
+    """A mock provider with a ledger AND a seed belonging to ONE run.
 
     R1: the process is killed by the PID recorded when it started, never by
     pattern. The port is checked free before binding and verified released
     after, because an orphan on it would silently serve the next run (R12).
     """
 
-    def __init__(self, results_dir: Path, template: Path, port: int = 8099):
+    def __init__(self, results_dir: Path, template: Path, port: int = 8099,
+                 seed: int | None = None):
         self.results_dir = results_dir
         self.template = template
         self.port = port
+        #: The provider's fault stream is a function of this alone. Passed by
+        #: the driver from the run's own ``RunConfig.seed``, so the run is
+        #: reproducible from its own record: re-running with the same seed
+        #: replays the same faults, and that is what the rule-13 proof asserts.
+        #: ``None`` leaves the template's seed in place, which is only correct
+        #: for a single-run probe and never for a collection.
+        self.seed = seed
         self.ledger_path = results_dir / "ground_truth.sqlite3"
         self.config_path = results_dir / "mock-api.yaml"
         self._process = None
@@ -372,19 +430,27 @@ class RunProvider:
     def url(self) -> str:
         return f"http://127.0.0.1:{self.port}"
 
+    def render(self) -> Path:
+        """Write this run's provider config. Separated from ``start`` so the
+        seed path can be tested without binding a port or spawning a process --
+        the defect it replaces was invisible precisely because nothing checked
+        the rendered config."""
+        from experiments.mock_api.supervisor import render_config
+
+        self.results_dir.mkdir(parents=True, exist_ok=True)
+        # render_config applies the overrides to the raw document and then
+        # loads the result through the strict loader, so a template typo fails
+        # here rather than inside a provider the runner has already started.
+        return render_config(
+            self.template, self.config_path,
+            ledger_path=self.ledger_path, seed=self.seed,
+        )
+
     def start(self, timeout_s: float = 90.0) -> bool:
         import subprocess
         import urllib.request
 
-        self.results_dir.mkdir(parents=True, exist_ok=True)
-        text = self.template.read_text(encoding="utf-8")
-        out = []
-        for line in text.splitlines():
-            if line.startswith("ledger_path:"):
-                out.append(f"ledger_path: {self.ledger_path}")
-            else:
-                out.append(line)
-        self.config_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+        self.render()
 
         self._process = subprocess.Popen(
             [sys.executable, "-m", "experiments.mock_api",

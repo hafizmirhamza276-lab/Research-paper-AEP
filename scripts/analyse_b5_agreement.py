@@ -9,6 +9,39 @@ credible for the same reason and no other.
 
 It applies `1fecb1f`'s pre-registration and nothing else.
 
+---
+
+**ONE CORRECTION WAS MADE AFTER DATA EXISTED, on 8 September 2026.** This is the
+single edit the ordering above exists to prevent, so it is recorded here in full
+rather than folded into a diff.
+
+* **What it was.** ``build_report`` mapped the frozen ``undetected_duplicate_rate``
+  onto B5's ``undetected_duplicate_applications``. The frozen numerator is
+  ``int(execution.is_undetected_duplicate)`` (``experiments/analyze.py:664``) --
+  a per-execution 0/1 indicator -- so H1 compared a count of *applications*
+  against a count of *executions*. It now reads
+  ``undetected_duplicate_executions``, the field the reconciler already computes
+  for exactly this. **H2 was already units-consistent and is unchanged.**
+* **What the script said before.** Against the 2026-09-08 session (`0c6bcf4`),
+  H1 read `DISAGREES` at both response classes: B5 `0.4000 [0.4000,0.4000]` vs
+  frozen `0.9333 [0.9000,1.0000]`, and B5 `0.4107 [0.4000,0.4214]` vs frozen
+  `0.9667 [0.9000,1.0000]`. Recorded verbatim in
+  ``reports/raw/ws6-b5-s1-2026-09-08/agreement.txt``, which is kept.
+* **What it says after.** Not yet run against any data. The corrected mapping is
+  committed *before* the collection it will read, and the session it would
+  change was collected by a harness now known to be defective in a second,
+  independent way, so re-reading it would answer nothing.
+* **Why this is not fitting the script to the result.** The mismatch was found
+  by reading ``analyze.py``'s numerator definitions against this file's mapping
+  while establishing why three of four B5 intervals were zero-width -- a
+  question about the *estimator*, not about the verdict. The correction moves
+  H1's B5 numerator **down** (3 where applications were 4 in 55 of 120 runs), so
+  it widens the gap that produced `DISAGREES` rather than narrowing it. It was
+  not made because the result was unwelcome; it makes an unwelcome result
+  slightly more unwelcome.
+* **Recorded in** ``reports/phase-report-ws6-determinism-2026-09-08.md`` §6 and
+  re-registered in ``reports/phase-report-ws6-prediction-corrected-2026-09-08.md``.
+
 **The three hypotheses** (pre-registration §1):
 
 * **H1** -- at the crash points B4 and B5 can *both* be cut at, B5 reproduces
@@ -368,8 +401,20 @@ def build_report(session: Path, repo: Path) -> dict:
 
     readings: list[CellReading] = []
     for hypothesis, (b5_arm, frozen_arm, metric) in HYPOTHESES.items():
+        # CORRECTED 2026-09-08, AFTER data existed. See the header note.
+        #
+        # The frozen numerators in analyze.py:664-670 are per-execution 0/1
+        # indicators -- int(execution.is_undetected_duplicate) and
+        # int(execution.is_lost_effect) -- so both sides must count EXECUTIONS.
+        #
+        #   H1 was wrong: it read undetected_duplicate_APPLICATIONS, a count of
+        #      applications, against B4's count of executions that had any
+        #      duplicate. An execution with three duplicate applications
+        #      contributes 3 on one side and 1 on the other.
+        #   H2 was already right and is UNCHANGED: lost_effect_executions is
+        #      already the executions-based field.
         metric_field = {
-            "undetected_duplicate_rate": "undetected_duplicate_applications",
+            "undetected_duplicate_rate": "undetected_duplicate_executions",
             "lost_effect_rate": "lost_effect_executions",
         }[metric]
         for (system, crash_point, response_class), cell_runs in sorted(by_cell.items()):

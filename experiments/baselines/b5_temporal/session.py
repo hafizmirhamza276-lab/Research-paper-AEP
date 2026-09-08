@@ -190,13 +190,21 @@ async def main() -> int:
             crash_point=entry["crash_point"],
         )
         results_dir = config.results_dir
-        provider = collect.RunProvider(results_dir, template=template, port=8099)
+        # The provider is seeded from THIS run's seed, so its fault stream is a
+        # function of the run's own record and nothing else. The 2026-09-08
+        # session left the template's fixed seed in place for all 120 runs, so
+        # every run replayed one fault stream and three of four cells produced a
+        # single distinct outcome across thirty runs.
+        provider = collect.RunProvider(results_dir, template=template, port=8099,
+                                       seed=config.seed)
         if not provider.start():
             record = {"run_id": run_id, "system": arm.value,
                       "crash_point": entry["crash_point"],
                       "response_class": "", "verdict": "VOID_PROVIDER_NEVER_READY",
                       "executions": EXECUTIONS_PER_RUN,
+                      "provider_seed": config.seed,
                       "undetected_duplicate_applications": None,
+                      "undetected_duplicate_executions": None,
                       "lost_effect_executions": None, "declared_ambiguous": None}
             collect.append_session_record(root, record)
             provider.stop()

@@ -400,6 +400,132 @@ def test_a_void_for_mismatch_is_excluded_by_the_reader(tmp_path: Path) -> None:
     }
 
 
+# ------------------------------------------- the two 2026-09-08 repairs
+#
+# Both defects were invisible to every existing gate. The seed one produced a
+# zero-width interval over thirty identical runs, which reads as a very precise
+# result; the units one compared a count of applications against a count of
+# executions, which reads as a rate. Neither could fail loudly, so these pin
+# them.
+
+
+def _template(tmp_path: Path) -> Path:
+    path = tmp_path / "mock-api.yaml"
+    path.write_text(
+        "config_version: aep.mock-legacy-api.config/1\n"
+        "defaults:\n"
+        "  faults:\n"
+        "    delay:\n"
+        "      distribution: constant\n"
+        "      seconds: 0.0\n"
+        "    duplicate_response_probability: 0.0\n"
+        "    server_error_probability: 0.05\n"
+        "    timeout_probability: 0.15\n"
+        "endpoints:\n"
+        "  ledger_postings:\n"
+        "    identity_fields:\n"
+        "    - action\n"
+        "    - amount_minor\n"
+        "    response_class: NO_READBACK\n"
+        "ledger_path: /var/tmp/unused.sqlite3\n"
+        "readback_keying: CALLER_REFERENCE\n"
+        "seed: 20260908\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _rendered_seed(config_path: Path) -> int:
+    for line in config_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("seed:"):
+            return int(line.split(":", 1)[1].strip())
+    raise AssertionError("no seed in the rendered config")
+
+
+def test_each_run_provider_renders_its_own_seed(tmp_path: Path) -> None:
+    """The repair: the run's seed must reach the provider's config.
+
+    Before it, ``start`` rewrote ``ledger_path`` and nothing else, so every run
+    of a session ran the template's fixed seed.
+    """
+    template = _template(tmp_path)
+    a = collect.RunProvider(tmp_path / "a", template=template, seed=111)
+    b = collect.RunProvider(tmp_path / "b", template=template, seed=222)
+    a.render()
+    b.render()
+    assert _rendered_seed(a.config_path) == 111
+    assert _rendered_seed(b.config_path) == 222
+    # And the ledger stays per-run, which the first version did get right.
+    assert a.ledger_path != b.ledger_path
+
+
+def test_the_template_seed_does_not_leak_through(tmp_path: Path) -> None:
+    """Non-vacuity: the template's own seed is what used to win."""
+    template = _template(tmp_path)
+    assert _rendered_seed(template) == 20260908
+    provider = collect.RunProvider(tmp_path / "r", template=template, seed=777)
+    provider.render()
+    assert _rendered_seed(provider.config_path) == 777, (
+        "the rendered config still carries the template's seed, which is "
+        "exactly the defect that made thirty runs identical"
+    )
+
+
+def test_h1_compares_executions_against_executions() -> None:
+    """The units repair, pinned against the frozen numerator definitions.
+
+    ``analyze.py`` builds both frozen rates from per-execution 0/1 indicators,
+    so both B5 fields must be executions-based. H1 previously read the
+    applications count.
+    """
+    import inspect
+
+    from experiments import analyze
+
+    source = inspect.getsource(analyze._numerator)
+    assert "int(execution.is_undetected_duplicate)" in source
+    assert "int(execution.is_lost_effect)" in source
+
+    mapping_source = inspect.getsource(verdict_script.build_report)
+    assert '"undetected_duplicate_rate": "undetected_duplicate_executions"' in (
+        mapping_source
+    ), "H1 must read the executions-based field"
+    assert '"lost_effect_rate": "lost_effect_executions"' in mapping_source, (
+        "H2 was already units-consistent and must stay so"
+    )
+    assert "undetected_duplicate_applications" not in mapping_source, (
+        "the applications count is a different quantity from B4's numerator"
+    )
+
+
+def test_the_session_record_carries_both_duplicate_counts(tmp_path: Path) -> None:
+    """Both are written, so the record says which is which.
+
+    The 2026-09-08 session carried only the applications count, which is why
+    correcting H1 would otherwise have required recollecting.
+    """
+    record = {
+        "run_id": "r0", "system": SystemId.B5_TEMPORAL.value,
+        "crash_point": "after_barrier_before_dispatch",
+        "response_class": "NO_READBACK", "verdict": "COMPLETED",
+        "executions": 10, "seed": 20260908, "provider_seed": 20260908,
+        "undetected_duplicate_applications": 4,
+        "undetected_duplicate_executions": 3,
+        "lost_effect_executions": 0, "declared_ambiguous": 0,
+    }
+    session = tmp_path / "session"
+    collect.append_session_record(session, record)
+    runs = verdict_script.read_b5_runs(session)
+    assert runs[0]["undetected_duplicate_executions"] == 3
+    assert runs[0]["undetected_duplicate_applications"] == 4
+    assert runs[0]["provider_seed"] == 20260908
+    # The two differ in real data; a reader must not treat them as synonyms.
+    assert (
+        runs[0]["undetected_duplicate_executions"]
+        != runs[0]["undetected_duplicate_applications"]
+    )
+
+
 def test_b5_descriptor_facts_match_b4s() -> None:
     """B5 and B4 must be the same row of the table run two ways.
 
