@@ -1,0 +1,277 @@
+"""The B5 collection runner: one run, reconciled by B4's reconciler.
+
+**The load-bearing constraint is oracle attribution.** ``undetected_duplicate_
+applications`` and ``lost_effect_executions`` must mean for B5 exactly what they
+mean for B4, or an agreement between the arms would be an artefact of how each
+was counted rather than of the engines --- the confound WS-6 exists to remove.
+
+**So this module does not compute them.** It calls
+``experiments.harness.reconcile.reconcile(events_path, ledger_path)``, the same
+function ``run_matrix`` calls for every other arm, unchanged. Read from
+``experiments/harness/reconcile.py:236``; the counts it returns are built in
+``ReconciliationReport`` (line 90) from the provider's own
+``GroundTruthLedger.applied_mutations()`` and ``duplicate_groups()``, joined to
+executions through ``plan_workload(config)``'s targets.
+
+The consequence, and it is the whole design of this file: **B5's job is to
+produce an event log of the shape the reconciler already reads**, not to produce
+numbers. Specifically ``reconcile`` requires
+
+* one ``run_started`` carrying ``run_config`` and ``mock_api_config``
+  (``reconcile.py:169`` and ``:180``), and
+* one ``final_classification`` per execution with ``execution_id``, ``status``
+  and ``outcome_class`` (``:187``, ``:195``) --- the last is mandatory, and a log
+  without it is refused rather than silently counted.
+
+Everything else follows: the workflow must mutate the **plan's** targets, because
+``execution_by_target`` is how an applied row becomes an execution's effect.
+
+**Not a collection driver.** This runs ONE run. Sequencing runs into cells is
+``run_matrix``'s job and is deliberately not duplicated here.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import time
+import uuid
+from dataclasses import dataclass
+from pathlib import Path
+
+from experiments.baselines.b5_temporal.gate import (
+    AttributionStatus,
+    classify,
+)
+from experiments.baselines.b5_temporal.supervisor import WorkerSupervisor
+from experiments.baselines.contract import OutcomeClass, SystemId
+from experiments.harness.events import EventLog
+from experiments.harness.reconcile import reconcile, write_summary
+from experiments.harness.workload import plan_workload
+
+#: Fixed at 06d51b0, before any B5 data existed, from the measured provider
+#: distribution. Imported rather than passed so a collection cannot quietly use
+#: a different one than the committed decision.
+START_TO_CLOSE_MS = 4000
+
+#: ``maximumAttempts``: 0 is Temporal's unlimited, 1 is the documented
+#: at-most-once configuration.
+MAX_ATTEMPTS = {
+    SystemId.B5_TEMPORAL: 0,
+    SystemId.B5B_TEMPORAL_AT_MOST_ONCE: 1,
+}
+
+
+@dataclass
+class ExecutionOutcome:
+    execution_id: str
+    status: str
+    outcome_class: OutcomeClass
+
+
+def outcome_of(settled: bool, result: object) -> ExecutionOutcome | None:
+    """Map one workflow's own record into the shared vocabulary.
+
+    B5 can never produce ``DECLARED_AMBIGUOUS``: the engine has no such record,
+    which is H3's structural prediction and not a property of this mapping. A
+    workflow that failed produces ``UNVERIFIED_FAILURE`` and **not**
+    ``CONFIRMED_NOT_APPLIED``, because the engine wrote "failed" with no evidence
+    that nothing was applied --- the distinction ``contract.py:87`` exists to
+    preserve, and the one that makes B5b's lost effects visible.
+    """
+    if not settled:
+        return None
+    if isinstance(result, str) and result.startswith("FAILED:"):
+        return ExecutionOutcome("", "activity_failed", OutcomeClass.UNVERIFIED_FAILURE)
+    return ExecutionOutcome("", "completed", OutcomeClass.CONFIRMED_APPLIED)
+
+
+def attribution_status(report) -> AttributionStatus:
+    """Could the shared reconciler account for what the ledger holds?
+
+    Unattributed rows are the signal: a row the plan's targets cannot explain
+    means the join this run's numbers rest on did not hold, and a rate computed
+    over it would be arithmetic on the wrong denominator.
+    """
+    unattributed = int(getattr(report, "oracle_unattributed_rows", 0) or 0)
+    if unattributed:
+        return AttributionStatus(
+            usable=False,
+            reason=(
+                f"{unattributed} applied ledger row(s) could not be attributed "
+                f"to any execution in this run's workload plan"
+            ),
+            unattributed_rows=unattributed,
+        )
+    return AttributionStatus(True, "every applied row attributed to an execution")
+
+
+async def run_once(
+    *,
+    config,
+    mock_api_config,
+    results_dir: Path,
+    crash_point: str | None,
+    provider_url: str,
+    temporal_address: str = "127.0.0.1:7233",
+    deadline_s: float = 120.0,
+    respawn_enabled: bool = True,
+    ledger_path: Path | None = None,
+) -> dict:
+    """One B5 run: drive the workflow, then reconcile it with B4's reconciler."""
+    from temporalio.client import Client
+
+    results_dir.mkdir(parents=True, exist_ok=True)
+    events_path = results_dir / "events.jsonl"
+    log = EventLog(events_path, source="b5-collect", run_id=config.run_id)
+
+    plan = plan_workload(config)
+    log.emit(
+        "run_started",
+        run_config=config.echo(),
+        mock_api_config=mock_api_config.echo(),
+        seeds={"run_seed": config.seed, "mock_api_seed": mock_api_config.seed},
+        workload={
+            "total_executions": len(plan),
+            "crash_selected": sum(1 for item in plan if item.crash_selected),
+            "items": [item.echo() for item in plan],
+        },
+    )
+
+    client = await Client.connect(temporal_address)
+    supervisor = WorkerSupervisor(
+        out=results_dir, crash_point=crash_point, provider_url=provider_url,
+        respawn_enabled=respawn_enabled,
+    )
+    worker_ready = supervisor.spawn(1)
+    if not worker_ready:
+        # Retried once, not spent -- a worker that never came up measured
+        # nothing. A second failure still voids.
+        supervisor.spawn(1)
+        worker_ready = (results_dir / "ready").exists()
+
+    outcomes: list[ExecutionOutcome] = []
+    if worker_ready:
+        for item in plan:
+            handle = await client.start_workflow(
+                "B5Workflow",
+                {
+                    # The PLAN's target, not a fresh one: this is the join the
+                    # reconciler uses to turn an applied row into an execution's
+                    # effect, and a target invented here would make every row
+                    # unattributed.
+                    "target": item.target,
+                    "action": "post",
+                    "amount_minor": 100,
+                    "client_reference": item.execution_id,
+                    "endpoint": config.endpoint,
+                    "maximum_attempts": MAX_ATTEMPTS[config.system],
+                    "start_to_close_ms": START_TO_CLOSE_MS,
+                },
+                id=f"b5-{config.run_id}-{item.execution_index}",
+                task_queue="b5-ws6",
+            )
+            settled, result = False, None
+            started = time.monotonic()
+            waiter = asyncio.ensure_future(handle.result())
+            while time.monotonic() - started < deadline_s:
+                done, _ = await asyncio.wait({waiter}, timeout=0.5)
+                if done:
+                    break
+                supervisor.maintain()
+            if waiter.done():
+                try:
+                    result, settled = waiter.result(), True
+                except Exception as exc:                       # noqa: BLE001
+                    settled, result = True, f"FAILED:{type(exc).__name__}"
+            else:
+                waiter.cancel()
+            outcome = outcome_of(settled, result)
+            if outcome is not None:
+                outcome.execution_id = item.execution_id
+                outcomes.append(outcome)
+                log.emit(
+                    "final_classification",
+                    execution_id=item.execution_id,
+                    status=outcome.status,
+                    outcome_class=outcome.outcome_class.value,
+                    system=config.system.value,
+                    dispatch_attempts=supervisor.state.spawns,
+                    intent_id=None,
+                )
+    supervisor.stop()
+    log.emit("run_finished", executions=len(outcomes))
+
+    # ---- attribution, through the shared reconciler and nothing else --------
+    ledger = Path(ledger_path or (results_dir / "ground_truth.sqlite3"))
+    try:
+        report = reconcile(events_path, ledger)
+        status = attribution_status(report)
+    except Exception as exc:                                   # noqa: BLE001
+        report, status = None, AttributionStatus(
+            usable=False,
+            reason=f"the reconciler could not read this run: {type(exc).__name__}: {exc}",
+        )
+
+    trace = results_dir / "trace.jsonl"
+    names: list[str] = []
+    if trace.exists():
+        for line in trace.read_text(errors="replace").splitlines():
+            try:
+                names.append(json.loads(line)["event"])
+            except (ValueError, KeyError):
+                pass
+
+    verdict = classify(
+        armed_point=crash_point,
+        settled=bool(outcomes),
+        worker_ready=worker_ready,
+        events=names,
+        worker_deaths=supervisor.state.deaths,
+        respawns=supervisor.state.respawns,
+        attribution=status,
+    )
+
+    record = {
+        "run_id": config.run_id,
+        "system": config.system.value,
+        "crash_point": crash_point or "none",
+        "response_class": mock_api_config.endpoint(config.endpoint).response_class.value,
+        "verdict": verdict.verdict.value,
+        "reason": verdict.reason,
+        "executions": len(plan),
+        "attribution_usable": status.usable,
+        "attribution_reason": status.reason,
+        "start_to_close_ms": START_TO_CLOSE_MS,
+    }
+    if report is not None:
+        write_summary(results_dir, report, b5_verdict=verdict.verdict.value)
+        # The three outcome fields analyse_b5_agreement.py reads. Taken from the
+        # reconciler's report, never recomputed here.
+        record.update(
+            {
+                "undetected_duplicate_applications": (
+                    report.undetected_duplicate_applications
+                ),
+                "lost_effect_executions": report.lost_effect_executions,
+                "declared_ambiguous": report.declared_ambiguous_executions,
+            }
+        )
+    else:
+        # No rate may be invented for a run the reconciler refused. The verdict
+        # is already VOID_ATTRIBUTION_UNAVAILABLE and the fields are absent
+        # rather than zero, so nothing downstream can average them in.
+        record.update({"undetected_duplicate_applications": None,
+                       "lost_effect_executions": None,
+                       "declared_ambiguous": None})
+    (results_dir / "b5-run.json").write_text(
+        json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    return record
+
+
+def append_session_record(session_root: Path, record: dict) -> None:
+    """One line per run in the file ``analyse_b5_agreement.py`` reads."""
+    session_root.mkdir(parents=True, exist_ok=True)
+    with (session_root / "b5-runs.jsonl").open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")

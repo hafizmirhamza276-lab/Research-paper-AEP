@@ -49,6 +49,13 @@ class RunVerdict(str, Enum):
     #: how three Start-To-Close values were all reported as deadline results
     #: when in fact none of them was ever exercised.
     VOID_SUPERVISOR_NEVER_RESPAWNED = "VOID_SUPERVISOR_NEVER_RESPAWNED"
+    #: The run happened but its effects could not be attributed to executions:
+    #: no ledger, an unreadable one, or rows the plan's targets do not account
+    #: for. NOT a measurement, and the verdict that must exist because a missing
+    #: oracle otherwise looks exactly like a clean zero-duplicate result --
+    #: which would make B5 appear better than B4 for the one reason that has
+    #: nothing to do with either engine.
+    VOID_ATTRIBUTION_UNAVAILABLE = "VOID_ATTRIBUTION_UNAVAILABLE"
 
 
 VOID_VERDICTS = frozenset(
@@ -57,8 +64,18 @@ VOID_VERDICTS = frozenset(
         RunVerdict.VOID_INJECTOR_DID_NOT_FIRE,
         RunVerdict.VOID_WORKER_NEVER_READY,
         RunVerdict.VOID_SUPERVISOR_NEVER_RESPAWNED,
+        RunVerdict.VOID_ATTRIBUTION_UNAVAILABLE,
     }
 )
+
+
+@dataclass(frozen=True)
+class AttributionStatus:
+    """Whether the shared reconciler could account for this run's effects."""
+
+    usable: bool
+    reason: str
+    unattributed_rows: int = 0
 
 
 @dataclass(frozen=True)
@@ -79,11 +96,23 @@ def classify(
     events: list[str],
     worker_deaths: int = 0,
     respawns: int = 0,
+    attribution: "AttributionStatus | None" = None,
 ) -> GateResult:
     """Decide what a run was. ``events`` is the trace's event names, in order.
 
     ``settled`` means the workflow returned a result before the deadline.
     """
+    # Attribution is checked FIRST, before the run's own outcome is consulted.
+    # A rate computed over unattributable effects is worse than no rate: it
+    # looks like data.
+    if attribution is not None and not attribution.usable:
+        return GateResult(
+            RunVerdict.VOID_ATTRIBUTION_UNAVAILABLE,
+            f"the oracle could not attribute this run's effects: "
+            f"{attribution.reason}. No rate may be computed from it, and a "
+            f"zero here would be indistinguishable from a clean result.",
+        )
+
     if not worker_ready:
         return GateResult(
             RunVerdict.VOID_WORKER_NEVER_READY,

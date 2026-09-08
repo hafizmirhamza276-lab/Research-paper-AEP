@@ -84,6 +84,27 @@ def build_session(
         "\n".join(json.dumps(r) for r in progress) + "\n", encoding="utf-8"
     )
 
+    # Per-run summary.json, because that is where the per-run counts actually
+    # live and where analyse_write_loss.py has read them from since 856d78a.
+    # This fixture previously carried only matrix-progress.jsonl -- the file the
+    # OLD per_run_applied read a non-existent key from, which is the defect that
+    # commit repaired. A fixture still describing the old shape was asserting
+    # against a world the script no longer reads, and it went unnoticed because
+    # that pass ran check_paper_numbers.py rather than the suite.
+    for record in progress:
+        run_dir = root / record["run_id"]
+        run_dir.mkdir(exist_ok=True)
+        (run_dir / "summary.json").write_text(
+            json.dumps(
+                {
+                    "run_id": record["run_id"],
+                    "system": record["system"],
+                    "oracle_effect_executions": record["applied_effects_total"],
+                }
+            ),
+            encoding="utf-8",
+        )
+
     # One AEP-full run's worker log, carrying the fault and what followed it.
     run = root / "aep_full-none-ledger_postings-abcd1234-r0"
     run.mkdir()

@@ -294,6 +294,42 @@ REGIME_REDIS_KILL_INFLIGHT = Regime(
 #: **NO_READBACK only**, which is where ``docs/24`` B1 and the pre-registration
 #: both scope it. **Ten executions per run**, unlike the kill regimes' one: B1
 #: asks what the protocol does across a sequence once its record is destroyed.
+#: WS-6 / B5. The vendor's engine against our model of it, `1fecb1f`.
+#:
+#: **The six frozen regimes above are not modified**, and neither are B4's
+#: frozen cells: this is an additional Regime object whose whole purpose is to
+#: be read against them.
+#:
+#: **Five crash points, not six.** ``after_intent_before_barrier`` is mapped to
+#: ``None`` for B5 in ``experiments/baselines/crash_points.py``, so
+#: ``resolve_for_system`` raises ``CrashPointNotApplicable`` and the cell is
+#: recorded ``not_applicable`` with its reason rather than aliased onto a
+#: neighbour. In Temporal the worker issues an RPC and the server persists the
+#: record transactionally, so no worker-side pre-acknowledgement window exists
+#: to be cut in (``b5_temporal/B5_SEMANTICS.md`` 2.3). B4 and B4b **have**
+#: frozen cells at that point, so the gap is real and must show as a gap.
+#:
+#: **Both arms**, because `1fecb1f`'s H1 and H2 are about B5 and B5b
+#: respectively. Thirty runs of ten executions per cell, ten times the frozen
+#: B4/B4b cells' three runs: B4's headline is a point estimate on a thin row,
+#: and a comparison whose new arm was equally thin could not tell agreement from
+#: coincidence.
+REGIME_B5_TEMPORAL = Regime(
+    name="b5-temporal",
+    label="the vendor's durable-execution engine, worker SIGKILL (WS-6)",
+    crash_probability=1.0,
+    iterates_crash_points=True,
+    redis_kill_point=None,
+    redis_kill_delay_ms=0,
+    redis_kill_executions=0,
+    runs_per_cell=30,
+    executions_per_run=10,
+    workers=1,
+    systems=(SystemId.B5_TEMPORAL, SystemId.B5B_TEMPORAL_AT_MOST_ONCE),
+    endpoints=("ledger_postings", "payments"),
+    keyings=(ReadbackKeying.CALLER_REFERENCE,),
+)
+
 REGIME_WRITE_LOSS_PREACK = Regime(
     name="write-loss-preack",
     label="block-level write loss at the intent CAS, before the barrier (B1)",
@@ -1221,7 +1257,7 @@ def main(argv: list[str] | None = None) -> int:
         action="append",
         help=(
             "collect only these regimes: session-3, p0, p30, "
-            "redis-kill-preack, redis-kill-inflight, write-loss-preack"
+            "redis-kill-preack, redis-kill-inflight, write-loss-preack, b5-temporal"
         ),
     )
     parser.add_argument("--crash-delay-ms", type=int, default=400)

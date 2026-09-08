@@ -120,6 +120,33 @@ _WITH_PRE_DISPATCH_RECORD: Mapping[str, BaselineCrashPoint | None] = (
     )
 )
 
+#: B5/B5b. A shape neither existing mapping has: the engine *does* write a
+#: durable pre-dispatch record, so ``_WITHOUT_PRE_DISPATCH_RECORD`` is wrong,
+#: but the record is written by the SERVER inside one RPC, so there is no
+#: worker-side instant between writing it and its acknowledgement and
+#: ``_WITH_PRE_DISPATCH_RECORD`` is wrong too. ``after_intent_before_barrier``
+#: is therefore ``None`` -- *this system has no such moment* -- and
+#: ``run_matrix`` records the cell ``not_applicable`` with the reason rather
+#: than aliasing it onto a neighbour. See ``b5_temporal/B5_SEMANTICS.md`` 2.3.
+_TEMPORAL_SERVER_SIDE_BARRIER: Mapping[str, BaselineCrashPoint | None] = (
+    MappingProxyType(
+        {
+            "before_intent_write": BaselineCrashPoint.BEFORE_ANY_WRITE,
+            "after_intent_before_barrier": None,
+            "after_barrier_before_dispatch": (
+                BaselineCrashPoint.BEFORE_REQUEST_TRANSMISSION
+            ),
+            "mid_dispatch": BaselineCrashPoint.BEFORE_REQUEST_TRANSMISSION,
+            "after_response_before_resolution": (
+                BaselineCrashPoint.AFTER_RESPONSE_BEFORE_RECORD
+            ),
+            "after_resolution_before_barrier": (
+                BaselineCrashPoint.AFTER_RECORD_BEFORE_BARRIER
+            ),
+        }
+    )
+)
+
 #: Per system, the roadmap name -> that system's own position, or ``None``
 #: where the system has no such moment.
 ROADMAP_TO_BASELINE: Mapping[SystemId, Mapping[str, BaselineCrashPoint | None]] = (
@@ -132,6 +159,8 @@ ROADMAP_TO_BASELINE: Mapping[SystemId, Mapping[str, BaselineCrashPoint | None]] 
             # B4b runs the same code at the same checkpoints; only its retry
             # policy differs, so it has exactly B4's positions.
             SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE: _WITH_PRE_DISPATCH_RECORD,
+            SystemId.B5_TEMPORAL: _TEMPORAL_SERVER_SIDE_BARRIER,
+            SystemId.B5B_TEMPORAL_AT_MOST_ONCE: _TEMPORAL_SERVER_SIDE_BARRIER,
         }
     )
 )
@@ -142,6 +171,13 @@ NOT_APPLICABLE_REASONS: Mapping[str, str] = MappingProxyType(
         "after_intent_before_barrier": (
             "the system writes no record before dispatching, so there is no "
             "window between writing one and acknowledging it durable"
+        ),
+        # B5's absence has a different cause and must not be reported with
+        # B0-B2's reason: the record IS written, by the server, transactionally.
+        "after_intent_before_barrier:B5": (
+            "the worker issues an RPC and the server persists the record "
+            "transactionally before replying, so no worker-side window exists "
+            "between the write and its acknowledgement"
         ),
     }
 )

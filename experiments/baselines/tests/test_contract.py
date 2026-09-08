@@ -96,6 +96,11 @@ def test_at_most_once_dispatch_is_not_what_distinguishes_aep() -> None:
     assert at_most_once == {
         SystemId.B3_INTENT_NO_BARRIER,
         SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
+        # B5b is the vendor's engine in the same at-most-once configuration
+        # B4b models, so it belongs in this set for the same reason B4b does.
+        # Listing it is the point of the assertion: adding a system must force
+        # someone to say which side of the line it falls on.
+        SystemId.B5B_TEMPORAL_AT_MOST_ONCE,
         SystemId.AEP_FULL,
     }
 

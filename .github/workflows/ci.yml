@@ -115,7 +115,7 @@ jobs:
         # its tests are collected by the same invocation.
         run: >-
           uv sync --frozen --extra dev --extra cov --extra experiments
-          --extra analysis
+          --extra analysis --extra b5
 
       - name: Start Redis 7.2 from compose.phase2.yml
         run: |

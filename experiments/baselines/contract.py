@@ -62,6 +62,14 @@ class SystemId(str, Enum):
     #: Temporal's ``Maximum Attempts = 1``. Amendment E4 requires it to be run
     #: beside B4 rather than argued about; ``B4_SEMANTICS.md`` is the citation.
     B4B_DURABLE_WORKFLOW_AT_MOST_ONCE = "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE"
+    #: WS-6. The VENDOR'S engine, not our model of it: a real Temporal server
+    #: and SDK worker. B4 and B5 are deliberately the same row of the roadmap's
+    #: table run two ways, which is the whole point -- the comparison is only
+    #: meaningful if every declared fact below matches B4's, so that a
+    #: difference in measured rate cannot be a difference in what was measured.
+    B5_TEMPORAL = "B5_TEMPORAL"
+    #: B5 at ``maximumAttempts = 1``, mirroring B4b.
+    B5B_TEMPORAL_AT_MOST_ONCE = "B5B_TEMPORAL_AT_MOST_ONCE"
     AEP_FULL = "AEP_FULL"
 
 
@@ -277,6 +285,47 @@ SYSTEMS: Mapping[SystemId, SystemDescriptor] = MappingProxyType(
             sends_client_reference=False,
             resume_policy=ResumePolicy.REEXECUTE_CRASHED,
             redispatches_on_replay=True,
+        ),
+        SystemId.B5_TEMPORAL: SystemDescriptor(
+            system=SystemId.B5_TEMPORAL,
+            label="B5: Temporal (the vendor's engine)",
+            description=(
+                "A real Temporal server and SDK worker at the vendor default "
+                "retry policy. Every declared fact here is B4's, deliberately: "
+                "B5 exists to test whether our model of the engine reproduces "
+                "the engine, and a descriptor that differed would make any "
+                "difference in rate a difference in what was measured rather "
+                "than in the systems."
+            ),
+            uses_lease=True,
+            uses_fenced_state_writes=False,
+            writes_pre_dispatch_record=True,
+            uses_durability_barrier=True,
+            has_recovery_service=False,
+            retries_on_ambiguity=True,
+            can_declare_ambiguity=False,
+            sends_client_reference=False,
+            resume_policy=ResumePolicy.REEXECUTE_CRASHED,
+            redispatches_on_replay=True,
+        ),
+        SystemId.B5B_TEMPORAL_AT_MOST_ONCE: SystemDescriptor(
+            system=SystemId.B5B_TEMPORAL_AT_MOST_ONCE,
+            label="B5b: Temporal at maximumAttempts = 1",
+            description=(
+                "B5 in the documented at-most-once configuration, mirroring "
+                "B4b. It cannot produce a caller-caused duplicate; what it "
+                "produces instead is a lost effect, and it does not escalate."
+            ),
+            uses_lease=True,
+            uses_fenced_state_writes=False,
+            writes_pre_dispatch_record=True,
+            uses_durability_barrier=True,
+            has_recovery_service=False,
+            retries_on_ambiguity=False,
+            can_declare_ambiguity=False,
+            sends_client_reference=False,
+            resume_policy=ResumePolicy.REEXECUTE_CRASHED,
+            redispatches_on_replay=False,
         ),
         SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE: SystemDescriptor(
             system=SystemId.B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,
