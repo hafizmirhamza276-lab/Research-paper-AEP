@@ -1,0 +1,98 @@
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.utf8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/data ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+waiting for server to start....2026-09-08 12:54:34.199 UTC [49] LOG:  starting PostgreSQL 16.3 (Debian 16.3-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2026-09-08 12:54:34.202 UTC [49] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-08 12:54:34.204 UTC [52] LOG:  database system was shut down at 2026-09-08 12:54:34 UTC
+2026-09-08 12:54:34.207 UTC [49] LOG:  database system is ready to accept connections
+ done
+server started
+CREATE DATABASE
+
+
+/usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+
+waiting for server to shut down....2026-09-08 12:54:34.392 UTC [49] LOG:  received fast shutdown request
+2026-09-08 12:54:34.392 UTC [49] LOG:  aborting any active transactions
+2026-09-08 12:54:34.393 UTC [49] LOG:  background worker "logical replication launcher" (PID 55) exited with exit code 1
+2026-09-08 12:54:34.394 UTC [50] LOG:  shutting down
+2026-09-08 12:54:34.394 UTC [50] LOG:  checkpoint starting: shutdown immediate
+2026-09-08 12:54:34.400 UTC [50] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.001 s, total=0.007 s; sync files=301, longest=0.001 s, average=0.000 s; distance=4255 kB, estimate=4255 kB; lsn=0/1912048, redo lsn=0/1912048
+2026-09-08 12:54:34.406 UTC [49] LOG:  database system is shut down
+ done
+server stopped
+
+PostgreSQL init process complete; ready for start up.
+
+2026-09-08 12:54:34.510 UTC [1] LOG:  starting PostgreSQL 16.3 (Debian 16.3-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2026-09-08 12:54:34.510 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-09-08 12:54:34.510 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-09-08 12:54:34.512 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-08 12:54:34.514 UTC [65] LOG:  database system was shut down at 2026-09-08 12:54:34 UTC
+2026-09-08 12:54:34.518 UTC [1] LOG:  database system is ready to accept connections
+2026-09-08 12:59:34.733 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:02:15.372 UTC [63] LOG:  checkpoint complete: wrote 1607 buffers (9.8%); 0 WAL file(s) added, 0 removed, 1 recycled; write=160.637 s, sync=0.002 s, total=160.640 s; sync files=669, longest=0.001 s, average=0.001 s; distance=8919 kB, estimate=8919 kB; lsn=0/243BA78, redo lsn=0/21C7F18
+2026-09-08 13:04:34.504 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:05:23.304 UTC [63] LOG:  checkpoint complete: wrote 488 buffers (3.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=48.799 s, sync=0.001 s, total=48.800 s; sync files=129, longest=0.001 s, average=0.001 s; distance=4063 kB, estimate=8434 kB; lsn=0/2783E20, redo lsn=0/25BFD20
+2026-09-08 13:09:34.561 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:10:28.702 UTC [63] LOG:  checkpoint complete: wrote 542 buffers (3.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=54.141 s, sync=0.001 s, total=54.142 s; sync files=125, longest=0.001 s, average=0.000 s; distance=3894 kB, estimate=7980 kB; lsn=0/2AE4098, redo lsn=0/298D678
+2026-09-08 13:14:35.055 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:15:41.987 UTC [63] LOG:  checkpoint complete: wrote 668 buffers (4.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=66.932 s, sync=0.001 s, total=66.932 s; sync files=160, longest=0.001 s, average=0.001 s; distance=4641 kB, estimate=7646 kB; lsn=0/2FFEDB8, redo lsn=0/2E15D38
+2026-09-08 13:19:36.385 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:20:49.660 UTC [63] LOG:  checkpoint complete: wrote 733 buffers (4.5%); 0 WAL file(s) added, 0 removed, 1 recycled; write=73.275 s, sync=0.001 s, total=73.276 s; sync files=159, longest=0.001 s, average=0.000 s; distance=5211 kB, estimate=7402 kB; lsn=0/355E408, redo lsn=0/332CA20
+2026-09-08 13:24:37.001 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:26:02.114 UTC [63] LOG:  checkpoint complete: wrote 853 buffers (5.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=85.114 s, sync=0.001 s, total=85.114 s; sync files=165, longest=0.001 s, average=0.000 s; distance=6516 kB, estimate=7314 kB; lsn=0/3BAAA68, redo lsn=0/3989C30
+2026-09-08 13:29:36.451 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:30:56.654 UTC [63] LOG:  checkpoint complete: wrote 801 buffers (4.9%); 0 WAL file(s) added, 0 removed, 0 recycled; write=80.203 s, sync=0.001 s, total=80.204 s; sync files=163, longest=0.001 s, average=0.000 s; distance=6009 kB, estimate=7183 kB; lsn=0/423DA60, redo lsn=0/3F68368
+2026-09-08 13:34:37.008 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:36:09.445 UTC [63] LOG:  checkpoint complete: wrote 923 buffers (5.6%); 0 WAL file(s) added, 0 removed, 1 recycled; write=92.437 s, sync=0.001 s, total=92.438 s; sync files=162, longest=0.001 s, average=0.000 s; distance=6849 kB, estimate=7150 kB; lsn=0/48FF278, redo lsn=0/4618820
+2026-09-08 13:39:37.802 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:40:49.799 UTC [63] LOG:  checkpoint complete: wrote 721 buffers (4.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=71.996 s, sync=0.001 s, total=71.997 s; sync files=157, longest=0.001 s, average=0.001 s; distance=5017 kB, estimate=6936 kB; lsn=0/4DBD278, redo lsn=0/4AFEEA0
+2026-09-08 13:44:38.152 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:46:15.498 UTC [63] LOG:  checkpoint complete: wrote 972 buffers (5.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=97.346 s, sync=0.001 s, total=97.347 s; sync files=165, longest=0.001 s, average=0.000 s; distance=7422 kB, estimate=7422 kB; lsn=0/5603328, redo lsn=0/523EA90
+2026-09-08 13:49:38.825 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:51:24.946 UTC [63] LOG:  checkpoint complete: wrote 1060 buffers (6.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=106.121 s, sync=0.001 s, total=106.121 s; sync files=167, longest=0.001 s, average=0.000 s; distance=7676 kB, estimate=7676 kB; lsn=0/5D55EB8, redo lsn=0/59BDE08
+2026-09-08 13:54:39.276 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 13:56:15.207 UTC [63] LOG:  checkpoint complete: wrote 958 buffers (5.8%); 0 WAL file(s) added, 0 removed, 1 recycled; write=95.931 s, sync=0.001 s, total=95.932 s; sync files=162, longest=0.001 s, average=0.000 s; distance=7517 kB, estimate=7660 kB; lsn=0/64B91B8, redo lsn=0/6115478
+2026-09-08 13:59:39.584 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:01:11.248 UTC [63] LOG:  checkpoint complete: wrote 916 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=91.664 s, sync=0.001 s, total=91.664 s; sync files=162, longest=0.001 s, average=0.000 s; distance=7256 kB, estimate=7620 kB; lsn=0/6B925A0, redo lsn=0/682B7D0
+2026-09-08 14:04:39.550 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:06:21.568 UTC [63] LOG:  checkpoint complete: wrote 1020 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=102.018 s, sync=0.001 s, total=102.019 s; sync files=160, longest=0.001 s, average=0.000 s; distance=7437 kB, estimate=7602 kB; lsn=0/727C350, redo lsn=0/6F6EDC0
+2026-09-08 14:09:39.906 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:11:05.054 UTC [63] LOG:  checkpoint complete: wrote 852 buffers (5.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=85.148 s, sync=0.001 s, total=85.149 s; sync files=162, longest=0.001 s, average=0.000 s; distance=6708 kB, estimate=7512 kB; lsn=0/7885770, redo lsn=0/75FBDE0
+2026-09-08 14:14:39.426 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:16:41.095 UTC [63] LOG:  checkpoint complete: wrote 1214 buffers (7.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=121.669 s, sync=0.001 s, total=121.670 s; sync files=161, longest=0.001 s, average=0.000 s; distance=8315 kB, estimate=8315 kB; lsn=0/82079D8, redo lsn=0/7E1AA30
+2026-09-08 14:19:39.439 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:21:05.386 UTC [63] LOG:  checkpoint complete: wrote 859 buffers (5.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=85.946 s, sync=0.001 s, total=85.947 s; sync files=161, longest=0.001 s, average=0.000 s; distance=6873 kB, estimate=8170 kB; lsn=0/8826498, redo lsn=0/84D0FC0
+2026-09-08 14:24:39.774 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:26:41.649 UTC [63] LOG:  checkpoint complete: wrote 1219 buffers (7.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=121.875 s, sync=0.001 s, total=121.876 s; sync files=162, longest=0.001 s, average=0.000 s; distance=8943 kB, estimate=8943 kB; lsn=0/9245F68, redo lsn=0/8D8CE20
+2026-09-08 14:29:39.988 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:31:23.695 UTC [63] LOG:  checkpoint complete: wrote 1038 buffers (6.3%); 0 WAL file(s) added, 0 removed, 1 recycled; write=103.707 s, sync=0.001 s, total=103.707 s; sync files=162, longest=0.001 s, average=0.000 s; distance=8520 kB, estimate=8901 kB; lsn=0/9A46E00, redo lsn=0/95DEE60
+2026-09-08 14:34:40.019 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:36:50.396 UTC [63] LOG:  checkpoint complete: wrote 1301 buffers (7.9%); 0 WAL file(s) added, 0 removed, 0 recycled; write=130.377 s, sync=0.001 s, total=130.378 s; sync files=161, longest=0.001 s, average=0.000 s; distance=9418 kB, estimate=9418 kB; lsn=0/A3E9180, redo lsn=0/9F117F8
+2026-09-08 14:39:40.665 UTC [63] LOG:  checkpoint starting: time
+2026-09-08 14:41:22.980 UTC [63] LOG:  checkpoint complete: wrote 1024 buffers (6.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=102.314 s, sync=0.001 s, total=102.315 s; sync files=159, longest=0.001 s, average=0.001 s; distance=8628 kB, estimate=9339 kB; lsn=0/AB5A998, redo lsn=0/A77E910

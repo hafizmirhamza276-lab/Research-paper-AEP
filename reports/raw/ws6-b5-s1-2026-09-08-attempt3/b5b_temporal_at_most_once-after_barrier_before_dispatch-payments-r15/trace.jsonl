@@ -1,0 +1,23 @@
+{"event": "b5_worker_connected", "pid": 58577, "wall_ms": 1788877967768}
+{"event": "b5_worker_running", "pid": 58577, "wall_ms": 1788877969336}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877969824}
+{"event": "b5_point_reached", "fires": true, "pid": 58577, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788877969825}
+{"event": "b5_crash_firing", "pid": 58577, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788877969826}
+{"event": "b5_worker_connected", "pid": 58645, "wall_ms": 1788877973707}
+{"event": "b5_worker_running", "pid": 58645, "wall_ms": 1788877975198}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877983910}
+{"attempt": 1, "elapsed_ms": 2445.36, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877986357}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877986396}
+{"attempt": 1, "elapsed_ms": 2035.481, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877988433}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877988470}
+{"attempt": 1, "elapsed_ms": 2038.767, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877990511}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877990565}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877994597}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877998629}
+{"attempt": 1, "elapsed_ms": 2040.871, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788878000672}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788878000720}
+{"attempt": 1, "elapsed_ms": 2044.82, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788878002805}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788878002881}
+{"attempt": 1, "elapsed_ms": 2037.983, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788878004921}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788878004970}
+{"attempt": 1, "elapsed_ms": 2045.612, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788878007017}

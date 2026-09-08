@@ -1,0 +1,39 @@
+### attempt 2 of 3, stamp 2026-09-08-attempt3 Tue Sep  8 12:54:32 UTC 2026
+### observers pid 710 Tue Sep  8 12:54:32 UTC 2026
+### up Tue Sep  8 12:54:32 UTC 2026
+ Network aep-ws6-b5_default Creating 
+ Network aep-ws6-b5_default Creating 
+ Network aep-ws6-b5_default Created 
+ Network aep-ws6-b5_default Created 
+ Container aep-ws6-postgres Creating 
+ Container aep-ws6-postgres Created 
+ Container aep-ws6-temporal Creating 
+ Container aep-ws6-temporal Created 
+ Container aep-ws6-postgres Starting 
+ Container aep-ws6-postgres Started 
+ Container aep-ws6-postgres Waiting 
+ Container aep-ws6-postgres Healthy 
+ Container aep-ws6-temporal Starting 
+ Container aep-ws6-temporal Started 
+  temporal health: healthy
+  measurement-host.txt: 6168 bytes
+### primary Tue Sep  8 12:55:04 UTC 2026
+### primary rc=0 Tue Sep  8 14:43:57 UTC 2026
+### evidence Tue Sep  8 14:43:57 UTC 2026
+  killed events pid 710
+ Container aep-ws6-temporal Stopping 
+ Container aep-ws6-temporal Stopped 
+ Container aep-ws6-temporal Removing 
+ Container aep-ws6-temporal Removed 
+ Container aep-ws6-postgres Stopping 
+ Container aep-ws6-postgres Stopped 
+ Container aep-ws6-postgres Removing 
+ Container aep-ws6-postgres Removed 
+ Network aep-ws6-b5_default Removing 
+ Network aep-ws6-b5_default Removed 
+### teardown verification Tue Sep  8 14:44:01 UTC 2026
+  ws6 containers left : 0
+  port 7233: free
+  port 8233: free
+  port 8099: free
+### FINISHED rc=0 Tue Sep  8 14:44:01 UTC 2026

@@ -1,0 +1,19 @@
+{
+  "armed_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+  "attribution_reason": "every applied row attributed to an execution",
+  "attribution_usable": true,
+  "crash_point": "after_barrier_before_dispatch",
+  "declared_ambiguous": 0,
+  "executions": 10,
+  "lost_effect_executions": 0,
+  "provider_seed": 20260910,
+  "reason": "fault delivered at 'ACTIVITY_ENTERED_BEFORE_CALL'; worker deaths=1, respawns=1",
+  "response_class": "AUTHORITATIVE_READBACK",
+  "run_id": "b5_temporal-after_barrier_before_dispatch-payments-r2",
+  "seed": 20260910,
+  "start_to_close_ms": 4000,
+  "system": "B5_TEMPORAL",
+  "undetected_duplicate_applications": 3,
+  "undetected_duplicate_executions": 2,
+  "verdict": "COMPLETED"
+}

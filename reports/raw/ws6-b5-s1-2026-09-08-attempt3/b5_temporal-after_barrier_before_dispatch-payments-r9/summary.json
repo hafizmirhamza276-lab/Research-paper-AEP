@@ -1,0 +1,31 @@
+{
+  "agrees": true,
+  "b5_verdict": "COMPLETED",
+  "caller_redispatch_duplicate_applications": 1,
+  "classifications": {
+    "completed": 10
+  },
+  "config_digest": "8443349af9e419c77a3febe0cba573ace6c4236bf3b2f8a2591c01c1dcd9c416",
+  "declared_ambiguous_executions": 0,
+  "disagreements": [],
+  "duplicate_prediction_applies": false,
+  "executions_planned": 10,
+  "expected_duplicate_groups": -1,
+  "expected_effect_executions_lower": 10,
+  "expected_effect_executions_upper": 10,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 11,
+  "oracle_duplicate_groups": 1,
+  "oracle_effect_executions": 10,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 10
+  },
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b5_temporal-after_barrier_before_dispatch-payments-r9",
+  "system": "B5_TEMPORAL",
+  "undetected_duplicate_applications": 1,
+  "undetected_duplicate_executions": 1,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}
