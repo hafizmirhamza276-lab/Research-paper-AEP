@@ -86,6 +86,7 @@ class WorkerSupervisor:
         self.injector_disabled = injector_disabled
         self.state = SupervisorState()
         self._process: subprocess.Popen | None = None
+        self._death_counted = False
 
     # -- lifetimes ---------------------------------------------------------
 
@@ -116,6 +117,7 @@ class WorkerSupervisor:
                 stdout=subprocess.DEVNULL, stderr=errlog,
             )
         self.state.spawns += 1
+        self._death_counted = False
         if attempt > 1:
             self.state.respawns += 1
         for _ in range(400):
@@ -149,7 +151,14 @@ class WorkerSupervisor:
         """
         if self.alive():
             return
-        self.note_death()
+        # Count DEATHS, not polls. The first version incremented on every poll
+        # while the worker stayed dead, so a respawn-disabled branch reported
+        # deaths=232 when one worker had died once. No verdict depended on it --
+        # the gate tests deaths > 0 -- but the number as printed counted nothing,
+        # and a number that counts nothing does not belong in a report.
+        if not self._death_counted:
+            self.note_death()
+            self._death_counted = True
         if not self.respawn_enabled:
             return
         if self.state.spawns >= MAX_LIFETIMES:

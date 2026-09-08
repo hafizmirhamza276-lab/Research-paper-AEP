@@ -165,12 +165,26 @@ async def run_one(
 ) -> dict:
     trace = OUT / "trace.jsonl"
     trace.write_text("", encoding="utf-8")
+    # Truncated per run, decided rather than carried. Appending across runs meant
+    # a stale traceback from a previous round was readable during a later one and
+    # could have been attributed to it -- a log that cannot say which run a line
+    # belongs to cannot report "I could not tell" (docs/25 R14).
+    (OUT / "worker.err").write_bytes(b"")
 
     sup = WorkerSupervisor(
         out=OUT, crash_point=crash_point, provider_url=provider_url,
         respawn_enabled=respawn_enabled, injector_disabled=injector_disabled,
     )
     worker_ready = sup.spawn(1)
+    if not worker_ready:
+        # Decided: a cold start that misses the ready timeout is RETRIED ONCE,
+        # not spent. A worker that never came up measured nothing, so voiding
+        # the run loses a run of power for a reason that has nothing to do with
+        # the engine. One retry only -- a second failure is a real defect and
+        # must still void, or this quietly becomes an unbounded loop that hides
+        # a broken worker.
+        sup.spawn(1)
+        worker_ready = (OUT / "ready").exists()
 
     settled, result, elapsed = False, None, 0.0
     if worker_ready:
