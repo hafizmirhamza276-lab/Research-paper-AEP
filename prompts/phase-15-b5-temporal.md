@@ -409,6 +409,169 @@ recorded here together with the reason collection did not happen.
 
 ---
 
+## Prompt 12 — read the WS-6 outcome
+
+> Read the WS-6 outcome. Run analyse_b5_agreement.py against 0c6bcf4's session root.
+>
+> Report the reading AND the reasons, both. The script evaluates in a fixed order --
+> absent point, then voids, then the pending bound, then interval overlap -- so
+> report which stage each cell resolved at, not only its final reading. A cell
+> reading AGREES after passing all four is a different fact from one that never
+> reached the overlap test.
+>
+> Report per hypothesis: H1 duplicates, H2 lost effects, H3 non-escalation. H3 is
+> absolute -- one declared ambiguity refutes it -- so say plainly whether any
+> appeared.
+>
+> Say explicitly which cells are NOT_TESTABLE_ABSENT_IN_B5. B5 has no
+> after_intent_before_barrier point, and that is where B4 has frozen data at all
+> three response classes. The summary must not read as a complete comparison.
+>
+> The 2 VOID_WORKER_NEVER_READY are excluded from rates and reported with counts.
+> Confirm the script did that rather than assuming it.
+>
+> Do not edit the script to fit what you see. If it errors, or the data has a shape
+> it does not handle, report that as a finding and stop. Editing a verdict script
+> after seeing data is what this ordering exists to prevent; any change it needs is
+> a separate prompt with the reason recorded.
+>
+> Do not touch the paper. No macros, no prose, no §VI, no §VIII. This pass reads the
+> result and nothing else.
+>
+> Then two small records. First, the push hang: the documented off-screen credential
+> dialog did not apply, no stalled process and no index.lock, and a plain retry with
+> a longer window cleared it. Update the handoff §5 note so the next reader tries a
+> retry before hunting a dialog.
+>
+> Second, record the 2 VOID_WORKER_NEVER_READY as an open question -- both in the
+> first cell, both with empty worker.err, none in attempt 1's 39 runs. Do not chase
+> it.
+>
+> Commit and push. If the push hangs, retry once with a longer window before
+> reporting it as a hang.
+
+## Prompt 13 — establish why the intervals are zero-width
+
+> Establish why three of four B5 intervals are zero-width. Do not touch the paper.
+>
+> The reading at 3e633d7 gives B5 rates of 0.4000 [0.4000, 0.4000] and 0.3000
+> [0.3000, 0.3000] twice. A cluster bootstrap returns zero width only when every
+> run produced an identical count. Confirm that directly from the run records: the
+> per-run duplicate and lost-effect counts for each of the four cells, min, median,
+> max and the distinct values observed.
+>
+> If every run is identical, establish whether that is a property of the engine or
+> of the harness. Candidates to separate, not to choose between: the crash fires at
+> a fixed point so the same executions are always in flight; the supervisor
+> respawns once and the retry set is therefore fixed; the provider's 15% timeout
+> and 5% error should introduce variation and apparently did not, which is itself
+> worth checking against the run records.
+>
+> B4's frozen cells have wide intervals. Establish whether B4's per-run counts vary
+> and B5's do not, or whether B4's width comes from having 3 runs where B5 has 30.
+> Read both from the same place. That difference alone could explain the
+> non-overlap without either engine behaving differently.
+>
+> Do not edit analyse_b5_agreement.py. If the estimator is doing something wrong
+> with a degenerate cluster, that is a finding to report, not to fix in the pass
+> that discovered it.
+>
+> Report what you find. If the determinism is real and explicable, say so and say
+> what it means for reporting an interval at all. If it indicates the harness is
+> constraining the outcome, that is a defect and the DISAGREES reading does not yet
+> support a claim about B4.
+>
+> The agreement.txt/json artifacts in the session directory are fine as evidence of
+> what was run -- keep them.
+>
+> Commit and push.
+
+## Prompt 14 — repair the harness and re-register
+
+> Repair the B5 harness and re-register, before collecting. Do not collect.
+>
+> Two defects sit between the DISAGREES reading and any claim about B4. Fix both,
+> and pre-register the corrected cell, because the repair changes what the
+> collection measures.
+>
+> First, the seed. RunProvider.start() rewrites ledger_path and nothing else, so
+> all 120 runs shared seed 20260908 and the fault stream was identical.
+> supervisor.py's render_config already takes a seed, and its docstring exists
+> because Session 3's D0(ii) gate caught this. Use it: one freshly seeded provider
+> per run, derived from the run's own seed so it is reproducible.
+>
+> Prove the repair, per rule 13, and prove it on the fault stream rather than on
+> the outcome: show that the per-run fault-decision signatures from
+> ground_truth.run.jsonl now differ across runs, and show that a run given the same
+> seed reproduces its signature exactly. A seed that varies but does not reach the
+> provider would look identical to what you just found.
+>
+> Second, H1's units. analyse_b5_agreement.py:371 compares B5's duplicate
+> applications against B4's per-execution indicator. The reconciler already
+> computes undetected_duplicate_executions and it is in all 120 summary.json, so
+> write it into the session record and compare like with like. State in the report
+> that H2 was already units-consistent and needed no change.
+>
+> This is a change to the verdict script after data exists, which is the one edit
+> the ordering exists to prevent -- so do it explicitly and on the record. Record
+> what the script said before, what it says after, and that the correction was
+> identified from a units mismatch in the code rather than from the result being
+> unwelcome. Do not run it against the new data in this pass.
+>
+> Then re-register. Attempt 2's data stays as a complete honest record of a harness
+> that was too deterministic -- do not delete or amend it. The corrected cell is a
+> new pre-registration: hypotheses unchanged, run counts, unit of analysis, stopping
+> rule, and the statement that per-run fault streams now vary. Commit it before any
+> attempt 3 run exists.
+>
+> Two of three attempts remain. Say in the pre-registration whether the repair
+> resets that budget or spends from it, and why. Attempt 2 was not wasted, but it
+> also did not measure the cell.
+>
+> R1, R8, R8a, R8b, R12, R12a, R14 apply. Commit and push.
+
+## Prompt 15 — collect attempt 3 (this one)
+
+> Launch WS-6 attempt 3 against the corrected cell.
+>
+> Rule 4 first: append the prompts issued since the last prompts commit, verbatim,
+> corrections recorded alongside, before any data commit.
+>
+> Collect exactly what the corrected re-registration specifies: 120 runs, 30 x 10,
+> both configurations, 4000 ms Start-To-Close, into a new dated directory. Frozen
+> results are immutable. Follow the stopping rule as written; do not adjust it
+> mid-collection.
+>
+> Launch detached with nohup setsid, keepalive held. Record the environment with
+> verify_measurement_host.py. Do not run the test suite against anything this
+> collection uses.
+>
+> Do NOT run analyse_b5_agreement.py. Read the run count and the void counts only,
+> so any void decision stays outcome-independent.
+>
+> Two stop conditions beyond the pre-registered one.
+>
+> If VOID_ATTRIBUTION_UNAVAILABLE appears, stop and report. It appeared in no run
+> of attempt 2, so its presence would mean something changed.
+>
+> And read the provider_seed field across runs as the collection proceeds. It is
+> configuration the runner echoes back, not an outcome, so reading it is
+> outcome-independent. If the seeds are not distinct across runs, stop immediately
+> -- that is the defect this attempt exists to repair, and collecting through it
+> would spend an attempt reproducing attempt 2.
+>
+> Do not read per-run duplicate or lost-effect counts. Those are outcomes, and the
+> identical-runs check belongs to the analysis pass, not to you during collection.
+>
+> The 2 VOID_WORKER_NEVER_READY from attempt 2 are an open question in handoff §7.
+> If they recur, record the count and the positions; do not chase them.
+>
+> R1, R8, R8a, R8b, R12, R12a, R14 apply. Stop when the data is committed and
+> pushed. No analysis, no verdict, paper untouched. If the push hangs, retry once
+> with a longer window before reporting it as a hang.
+
+---
+
 # Corrections recorded alongside, not applied silently
 
 **Prompt 5's premise, and my own report, were wrong about readiness.** Prompt 5
@@ -464,3 +627,34 @@ driver died with its launching client first, and the distro idled out ~20 s
 later. `.wslconfig`'s `vmIdleTimeout=-1` is not honoured by WSL 2.7.3.0 at all.
 The prompt asked for exactly this correction to be recorded, which is why it is
 here and in `reports/phase-report-ws6-attempt1-voided-2026-09-08.md` §4.
+
+---
+
+**Prompt 12 asked for "two small records" and got three artefacts.** I also
+saved the analysis output (`agreement.txt`, `agreement.json`) into the session
+directory and re-digested `SHA256SUMS` over it, treating that as evidence of what
+was run rather than as a new document, and flagged it in the report as a third
+artefact so it could be objected to. Prompt 13 accepted it explicitly — *"The
+agreement.txt/json artifacts in the session directory are fine as evidence of
+what was run -- keep them."* Recorded because the acceptance is what makes it not
+a silent widening of scope.
+
+**Prompt 14's rule-13 proof failed on its first run, for its own reasons.** The
+prompt asked for the repair to be proven on the fault stream rather than the
+outcome, and warned that *"a seed that varies but does not reach the provider
+would look identical to what you just found."* The proof's branch B — the same
+seed must reproduce its stream exactly — failed, and the defect was in the proof,
+not the repair: its signature digested client-observed HTTP statuses, which
+depend on whether the test client's socket timeout fires before the provider's
+simulated timeout returns 504. The provider's own decisions were byte-identical
+across the two runs. Before rewriting the signature I checked that a
+provider-only signature still separated the five seeds, so the rewrite was not
+assumed to work. Recorded in `prove_provider_seeding.py`'s docstring and in
+`reports/phase-report-ws6-prediction-corrected-2026-09-08.md` §2.1.
+
+**Prompt 10's `resolve_for_system()` deviation, above, is the pattern these
+share:** each time the prompt named a mechanism and the mechanism turned out to
+be the wrong one for a reason only visible on contact with the code. In all three
+cases the deviation is recorded here rather than folded into a diff, because a
+prompt whose instruction was not followed is a prompt whose record would
+otherwise be false.
