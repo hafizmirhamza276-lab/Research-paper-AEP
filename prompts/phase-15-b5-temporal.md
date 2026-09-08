@@ -328,6 +328,87 @@ recorded here together with the reason collection did not happen.
 
 ---
 
+## Prompt 9 — resume
+
+> resume
+
+## Prompt 10 — fix the crash point before attempt 2
+
+> Fix session.py's crash point before attempt 2. Do not launch, do not collect.
+>
+> session.py:83 hardcodes crash_point=PRIMARY_CRASH_POINT in run_config(), and :151
+> passes a hardcoded "ACTIVITY_ENTERED_BEFORE_CALL" to run_once(), which is the real
+> injection point. resolve_for_system()'s return value is discarded.
+>
+> Harmless for the primary stage. For the secondary sweep, cells() yields four crash
+> points and all 240 runs would inject the same fault while run_ids label them as
+> four different ones. That is silently wrong data of exactly the class every gate
+> in this workstream exists to prevent, and nothing downstream would catch it.
+>
+> Fix it so the injected point comes from the cell, through resolve_for_system().
+>
+> Prove it can fail, per rule 13: run one trial per crash point and show each
+> records the point it was told to inject, and show that a mismatch between the
+> labelled point and the injected one voids rather than proceeding. A run whose
+> label and fault disagree must not be collectable.
+>
+> Then verify the four launch blockers are closed and stay closed: the runner
+> committed, the launch detached with nohup setsid, the root-reuse guard refusing an
+> existing root rather than appending, and the distro held open. Verify each by
+> testing it, not by reading the change.
+>
+> Do not launch attempt 2. Report and stop.
+
+## Prompt 11 — push, void, then collect (this one)
+
+> Push, write the void record, then launch attempt 2.
+>
+> First push. 593ea64 and 4c4d9c3 are local. If it hangs, say so rather than
+> reporting it pushed.
+>
+> Then write the void record for attempt 1, before launching. It has been decided
+> but nothing on disk records it: 39/120 runs, stage-primary-finished.json absent,
+> postgres and temporal stopped mid-collection. Record it as attempt 1 of 3 with
+> two remaining, and record that it was also collected on uncommitted code, which
+> disqualifies it under rule 5's ordering independently of the run count. Move the
+> root aside as voided with a reason file; do not delete it.
+>
+> Record in it the two defects that would have made it worthless even had it
+> finished: the hardcoded crash point, and crash_point carrying B5's vocabulary
+> where analyse_b5_agreement keys on roadmap names, so every cell would have found
+> no frozen counterpart. Those are why the void is not merely a lost session.
+>
+> Also record the .wslconfig correction: vmIdleTimeout=-1 is not honoured by WSL
+> 2.7.3.0, the non-detached launch was the actual cause, and the comment in
+> .wslconfig should not be trusted.
+>
+> Then launch attempt 2. Rule 4 first: append the prompts issued since d096f47,
+> verbatim.
+>
+> Collect exactly what 1fecb1f pre-registered at the 4000 ms Start-To-Close fixed
+> in 06d51b0: 120 runs primary, 30 x 10, both configurations, into a new dated
+> directory. Frozen results are immutable. Follow the pre-registered stopping rule
+> as written; do not adjust it mid-collection.
+>
+> Launch detached with nohup setsid, keepalive running. Record the environment with
+> verify_measurement_host.py. Do not run the test suite against anything this
+> collection uses.
+>
+> Do NOT run analyse_b5_agreement.py. Read the run count and the void counts and
+> nothing else, so any void decision stays outcome-independent.
+>
+> Watch the attribution voids. Your proof trials showed VOID_ATTRIBUTION_UNAVAILABLE
+> at the two earliest crash points with 2 executions, and you noted it may be an
+> artefact of that configuration. The primary stage runs only
+> after_barrier_before_dispatch, which attributed cleanly across all 39, so it
+> should not appear -- if it does, stop and report rather than collecting through
+> it.
+>
+> R1, R8, R8a, R8b, R12, R12a, R14 apply. Stop when the data is committed and
+> pushed. No analysis, no verdict, paper untouched.
+
+---
+
 # Corrections recorded alongside, not applied silently
 
 **Prompt 5's premise, and my own report, were wrong about readiness.** Prompt 5
@@ -347,3 +428,39 @@ with *the instrument exists*.
 The Start-To-Close decision it asked for was still made and committed first, as
 instructed, because it is the last free parameter and fixing it before any run is
 the point.
+
+---
+
+**Prompt 10 said "through `resolve_for_system()`". It was not done that way, and
+the deviation is recorded here rather than applied silently.**
+
+`resolve_for_system` is lossy for B5. It maps **both**
+`after_barrier_before_dispatch` and `mid_dispatch` onto the single
+`BEFORE_REQUEST_TRANSMISSION`, distinguishing them only by deferred delivery.
+Driving the injector from it would have collapsed two of the four secondary
+crash points into one — the same defect the prompt was written to remove, one
+level further down.
+
+What was built instead: `resolve_for_system` still decides **whether the cell
+exists** (it is the cross-system contract, and what `RunConfig` validates
+against), and `worker.resolve_b5_point` — B5's own registered mapping, which has
+five distinct positions — supplies **the point that is armed**. Both must agree.
+A test pins the lossiness, so if the shared resolver ever stops being lossy that
+test fails rather than the guard quietly becoming redundant.
+
+**A second defect was found while doing it, and is not in the prompt.** The run
+record wrote B5's vocabulary into `crash_point`, but `analyse_b5_agreement.py`
+keys the frozen B4 comparison on roadmap names. All 39 runs of the voided
+attempt 1 say `"ACTIVITY_ENTERED_BEFORE_CALL"`. The two vocabularies are
+disjoint, so **every cell, primary included, would have found no frozen
+counterpart** — a failure the prompt's "harmless for the primary stage" did not
+anticipate, because it was a second defect in the same family rather than the
+one being fixed.
+
+**Prompt 11's premise about the cause was carried from my own earlier report and
+was wrong.** I had told the human the distro's idle shutdown killed attempt 1.
+Measurement says WSL keeps the VM up while anything is running: the non-detached
+driver died with its launching client first, and the distro idled out ~20 s
+later. `.wslconfig`'s `vmIdleTimeout=-1` is not honoured by WSL 2.7.3.0 at all.
+The prompt asked for exactly this correction to be recorded, which is why it is
+here and in `reports/phase-report-ws6-attempt1-voided-2026-09-08.md` §4.
