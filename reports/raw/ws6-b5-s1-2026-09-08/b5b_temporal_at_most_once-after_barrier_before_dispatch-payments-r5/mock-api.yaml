@@ -1,0 +1,23 @@
+config_version: aep.mock-legacy-api.config/1
+defaults:
+  faults:
+    delay:
+      distribution: constant
+      seconds: 2.0
+    duplicate_response_probability: 0.0
+    server_error_probability: 0.05
+    timeout_probability: 0.15
+endpoints:
+  ledger_postings:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: NO_READBACK
+  payments:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: AUTHORITATIVE_READBACK
+ledger_path: /root/aep-ws6/b5-s1-2026-09-08-attempt2/b5b_temporal_at_most_once-after_barrier_before_dispatch-payments-r5/ground_truth.sqlite3
+readback_keying: CALLER_REFERENCE
+seed: 20260908
