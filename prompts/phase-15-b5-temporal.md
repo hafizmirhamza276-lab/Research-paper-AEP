@@ -237,6 +237,95 @@ recorded here together with the reason collection did not happen.
 > Stop when the data is committed and pushed. No analysis, no verdict, paper
 > untouched. If the push hangs, say so rather than reporting it pushed.
 
+## Prompt 7 — build the collection runner
+
+> Build the B5 collection runner. Do not collect.
+>
+> 1df2b16 names five components collection needs. Build them, and build the gate
+> with them -- a harness built and used in the same pass gets no gate, and both
+> existing B5 gates exist because instrument failure was invisible twice.
+>
+> The load-bearing constraint is oracle attribution.
+> undetected_duplicate_applications and lost_effect_executions must come from the
+> same reconciler that produced B4's, against the same provider ledger. If B5's
+> rates came from anywhere else, agreement or disagreement would be an artefact
+> of attribution rather than of the engines -- the confound WS-6 exists to
+> remove. Read how B4 reconciles and use that path; do not write a B5-specific
+> one. Say where you read it.
+>
+> Register B5 in contract.py's SystemId and in run_matrix.py the way the other
+> systems are registered. Follow the existing shape rather than inventing one.
+>
+> Prove the runner writes what analyse_b5_agreement.py reads. That script is
+> already committed and predates any data, so the runner must satisfy it, not the
+> other way round. If the two disagree on format, change the runner. Changing the
+> verdict script now is the one edit the ordering exists to prevent -- if it is
+> genuinely wrong, stop and report rather than editing it.
+>
+> Prove the gate can fail, both directions, on the real stack: a run the
+> reconciler can attribute, and a run where attribution is unavailable, which
+> must void naming attribution rather than reporting a zero rate. A missing
+> oracle currently looks like a clean result.
+>
+> Do not collect. The pre-registered stopping rule voids on run count, so a
+> session started before the gate is proven has nothing for a void decision to
+> rest on.
+>
+> Note in the report that this is the fifth instance of the R14 pattern, and that
+> this one was a readiness claim rather than a check -- R14 covers instruments
+> that cannot say "I looked in the wrong place"; a report asserting readiness
+> without running the grep is the same defect in prose. Say whether R14 should be
+> widened to cover it or whether that is a different rule.
+>
+> R1, R8, R8a, R8b, R12, R12a, R14 apply. Commit and push; if the push hangs, say
+> so.
+
+## Prompt 8 — prove the silent branch, then collect (this one)
+
+> Prove the attribution gate's silent branch, then collect.
+>
+> Give each run its own ledger, as WS-4's runs had. The shared probe ledger is
+> why branch A voided -- 129 rows from days of probe runs that the run's plan
+> cannot explain. That was the gate working, and it named a requirement that was
+> never written down.
+>
+> Re-run prove_attribution_gate.py and observe branch A silent. Both branches
+> must be observed in one run of the proof, not one now and one from memory.
+> Until branch A is silent, do not collect.
+>
+> Then collect. Rule 4 first: append the prompts issued since d096f47, verbatim.
+>
+> Collect exactly what 1fecb1f pre-registered at the 4000 ms Start-To-Close fixed
+> in 06d51b0: 120 runs primary, 240 secondary, 30 x 10, both configurations, into
+> a new dated directory. Frozen results are immutable. Follow the pre-registered
+> stopping rule as written; do not adjust it mid-collection.
+>
+> Launch with nohup setsid. Record the environment with
+> verify_measurement_host.py. Do not run the test suite against anything this
+> collection uses.
+>
+> Do NOT run analyse_b5_agreement.py. Read the run count and the void counts and
+> nothing else. The voids are instrument health, not outcome, so reading them
+> keeps a void decision outcome-independent as WS-4's was. If voids exceed what
+> the instrument should produce, stop and report rather than collecting through
+> it.
+>
+> Two things to record while you are there.
+>
+> The regression in test_the_unit_of_analysis_is_the_run is a different failure
+> from R14's five: the checker was not weak, it was the wrong checker. 856d78a
+> ran check_paper_numbers.py and not the suite, so a fix was verified by a gate
+> that could not see it. Record it as its own entry -- verify a change with the
+> gate that covers what you changed -- rather than folding it into R14's
+> widening.
+>
+> And record that CI did not install the b5 extra the suite now imports, so tests
+> would have skipped rather than failed. A suite that skips what it cannot import
+> reports green for work it never ran.
+>
+> R1, R8, R8a, R8b, R12, R12a, R14 apply. Stop when the data is committed and
+> pushed. No analysis, no verdict, paper untouched. If the push hangs, say so.
+
 ---
 
 # Corrections recorded alongside, not applied silently
