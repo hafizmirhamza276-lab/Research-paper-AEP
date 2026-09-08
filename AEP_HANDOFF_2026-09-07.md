@@ -248,9 +248,18 @@ Carried forward from the 09-04 file's §6. **Rechecked:** the credential,
 lock-file, `nohup setsid`, sleep, test-suite-safety and corporate-laptop notes
 all still hold; the "unpushed commits" note is superseded — see §6.
 
+- **If a push hangs, retry once with a longer window before hunting anything.**
+  Updated 8 September. A push of 981 objects timed out at 180 s, and the
+  off-screen-credential diagnosis below did **not** apply: no
+  `git-remote-https.exe`, no other git process, and no `.git/index.lock`. A
+  plain retry at 540 s completed normally, and only 343 KiB actually
+  transferred — so the stall was in the connection/auth phase, not the transfer,
+  and nothing needed to be found or killed. Check for a stalled process and a
+  lock file *after* a retry fails, not before.
 - **Git credential dialog opens off-screen.** Cost 3h17m once, with a stalled
-  `git-remote-https.exe` holding `.git/index.lock`. If git hangs, look for a
-  hidden account-selection window. The account is **`hafizmirhamza276-lab`**.
+  `git-remote-https.exe` holding `.git/index.lock`. If git hangs *and a retry
+  did not clear it*, look for a hidden account-selection window. The account is
+  **`hafizmirhamza276-lab`**.
 - **Never delete `.git/index.lock` while git processes are alive.** Kill them,
   confirm gone, verify the lock is 0 bytes, remove, then `git fsck`. This
   recurred this session; the lock was stale and no git process existed in either
@@ -352,6 +361,18 @@ Rechecked; all six from the 09-04 file are still open and none has been acted on
   instant `run_matrix` returned 0, and `coordinator_restarted_unexpectedly` is
   `False` in all 60 rows. Deliberately not chased; recorded so a fourth
   occurrence is met as a pattern.
+- **Two `VOID_WORKER_NEVER_READY` runs in the B5 primary session, unexplained.**
+  Added 8 September, from `0c6bcf4`. Sequence positions 10 and 21, **both in the
+  first cell** (`B5_TEMPORAL` / `ledger_postings`), both with an **empty
+  `worker.err`** — so the worker left no traceback; it simply did not signal
+  ready inside the spawn window, and `collect.py` retries once before voiding.
+  **Attempt 1 produced none in its 39 runs**, under the same provider
+  configuration, which is what makes it worth recording rather than shrugging
+  at. The gate excluded both from every rate and reported them with counts, so
+  no number rests on them, and 2/120 breaches no pre-registered rule.
+  **Deliberately not chased** — recorded so a recurrence is met as a pattern,
+  the same treatment `docs/25` R12a gives the container-lifecycle events.
+
 - **`/PTEX.FileName` is still in the public `main.pdf`.** Absolute build paths
   carrying the repository name remain in `main.pdf` and are *not* a defect there
   — the public PDF is not anonymous. But it is a decision, not an accident, and
