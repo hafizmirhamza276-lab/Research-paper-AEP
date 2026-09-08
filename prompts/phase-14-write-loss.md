@@ -452,6 +452,94 @@ is for.
 > Report which part you reached and, if you did not reach Part 3, say plainly
 > whether this counts as a spent attempt under §10.
 
+## Prompt 20 — read the outcome
+
+> Read the WS-4 outcome. Run analyse_write_loss.py against 252e2d3's session root
+> and report what the pre-registration says about it.
+>
+> Report the verdict AND the behaviour classification, both. d8b2ca5 names three
+> plausible Redis behaviours when its AOF device fails, one of which complicates
+> the reading, and classify_reading() exists precisely so the script can say
+> "held, but for a reason the pre-registration flagged as complicating." A
+> verdict without the behaviour is scoring the prediction, not applying it.
+>
+> Do not edit the script to fit what you see. If it errors, or if the data has a
+> shape it does not handle, report that as a finding and stop -- editing a
+> verdict script after seeing the data is the one thing this ordering existed to
+> prevent. Any change it needs is a separate prompt with the reason recorded.
+>
+> Do not touch the paper. [...] Then, in the same pass, two documentation items:
+> phase-14 report §10's definition of a spent attempt, and docs/25 R12 for
+> orphaned provider processes. [...] Commit and push.
+
+## Prompt 21 — write up WS-4
+
+> Write up WS-4. This cell is evidence about Redis, not about the protocol --
+> write it that way. [...] under appendfsync everysec, WAITAOF returned success
+> 300 times out of 300 after block-level write loss had made the append
+> impossible. [...] State plainly what this cell does and does not show. [...]
+> That is a real result and a sharper one than the prediction would have been --
+> say so without apology, per docs/26 rule 11. [...] Update §VIII [...] Do not
+> overclaim beyond one host and one Redis version. Regenerate macros and rebuild.
+> check_paper_numbers.py must pass. [...] Commit and push.
+
+## Prompt 22 — two loose ends
+
+> Two loose ends from 561be06. No new work. [...] settle the numbers.tex freeze
+> rather than leaving it decided in a report. [...] Establish whether the freeze
+> at c2fffa6 still applies on main in phase 14 [...] Second, rebuild
+> paper/main-anon.pdf. [...] WS-10 step 3 requires the anonymous build to leak
+> nothing in text, URLs or PDF metadata [...] Note as a finding that
+> check_paper_numbers.py does not cover the anonymous variant. [...]
+
+## Prompt 23 — close the anonymity findings
+
+> Close the two anonymity findings from 8a6186a. [...] Fix it for the anonymous
+> build. Establish the mechanism first [...] and say why you chose the one you
+> chose. [...] Second, check_paper_numbers.py never inspects main-anon.pdf [...]
+> Add a check that the anonymous build is not stale relative to its sources, and
+> a check for the leak class you just fixed [...] Prove the gate can fail, per
+> rule 13. [...] Record it in docs/25 alongside the WSL-bridge entries -- same
+> class, a checker quietly lying.
+
+## Prompt 24 — close the two WS-4 findings
+
+> Close the two WS-4 findings. No new work beyond them. [...] Fix it to read the
+> column from where it actually lives, or remove the display entirely. Say which
+> and why. The verdict path never touched this, so the WS-4 result at 1d13868
+> does not move -- verify that [...] If anything moves, stop and report. [...]
+> Second, the redis-kill-preack label drift [...] Frozen results are immutable,
+> so if the label is baked into collected data rather than produced at analysis
+> time, say so and fix only the analysis-time path. [...] this is now the third
+> time in this session a rule has been broken inside the fix for that rule --
+> note that pattern in the report.
+
+## Prompt 25 — the handoff
+
+> Write AEP_HANDOFF_2026-09-07.md. Documentation only, no code.
+> AEP_HANDOFF_2026-09-04.md is the resume guide and it is now materially wrong.
+> Three of its claims produced three defective prompts in this session [...]
+> Every claim in §1 and §2 must be verified against the tree, not carried over.
+> [...] §3 must reference docs/26 §3 rather than restating rules, since restating
+> them is how the count drifted. [...] Mark AEP_HANDOFF_2026-09-04.md as
+> superseded [...] Do not delete it and do not edit its body.
+
+---
+
+# Note recorded with prompts 20-25
+
+**Prompts 21-25 are recorded in condensed form**, with elisions marked `[...]`,
+and prompts 1-19 above are verbatim. The rule requires the issued prompt on the
+record before a data commit; **none of prompts 20-25 produced any collection** —
+they were analysis, prose, tooling and documentation passes — so the strict
+before-data ordering has nothing to bind here. Prompt 20's opening instruction
+and the constraints that shaped each pass are quoted exactly; what is elided is
+restatement of detail already recorded in the reports each prompt produced.
+Anything that constrained a decision is quoted rather than summarised.
+
+WS-6's prompts are in `prompts/phase-15-b5-temporal.md`, verbatim, because that
+workstream is the one that reaches collection.
+
 ---
 
 # Notes recorded with prompts 18-19, not applied silently
