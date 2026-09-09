@@ -16,6 +16,30 @@ required~\cite{kleppmann2016locking}. AEP applies that standard remedy to its
 state store. B1 and B2 show its boundary: fencing protects the store, not an
 external endpoint that does not interpret the token (\cref{tab:outcomes}).
 
+\paragraph{What fencing requires of the resource} The fencing step deserves a
+primary source, because AEP's guard depends on it and because the requirement it
+imposes is the one this paper cannot satisfy. Chubby states both the hazard and
+the remedy directly: a client holding a lock may issue a request and then fail,
+a second client may acquire the lock and act, and the first request may arrive
+afterwards. Its remedy is a \emph{sequencer} --- the lock name, a generation
+number that changes on every transition from free to held, and the acquisition
+mode --- which the client passes to the file server, \emph{and which the file
+server is expected to validate}~\cite{burrows2006chubby}. ZooKeeper supplies the
+same class of primitive as a coordination kernel on which client-side locking is
+built~\cite{hunt2010zookeeper}.
+
+That validation requirement is the crux. A fencing token protects a resource
+only if the resource checks it, which makes fencing a property of the
+\emph{resource}, not of the lock service. Chubby concedes the point by shipping
+a fallback for servers that cannot be modified to validate sequencers:
+\emph{lock-delay}, which merely withholds a lock for a bounded period after an
+abnormal release and which the paper describes as imperfect. That fallback is
+the closest prior art to AEP's setting, and it is a timing heuristic rather than
+a guarantee. Kleppmann's analysis remains the clearest statement of the failure
+mode in the commodity Redis setting, and is cited as the practitioner account it
+is~\cite{kleppmann2016locking}. B1 and B2 measure exactly this boundary: fencing
+protects the store and not an endpoint that never interprets the token.
+
 \paragraph{Logging, outboxes, and long-lived transactions} The
 expected-version CAS is optimistic concurrency control~\cite{kung1981optimistic}.
 ARIES writes intent before an action that the same recovery domain can undo or
@@ -161,6 +185,45 @@ $[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%
 (\cref{sec:eval-detection}). The Redis-kill experiment isolates a prevention
 effect. We found no prior evaluation that measures this detection/prevention
 decomposition with an independent external-effect ledger.
+
+\paragraph{The durable-orchestration line, and what each assumes of the
+endpoint} The idea is older than the current generation of products. Workflow
+management systems already specified business processes and generated
+implementations that recorded progress durably across long-running
+activities~\cite{georgakopoulos1995workflow}; the recovery semantics they
+relied on were the advanced transaction models discussed above, which is why
+sagas and compensation sit underneath that literature rather than beside it.
+
+The current generation renamed the idea and sharpened the boundary, and each
+system states the same assumption in its own documentation. Cadence introduced
+the framing: workflow code is fault-oblivious and therefore may not call an
+external API directly, only orchestrate \emph{activities}, and because the
+service does not recover an activity's state, activity failure is expected and
+retried~\cite{cadence-workflows}. Restate journals each step and replays the
+journal after a crash, skipping completed steps --- and its documentation names
+the residual exactly: if a side effect completes but the failure prevents its
+result being recorded, replay will run it again, so side effects are required
+to be idempotent~\cite{restate-durable-execution}. AWS states it normatively:
+a Step Functions workflow conforms to an at-least-once execution model in which
+each step may run more than once, and step-level idempotency remains the
+caller's responsibility~\cite{aws-stepfunctions-bestpractices}; its durable
+execution SDK turns the trade into an explicit per-step knob, recommending
+at-least-once for idempotent operations and at-most-once for externally
+side-effecting ones such as charging a card or posting to a non-idempotent
+API~\cite{aws-durable-execution-idempotency}. That last sentence is this
+paper's problem statement, written by a vendor. DBOS takes the other route,
+placing system state in a distributed transactional DBMS so that services are
+implemented as ordinary database operations and are recoverable as
+such~\cite{skiadopoulos2022dbos} --- recoverability again purchased by keeping
+the effect inside the transactional domain, the same boundary Olive draws.
+
+The axis that matters here is not feature coverage but what each assumes of the
+invoked step: that it is idempotent, compensable, or inside the same
+transactional domain. Where that holds, these systems are correct and AEP is
+unnecessary. AEP's endpoint satisfies none of the three. \textbf{Our measured
+comparison is with one engine and does not transfer to the others}
+(\cref{sec:threats}); what the systems above share is the assumption, which each
+states for itself in the text cited.
 
 \paragraph{Agent execution reliability} Three contemporaneous systems overlap
 substantially and delimit the claim. Verified Tool Calls formalizes non-atomic
