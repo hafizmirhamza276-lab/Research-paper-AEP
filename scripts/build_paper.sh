@@ -9,14 +9,37 @@
 # Usage, from the repository root:
 #   bash scripts/build_paper.sh               # public    -> paper/main.pdf
 #   bash scripts/build_paper.sh --anonymous   # anonymous -> paper/main-anon.pdf
+#   bash scripts/build_paper.sh --supplementary [--anonymous]
+#                                             #           -> paper/supplementary[-anon].pdf
+#
+# The supplementary is a SEPARATE document, not an appendix bound into
+# main.tex, because IEEE CS guidance treats appendices as supplemental material
+# to be submitted separately and excludes supplemental material from the page
+# count. It is built by this same script so it inherits every protection the
+# main build has: scratch compilation, the .bbl identity assertion, staged
+# promotion, its own provenance stamp, and -- for its anonymous build -- the
+# same pdfTeX primitives.
 set -euo pipefail
 
 ANON=0
+DOC="main"
 JOB="main"
 TEXINPUT="main.tex"
+# --supplementary may appear before or after --anonymous.
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--supplementary" ]; then
+    DOC="supplementary"
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- ${ARGS[@]+"${ARGS[@]}"}
+JOB="$DOC"
+TEXINPUT="${DOC}.tex"
 if [ "${1:-}" = "--anonymous" ]; then
   ANON=1
-  JOB="main-anon"
+  JOB="${DOC}-anon"
   # Two pdfTeX primitives, and they are here rather than in main.tex so the
   # public build is untouched by construction -- it is not anonymous and does
   # not need to be.
@@ -38,9 +61,9 @@ if [ "${1:-}" = "--anonymous" ]; then
   # and shift the xref table, risking corruption of the artifact it is meant to
   # protect. These primitives remove the strings at the source, need no external
   # tool, and cannot produce an invalid PDF.
-  TEXINPUT='\pdfsuppressptexinfo=-1 \pdfinfoomitdate=1 \pdftrailerid{}\def\ANONYMOUS{}\input{main.tex}'
+  TEXINPUT="\pdfsuppressptexinfo=-1 \pdfinfoomitdate=1 \pdftrailerid{}\def\ANONYMOUS{}\input{${DOC}.tex}"
 elif [ "$#" -ne 0 ]; then
-  echo "usage: $0 [--anonymous]" >&2
+  echo "usage: $0 [--supplementary] [--anonymous]" >&2
   exit 2
 fi
 
@@ -119,10 +142,27 @@ export BIBINPUTS="${PAPER}:${BIBINPUTS:-}"
 
 cd "$BUILD_DIR"
 
+# Does this document have a bibliography at all? The supplementary starts
+# as an empty container with no citations, and bibtex fails hard on
+# "I found no citation commands". Running it anyway would make an honest
+# empty container unbuildable; skipping it silently would hide a missing
+# bibliography the day the first citation is moved in. So the decision is
+# derived from the source, announced, and PAIRED WITH A GATE:
+# check_paper_numbers.py refuses a supplementary that cites without
+# declaring a bibliography.
+HAS_BIB=0
+if grep -qE '^[^%]*\\bibliography\{' "${PAPER}/${DOC}.tex"; then
+  HAS_BIB=1
+fi
+
 echo "=== pdflatex / bibtex / pdflatex x2 (${JOB}, staged) ==="
 "$PDFLATEX" -interaction=nonstopmode -halt-on-error -jobname="$JOB" \
   "$TEXINPUT" >/dev/null
-"$BIBTEX" "$JOB" >/dev/null
+if [ "$HAS_BIB" -eq 1 ]; then
+  "$BIBTEX" "$JOB" >/dev/null
+else
+  echo "no bibliography in ${DOC}.tex -- skipping bibtex (announced, not silent)"
+fi
 "$PDFLATEX" -interaction=nonstopmode -halt-on-error -jobname="$JOB" \
   "$TEXINPUT" >/dev/null
 "$PDFLATEX" -interaction=nonstopmode -halt-on-error -jobname="$JOB" \
@@ -139,6 +179,10 @@ echo "=== pdflatex / bibtex / pdflatex x2 (${JOB}, staged) ==="
 # lines' range in the same block (B40's shape, much shorter). The explicit
 # -f test is the mitigation: if this is ever reordered above them, it fails
 # closed rather than silently finding no log and concluding nothing.
+if [ "$HAS_BIB" -eq 0 ]; then
+  echo "bbl identity: not applicable -- ${DOC}.tex declares no bibliography"
+fi
+if [ "$HAS_BIB" -eq 1 ]; then
 if [ ! -f "${JOB}.log" ]; then
   echo "bbl identity: no ${JOB}.log to check -- refusing to assume" >&2
   exit 1
@@ -162,8 +206,13 @@ done <<EOF
 $bbl_opens
 EOF
 echo "bbl identity: pdflatex opened the staged ${JOB}.bbl"
+fi
 
-for artifact in "${JOB}.pdf" "${JOB}.log" "${JOB}.bbl" "${JOB}.blg"; do
+REQUIRED_ARTIFACTS=("${JOB}.pdf" "${JOB}.log")
+if [ "$HAS_BIB" -eq 1 ]; then
+  REQUIRED_ARTIFACTS+=("${JOB}.bbl" "${JOB}.blg")
+fi
+for artifact in "${REQUIRED_ARTIFACTS[@]}"; do
   if [ ! -s "$artifact" ]; then
     echo "paper build did not produce a non-empty ${artifact}" >&2
     exit 1
@@ -214,7 +263,7 @@ grep -oE "Output written on ${JOB}.pdf \([0-9]+ pages" "${JOB}.log" || true
 echo "overfull boxes: ${overfull_count}"
 echo "underfull boxes: ${underfull_count}"
 
-if [ "$ANON" -eq 0 ]; then
+if [ "$ANON" -eq 0 ] && [ "$DOC" != "supplementary" ]; then
   echo
   echo "=== the numbers against the results ==="
   cd "$ROOT"
@@ -235,15 +284,27 @@ fi
 # old PDF with a build whose supporting artifacts were not preserved.
 cp -- "$BUILD_DIR/${JOB}.pdf" "$STAGED_PDF"
 cp -- "$BUILD_DIR/${JOB}.log" "$STAGED_LOG"
-cp -- "$BUILD_DIR/${JOB}.bbl" "$STAGED_BBL"
-cp -- "$BUILD_DIR/${JOB}.blg" "$STAGED_BLG"
+if [ "$HAS_BIB" -eq 1 ]; then
+  cp -- "$BUILD_DIR/${JOB}.bbl" "$STAGED_BBL"
+  cp -- "$BUILD_DIR/${JOB}.blg" "$STAGED_BLG"
+fi
 mv -f -- "$STAGED_LOG" "$PAPER/${JOB}.log"
-mv -f -- "$STAGED_BBL" "$PAPER/${JOB}.bbl"
-mv -f -- "$STAGED_BLG" "$PAPER/${JOB}.blg"
+if [ "$HAS_BIB" -eq 1 ]; then
+  mv -f -- "$STAGED_BBL" "$PAPER/${JOB}.bbl"
+  mv -f -- "$STAGED_BLG" "$PAPER/${JOB}.blg"
+fi
 # The stamp goes with them. It is promoted BEFORE the PDF for the same reason
 # the logs are: the PDF is the last thing to move, so no ordering leaves a new
 # PDF beside a stamp that does not describe it.
-if [ "$ANON" -eq 0 ]; then
+# One stamp per artifact, never shared: a rebuild of one must not vouch for
+# another that was not rebuilt. That is the main-anon.pdf failure, generalised.
+if [ "$DOC" = "supplementary" ]; then
+  if [ "$ANON" -eq 0 ]; then
+    mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance-supp.json"
+  else
+    mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance-supp-anon.json"
+  fi
+elif [ "$ANON" -eq 0 ]; then
   mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance.json"
 else
   mv -f -- "$STAGED_PROV" "$PAPER/.build-provenance-anon.json"

@@ -46,16 +46,36 @@ STAMP_NAME = ".build-provenance.json"
 #: that had not been rebuilt, which is exactly how main-anon.pdf sat three days
 #: behind section VIII while the checker reported 19 passed.
 ANON_STAMP_NAME = ".build-provenance-anon.json"
+#: The supplementary is a separate submitted PDF (IEEE CS treats appendices as
+#: supplemental material, submitted separately), so it gets its own stamps for
+#: the same reason the anonymous build does: one shared stamp would let a
+#: rebuild of one artifact vouch for another that was never rebuilt.
+SUPP_STAMP_NAME = ".build-provenance-supp.json"
+SUPP_ANON_STAMP_NAME = ".build-provenance-supp-anon.json"
 STAMP_VERSION = 1
 
 # Top-level build products. Everything else under paper/ is an input.
 ARTIFACT_NAMES = {
     STAMP_NAME,
     ANON_STAMP_NAME,
+    SUPP_STAMP_NAME,
+    SUPP_ANON_STAMP_NAME,
     "main.pdf", "main.aux", "main.bbl", "main.blg", "main.log",
     "main.out", "main.toc", "main.synctex.gz",
     "main-anon.pdf", "main-anon.aux", "main-anon.bbl", "main-anon.blg",
     "main-anon.log", "main-anon.out", "main-anon.toc",
+    # The supplementary's products. Its SOURCE, supplementary.tex, is
+    # deliberately NOT listed: it stays a source, so editing it marks the main
+    # build stale too. That coupling is intentional. The two PDFs are submitted
+    # together, and a supplementary newer than the paper that points at it is
+    # exactly the state that must not pass silently.
+    "supplementary.pdf", "supplementary.aux", "supplementary.bbl",
+    "supplementary.blg", "supplementary.log", "supplementary.out",
+    "supplementary.toc",
+    "supplementary-anon.pdf", "supplementary-anon.aux",
+    "supplementary-anon.bbl", "supplementary-anon.blg",
+    "supplementary-anon.log", "supplementary-anon.out",
+    "supplementary-anon.toc",
 }
 
 

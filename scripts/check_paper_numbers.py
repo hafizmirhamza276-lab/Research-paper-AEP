@@ -331,6 +331,130 @@ def check_anonymous_build(result: Result, paper: Path) -> None:
     )
 
 
+def check_supplementary(result: Result, paper: Path) -> None:
+    """The supplementary is a submitted artifact, so it is gated like one.
+
+    It is a separate PDF rather than an appendix because IEEE Computer Society
+    guidance treats appendices as supplemental material to be submitted
+    separately, and excludes supplemental material from the page count. A
+    separate PDF is a second surface, and the reason this function exists is
+    that ``main-anon.pdf`` sat three days stale while the checker reported 19
+    passed -- because nothing read it. A second document nothing reads would be
+    the same failure with a new name.
+
+    What is checked here: both artifacts exist; each is fresh against **its
+    own** stamp; the anonymous one carries no absolute build path, no populated
+    DocInfo, the anonymous byline, and not the main paper's public byline; and
+    a supplementary that cites must declare a bibliography.
+
+    What is NOT checked here, stated so nobody assumes otherwise: the
+    supplementary's prose is not read against the results, because it holds no
+    generated numbers. The moment a macro from ``generated/numbers.tex`` is used
+    in it, ``check_macros_are_used`` must be widened to scan it -- that function
+    reads ``main.tex`` and ``sections/*.tex`` only, and would silently report an
+    orphan as used, or a used macro as orphaned, the day the supplementary
+    carries one.
+    """
+    supp = paper / "supplementary.pdf"
+    anon = paper / "supplementary-anon.pdf"
+    for path, label in ((supp, "supplementary"), (anon, "supplementary-anon")):
+        result.check(path.is_file(), f"{label}.pdf exists", f"missing {path}")
+    if not (supp.is_file() and anon.is_file()):
+        return
+
+    for stamp, label in (
+        (paper_provenance.SUPP_STAMP_NAME, "supplementary"),
+        (paper_provenance.SUPP_ANON_STAMP_NAME, "supplementary-anon"),
+    ):
+        fresh, reason = paper_provenance.verify(paper, stamp)
+        result.check(fresh, f"{label}.pdf is not stale", reason)
+
+    raw = anon.read_bytes()
+
+    leaked = []
+    if b"/PTEX.FileName" in raw:
+        leaked.append("/PTEX.FileName present")
+    for needle in (str(ROOT).encode(), ROOT.name.encode()):
+        if needle in raw:
+            leaked.append(f"build path {needle.decode(errors='replace')!r}")
+    result.check(
+        not leaked,
+        "supplementary-anon leaks no absolute build path",
+        "; ".join(leaked),
+    )
+
+    dirty = [
+        key.decode()
+        for key in _DOCINFO_KEYS
+        if re.search(rb"/" + key + rb"\s*\(([^)]+)\)", raw)
+    ]
+    if re.search(rb"/(Creation|Mod)Date\s*\(", raw):
+        dirty.append("CreationDate/ModDate present")
+    result.check(
+        not dirty, "supplementary-anon DocInfo is clean", ", ".join(dirty)
+    )
+
+    # The byline. Failing closed when pdftotext is absent, for the same reason
+    # the main check does: "I could not look" must not render as "it is clean".
+    if not shutil.which("pdftotext"):
+        result.check(
+            False,
+            "supplementary-anon carries no public byline",
+            "pdftotext not installed; cannot verify -- failing closed",
+        )
+        return
+
+    def first_page(path: Path) -> str:
+        done = subprocess.run(
+            ["pdftotext", "-f", "1", "-l", "1", str(path), "-"],
+            capture_output=True, text=True,
+        )
+        return done.stdout if done.returncode == 0 else ""
+
+    anon_text = first_page(anon)
+    # Derived from the public MAIN paper, never written here: putting the
+    # author's name in this file to check for its absence would reintroduce the
+    # leak the check exists to prevent.
+    byline = ""
+    public_main = paper / "main.pdf"
+    if public_main.is_file():
+        lines = [line.strip() for line in first_page(public_main).splitlines()]
+        lines = [line for line in lines if line]
+        for index, line in enumerate(lines):
+            if line.startswith("Abstract") and index:
+                byline = lines[index - 1]
+                break
+
+    problems = []
+    if "Anonymous" not in anon_text:
+        problems.append("no 'Anonymous' byline on page 1")
+    if byline and byline in anon_text:
+        problems.append("the paper's public byline appears in the supplementary")
+    if not byline:
+        problems.append("could not locate the public byline to compare against")
+    result.check(
+        not problems,
+        "supplementary-anon carries no public byline",
+        "; ".join(problems),
+    )
+
+    # The pairing build_paper.sh's skipped-bibtex branch depends on. It skips
+    # bibtex when the source declares no bibliography, which is correct for an
+    # empty container and wrong the moment content citing anything is moved in.
+    source = (paper / "supplementary.tex").read_text(encoding="utf-8")
+    stripped = "\n".join(
+        line.split("%", 1)[0] for line in source.splitlines()
+    )
+    cites = bool(re.search(r"\\cite[a-z]*\{", stripped))
+    has_bib = bool(re.search(r"\\bibliography\{", stripped))
+    result.check(
+        not cites or has_bib,
+        "supplementary that cites declares a bibliography",
+        "supplementary.tex uses \\cite but declares no \\bibliography, so "
+        "build_paper.sh skips bibtex and the citations render as [?]",
+    )
+
+
 def check_bibliography(result: Result, build_dir: Path) -> None:
     """A blank bibliography compiles clean. Check the artifact, not the log."""
     bbl = build_dir / "main.bbl"
@@ -461,6 +585,8 @@ def main() -> int:
     # Always against paper/, never against --build-dir: the anonymous PDF is
     # never staged there, and the artifact that ships is the promoted one.
     check_anonymous_build(result, arguments.paper)
+    # The supplementary ships alongside the paper, so it is gated alongside it.
+    check_supplementary(result, arguments.paper)
 
     # B21 item 3. The two checks below read main.bbl/main.blg/main.log. When
     # --build-dir was not given they come from paper/, where build_paper.sh

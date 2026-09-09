@@ -379,6 +379,44 @@ they have a common cause**, and a future investigation should not assume one.
 
 ---
 
+### R9b. Third known flake, and the first that fails in isolation: `test_one_execution_produces_exactly_one_applied_mutation`
+
+**Observed 9 September 2026**, in the full-suite run during WS-9's first task
+(`1 failed, 1969 passed`). Unlike R9 and R9a, **it did not pass on re-run in
+isolation**: three consecutive isolated runs of that single test gave
+**pass, fail, pass**. Running the whole file gave `6 passed, 1 error`, the error
+being a separate teardown failure in
+`test_the_runner_carries_no_test_authorisation`.
+
+**Not caused by the work in flight.** The change under test touched
+`scripts/build_paper.sh`, `scripts/check_paper_numbers.py`,
+`scripts/paper_provenance.py` and the new `paper/supplementary.tex`. None is
+imported by `experiments/mock_api/tests/`, and none touches `paper/`-unrelated
+state. The same test passed in several full-suite runs earlier the same day.
+
+**Why this one is a different class from R9 and R9a.** Both of those passed the
+moment they were re-run alone, which is what made "flake, do not chase"
+defensible: the failure needed the full suite's concurrency to appear. This one
+reproduces **without** the suite around it, roughly one run in three on this
+host under load. A test that fails alone is not a scheduling artefact; it is
+either a real nondeterminism in the mock provider's dispatch accounting or a
+test that under-specifies what it is asserting.
+
+**Still not chased in this pass**, because `docs/26` §3 rule 12 puts a defect
+found outside a task's scope in the record rather than in the diff. But it is
+recorded with a **stronger recommendation than R9 or R9a**: this one should be
+investigated before it is relied on, because
+`test_one_execution_produces_exactly_one_applied_mutation` asserts the
+one-execution-one-effect property that the WS-4 and WS-6 oracles are built on.
+If that accounting is genuinely nondeterministic, it is a question about the
+instrument and not only about the test.
+
+**Do not fold it into R9's entry.** R9 is `SIGKILL` timing, R9a is barrier
+validation, this is dispatch accounting, and the only property all three share
+is the word "flake".
+
+---
+
 ## R10. Finding: on the write-loss regime the test-instance marker lives only in RAM.
 
 **A finding, not a fix.** Recorded so it is not rediscovered as a surprise.

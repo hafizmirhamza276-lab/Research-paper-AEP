@@ -1,0 +1,86 @@
+% Supplementary material for
+%   "Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy APIs
+%    Without Idempotency Keys"
+%
+% WHY THIS IS A SEPARATE DOCUMENT AND NOT AN APPENDIX TO main.tex.
+%
+% The IEEE Computer Society author guidance, which governs TSE, states that
+% "appendices in journal articles are treated as supplemental material and must
+% be submitted separately rather than in the main manuscript file", and that
+% "Supplemental material is not included in these word counts". Both sentences
+% point the same way: an appendix bound into main.tex would still be part of the
+% manuscript file, would still count against the 12-page regular-paper limit,
+% and would have to be pulled back out at submission. A separate PDF is what the
+% submission process asks for, so that is what this is. Convenience did not
+% decide it -- if anything an appendix would have been easier to build.
+%
+% CONTAINER ONLY. Nothing has been moved here yet. Each move out of the main
+% text is a decision, taken one at a time, and this file exists first so those
+% decisions are moves rather than deletions.
+%
+% It carries the same anonymity toggle as main.tex, and build_paper.sh applies
+% the same pdfTeX primitives to its anonymous build, because a second PDF that
+% leaks the author is the same failure as the first one leaking.
+
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% ---------------------------------------------------------------------------
+% Anonymity toggle. Identical in shape to main.tex's: the flag is defined on
+% the pdflatex command line by build_paper.sh --anonymous, so neither branch can
+% be reached by editing this file alone, and an identity added to the wrong
+% branch cannot reach supplementary-anon.pdf.
+% ---------------------------------------------------------------------------
+\newif\ifanonymous
+\anonymousfalse
+\ifdefined\ANONYMOUS \anonymoustrue \fi
+
+\begin{document}
+
+\title{Supplementary Material for\\
+\emph{Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy
+APIs Without Idempotency Keys}}
+
+\ifanonymous
+  % Mirrors main.tex's anonymous branch, including the DocInfo wipe. A second
+  % PDF that leaks the author is the same failure as the first one leaking.
+  \author{Anonymous Author(s)}
+  \hypersetup{pdfauthor={},pdftitle={},pdfsubject={},pdfkeywords={},
+              pdfcreator={},pdfproducer={}}
+\else
+  % Deliberately empty until the main paper's byline is settled, so the two
+  % documents cannot disagree. What check_paper_numbers.py asserts is the leak
+  % that actually matters: that the anonymous supplementary carries the
+  % anonymous byline and does NOT contain the main paper's public byline.
+  \author{}
+\fi
+
+\maketitle
+
+\section{Purpose and status}
+
+This document holds material referenced from the main paper but not required to
+follow its argument: extended tables, per-session breakdowns, probe detail, and
+enumerated coverage gaps. It is submitted as supplemental material rather than
+as an appendix, for the reason recorded at the top of this file.
+
+\textbf{At the time of writing it is empty of moved content.} It was built
+first, deliberately. Material that leaves the main text has to arrive somewhere
+citable or it is simply deleted, and the difference between a move and a
+deletion is exactly what a reader losing that material would want to know. Each
+section below will be filled by a separate, individually decided move, and the
+main text will retain a one-paragraph pointer to each.
+
+\section{Contents}
+
+Empty. Sections appear here as material is moved, each with a back-reference to
+the main text passage that points at it.
+
+\end{document}
