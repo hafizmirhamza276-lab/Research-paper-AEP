@@ -172,6 +172,16 @@ def check_macros_are_used(result: Result, paper: Path) -> None:
     written, and its evidence gets orphaned. LaTeX catches the opposite
     direction -- a macro used and not defined -- and says nothing about this
     one.
+
+    **Widened to the supplementary, WS-9 move 2.** It previously scanned
+    ``main.tex`` and ``sections/*.tex`` only. Moving the coverage-gap
+    enumeration out of section VIII took 13 macros with it --- ``CellsCollected``,
+    ``ExecutionsCollected``, ``ClassRunsPerArm`` and the ``ClassPp*`` family ---
+    each used *nowhere else in the paper*. Left unwidened, this gate would have
+    reported all 13 orphaned and the honest reading of that report would have
+    been wrong: they are used, in a document the gate could not see. A
+    submitted PDF whose numbers no gate reads is the ``main-anon.pdf`` failure
+    with a new name.
     """
     numbers = paper / "generated" / "numbers.tex"
     if not numbers.is_file():
@@ -180,8 +190,12 @@ def check_macros_are_used(result: Result, paper: Path) -> None:
     defined = set(
         re.findall(r"\\newcommand\{\\([A-Za-z]+)\}", numbers.read_text(encoding="utf-8"))
     )
+    sources = [paper / "main.tex", *sorted((paper / "sections").glob("*.tex"))]
+    supplementary = paper / "supplementary.tex"
+    if supplementary.is_file():
+        sources.append(supplementary)
     used: set[str] = set()
-    for path in [paper / "main.tex", *sorted((paper / "sections").glob("*.tex"))]:
+    for path in sources:
         text = path.read_text(encoding="utf-8")
         used.update(re.findall(r"\\([A-Za-z]+)\{?\}?", text))
     orphans = sorted(defined - used)
