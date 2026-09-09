@@ -50,6 +50,40 @@ artifact. Blocker **A1 is closed by retitling**, not by an agent experiment.
 
 `check_paper_numbers.py`: **24 passed, 0 failed** (the 24th is the WS-6 B5 session, added 8 September so the gate regenerates with the same source it checks). Both PDFs build clean.
 
+### WS-8 — references complete at 58; the §VII rewrite is not (8 September)
+
+**34 → 58 references**, every one cited in prose, no uncited entries, across five
+passes (`ab15698`, `70c138b`, `14ee6ba`, `223ee1c`, `14148c6`). Areas filled, in
+order: storage durability and fsync semantics; distributed transactions and their
+retreat, and compensation; idempotency-key contracts as deployed, and
+exactly-once delivery; the durable-orchestration line and fencing; and
+crash-consistency methodology. Table XII is at 14 system rows. `verify_refs.py
+--offline` is now a CI step (task 8.4).
+
+**Stopped at 58, not 65, by decision.** The remaining candidates were thinner in
+load-bearing material than what is already in, and every reference here is
+attached to a sentence that would have been written anyway. One reference was
+**rejected as unverifiable and is not cited**: the X/Open XA specification, whose
+bibliographic details are consistent across sources (C193, December 1991, ISBN
+1-872630-24-3) but whose text was not readable at any resolving URL. The
+participant-obligation claim rests on `mohan1986rstar` and `skeen1981nonblocking`
+instead.
+
+**`docs/26` task 8.2 is half done, and the missing half is a rewrite.** 8.2 asked
+for §VII to be reorganised around three questions --- what each system requires of
+the endpoint, whether it can report *unknown*, its residual when the assumption
+fails. That axis was applied to Table XII and to each new paragraph's prose, but
+**the section's organisation is still topical-by-mechanism**. Five passes added
+paragraphs without changing its shape: §VII is now **423 lines and 14
+`\\paragraph` blocks**, with near-duplicate neighbours (two exactly-once
+paragraphs, two fault-injection paragraphs, a fencing paragraph that partly
+restates the leases one). The public PDF is **26 pages** against WS-9's 16-page
+target, and §VII is among the largest sections.
+
+**This is WS-9 work, not more references.** Reorganising §VII around the three
+questions should absorb the duplication and take pages out; doing it now and
+again in WS-9 would be doing it twice.
+
 ### WS-6 — complete (8 September)
 
 **The real Temporal baseline was built, collected and read.** The result, so a
@@ -220,7 +254,7 @@ entirely: Option A was executed, so there is no agent workload to build.
 | WS-5 stats power + remaining cells | ⬜ | 2–3 days |
 | **WS-6 real Temporal baseline** | ✅ **complete** (`7fddd91`, `34713eb`); secondary sweep deferred | — |
 | WS-7 TLA+ model | ⬜ | 3–4 days |
-| WS-8 related work 34 → 65+ refs | ⬜ | 2–3 days |
+| **WS-8 related work** | ✅ **references complete at 58** (`14148c6`); task 8.2's §VII rewrite outstanding → WS-9 | — |
 | WS-9 manuscript rewrite (21 → 16 pages, tone, AI disclosure) | ⬜ | 4–5 days |
 | WS-10 audit + arXiv + submit | ⬜ | 2–3 days |
 
@@ -243,7 +277,7 @@ to list fourteen rules against a source that had twelve, and how a prompt came t
 cite a rule that did not exist.
 
 - **Project rules: `docs/26` §3.** Currently **14** rules, 1–14. Read them there.
-- **Collection tooling rules: `docs/25`.** Currently **R1–R13**, including
+- **Collection tooling rules: `docs/25`.** Currently **R1–R15**, including
   **R8a**, **R8b** and **R12a**. Read them there.
 
 If a rule needs changing, change it in the source document in its own
@@ -284,11 +318,18 @@ recorded, not silently skipped.
 > evidence about the *specification*, not the implementation — say so where it
 > is reported, and do not let it be read as verifying the code.
 
-### Prompt 4 — WS-8, related work
+### Prompt 4 — WS-8, related work — **references DONE; the rewrite is not**
 
 > Expand related work from 34 to 65+ references. Every citation must resolve;
 > `scripts/validate_citations.py` must pass. Do not pad — a reference that is
 > not engaged with in the prose is not a reference.
+
+**Answered for the reference half.** 34 → **58**, all cited in prose, no uncited
+entries, one rejected as unverifiable and recorded. Stopped at 58 rather than 65
+by decision: the remaining candidates were thinner than what is in, and the
+instruction not to pad outranks the target. **`docs/26` task 8.2 --- rewrite §VII
+around the three questions --- is NOT done**, and the missing half is a rewrite,
+not more references. See §1.
 
 ### Prompt 5 — WS-9, the rewrite
 

@@ -351,6 +351,34 @@ it.
 
 ---
 
+### R9a. Second known flake: `test_the_barrier_is_validated_once_not_per_resolution`
+
+**Observed once, 8 September 2026**, in the full-suite run immediately preceding
+commit `14148c6` (WS-8's final reference pass). Result that run: `2 failed, 1968
+passed` --- the other failure was `test_verify_refs.py`'s pinned route counts,
+which was real and is the subject of R15. Re-run **in isolation: passed**;
+re-run as part of the full suite after the counts were corrected: **1970 passed,
+0 failed**.
+
+**Do not chase it.** Recorded so a second sighting is recognised as a second
+sighting.
+
+It lives in `tests/test_recovery_durability_barrier.py` and asserts that the
+durability barrier is validated once rather than once per resolution. The change
+in flight touched `paper/refs.bib`, `paper/sections/07-related.tex`,
+`tests/test_verify_refs.py` and `.github/workflows/ci.yml` --- nothing in
+`aep_core` and nothing in the barrier path --- so it was not caused by the work
+in progress.
+
+**This is not obviously the same phenomenon as R9's.** R9's flake is
+`SIGKILL`-timing in the mock API's crash-safety suite; this one is barrier
+validation counting in the recovery path. They share only that both are
+timing-adjacent assertions that failed once under a full-suite run and passed
+alone. Recording them adjacently is a filing convenience, **not a claim that
+they have a common cause**, and a future investigation should not assume one.
+
+---
+
 ## R10. Finding: on the write-loss regime the test-instance marker lives only in RAM.
 
 **A finding, not a fix.** Recorded so it is not rediscovered as a surprise.
@@ -579,3 +607,78 @@ Concretely, and each of these is one of the five above:
 that cannot fail is decoration. R14 is the same demand pointed one level up: the
 *checker* is also code, it also has a failing branch, and nothing in R3 or R13
 compels anyone to exercise it. These five instances are what that gap produced.
+
+---
+
+## R15. Verify a change with the gate that covers what you changed.
+
+**Two occurrences, both the same shape: a fix was verified by a gate that could
+not see what the fix touched.** This is not R14. R14 is about an instrument that
+cannot report the third outcome --- a checker too weak to fail. R15 is about
+running the wrong instrument at all. The gate in both cases was sound; it was
+simply pointed somewhere else.
+
+**Occurrence 1 --- `856d78a`, 6 September.** The commit closed two WS-4 findings
+and was verified by running `check_paper_numbers.py`. That gate reads the
+manuscript against the analysis CSVs. The change also touched harness code, and
+it regressed `test_the_unit_of_analysis_is_the_run` in
+`tests/test_write_loss_verdict.py` --- a test the paper gate does not run and
+cannot run. The regression was found later, not by the verification performed at
+the time.
+
+**Occurrence 2 --- WS-8, 8 September.** Five reference passes each ran
+`check_paper_numbers.py`, `verify_refs.py --offline` and `validate_citations.py`,
+all of which passed every time. None ran the suite. `tests/test_verify_refs.py`
+pins the bibliography's route counts precisely so that a new entry must be routed
+deliberately, and it went red on the **first** WS-8 commit and stayed red for
+**four commits** before the full suite was run again. The gate worked exactly as
+designed and nobody was looking at it.
+
+### The rule
+
+> **Verify a change with the gate that covers what you changed, and run the full
+> suite before any commit that touches tracked code or tests. Paper gates do not
+> substitute.**
+
+The paper gates answer a narrow question --- does the manuscript still match its
+results --- and they answer it well. They say nothing about whether the
+repository's own tests still pass. A commit that edits `refs.bib`, a script, or
+a test file has changed something no paper gate reads.
+
+### Why this is worth its own entry
+
+The two occurrences are eight days apart, in different workstreams, by the same
+route: a plausible, relevant, *passing* gate was mistaken for sufficient
+verification. Neither was caught by review; both were caught later by running the
+thing that should have been run first. That is a habit failure rather than a
+tooling failure, which is why the rule is stated as a running discipline and not
+as a new check.
+
+### Is anything enforcing it? No.
+
+Nothing in the repository prevents a commit whose tests were never run. Two
+mechanisms would catch this class, and neither is built in this pass:
+
+* **A pre-commit hook** running the suite when the staged set touches
+  `tests/`, `scripts/`, `experiments/` or `aep_core/`. It would catch both
+  occurrences at the moment they happened, which is the right moment. The cost
+  is the suite's wall-clock: **8m31s** measured on 8 September. That is too long
+  to sit in front of on every commit, and a hook that slow is a hook people
+  disable or bypass with `--no-verify` --- which converts a habit failure into a
+  habit failure with a false sense of coverage. A *targeted* variant --- run only
+  the test files that import what changed --- would be fast enough, but choosing
+  those files correctly is itself the checking code R14 warns about, and getting
+  it wrong reproduces exactly this bug one level down.
+* **A CI step**, which already exists: the suite runs on every push, so both
+  occurrences *would* have been caught in CI. What CI cannot do is catch them
+  **before** the commit, and both of these sat in pushed commits --- four of them
+  in the WS-8 case --- which is the gap. CI turns this from an undetected defect
+  into a late-detected one; it does not remove it.
+
+**Recommendation: no hook here, at least not yet.** The honest fix is the rule
+above plus reading CI results after pushing, which was the step actually skipped.
+If a third occurrence appears, the targeted pre-commit hook becomes worth its
+cost and its own R14 treatment --- and a third occurrence is the trigger, in the
+same sense R12a records a third unexplained restart so a fourth is met as a
+pattern.
+
