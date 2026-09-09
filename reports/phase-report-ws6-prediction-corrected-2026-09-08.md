@@ -241,6 +241,83 @@ argument.
 **Attempt 2 was not wasted, and it also did not measure the cell.** Both are
 true, and the second is why this file exists.
 
+## 7a. The secondary sweep: DEFERRED, with the trigger stated
+
+**Decided 8 September, after the primary was read. Recorded here so the
+registration and its disposition sit together, and so no registered cell is left
+in an undecided state.**
+
+`1fecb1f` §3.1 registers a **secondary sweep — 240 runs**, the remaining four
+reachable crash points (`before_intent_write`, `mid_dispatch`,
+`after_response_before_resolution`, `after_resolution_before_barrier`),
+`NO_READBACK` only, both arms, 30 × 10. Its own condition was *"collected only
+if the primary completes"* — **and the primary has completed**, so the
+registration's trigger has fired and the cell cannot be left silent.
+
+**Decision: deferred, not cancelled.** Arm B in Phase 13 was *cancelled* because
+its mechanism would have changed the question and was designed but never built.
+This is the opposite case: the instrument exists, `session.py` arms all five
+points from the cell through the resolvers, and the binding is proven in both
+directions (`prove_crash_point_binding.py`). Cancelling would discard working,
+proven capability for a reason that is only cost.
+
+### What it would add, and what it would not
+
+**It would broaden, not strengthen.** §VIII's paragraph rests on the primary
+cell alone and says so in its own text — *"at the one crash point both the
+engine and our model can be cut at."* No claim in the manuscript depends on the
+other four points:
+
+* **H3** is argued structurally — the fact required is not in the engine's
+  history and cannot be put there — and the empirical support the paper cites is
+  the 118 non-void runs already collected. Four more points would add
+  opportunities to falsify it, which is worth something, but the claim does not
+  rest on breadth.
+* **The corner assignment** is currently observed at one point. Broadening it
+  would license a stronger statement than the paper makes.
+* **The frozen comparators exist** at all four points, so the sweep is testable —
+  this is a choice not to collect, not an inability.
+
+**The one thing it would genuinely settle**, and this is the honest argument
+*for* collecting it: a single crash point cannot distinguish *"the model's rates
+are systematically higher than the product's"* from *"the model and the product
+diverge at this particular point."* Four more points would. **The paper claims
+neither**, so nothing currently written is weaker for the gap — but a reader may
+reasonably want to know, which is why this is deferred rather than closed.
+
+### Cost, and what must be settled first
+
+≈240 runs at the 55–60 s/run observed in attempt 3, so **roughly four hours**
+plus analysis. Three things would have to be handled before collecting, none of
+which is a blocker and none of which has been done:
+
+1. **`before_intent_write` has never attributed at 10 executions.** The
+   crash-point binding proof saw `VOID_ATTRIBUTION_UNAVAILABLE` there under a
+   2-execution configuration. That was probably an artefact of the proof's
+   configuration — `after_barrier_before_dispatch` attributed cleanly at 10 in
+   both attempts — but it is untested at collection width.
+2. **`mid_dispatch` uses deferred delivery** (`DURING_PROVIDER_CALL`, armed by a
+   watchdog thread) and has never been exercised in a collection, only in the
+   binding proof.
+3. **`VOID_WORKER_NEVER_READY` is an open question** (handoff §7), at 2 in 120
+   in each of the last two sessions.
+
+### The trigger
+
+Collect the secondary sweep if **any** of these occurs:
+
+* **A reviewer asks** whether the primary result holds at other crash points.
+* **The manuscript comes to claim anything about B5 beyond the primary cell** —
+  §VIII's paragraph being broadened, a B5 row added to a table, or the corner
+  assignment stated generally rather than at one point.
+* **H3 is challenged on breadth** — that one crash point is too narrow a basis
+  for the non-escalation claim.
+
+If triggered, it needs its **own re-registration** before any run: fixed n 240,
+the stopping rule restated, and the three items above settled. **The attempt
+budget does not transfer.** §7's three attempts belong to the primary corrected
+cell, of which one was used; the secondary sweep would declare its own.
+
 ## 8. What this does not claim
 
 The `DISAGREES` reading at `3e633d7` **stands as a description of what was

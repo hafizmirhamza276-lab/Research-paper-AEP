@@ -48,11 +48,70 @@ occurrences, §II 2, §VII 5 (related work, where they belong), §VIII 2, and
 **zero** in §III model, §IV protocol, §V implementation, §VI evaluation, §IX
 artifact. Blocker **A1 is closed by retitling**, not by an agent experiment.
 
-`check_paper_numbers.py`: **23 passed, 0 failed.** Both PDFs build clean.
+`check_paper_numbers.py`: **24 passed, 0 failed** (the 24th is the WS-6 B5 session, added 8 September so the gate regenerates with the same source it checks). Both PDFs build clean.
+
+### WS-6 — complete (8 September)
+
+**The real Temporal baseline was built, collected and read.** The result, so a
+resuming reader does not have to derive it:
+
+**All four testable cells `DISAGREES`, all four reaching the overlap test —
+stage 4 of 4, none resolved early.**
+
+| | B5 | frozen B4/B4b |
+|---|---|---|
+| H1 duplicates, `AUTH` | 0.1567 [0.1233, 0.1900] | 0.9333 [0.9000, 1.0000] |
+| H1 duplicates, `NO_READBACK` | 0.1586 [0.1241, 0.1931] | 0.9667 [0.9000, 1.0000] |
+| H2 lost effects, `AUTH` | 0.1433 [0.1067, 0.1833] | 0.9667 [0.9000, 1.0000] |
+| H2 lost effects, `NO_READBACK` | 0.1414 [0.1034, 0.1828] | 0.8667 [0.8000, 0.9000] |
+
+**The direction transfers; the magnitudes do not.** Unlimited attempts
+duplicated at 0.1576 over 590 executions and lost **zero**; one attempt lost at
+0.1424 and duplicated **zero** — each in the corner `tab:related` assigns it,
+with exactly no events of the other kind. **H3 held on the product itself:** no
+declared ambiguity in 118 non-void runs, so the trilemma's third corner is
+unreachable by the engine and not merely by our model of it.
+
+**Four bounds, all in §VIII's paragraph:** the comparison is incomplete (B5 has
+no `after_intent_before_barrier` where B4 has data at all three classes); the
+rates are conditional on a 4000 ms Start-To-Close B4 has no analogue for; B4's
+intervals rest on 3 runs against B5's 30, so **the separation is in the point
+estimates, ≈0.78 apart, not in the intervals**; and the dispatch window is sized
+by the server and loopback.
+
+**What changed in the manuscript: one paragraph in §VIII, and nothing else.**
+§VII already called B4/B4b *"semantic controls, not claims about those products'
+complete implementations"* and §VIII already had *"B4 is not Temporal"*, so the
+re-scoping the verdict script's wording demands was **already done before the
+data existed**. §VI and §VII are unchanged. Fourteen generated macros; no
+hand-edited numbers.
+
+**What it took:** three attempts. Attempt 1 voided at 39/120 (non-detached
+launch). Attempt 2 completed 120/120 but was **instrument-constrained** — one
+fixed provider seed for all 120 runs, so three of four cells produced a single
+distinct outcome and the intervals collapsed to zero width. Attempt 3 is the
+corrected cell: per-run seeds, 30 distinct per cell, counts spanning 4–5 values.
+Two defects were found and fixed between them (the fixed seed, and H1 comparing
+applications against an executions indicator), both recorded in
+`reports/phase-report-ws6-determinism-2026-09-08.md`.
+
+**Secondary sweep: DEFERRED, with the trigger recorded** —
+`reports/phase-report-ws6-prediction-corrected-2026-09-08.md` §7a. 240 runs, the
+four remaining crash points on `NO_READBACK`, registered in `1fecb1f` §3.1 and
+**not collected**. The instrument exists and the binding is proven, so it is
+deferred rather than cancelled. It would *broaden* rather than strengthen: no
+manuscript claim depends on it, and §VIII rests on the primary cell by its own
+wording. Collect it if a reviewer asks whether the result holds at other crash
+points, if the manuscript comes to claim anything about B5 beyond the primary
+cell, or if H3 is challenged on breadth. It needs its own re-registration and
+its own attempt budget first.
+
+Written up in `reports/phase-report-ws6-writeup-2026-09-08.md`.
 
 ### WS-4 — complete
 
-This is the session's substantive work and the paper's newest result.
+This was the 7 September session's substantive work. **WS-6 above supersedes it
+as the paper's newest result**; WS-4's finding below is unchanged.
 
 **The instrument.** `dm-flakey drop_writes` on a loop device carrying the
 harness Redis's AOF, armed at the intent CAS. Mechanism selected by the
@@ -159,7 +218,7 @@ entirely: Option A was executed, so there is no agent workload to build.
 | **WS-4 write-loss** | ✅ **complete** (`252e2d3`, `1d13868`, `561be06`, `856d78a`) | — |
 | WS-2 archive | 🟡 DOI at submission | ~1 day |
 | WS-5 stats power + remaining cells | ⬜ | 2–3 days |
-| WS-6 real Temporal baseline | ⬜ | 3–5 days |
+| **WS-6 real Temporal baseline** | ✅ **complete** (`7fddd91`, `34713eb`); secondary sweep deferred | — |
 | WS-7 TLA+ model | ⬜ | 3–4 days |
 | WS-8 related work 34 → 65+ refs | ⬜ | 2–3 days |
 | WS-9 manuscript rewrite (21 → 16 pages, tone, AI disclosure) | ⬜ | 4–5 days |
@@ -207,12 +266,17 @@ were re-read against the tree; their premises still hold.
 > command, committed and pushed before any data exists. Report power as it comes
 > out, including if it says the existing n is inadequate.
 
-### Prompt 2 — WS-6, real Temporal baseline
+### Prompt 2 — WS-6, real Temporal baseline — **DONE, do not re-issue**
 
 > B4 shares one mechanism with Temporal and §VIII already says it is not
 > Temporal. Build a real Temporal baseline, or state with evidence why it cannot
 > be built on this host and make that the recorded answer. Do not weaken §VIII's
 > existing sentence before there is a result to replace it with.
+
+**Answered.** The baseline was built and collected; see §1. §VIII's existing
+sentence was not weakened — it was kept and a paragraph added showing it is now
+measured rather than asserted. The secondary sweep is deferred with its trigger
+recorded, not silently skipped.
 
 ### Prompt 3 — WS-7, TLA+ model
 
