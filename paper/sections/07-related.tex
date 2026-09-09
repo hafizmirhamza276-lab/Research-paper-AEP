@@ -7,68 +7,82 @@ plus locking is new. The contribution is a capability-specific recovery
 semantics for effects outside the coordinator's atomicity domain, and an
 evaluation that separates detection from prevention.
 
+Prior work is therefore organised here by the three questions that decide
+whether it applies to a non-cooperative endpoint: what it requires the endpoint
+to supply, whether it can report \emph{unknown}, and what residual it leaves when
+its stated assumption fails. \Cref{tab:related} is that comparison in one place;
+the subsections below are its rows in prose.
+
+\subsection{What the endpoint must supply}
+
 \paragraph{Leases and fencing} Leases provide time-bounded mutual exclusion
 under crash faults~\cite{gray1989leases}; Chubby made the pattern an
-infrastructural service~\cite{burrows2006chubby}, and the Redis lock
-pattern~\cite{redis-locks} is a commodity form. A lease holder may stall past
-expiry and write afterwards, so a monotonic fencing token is also
-required~\cite{kleppmann2016locking}. AEP applies that standard remedy to its
-state store. B1 and B2 show its boundary: fencing protects the store, not an
-external endpoint that does not interpret the token (\cref{tab:outcomes}).
+infrastructural service~\cite{burrows2006chubby}, ZooKeeper supplies the same
+class of primitive as a coordination kernel on which client-side locking is
+built~\cite{hunt2010zookeeper}, and the Redis lock pattern~\cite{redis-locks} is
+a commodity form. A lease holder may stall past expiry and write afterwards, so
+a monotonic fencing token is also required.
 
-\paragraph{What fencing requires of the resource} The fencing step deserves a
-primary source, because AEP's guard depends on it and because the requirement it
-imposes is the one this paper cannot satisfy. Chubby states both the hazard and
-the remedy directly: a client holding a lock may issue a request and then fail,
-a second client may acquire the lock and act, and the first request may arrive
-afterwards. Its remedy is a \emph{sequencer} --- the lock name, a generation
-number that changes on every transition from free to held, and the acquisition
-mode --- which the client passes to the file server, \emph{and which the file
-server is expected to validate}~\cite{burrows2006chubby}. ZooKeeper supplies the
-same class of primitive as a coordination kernel on which client-side locking is
-built~\cite{hunt2010zookeeper}.
+Chubby states both the hazard and the remedy in primary form, which matters
+because AEP's guard depends on the remedy and because the requirement it imposes
+is the one this paper cannot satisfy. A client holding a lock may issue a request
+and then fail, a second client may acquire the lock and act, and the first
+request may arrive afterwards. The remedy is a \emph{sequencer} --- the lock
+name, a generation number that changes on every transition from free to held,
+and the acquisition mode --- which the client passes to the file server,
+\emph{and which the file server is expected to validate}~\cite{burrows2006chubby}.
+That validation requirement is the crux: a fencing token protects a resource only
+if the resource checks it, which makes fencing a property of the \emph{resource}
+rather than of the lock service. Chubby concedes the point by shipping a fallback
+for servers that cannot be modified to validate sequencers --- \emph{lock-delay},
+which merely withholds a lock for a bounded period after an abnormal release and
+which that paper calls imperfect. It is the closest prior art to AEP's setting
+and it is a timing heuristic, not a guarantee. Kleppmann's analysis remains the
+clearest statement of the failure mode in the commodity Redis setting and is
+cited as the practitioner account it is~\cite{kleppmann2016locking}. B1 and B2
+measure exactly this boundary: fencing protects the store, not an endpoint that
+never interprets the token (\cref{tab:outcomes}).
 
-That validation requirement is the crux. A fencing token protects a resource
-only if the resource checks it, which makes fencing a property of the
-\emph{resource}, not of the lock service. Chubby concedes the point by shipping
-a fallback for servers that cannot be modified to validate sequencers:
-\emph{lock-delay}, which merely withholds a lock for a bounded period after an
-abnormal release and which the paper describes as imperfect. That fallback is
-the closest prior art to AEP's setting, and it is a timing heuristic rather than
-a guarantee. Kleppmann's analysis remains the clearest statement of the failure
-mode in the commodity Redis setting, and is cited as the practitioner account it
-is~\cite{kleppmann2016locking}. B1 and B2 measure exactly this boundary: fencing
-protects the store and not an endpoint that never interprets the token.
-
-\paragraph{Logging, outboxes, and long-lived transactions} The
+\paragraph{Logging, outboxes, and what compensation assumes} The
 expected-version CAS is optimistic concurrency control~\cite{kung1981optimistic}.
 ARIES writes intent before an action that the same recovery domain can undo or
-redo~\cite{mohan1992aries}; AEP instead records an action performed by a
-foreign endpoint that may support neither operation. The transactional-outbox
-pattern likewise stores a message before a relay publishes it, but explicitly
-permits the relay to publish twice after a crash and therefore assumes an
-idempotent consumer~\cite{richardson-transactional-outbox}. B3 is structurally
-outbox-like, with a no-re-entry rule in the measured runner; it does not make
-the remote mutation transactional. Sagas are appropriate when a compensating
-action exists~\cite{garciamolina1987sagas}. AEP addresses the case in which no
-compensation exists, or deciding whether to compensate first requires the
-missing outcome.
+redo~\cite{mohan1992aries}; AEP instead records an action performed by a foreign
+endpoint that may support neither operation. The transactional-outbox pattern
+likewise stores a message before a relay publishes it, but explicitly permits the
+relay to publish twice after a crash and therefore assumes an idempotent
+consumer~\cite{richardson-transactional-outbox}. B3 is structurally outbox-like,
+with a no-re-entry rule in the measured runner; it does not make the remote
+mutation transactional.
 
-The expired IETF HTTPAPI working-group draft for an \texttt{Idempotency-Key}
-header documents the cooperative alternative: a server can make non-idempotent
-\texttt{POST} and \texttt{PATCH} requests safely retryable by interpreting a
-client key~\cite{jena2025idempotencykey}. AEP's premise is precisely the
-endpoint that does not implement such a contract. Helland describes the
-broader consequences of operating without distributed transactions and the
-centrality of idempotence~\cite{helland2007apostate,helland2012idempotence}.
+Compensation is the standard answer once atomicity is unavailable, and it rests
+on a premise worth stating. Gray observes that a committed transaction cannot be
+abrogated: its effects can only be altered by running a further transaction,
+which is why the remedy after commit is compensation rather than
+rollback~\cite{gray1981transaction}. Korth et al.\ formalise this, defining
+compensating transactions that undo committed work without cascading aborts,
+with conflict expressed as failure of operations to
+commute~\cite{korth1990compensating}. Sagas apply the idea to long-running
+activities by pairing each step with a compensating
+step~\cite{garciamolina1987sagas}. All three presuppose two facts about the
+effect: that it \emph{happened}, since a compensating step is chosen because a
+committed effect is known to exist, and that a semantically inverse operation
+exists and may itself be applied. AEP's endpoint reliably supplies neither. In
+the \textsc{no-readback} class the first is unobtainable by construction, and
+compensating for an effect that may not have occurred is itself a mutation with
+the same problem --- which is why declared ambiguity is terminal here rather than
+a prelude to compensation. Helland describes the broader consequences of
+operating without distributed transactions and the centrality of
+idempotence~\cite{helland2007apostate,helland2012idempotence}.
 
-\paragraph{What an idempotency-key contract requires of the server} Because the
-paper's premise is an endpoint that offers no such contract, it is worth being
-precise about what one costs the server rather than treating it as a header.
-The draft places the burden squarely on the resource: it must manage the key's
-lifecycle, it \textsc{must} publish an idempotency specification including any
-expiration policy, and on a repeat it \textsc{should} respond with the result of
-the previously completed operation, success or error, rather than executing
+\paragraph{What an idempotency-key contract requires of the server} The expired
+IETF HTTPAPI working-group draft for an \texttt{Idempotency-Key} header
+documents the cooperative alternative, and because AEP's premise is an endpoint
+offering no such contract it is worth being precise about what one costs the
+server rather than treating it as a header. The draft places the burden squarely
+on the resource: it must manage the key's lifecycle, it \textsc{must} publish an
+idempotency specification including any expiration policy, and on a repeat it
+\textsc{should} respond with the result of the previously completed operation,
+success or error, rather than executing
 again~\cite{jena2025idempotencykey}. Storing the key is the least of it; the
 server must also retain the \emph{outcome}, scope the key, and decide how long
 the guarantee lasts.
@@ -82,162 +96,128 @@ whose parameters differ~\cite{stripe-idempotency}. Adyen returns the original
 response without reprocessing, scopes keys to the company account, does not
 cross-check duplicates across regional endpoints, and holds keys for seven to
 fourteen days~\cite{adyen-idempotency}. The same header name therefore carries
-materially different guarantees: a retry that is protected at one provider is
-outside the window at another, and the caller cannot tell from the protocol.
-These are specifications and vendor documentation rather than research, and are
-cited as such --- the claim is about what the contract requires, for which the
-normative text is the primary source. AEP assumes the case beneath all of them:
-no key is interpreted at all. What the deployed contracts add is that even
-cooperation is bounded, so a caller's obligation to reason about an unsettled
-effect does not disappear where a key exists --- it merely shrinks to the
-retention window.
+materially different guarantees: a retry protected at one provider is outside the
+window at another, and the caller cannot tell from the protocol. These are
+specifications and vendor documentation rather than research, and are cited as
+such --- the claim is about what the contract requires, for which the normative
+text is the primary source. AEP assumes the case beneath all of them: no key is
+interpreted at all. What the deployed contracts add is that even cooperation is
+bounded, so a caller's obligation to reason about an unsettled effect does not
+disappear where a key exists --- it shrinks to the retention window.
 
-\paragraph{Why not two-phase commit} The obvious objection to this whole
-framing is that atomic commit already solves it, so it is worth saying exactly
-what that would require of the endpoint. Under 2PC each participant durably
-logs its own state transitions to stable storage and answers the coordinator
-from that log during recovery~\cite{mohan1986rstar}. A participant that has
-voted to commit then enters an uncertainty window in which it can neither
-commit nor abort on its own authority, and must block --- holding the prepared
-state --- until the coordinator is heard from again~\cite{skeen1981nonblocking}.
-Both are obligations on the \emph{participant}. A legacy endpoint that accepts a
-request and returns a response offers none of them: there is no prepare, no
-vote, and no way to ask it to hold a decision open. The barrier is not that 2PC
-is expensive here; it is that the protocol has no participant to run.
+\paragraph{Why not two-phase commit} The obvious objection is that atomic commit
+already solves this, so it is worth saying exactly what that would require of the
+endpoint. Under 2PC each participant durably logs its own state transitions to
+stable storage and answers the coordinator from that log during
+recovery~\cite{mohan1986rstar}. A participant that has voted to commit then
+enters an uncertainty window in which it can neither commit nor abort on its own
+authority, and must block --- holding the prepared state --- until the
+coordinator is heard from again~\cite{skeen1981nonblocking}. Both are obligations
+on the \emph{participant}, and a legacy endpoint that accepts a request and
+returns a response offers none of them: no prepare, no vote, and no way to ask it
+to hold a decision open. The barrier is not that 2PC is expensive here; it is
+that the protocol has no participant to run.
 
-Nor is this a counsel of despair about distributed transactions in general.
-Spanner shows the obligations can be met at global scale, with a
-2PC implementation integrated with replication and concurrency control and a
-time API that bounds clock uncertainty~\cite{corbett2012spanner} --- but it is
-built by an operator who controls every participant and can equip each one.
-That is the condition AEP assumes away. Helland's account of building without
-distributed transactions describes the same retreat from the application
-side~\cite{helland2007apostate,helland2012idempotence}: when enrolment is not
-available, the burden moves to the caller, and idempotence becomes the pivot on
-which correctness turns. AEP is what is left when the endpoint does not supply
-that pivot either.
+Nor is this a counsel of despair about distributed transactions. Spanner shows
+the obligations can be met at global scale, with a 2PC implementation integrated
+with replication and concurrency control and a time API that bounds clock
+uncertainty~\cite{corbett2012spanner} --- but it is built by an operator who
+controls every participant and can equip each one. That is the condition AEP
+assumes away, and when enrolment is unavailable the burden moves to the caller
+and idempotence becomes the pivot on which correctness turns. AEP is what is left
+when the endpoint does not supply that pivot either.
 
-\paragraph{What compensation assumes} Compensation is the standard answer once
-atomic commit is off the table, and it rests on a premise worth stating.
-Gray observes that a committed transaction cannot be abrogated: its effects can
-only be altered by running a further transaction, which is why the remedy after
-commit is compensation rather than rollback~\cite{gray1981transaction}. Korth
-et al.\ formalise this, defining compensating transactions that undo committed
-work without cascading aborts, with conflict expressed as failure of operations
-to commute~\cite{korth1990compensating}. Sagas apply the idea to long-running
-activities by pairing each step with a compensating step~\cite{garciamolina1987sagas}.
+\subsection{Whether it can report \emph{unknown}}
 
-Every one of these presupposes two facts about the effect. The first is that it
-\emph{happened}: a compensating step is chosen and applied because a committed
-effect is known to exist. The second is that a semantically inverse operation
-exists and may itself be applied. AEP's endpoint reliably supplies neither. In
-the \textsc{no-readback} class the first is unobtainable by construction --- no
-participant can establish after a crash whether the mutation was applied --- and
-compensating for an effect that may not have occurred is itself a mutation with
-the same problem. That is why declared ambiguity is terminal here rather than a
-prelude to compensation: it is the honest report when the fact compensation
-needs cannot be recovered.
-
-\paragraph{Locks with intent and durable execution} Olive is the closest
-mechanistic antecedent. Its locks with intent durably associate code with a
-lock and provide exactly-once execution despite client failures and concurrent
+\paragraph{Locks with intent, and the durable-orchestration line} Olive is the
+closest mechanistic antecedent. Its locks with intent durably associate code with
+a lock and provide exactly-once execution despite client failures and concurrent
 duplicate executions~\cite{setty2016olive}. A write-ahead intent as a checked
 precondition of execution is therefore prior work, not AEP's novelty. Olive's
 guarantee is realized through operations made recoverable within its cloud
-storage abstraction. AEP starts where that atomicity scope ends: the effect is
-performed by a legacy endpoint, and in the \textsc{no-readback} class no
-participant can later establish whether it happened. AEP consequently offers
-no exactly-once claim; it terminates in declared ambiguity and prohibits
-automatic re-dispatch.
+storage abstraction; AEP starts where that atomicity scope ends, and consequently
+offers no exactly-once claim --- it terminates in declared ambiguity and
+prohibits automatic re-dispatch.
 
-Four systems develop transactional or replay-based durable execution, and each
-draws the same boundary in a different place. Beldi extends Olive's atomic
-logging to stateful serverless functions and adds a two-phase commit variant for
-transactions across them~\cite{zhang2020beldi}; the atomicity covers reads and
-writes on Beldi's own data structures and functions that speak its commit
-protocol, so an endpoint that implements neither is outside it. Boki gives
-functions a shared log and builds durability, consistency and fault tolerance on
-that primitive~\cite{jia2021boki}; state that lives in the log is recoverable,
-and an effect performed elsewhere is not in the log to recover. Durable
-Functions replays the orchestration from its history and re-invokes activities,
-which is safe when the activity can be re-run~\cite{burckhardt2021durable}.
-ExoFlow is the closest in spirit to this paper: it decouples recovery from
-execution and asks the author to annotate each task's semantics --- including
-nondeterminism --- so the system can choose a recovery strategy per
-task~\cite{zhuang2023exoflow}. That is a declaration about the task, made by
-someone who knows it; AEP's declarations are about the \emph{endpoint's}
-capability to answer after the fact, which is not a property the caller can
-annotate its way out of. Across all four the guarantee holds when an effect is
-idempotent, transactional, compensable, or otherwise recoverable. Temporal states the
-operational premise directly: activities should be idempotent because they may
-execute more than once~\cite{temporal-activity-definition}; setting Maximum
-Attempts to one selects the opposite retry policy~\cite{temporal-retry}, and
-the engine's own account of when an activity is considered failed rests on
-timeouts and heartbeats rather than on any fact about the
-endpoint~\cite{temporal-activity-failures}. Our B4 and B4b controls instantiate
-these two policies against the same non-cooperative endpoint. They are semantic
-controls, not claims about those products' complete implementations.
+The idea is older than the current generation of products. Workflow management
+systems already specified business processes and generated implementations that
+recorded progress durably across long-running
+activities~\cite{georgakopoulos1995workflow}; the recovery semantics they relied
+on were the compensation models above, which is why sagas sit underneath that
+literature rather than beside it. What the current generation added is a sharper
+boundary, and each system states the same assumption in its own documentation.
+Cadence introduced the framing: workflow code is fault-oblivious and may not call
+an external API directly, only orchestrate \emph{activities}, and because the
+service does not recover an activity's state, activity failure is expected and
+retried~\cite{cadence-workflows}. Restate journals each step and replays after a
+crash, skipping completed steps --- and names the residual exactly: if a side
+effect completes but the failure prevents its result being recorded, replay runs
+it again, so side effects are required to be
+idempotent~\cite{restate-durable-execution}. AWS states it normatively: a Step
+Functions workflow conforms to an at-least-once execution model in which each
+step may run more than once, and step-level idempotency remains the caller's
+responsibility~\cite{aws-stepfunctions-bestpractices}; its durable execution SDK
+turns the trade into an explicit per-step knob, recommending at-least-once for
+idempotent operations and at-most-once for externally side-effecting ones such as
+charging a card or posting to a non-idempotent
+API~\cite{aws-durable-execution-idempotency}. That last sentence is this paper's
+problem statement, written by a vendor. DBOS takes the other route, placing
+system state in a distributed transactional DBMS so that services are ordinary
+database operations, recoverable as such~\cite{skiadopoulos2022dbos} ---
+recoverability again purchased by keeping the effect inside the transactional
+domain, the same boundary Olive draws.
+
+Four systems in this line draw that boundary in different places. Beldi extends
+Olive's atomic logging to stateful serverless functions and adds a two-phase
+commit variant across them~\cite{zhang2020beldi}; the atomicity covers Beldi's
+own data structures and functions that speak its commit protocol, so an endpoint
+implementing neither is outside it. Boki gives functions a shared log and builds
+durability, consistency and fault tolerance on that primitive~\cite{jia2021boki};
+state living in the log is recoverable, and an effect performed elsewhere is not
+in the log to recover. Durable Functions replays the orchestration from its
+history and re-invokes activities, safe when the activity can be
+re-run~\cite{burckhardt2021durable}. ExoFlow is closest in spirit to this paper:
+it decouples recovery from execution and asks the author to annotate each task's
+semantics, including nondeterminism, so the system can choose a recovery strategy
+per task~\cite{zhuang2023exoflow} --- but that is a declaration about the task by
+someone who knows it, whereas AEP's declarations are about the \emph{endpoint's}
+capacity to answer after the fact, which a caller cannot annotate its way out of.
+
+The axis is not feature coverage but what each assumes of the invoked step: that
+it is idempotent, compensable, or inside the same transactional domain. Where
+that holds these systems are correct and AEP is unnecessary; AEP's endpoint
+satisfies none of the three. Temporal states the operational premise directly:
+activities should be idempotent because they may execute more than
+once~\cite{temporal-activity-definition}; setting Maximum Attempts to one selects
+the opposite retry policy~\cite{temporal-retry}, and the engine's own account of
+when an activity is considered failed rests on timeouts and heartbeats rather
+than on any fact about the endpoint~\cite{temporal-activity-failures}. Our B4 and
+B4b controls instantiate these two policies against the same non-cooperative
+endpoint. They are semantic controls, not claims about those products' complete
+implementations.
 
 That distinction is no longer only a caveat. We subsequently ran the production
-engine itself against the same endpoint, in both configurations, at the one
-crash point the engine and our controls can both be cut at
-(\cref{sec:threats}). \emph{The direction transferred and the magnitudes did
-not}: unlimited attempts duplicated and lost nothing, one attempt lost and
-duplicated nothing --- each landing in the corner \cref{tab:related} assigns it
---- while the rates were several times below B4's and B4b's at the same crash
-point, and neither configuration declared ambiguity in any run. The comparison
-covers one crash point of five, is conditional on a fixed activity timeout the
-controls have no analogue for, and rests on frozen control cells an order of
-magnitude thinner than the engine's; it is reported with those bounds in
-\cref{sec:threats} and no rate in this paper should be read as a product's.
+engine itself against the same endpoint, in both configurations, at the one crash
+point the engine and our controls can both be cut at (\cref{sec:threats}).
+\emph{The direction transferred and the magnitudes did not}: unlimited attempts
+duplicated and lost nothing, one attempt lost and duplicated nothing --- each
+landing in the corner \cref{tab:related} assigns it --- while the rates were
+several times below B4's and B4b's at the same crash point, and neither
+configuration declared ambiguity in any run. The comparison covers one crash
+point of five, is conditional on a fixed activity timeout the controls have no
+analogue for, and rests on frozen control cells an order of magnitude thinner
+than the engine's; it is reported with those bounds in \cref{sec:threats}, our
+measured comparison is with one engine and does not transfer to the others, and
+no rate in this paper should be read as a product's.
 
-The ablation supplies AEP's narrower empirical delta. B3 and AEP-full share
-the pre-dispatch record and no-re-entry transition but differ on the durability
+The ablation supplies AEP's narrower empirical delta. B3 and AEP-full share the
+pre-dispatch record and no-re-entry transition but differ on the durability
 barrier. We observe no difference in their crashed-regime detection outcomes,
 bounded by pooling the capability classes: both zero-event rates fall within
 $[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%
 (\cref{sec:eval-detection}). The Redis-kill experiment isolates a prevention
 effect. We found no prior evaluation that measures this detection/prevention
 decomposition with an independent external-effect ledger.
-
-\paragraph{The durable-orchestration line, and what each assumes of the
-endpoint} The idea is older than the current generation of products. Workflow
-management systems already specified business processes and generated
-implementations that recorded progress durably across long-running
-activities~\cite{georgakopoulos1995workflow}; the recovery semantics they
-relied on were the advanced transaction models discussed above, which is why
-sagas and compensation sit underneath that literature rather than beside it.
-
-The current generation renamed the idea and sharpened the boundary, and each
-system states the same assumption in its own documentation. Cadence introduced
-the framing: workflow code is fault-oblivious and therefore may not call an
-external API directly, only orchestrate \emph{activities}, and because the
-service does not recover an activity's state, activity failure is expected and
-retried~\cite{cadence-workflows}. Restate journals each step and replays the
-journal after a crash, skipping completed steps --- and its documentation names
-the residual exactly: if a side effect completes but the failure prevents its
-result being recorded, replay will run it again, so side effects are required
-to be idempotent~\cite{restate-durable-execution}. AWS states it normatively:
-a Step Functions workflow conforms to an at-least-once execution model in which
-each step may run more than once, and step-level idempotency remains the
-caller's responsibility~\cite{aws-stepfunctions-bestpractices}; its durable
-execution SDK turns the trade into an explicit per-step knob, recommending
-at-least-once for idempotent operations and at-most-once for externally
-side-effecting ones such as charging a card or posting to a non-idempotent
-API~\cite{aws-durable-execution-idempotency}. That last sentence is this
-paper's problem statement, written by a vendor. DBOS takes the other route,
-placing system state in a distributed transactional DBMS so that services are
-implemented as ordinary database operations and are recoverable as
-such~\cite{skiadopoulos2022dbos} --- recoverability again purchased by keeping
-the effect inside the transactional domain, the same boundary Olive draws.
-
-The axis that matters here is not feature coverage but what each assumes of the
-invoked step: that it is idempotent, compensable, or inside the same
-transactional domain. Where that holds, these systems are correct and AEP is
-unnecessary. AEP's endpoint satisfies none of the three. \textbf{Our measured
-comparison is with one engine and does not transfer to the others}
-(\cref{sec:threats}); what the systems above share is the assumption, which each
-states for itself in the text cited.
 
 \paragraph{Agent execution reliability} Three contemporaneous systems overlap
 substantially and delimit the claim. Verified Tool Calls formalizes non-atomic
@@ -263,116 +243,108 @@ B3/AEP ablation. ACRFence addresses semantic rollback during agent
 checkpoint-restore~\cite{zheng2026acrfence}; it is adjacent rather than a basis
 for ranking which work is ``nearest.''
 
+\subsection{The residual when the assumption fails}
+
 \paragraph{Durability acknowledgements and what they are worth} AEP's barrier
 withholds dispatch until the store acknowledges the intent durable, so the
-protocol is only as strong as that acknowledgement. A body of storage work
-establishes that the acknowledgement can be false. Rebello et al.\ show that
-none of five widely deployed applications --- PostgreSQL, LMDB, LevelDB, SQLite
-and Redis --- handles \texttt{fsync} failure sufficiently, and that on Linux the
+protocol is only as strong as that acknowledgement --- and a body of storage work
+establishes that the acknowledgement can be false. Rebello et al.\ show that none
+of five widely deployed applications --- PostgreSQL, LMDB, LevelDB, SQLite and
+Redis --- handles \texttt{fsync} failure sufficiently, and that on Linux the
 affected pages are marked clean regardless of whether writeback
 succeeded~\cite{rebello2020fsync}; the operational discovery that a successful
 \texttt{fsync} does not mean the data reached persistent storage was made in
-PostgreSQL and reported at the time~\cite{corbet2018fsync}. Ganesan et al.\
-find that eight distributed storage systems, Redis among them, do not
-consistently use redundancy to recover from file-system faults, so a single
-fault can produce data loss or unavailability~\cite{ganesan2017redundancy}.
-Alagappan et al.\ show that recovery which ignores protocol-level knowledge
-loses data in replicated logs, and repair it for
-Raft-style~\cite{ongaro2014raft} systems~\cite{alagappan2018par}.
+PostgreSQL and reported at the time~\cite{corbet2018fsync}. Ganesan et al.\ find
+that eight distributed storage systems, Redis among them, do not consistently use
+redundancy to recover from file-system faults, so a single fault can produce data
+loss or unavailability~\cite{ganesan2017redundancy}. Alagappan et al.\ show that
+recovery ignoring protocol-level knowledge loses data in replicated logs, and
+repair it for Raft-style~\cite{ongaro2014raft} systems~\cite{alagappan2018par}.
 
 We place our own durability result in that line rather than beside it:
 \cref{sec:threats} reports a barrier that dispatched on an acknowledgement which
 was already impossible to honour, because the underlying device discarded the
-write and reported success. The protocol behaved exactly as specified on an
-input that was false. What this literature supplies is the reason that is a
-property of the storage stack rather than a defect peculiar to our
-implementation --- and the reason a barrier's guarantee must be stated as
-conditional on the acknowledgement it rests on.
+write and reported success. The protocol behaved exactly as specified on an input
+that was false. What this literature supplies is the reason that is a property of
+the storage stack rather than a defect peculiar to our implementation --- and the
+reason a barrier's guarantee must be stated as conditional on the acknowledgement
+it rests on.
 
-\paragraph{Exactly-once state versus exactly-once effect} Consistent recovery
-for distributed computation is classically obtained by snapshotting global
-state~\cite{chandy1985snapshots}, and modern dataflow engines make that
-practical by injecting barriers into the stream and persisting operator state
-asynchronously~\cite{carbone2015abs}. The guarantee these mechanisms provide is
-that \emph{internal state} is restored to a consistent cut. An external
-mutation already performed is not inside that cut and is not undone by
-restoring it, which is why exactly-once processing is routinely paired with a
-transactional or idempotent sink. AEP's endpoint is neither, and in the
-\textsc{no-readback} class it cannot even be interrogated after the fact --- so
-the snapshot line of work and AEP are solving adjacent problems on opposite
-sides of the atomicity boundary. This is also the end-to-end
-argument~\cite{saltzer1984endtoend} in an uncomfortable form: the check that
-would settle whether the effect happened belongs at the endpoints, and the
-endpoint that would have to perform it is precisely the one that cannot.
+\paragraph{Exactly-once: state, delivery, and effect} The paper declines the term
+``exactly-once,'' and should say what it is declining, because the term covers
+three different things. Consistent recovery for distributed computation is
+classically obtained by snapshotting global state~\cite{chandy1985snapshots}, and
+modern dataflow engines make that practical by injecting barriers into the stream
+and persisting operator state asynchronously~\cite{carbone2015abs}. What those
+mechanisms guarantee is that \emph{internal state} is restored to a consistent
+cut; an external mutation already performed is not inside that cut and is not
+undone by restoring it.
 
-\paragraph{Exactly-once delivery, and what is provided instead} The paper
-declines the term ``exactly-once,'' and should say what it is declining. The
-obstacle is epistemic rather than engineering. For a sender and a receiver to
-agree that a message was delivered, each acknowledgement requires its own
-acknowledgement; Halpern and Moses formalise this as the unattainability of
-common knowledge when communication is not guaranteed, and connect it to the
-coordinated-attack problem~\cite{halpern1990knowledge}. No protocol removes that
-regress, which is why exactly-once \emph{delivery} is not on offer from any
-system.
+Exactly-once \emph{delivery} is not on offer from any system, and the obstacle is
+epistemic rather than engineering. For a sender and a receiver to agree that a
+message was delivered, each acknowledgement requires its own acknowledgement;
+Halpern and Moses formalise this as the unattainability of common knowledge when
+communication is not guaranteed, and connect it to the coordinated-attack
+problem~\cite{halpern1990knowledge}. No protocol removes that regress. What
+systems provide instead is exactly-once \emph{processing}, obtained by enrolling
+the destination: Kafka couples an idempotent producer protocol with transactions
+so that output records, offset commits and state updates commit atomically, and
+the read--process--write cycle either takes effect once or not at
+all~\cite{wang2021kafka}. That guarantee is real, and it is real \emph{because}
+the sink is inside the transaction --- which is also why the snapshot mechanisms
+above are paired with a transactional sink.
 
-What systems provide instead is exactly-once \emph{processing}, obtained by
-enrolling the destination. Kafka couples an idempotent producer protocol with
-transactions so that output records, offset commits and state updates are
-committed atomically, and the read--process--write cycle either takes effect
-once or not at all~\cite{wang2021kafka}. That guarantee is real, and it is real
-\emph{because} the sink is inside the transaction: the records live in a log the
-system controls. The same construction is why the snapshot mechanisms above are
-usually paired with a transactional sink.
+This is the distinction the paper needs and the one the term usually obscures. A
+message delivered once is not an external mutation performed once. Where the
+destination can be enrolled --- a Kafka topic, a database in the same commit
+scope --- exactly-once processing is available and AEP is unnecessary. Where it
+cannot, no retry discipline on the caller's side reconstructs it, and the
+residual is not a weaker delivery guarantee but an unanswered question about an
+effect. This is also the end-to-end argument~\cite{saltzer1984endtoend} in an
+uncomfortable form: the check that would settle whether the effect happened
+belongs at the endpoints, and the endpoint that would have to perform it is
+precisely the one that cannot.
 
-This is the distinction the paper needs, and it is the one the term usually
-obscures. A message delivered once is not an external mutation performed once.
-Where the destination can be enrolled --- a Kafka topic, a database in the same
-commit scope --- exactly-once processing is available and AEP is unnecessary.
-Where it cannot, no amount of retry discipline on the caller's side reconstructs
-it, and the residual is not a weaker delivery guarantee but an unanswered
-question about an effect. AEP occupies exactly that gap.
-
-\paragraph{Fault-injection lineage} AEP's named crash boundaries and
-independent oracle follow a mature crash-consistency methodology. ALICE
-constructs possible post-crash storage states and checks application
-invariants~\cite{pillai2014alice}; Torturing Databases combines controlled
-power-fault injection with record/replay and cross-layer diagnosis
-~\cite{zheng2014torturing}; and CrashMonkey/Ace exhaustively test bounded
-workloads at persistence boundaries~\cite{mohan2018crashmonkey}. AEP applies
-this lineage to a caller-to-endpoint protocol: real process kills at named
-instruction boundaries, a separately written provider ledger, and a
-\texttt{dm-flakey} write-loss probe. The harness is an evaluation instrument,
-not a claimed fault-injection contribution.
-
-What the harness borrows and what it cannot is clearest when each method is
-read by \emph{what it injects and at which layer}. Ferrite specifies
-crash-consistency models for a file system --- litmus tests and an operational
+\paragraph{Fault-injection lineage} AEP's named crash boundaries and independent
+oracle follow a mature crash-consistency methodology, and what the harness
+borrows from it is clearest when each method is read by \emph{what it injects and
+at which layer}. ALICE constructs possible post-crash storage states and checks
+application invariants~\cite{pillai2014alice}; Torturing Databases combines
+controlled power-fault injection with record/replay and cross-layer diagnosis
+~\cite{zheng2014torturing}; CrashMonkey/Ace exhaustively test bounded workloads
+at persistence boundaries~\cite{mohan2018crashmonkey}; and Ferrite specifies
+crash-consistency models for a file system as litmus tests and an operational
 semantics at the POSIX interface, validated against real implementations, which
-exposed unintuitive ext4 behaviour~\cite{bornholt2016ferrite}. That method is
-unavailable to us in the direction that matters: a legacy endpoint publishes no
-crash-consistency model to write litmus tests against, which is the problem
-rather than an oversight. FATE injects failures into cloud systems and
-systematically explores \emph{sequences} of several, pairing them with
-declarative specifications of correct recovery~\cite{gunawi2011fate}; our cells
-inject one fault at one named boundary, so they trade FATE's coverage of
-failure combinations for an exact statement of where the single fault landed.
-Lineage-driven fault injection inverts the search, reasoning backwards from a
-correct outcome to the fault combinations that could have prevented it, and its
-authors bound the fault model explicitly to dropped messages, failed nodes and
-partitions~\cite{alvaro2015ldfi} --- a model that excludes crash recovery, which
-is the class this paper is about. Elle checks a database's client-observed
-history for isolation anomalies while faults are injected, inferring a
-dependency graph from what clients saw~\cite{kingsbury2020elle}; the contrast
-with our setting is the oracle, because Elle must infer from the client's view
-whereas our provider ledger is written independently of the system under test
-and is never consulted by it.
+exposed unintuitive ext4 behaviour~\cite{bornholt2016ferrite}. That last method
+is unavailable to us in the direction that matters: a legacy endpoint publishes
+no crash-consistency model to write litmus tests against, which is the problem
+rather than an oversight.
+
+Three methods from distributed systems bound the comparison further. FATE injects
+failures into cloud systems and systematically explores \emph{sequences} of
+several, pairing them with declarative specifications of correct
+recovery~\cite{gunawi2011fate}; our cells inject one fault at one named boundary,
+trading FATE's coverage of failure combinations for an exact statement of where
+the single fault landed. Lineage-driven fault injection inverts the search,
+reasoning backwards from a correct outcome to the fault combinations that could
+have prevented it, with the fault model bounded explicitly to dropped messages,
+failed nodes and partitions~\cite{alvaro2015ldfi} --- a model that excludes crash
+recovery, the class this paper is about. Elle checks a database's client-observed
+history for isolation anomalies while faults are injected, inferring a dependency
+graph from what clients saw~\cite{kingsbury2020elle}; the contrast with our
+setting is the oracle, because Elle must infer from the client's view whereas our
+provider ledger is written independently of the system under test and is never
+consulted by it. AEP applies this lineage to a caller-to-endpoint protocol: real
+process kills at named instruction boundaries, a separately written provider
+ledger, and a \texttt{dm-flakey} write-loss probe. The harness is an evaluation
+instrument, not a claimed fault-injection contribution.
 
 \begin{table*}[t]
 \centering
-\caption{Selected design assumptions. ``Endpoint must cooperate'' denotes
-idempotence, an idempotency key, transaction enrolment, or compensation. The
-rows are not ordered by guarantee strength; they expose different residuals
-when their stated assumptions fail.}
+\caption{Selected design assumptions, organised by the three questions of this
+section. ``Endpoint must cooperate'' denotes idempotence, an idempotency key,
+transaction enrolment, or compensation. The rows are not ordered by guarantee
+strength; they expose different residuals when their stated assumptions fail.}
 \label{tab:related}
 \small
 \renewcommand{\arraystretch}{1.08}
@@ -413,11 +385,11 @@ Temporal-style, 1 attempt~\cite{temporal-retry}
 \end{tabularx}
 \end{table*}
 
-\paragraph{Revised novelty position} AEP's claim is not the invention of
-write-ahead intent, locking, or fail-closed interposition. It is the measured
-composition for endpoints with authoritative, positive-only, or no readback:
-capability-specific recovery; a terminal declared-ambiguity outcome when no
-query can settle the effect; real process and durability-fault evaluation with
-an independent ground-truth ledger; and an ablation that assigns detection to
-the pre-dispatch record plus no re-entry, and prevention to the durability
+Read down the three columns, the position is this. AEP's claim is not the
+invention of write-ahead intent, locking, or fail-closed interposition. It is the
+measured composition for endpoints with authoritative, positive-only, or no
+readback: capability-specific recovery; a terminal declared-ambiguity outcome
+when no query can settle the effect; real process and durability-fault evaluation
+with an independent ground-truth ledger; and an ablation that assigns detection
+to the pre-dispatch record plus no re-entry, and prevention to the durability
 barrier.
