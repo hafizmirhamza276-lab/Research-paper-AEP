@@ -950,7 +950,12 @@ def emit_deployment_choice(
         r"by the pre-dispatch record plus no re-entry, "
         r"which all three rows have, and \cref{tab:ablation} is the "
         r"ablation that shows it. What the barrier buys is the last "
-        r"column's second word, and \cref{tab:killablation} is what it is "
+        # WS-9 move 3 moved tab:killablation -- the uncontrolled cell's
+        # per-session table -- into paper/supplementary.tex, which is a
+        # separate document whose labels this \cref cannot reach. Point at the
+        # subsection that still carries the claim in the main paper rather than
+        # at the table that no longer does.
+        r"column's second word, and \cref{sec:eval-prevention} is what it is "
         r"worth. `Over floor' is the same median less the provider's "
         r"2\,000\,ms delay, and so includes the "
         f"{tex(b3 - b0)}"

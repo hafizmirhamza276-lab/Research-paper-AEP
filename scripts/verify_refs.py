@@ -27,6 +27,33 @@ Deriving the DBLP queries also fixes the rate limiting that caused the observed
 false pass: only entries with neither a DOI nor a URL need a title search, which
 is 7 of 34 rather than 23, so the sweep no longer hammers the API.
 
+**Which mode CI runs, and why it is not the online one.** CI runs
+``--offline`` (`.github/workflows/ci.yml`). That is deliberate and it is not
+a weakening: the online sweep cannot pass unattended from an ordinary network,
+and the reason is in the responses rather than in the bibliography. Probing all
+five DBLP-routed entries back to back returned three **HTTP 200** responses with
+``Content-Type: text/html`` carrying an Anubis proof-of-work interstitial
+("Making sure you're not a bot!"), one **HTTP 429**, and one connection reset;
+the URL route separately draws an **HTTP 403** from a publisher's bot policy,
+the same policy :func:`check_doi` already routes around. Only the 429 is rate
+limiting. The interstitial is a bot challenge that no retry can clear, and
+because it arrives with status 200 no amount of transient-code tolerance sees
+it. A CI step that goes red for that trains people to ignore red builds, so CI
+asserts the part that is deterministic: every entry carries a route to its
+source, and an unrouted entry fails.
+
+**What the online mode is still for, and when it gets run.** It is the check
+that a route actually leads somewhere -- that the DOI resolves at the
+registration agency, the URL is live, the DBLP title matches. It is run by hand,
+not on a schedule: when references are added or changed (as through WS-8's five
+passes), and once more before submission. It is read, not just exited on;
+``--allow-transient N`` exists so a human can distinguish a dead entry from a
+throttled sweep, and the failure detail now names a bot challenge as such
+instead of surfacing it as a JSON parse error.
+
+**Neither mode checks that a reference says what it is cited for.** Nothing
+automatic can. That verification is human and is recorded in the WS-8 reports.
+
 Usage::
 
     python scripts/verify_refs.py              # full sweep; non-zero on any failure
@@ -199,8 +226,30 @@ def check_dblp(entry: Entry, *, hits: int = 4, verbose: bool = True) -> tuple[st
     for attempt in range(3):
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
-                payload = json.load(response)
+                raw = response.read()
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError:
+                # DBLP fronts its API with an Anubis proof-of-work interstitial.
+                # It answers **HTTP 200** with `Content-Type: text/html` and a
+                # "Making sure you're not a bot!" page, so `urlopen` raises
+                # nothing and the only symptom used to be a bare
+                # "Expecting value: line 1 column 1 (char 0)" -- which reads
+                # like a defect in this parser and is not one. Name it, and do
+                # not retry it: an unattended script cannot solve a
+                # proof-of-work challenge, so a retry burns eight seconds to
+                # fetch the same page.
+                head = raw[:400].decode("utf-8", "replace")
+                if "not a bot" in head or head.lstrip()[:9].lower() == "<!doctype":
+                    return FAILED, "bot challenge (HTTP 200, HTML interstitial, not JSON)"
+                return FAILED, "HTTP 200 with a non-JSON body, %d bytes" % len(raw)
             break
+        except urllib.error.HTTPError as error:
+            # 429 is the API saying "not now" and is worth one more try; any
+            # other status is an answer.
+            if error.code != 429 or attempt == 2:
+                return FAILED, "HTTP %s" % error.code
+            time.sleep(8 * (attempt + 1))
         except Exception as error:  # noqa: BLE001
             if attempt == 2:
                 return FAILED, str(error)

@@ -9,7 +9,7 @@
     "generated/numbers.tex": "88de8d2046374d5104b9f0d2464ec1fb6b52a77a0b11e8bc44cc6e94d8c03b2f",
     "generated/table-ablation.tex": "2338e6f83cd84e8af72b0d70181b498cae47d5c396a1be682248dbb5d7b08cb4",
     "generated/table-ambiguity-by-crashpoint.tex": "1e8e92a28a9b29b126e31d5e418a2717a30f2f16103c74bfc5b8f4e1bec363e6",
-    "generated/table-deployment-choice.tex": "3b5d42ef205dec2be431744edee946ac6d5a5d29b70ef69794ed0528caf870e2",
+    "generated/table-deployment-choice.tex": "2344c0868071851cb86c2d7ca2e4a9761a88a477094f7a4475b6edab12fbf47d",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
     "generated/table-outcomes.tex": "57b6a4bf989e5cf75f85756dc0b2b91df8a4925b9cd12c813cc67eefa92e6f44",
     "main.tex": "37821118da1383e7657b1bc6364155aea9ddd584c20c5c300174680b3d3b2635",
@@ -19,11 +19,11 @@
     "sections/03-model.tex": "6d64dc9dd1a68b1e7cb7dcf7fa1cfb7d66aef244964423fb641926189283e5e6",
     "sections/04-protocol.tex": "371a3f97eab6956ba04323238f7d43f558f0d2d52c925696e8598dc518e2ab89",
     "sections/05-implementation.tex": "b2517f5ddb176bc0a1ae7246b4ca3dfccf19eac03270204b4fde3e54bef635df",
-    "sections/06-evaluation.tex": "eaba03ebac01b70f48ccd3057b05f235b494928c5a07964cd057b304d04fbc6b",
+    "sections/06-evaluation.tex": "577ae8e9b0d2c3c0d977253d4a89b297dbc36e100535c5c4ba525b838c73eb3b",
     "sections/07-related.tex": "9bda5b83f2d7b5ff2ad3485a3a12adb4a98e4ceac12171b1100fd38d91bd8b24",
     "sections/08-threats.tex": "9b7f783745136ce5384a847276cc6184b40bf4d082636c346b73b7a3c45f8a6c",
     "sections/09-artifact.tex": "5be04a5c247b8795afda8153ff65b5dd26f35142200b42f98c02eac1cc7d9882",
-    "supplementary.tex": "90eb2d00711dcd64b3b08ceaf2643f01a86c493d79861dd1dfddb21fc9273097"
+    "supplementary.tex": "d6413ecce3c278d725515b8d93407e9f2aeb8912f8d8ca2cb7e47c3bc9ca6362"
   },
   "version": 1
 }

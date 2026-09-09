@@ -176,33 +176,25 @@ silence when it did. The cells where an effect \emph{does} typically exist ---
 \textsc{pos-only} --- show low ambiguity, because a positive read-back
 confirms the effect and the intent resolves.
 
-\subsubsection{Why the provably-empty cell is not resolved, and what it would
-cost}
+\subsubsection{Why the provably-empty cell is not resolved}
 \label{sec:eval-provable}
 
 The \texttt{after\_barrier\_before\_dispatch} row invites an obvious question:
 if the worker died before sending anything, \emph{the system could know that}.
 Why is the outcome ambiguous rather than a confirmed non-event?
 
-Because nothing durable records it. The last durable write before the call is
-the dispatch authorization, and the runner then performs preflight, mints the
-capability and calls the connector without touching Redis again. A recovery
-process reading the store afterwards sees an authorized, unresolved intent ---
-and that is exactly what it would see had the worker died \emph{during}
-transmission. The two histories are identical in the store, so recovery fails
-closed, which is the correct behaviour given what it can observe.
-
-Closing the gap is possible and we did not do it: a third durable barrier
-immediately before transmission would split the two cases and let recovery
-refute the earlier one. The measured price of a barrier on this configuration
-is \BarrierCostEach{}\,ms (\cref{sec:eval-rq3}), so that is a
-\ThirdBarrierStepPct{}\% increase in step latency to convert one crash point's
-declared ambiguities into confirmed non-events --- and it narrows rather than
-closes the window, since a
-crash between that barrier and the socket write returns the same ambiguity.
-We record the trade rather than take it, and note that its value depends
-entirely on the deployment's ratio of crash points, which our uniform matrix
-deliberately does not model.
+Because nothing durable records it. A recovery process reading the store
+afterwards sees an authorized, unresolved intent --- exactly what it would see
+had the worker died \emph{during} transmission, with the request already on the
+wire. The two histories are identical in everything durable, so recovery fails
+closed, which is the correct behaviour given what it can observe. \textbf{That
+is the negative result, and it is the protocol's, not the implementation's:} the
+cell is empty in the world and unresolvable from the store. Closing it is
+possible and we did not do it. The supplementary material gives the probe detail
+and prices the third barrier that would split the two cases --- a trade that
+narrows rather than closes the window, and whose value depends entirely on a
+deployment's ratio of crash points, which our uniform matrix deliberately does
+not model.
 
 \begin{figure*}[t]
 \centering
@@ -423,89 +415,41 @@ not offer it as one.
 with the controlled one} The original collection used \texttt{docker kill}
 alone, and is kept as the uncontrolled replication. It is reported separately
 rather than pooled: the two injectors have different landing distributions, and
-combining them would trade a stated limitation for an unstated confound. The
-scope of that cell is one pre-acknowledgement crash point and one host; the
-\textsc{authoritative-readback} class was subsequently collected over
-\ClassSessions{} sessions (\cref{sec:threats}), a comparison that did not reach
-a precision adequate to the question.
-
-\begin{table}[t]
-\centering
-\caption{The \emph{uncontrolled} hard-Redis-kill ablation --- the original
-\texttt{docker kill} cell, retained as the replication that agrees in direction
-with the controlled result above. Identical faults; the only difference is
-whether the system waits for the durability acknowledgement before dispatching.
-The rate is over executions, one per run. Source:
-\texttt{redis-kill-ablation.csv}, regime \texttt{redis-kill-preack},
-\textsc{no-readback}.}
-\label{tab:killablation}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
- & runs & \multicolumn{2}{c}{unwanted applied effect} & canary \\
- & & count & rate & survived \\
-\midrule
-AEP-full & \AepKillRuns{} & \AepKillApplied{} & \AepUnwantedRate{} & \AepKillCanary{} \\
-B3 (no barrier) & \BthreeKillRuns{} & \BthreeKillApplied{} & \BthreeUnwantedRate{} & \BthreeKillCanary{} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-There the rate is \AepUnwantedRate{} for AEP-full and \BthreeUnwantedRate{} for
-B3 (Fisher's exact test, two-tailed, $p = \UnwantedP{}$), a difference of
+combining them would trade a stated limitation for an unstated confound. There
+the rate is \AepUnwantedRate{} for AEP-full against \BthreeUnwantedRate{} for B3
+(Fisher's exact test, two-tailed, $p = \UnwantedP{}$), a difference of
 \UnwantedPrevented{} executions on the same injected fault --- the same
-direction as the controlled cell, at a magnitude the uncontrolled injector
-sets. Note that this is the only fault in the study under which the two systems
-diverge; everywhere else they differ by at most $\BthreeVsAepAmbDelta{}$
-executions in \BthreeVsAepN{} (\cref{tab:ablation}). Both systems declared
-ambiguity on all \AepKillRuns{} runs: the endpoint is \textsc{no-readback}, so
-neither can resolve what it does not know, and both fail closed. The difference
-between them is not in what they \emph{say} --- that is the detection
-guarantee, and \cref{sec:eval-detection} already showed it does not depend on
-the barrier --- it is in what they did to the outside world before saying it.
+direction as the controlled cell, at a magnitude the uncontrolled injector sets.
+This is the only fault in the study under which the two systems diverge;
+everywhere else they differ by at most $\BthreeVsAepAmbDelta{}$ executions in
+\BthreeVsAepN{} (\cref{tab:ablation}). Both systems declared ambiguity on all
+\AepKillRuns{} runs: the endpoint is \textsc{no-readback}, so neither can
+resolve what it does not know, and both fail closed. The difference between them
+is not in what they \emph{say} --- that is the detection guarantee, and
+\cref{sec:eval-detection} already showed it does not depend on the barrier ---
+it is in what they did to the outside world before saying it.
 
-That magnitude moves, which is why the controlled cell exists. The uncontrolled
-cell was re-collected \ReplicationSessions{} further times under an identical
-configuration --- same cell identity hash, same per-run seed, same pinned Redis
-image --- for \ReplicationRuns{} executions per arm. AEP-full's unwanted-applied
-count ranged \ReplicationAepMin{}--\ReplicationAepMax{} out of \AepKillRuns{};
-B3 recorded \ReplicationBthreeApplied{}/\AepKillRuns{} in every one, a range of
-\ReplicationBthreeRange{}. Taking the session rather than the execution as the
-unit, the difference averaged \ReplicationPreventedMean{} effects, 95\% interval
-[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}], and the
-\UnwantedPrevented{} of \cref{tab:killablation} falls inside it. Against that
-spread, the controlled cell's \ArmASpreadMax{}-count per-class spread over
-\ArmASessions{} sessions is the change worth reporting.
-
-The variation has a candidate cause --- the race itself --- and the replication
-set cannot establish it. Taking the session as the unit, the four sessions
-separate the runs that applied an effect from those that did not by
-\KillLatencyPerSession{}\,ms: mean \KillLatencyMean{}\,ms, 95\% interval
-[\KillLatencyLow{},\,\KillLatencyHigh{}]. \textbf{The half-width is
-\KillLatencyHalfWidth{}\,ms, \KillLatencyPrecisionRatio{} times the mean it
-brackets}, and the interval contains zero. We give the four session differences
-individually because the summary is what fails here: the interval admits effects
-three times the mean and effects of the opposite sign, and this design does not
-distinguish them. We give no $p$, and we do not put a count of sessions on one
-side of zero in place of one. Over \KillLatencySessions{} sessions a two-sided
-sign test cannot return below \KillLatencySignFloor{}, so no outcome this design
-admits could have reached significance.
-
-\textbf{B3 is not the negative control this paper previously reported.} Pooled
-over the same \ReplicationRuns{} executions it read as a clean null, and pooling
-is what made it read that way. At the session level it is uninformative:
-\KillLatencyBthreePerSession{}\,ms, mean \KillLatencyBthreeMean{}\,ms, interval
-[\KillLatencyBthreeLow{},\,\KillLatencyBthreeHigh{}], a half-width of
-\KillLatencyBthreeHalfWidth{}\,ms and \KillLatencyBthreePrecisionRatio{} times
-its own mean. A comparison that wide could not have contradicted the mechanism
-whatever B3 had done, so its failure to contradict it was never evidence for it.
-The original cell was collected on a different filesystem from the four
-replications, a difference no run configuration records, so we report it
-separately: it agrees in direction at \KillLatencyOrigDiff{}\,ms over
-\KillLatencyOrigN{} runs ($p = \KillLatencyOrigP{}$), with its own control at
-\KillLatencyBthreeOrigDiff{}\,ms ($p = \KillLatencyBthreeOrigP{}$,
-$n = \KillLatencyBthreeOrigN{}$). \textbf{It is one session: it pools nothing,
-and it replicates nothing.}
+\textbf{The direction replicates; the magnitude moves, which is why the
+controlled cell exists.} The cell was re-collected \ReplicationSessions{}
+further times under an identical configuration, and AEP-full's unwanted-applied
+count ranged \ReplicationAepMin{}--\ReplicationAepMax{} out of \AepKillRuns{}
+while B3 stayed at \ReplicationBthreeApplied{}/\AepKillRuns{} in every one.
+Taking the session as the unit, the difference averaged
+\ReplicationPreventedMean{} effects, 95\% interval
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}]; against that spread
+the controlled cell's \ArmASpreadMax{}-count per-class spread over
+\ArmASessions{} sessions is the change worth reporting. Two negative findings
+travel with the cell and are not softened by being moved: attributing the
+movement to kill latency did not succeed at this design's precision, and B3 is
+not the negative control an earlier version of this paper reported it to be ---
+its own session-level interval is far too wide to have contradicted the
+mechanism whatever it had done. The per-session tables carrying both --- the
+uncontrolled counts, the four session-level kill-latency differences with their
+intervals, and the same analysis for B3 --- are in the supplementary material.
+The scope of the cell is one pre-acknowledgement crash point and one host, and
+the \textsc{authoritative-readback} class was subsequently collected over
+\ClassSessions{} sessions (\cref{sec:threats}) at a precision inadequate to the
+question.
 
 \paragraph{Where the fault lands after the branch point, the arms tie} The
 same fault delivered \emph{after} dispatch separates nothing, and we collected
@@ -698,79 +642,51 @@ both policies. They nearly do --- B3 is \BthreeStepMedian{}\,ms under
 unmeasured premise is the kind of number this paper is trying not to publish.
 
 \paragraph{How precise these two figures are, which is: not very} Each is a
-difference of two medians over three runs per arm, and we report a cluster
-bootstrap over runs rather than over executions, because thirty step latencies
-from three runs are not thirty independent draws. The intervals are wide and
-one of them is uninformative:
+difference of two medians over three runs per arm, bootstrapped over runs rather
+than executions, and the honest form of the claim is therefore directional and
+bounded rather than a ratio: under \texttt{everysec} the barrier costs
+\BarrierCost{}\,ms with a 95\% interval of
+[\BarrierCostLow{}, \BarrierCostHigh{}], pinned only to within about a factor of
+four, while under \texttt{always} it is \BarrierCostAlways{}\,ms with an interval
+of [\BarrierCostAlwaysLow{}, \BarrierCostAlwaysHigh{}] that spans zero --- so at
+this sample size we cannot show the barrier costs anything at all under that
+policy (\cref{sec:threats}).
 
-\begin{center}
-\small
-\begin{tabular}{@{}lrr@{}}
-\toprule
-\texttt{appendfsync} & barrier (ms) & 95\% CI \\
-\midrule
-\texttt{everysec} & \BarrierCost{} & [\BarrierCostLow{}, \BarrierCostHigh{}] \\
-\texttt{always} & \BarrierCostAlways{} & [\BarrierCostAlwaysLow{}, \BarrierCostAlwaysHigh{}] \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Under \texttt{everysec} the barrier's cost is comfortably positive and its
-magnitude is pinned only to within about a factor of four. Under \texttt{always} it
-is \emph{not separable from zero at this sample size} --- the interval spans
-zero and is dominated by a heavy upper tail that three clusters cannot
-resolve. So the honest form of the claim is directional and bounded, not a
-ratio: \textbf{under \texttt{everysec} the barrier costs hundreds to
-$\approx2\,000$\,ms per step, and under \texttt{always} we cannot show it costs
-anything at all.} That is enough for the deployment decision in this section,
-and it is less than the point estimates alone appear to say. Closing it needs
-more crash-free runs, not more executions per run, and
-\cref{sec:threats} says so.
-
-\paragraph{B3-mode: the barrier removed entirely} This row is not a baseline
-we are beating; it is a supported configuration of the same implementation, and
-\cref{sec:eval-detection} is what licenses putting it in this table. It pays
-\ProtocolMinusBarrier{}\,ms over a system with no protocol at all. On the
-detection metrics, pooled across capability classes, we observe no difference
-between it and AEP-full, and what supports that is a bound rather than a test:
-both the undetected-duplicate and lost-effect rates lie in
+\paragraph{B3-mode: the barrier removed entirely} Not a baseline we are beating
+but a supported configuration of the same implementation, licensed by
+\cref{sec:eval-detection}. It pays \ProtocolMinusBarrier{}\,ms over a system
+with no protocol at all. On the detection metrics, pooled across capability
+classes, we observe no difference between it and AEP-full, supported by a bound
+rather than a test: both the undetected-duplicate and lost-effect rates lie in
 $[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%, and the
 declared-ambiguity difference lies inside the $\pm\BthreeVsAepAmbMargin{}$
-percentage-point margin that \cref{sec:eval-detection} states as a post hoc
-stipulation rather than a preregistration.
-
-\emph{We do not make that claim per capability class, and the reason is a
-number rather than an oversight.} Applying the same construction at per-class
-scope means six simultaneous bounds instead of two, over a third as many run
-clusters, and Bonferroni then puts the width at
-\AblationZeroUpperPerClass{} percentage points. A band that wide is not a
-detection guarantee, so what we report is that these data cannot support a
-per-class equivalence claim worth stating --- not that the question does not
-arise. What it forfeits is \cref{sec:eval-prevention}: under a hard Redis
-kill it will put an effect on the wire that AEP-full withholds, at
-\BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will
-not survive a host-level write loss (\cref{sec:eval-durability}).
+percentage-point margin \cref{sec:eval-detection} states as a post hoc
+stipulation. \emph{We do not make that claim per capability class, and the
+reason is a number rather than an oversight}: six simultaneous bounds instead of
+two, over a third as many run clusters, puts the Bonferroni width at
+\AblationZeroUpperPerClass{} percentage points, and a band that wide is not a
+detection guarantee. What B3-mode forfeits is \cref{sec:eval-prevention}: under
+a hard Redis kill it will put an effect on the wire that AEP-full withholds, at
+\BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will not
+survive a host-level write loss (\cref{sec:eval-durability}).
 
 \textbf{So the question a deployment answers is not ``can we afford AEP'' but
-``do we need prevention, and at which fsync policy''.} If losing Redis is
-the fault to worry about --- an instance on the same host as the workers, an
+``do we need prevention, and at which fsync policy''.} If losing Redis is the
+fault to worry about --- an instance on the same host as the workers, an
 unreplicated instance, a VM that can vanish --- the barrier is the point of the
 protocol and \texttt{always} makes it nearly free at this workload's shape. If
-Redis is well protected and worker crashes are the fault of concern,
-B3-mode gives the paper's headline result for \ProtocolMinusBarrier{}\,ms.
+Redis is well protected and worker crashes are the concern, B3-mode gives the
+paper's headline result for \ProtocolMinusBarrier{}\,ms.
 
-\textbf{One measurement this table does not support.} It says nothing about
-what \texttt{always} costs under load, and we are not recommending it on this
-evidence. The Redis documentation calls \texttt{always} ``very very slow, very
-safe''~\cite{redis-persistence}, and that judgement is about write throughput,
-which our workload cannot exercise: two workers, a two-second provider delay,
-and a handful of writes per step leave the system latency-bound and nowhere
-near an fsync-rate limit. Our throughput figure is in fact \emph{higher} under
-\texttt{always} ($\AepThroughputAlways{}$ versus $\AepThroughputEverysec{}$
-executions/s), which is a statement about
-this workload's shape and not about Redis. A write-heavy deployment would land
-somewhere else on the curve entirely, and finding where is not something this
-evaluation attempted.
+\textbf{One measurement this table does not support} is what \texttt{always}
+costs under load, and we are not recommending it on this evidence. The Redis
+documentation calls it ``very very slow, very safe''~\cite{redis-persistence}, a
+judgement about write throughput that our workload cannot exercise: two workers,
+a two-second provider delay and a handful of writes per step leave the system
+latency-bound and nowhere near an fsync-rate limit. Our throughput figure is in
+fact \emph{higher} under \texttt{always} ($\AepThroughputAlways{}$ versus
+$\AepThroughputEverysec{}$ executions/s), which is a statement about this
+workload's shape and not about Redis.
 
 \subsection{RQ4 --- recovery}
 \label{sec:eval-rq4}
