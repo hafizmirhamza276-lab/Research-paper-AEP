@@ -248,6 +248,42 @@ Carried forward from the 09-04 file's §6. **Rechecked:** the credential,
 lock-file, `nohup setsid`, sleep, test-suite-safety and corporate-laptop notes
 all still hold; the "unpushed commits" note is superseded — see §6.
 
+- **A push that does not clear on retry: force HTTP/1.1, repo-locally.** This is
+  the fix; it is one command and it worked first time.
+
+  ```
+  git config --local http.version HTTP/1.1
+  ```
+
+  **Third distinct push failure, 8 September**, and neither earlier note covers
+  it. `7fddd91` (958 objects, 340 KiB) hung silently at 540 s, hung again on a
+  25-minute retry, and reads were fine throughout — `git ls-remote` returned
+  instantly every time. What made it diagnosable was writing `--progress` to a
+  **file** rather than a pipe: an earlier diagnostic was killed by its own
+  timeout before the pipe flushed and showed nothing. With output to a file the
+  real error appeared:
+
+  ```
+  Writing objects: 100% (958/958), 340.22 KiB | 85.06 MiB/s, done.
+  error: RPC failed; HTTP 408 curl 22 The requested URL returned error: 408
+  send-pack: unexpected disconnect while reading sideband packet
+  ```
+
+  **What did not work, and what each ruled out.** `http.postBuffer=524288000`
+  turned the silent hang into the 408 above — useful, but not a fix, and the
+  pack is 340 KiB so buffer size was never the problem. `--no-thin` produced a
+  byte-identical pack and the same 408, ruling out remote delta resolution.
+  Splitting the push was not available: `0d6cd22..7fddd91` is a single commit of
+  976 files, all under `reports/`, and splitting it would mean rewriting the
+  record of a collection.
+
+  **`HTTP/1.1` fixed it immediately** — `0d6cd22..7fddd91` in one push, with
+  `remote: Resolving deltas` progressing normally, which never appeared under
+  HTTP/2. `RPC failed; HTTP 408 curl 22` on a POST while GETs succeed is the
+  signature of HTTP/2 multiplexing against whatever sits in front of this
+  network. Both settings are `--local`: nothing global, nothing system-wide, no
+  proxy, TLS or SSH configuration touched.
+
 - **If a push hangs, retry once with a longer window before hunting anything.**
   Updated 8 September. A push of 981 objects timed out at 180 s, and the
   off-screen-credential diagnosis below did **not** apply: no
@@ -255,7 +291,8 @@ all still hold; the "unpushed commits" note is superseded — see §6.
   plain retry at 540 s completed normally, and only 343 KiB actually
   transferred — so the stall was in the connection/auth phase, not the transfer,
   and nothing needed to be found or killed. Check for a stalled process and a
-  lock file *after* a retry fails, not before.
+  lock file *after* a retry fails, not before. **If the retry also fails, it is
+  the HTTP/1.1 case above — do not keep retrying.**
 - **Git credential dialog opens off-screen.** Cost 3h17m once, with a stalled
   `git-remote-https.exe` holding `.git/index.lock`. If git hangs *and a retry
   did not clear it*, look for a hidden account-selection window. The account is
