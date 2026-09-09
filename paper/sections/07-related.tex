@@ -57,10 +57,25 @@ execution. Their guarantees are appropriate when an effect is idempotent,
 transactional, compensable, or otherwise recoverable. Temporal states the
 operational premise directly: activities should be idempotent because they may
 execute more than once~\cite{temporal-activity-definition}; setting Maximum
-Attempts to one selects the opposite retry policy~\cite{temporal-retry}. Our B4
-and B4b controls instantiate these two policies against the same
-non-cooperative endpoint. They are semantic controls, not claims about those
-products' complete implementations.
+Attempts to one selects the opposite retry policy~\cite{temporal-retry}, and
+the engine's own account of when an activity is considered failed rests on
+timeouts and heartbeats rather than on any fact about the
+endpoint~\cite{temporal-activity-failures}. Our B4 and B4b controls instantiate
+these two policies against the same non-cooperative endpoint. They are semantic
+controls, not claims about those products' complete implementations.
+
+That distinction is no longer only a caveat. We subsequently ran the production
+engine itself against the same endpoint, in both configurations, at the one
+crash point the engine and our controls can both be cut at
+(\cref{sec:threats}). \emph{The direction transferred and the magnitudes did
+not}: unlimited attempts duplicated and lost nothing, one attempt lost and
+duplicated nothing --- each landing in the corner \cref{tab:related} assigns it
+--- while the rates were several times below B4's and B4b's at the same crash
+point, and neither configuration declared ambiguity in any run. The comparison
+covers one crash point of five, is conditional on a fixed activity timeout the
+controls have no analogue for, and rests on frozen control cells an order of
+magnitude thinner than the engine's; it is reported with those bounds in
+\cref{sec:threats} and no rate in this paper should be read as a product's.
 
 The ablation supplies AEP's narrower empirical delta. B3 and AEP-full share
 the pre-dispatch record and no-re-entry transition but differ on the durability
@@ -95,6 +110,48 @@ B3/AEP ablation. ACRFence addresses semantic rollback during agent
 checkpoint-restore~\cite{zheng2026acrfence}; it is adjacent rather than a basis
 for ranking which work is ``nearest.''
 
+\paragraph{Durability acknowledgements and what they are worth} AEP's barrier
+withholds dispatch until the store acknowledges the intent durable, so the
+protocol is only as strong as that acknowledgement. A body of storage work
+establishes that the acknowledgement can be false. Rebello et al.\ show that
+none of five widely deployed applications --- PostgreSQL, LMDB, LevelDB, SQLite
+and Redis --- handles \texttt{fsync} failure sufficiently, and that on Linux the
+affected pages are marked clean regardless of whether writeback
+succeeded~\cite{rebello2020fsync}; the operational discovery that a successful
+\texttt{fsync} does not mean the data reached persistent storage was made in
+PostgreSQL and reported at the time~\cite{corbet2018fsync}. Ganesan et al.\
+find that eight distributed storage systems, Redis among them, do not
+consistently use redundancy to recover from file-system faults, so a single
+fault can produce data loss or unavailability~\cite{ganesan2017redundancy}.
+Alagappan et al.\ show that recovery which ignores protocol-level knowledge
+loses data in replicated logs, and repair it for
+Raft-style~\cite{ongaro2014raft} systems~\cite{alagappan2018par}.
+
+We place our own durability result in that line rather than beside it:
+\cref{sec:threats} reports a barrier that dispatched on an acknowledgement which
+was already impossible to honour, because the underlying device discarded the
+write and reported success. The protocol behaved exactly as specified on an
+input that was false. What this literature supplies is the reason that is a
+property of the storage stack rather than a defect peculiar to our
+implementation --- and the reason a barrier's guarantee must be stated as
+conditional on the acknowledgement it rests on.
+
+\paragraph{Exactly-once state versus exactly-once effect} Consistent recovery
+for distributed computation is classically obtained by snapshotting global
+state~\cite{chandy1985snapshots}, and modern dataflow engines make that
+practical by injecting barriers into the stream and persisting operator state
+asynchronously~\cite{carbone2015abs}. The guarantee these mechanisms provide is
+that \emph{internal state} is restored to a consistent cut. An external
+mutation already performed is not inside that cut and is not undone by
+restoring it, which is why exactly-once processing is routinely paired with a
+transactional or idempotent sink. AEP's endpoint is neither, and in the
+\textsc{no-readback} class it cannot even be interrogated after the fact --- so
+the snapshot line of work and AEP are solving adjacent problems on opposite
+sides of the atomicity boundary. This is also the end-to-end
+argument~\cite{saltzer1984endtoend} in an uncomfortable form: the check that
+would settle whether the effect happened belongs at the endpoints, and the
+endpoint that would have to perform it is precisely the one that cannot.
+
 \paragraph{Fault-injection lineage} AEP's named crash boundaries and
 independent oracle follow a mature crash-consistency methodology. ALICE
 constructs possible post-crash storage states and checks application
@@ -125,6 +182,14 @@ Lease / fenced CAS~\cite{gray1989leases,kleppmann2016locking}
   & n/a & no & duplicate effect \\
 Sagas~\cite{garciamolina1987sagas}
   & compensation & no & compensation gap \\
+Transactional outbox~\cite{richardson-transactional-outbox}
+  & idempotent consumer & no & duplicate delivery \\
+\texttt{Idempotency-Key} header~\cite{jena2025idempotencykey}
+  & key support & no & duplicate effect \\
+Locks with intent~\cite{setty2016olive}
+  & effect inside storage & no & --- \\
+Dataflow snapshots~\cite{chandy1985snapshots,carbone2015abs}
+  & transactional sink & no & duplicate external effect \\
 Beldi~\cite{zhang2020beldi}
   & yes & no & --- \\
 Durable Functions~\cite{burckhardt2021durable}

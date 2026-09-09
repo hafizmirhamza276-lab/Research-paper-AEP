@@ -327,40 +327,10 @@
 % --------------------------------------------------------------------
 
 % [DBLP] Yao, Zhao, Yu, Du, Shafran, Narasimhan, Cao. ICLR 2023.
-@inproceedings{yao2023react,
-  author    = {Shunyu Yao and Jeffrey Zhao and Dian Yu and Nan Du and
-               Izhak Shafran and Karthik Narasimhan and Yuan Cao},
-  title     = {{ReAct}: Synergizing Reasoning and Acting in Language Models},
-  booktitle = {Proceedings of the 11th International Conference on Learning
-               Representations (ICLR)},
-  year      = {2023}
-}
-
 % [DBLP] Schick, Dwivedi-Yu, Dessi, Raileanu, Lomeli, Hambro, Zettlemoyer,
 % Cancedda, Scialom. NeurIPS 2023.
-@inproceedings{schick2023toolformer,
-  author    = {Timo Schick and Jane Dwivedi-Yu and Roberto Dess{\`\i} and
-               Roberta Raileanu and Maria Lomeli and Eric Hambro and
-               Luke Zettlemoyer and Nicola Cancedda and Thomas Scialom},
-  title     = {{Toolformer}: Language Models Can Teach Themselves to Use
-               Tools},
-  booktitle = {Advances in Neural Information Processing Systems 36
-               (NeurIPS)},
-  year      = {2023}
-}
-
 % [DBLP] Mei, Li, Xu, Ye, Ge, Zhang. CoRR abs/2403.16971. Preprint, cited
 % as such.
-@article{mei2024aios,
-  author  = {Kai Mei and Zelong Li and Shuyuan Xu and Ruosong Ye and
-             Yingqiang Ge and Yongfeng Zhang},
-  title   = {{AIOS}: {LLM} Agent Operating System},
-  journal = {CoRR},
-  volume  = {abs/2403.16971},
-  year    = {2024},
-  doi     = {10.48550/arXiv.2403.16971}
-}
-
 % [DBLP] Zheng, Yang, Zhang, Quinn. CoRR abs/2603.20625, 2026. Preprint,
 % cited as such.
 @article{zheng2026acrfence,
@@ -496,4 +466,83 @@
   howpublished = {\url{https://docs.temporal.io/activity-definition}},
   year         = {2026},
   note         = {Accessed 2026-08-06}
+}
+
+% ---------------------------------------------------------------------------
+% Storage durability and fsync semantics. Added WS-8. Every entry below was
+% confirmed against the publisher's own page before being cited, and each is
+% cited for a claim the paper it names actually makes.
+% ---------------------------------------------------------------------------
+
+@inproceedings{rebello2020fsync,
+  author    = {Anthony Rebello and Yuvraj Patel and Ramnatthan Alagappan and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Can Applications Recover from fsync Failures?},
+  booktitle = {2020 USENIX Annual Technical Conference (USENIX ATC)},
+  pages     = {753--767},
+  year      = {2020},
+  url       = {https://www.usenix.org/conference/atc20/presentation/rebello}
+}
+
+@misc{corbet2018fsync,
+  author       = {Jonathan Corbet},
+  title        = {{PostgreSQL}'s fsync() surprise},
+  howpublished = {\url{https://lwn.net/Articles/752063/}},
+  year         = {2018},
+  note         = {LWN.net. Accessed 2026-09-08}
+}
+
+@inproceedings{ganesan2017redundancy,
+  author    = {Aishwarya Ganesan and Ramnatthan Alagappan and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Redundancy Does Not Imply Fault Tolerance: Analysis of
+               Distributed Storage Reactions to Single Errors and Corruptions},
+  booktitle = {15th USENIX Conference on File and Storage Technologies (FAST)},
+  pages     = {149--166},
+  year      = {2017},
+  url       = {https://www.usenix.org/conference/fast17/technical-sessions/presentation/ganesan}
+}
+
+@inproceedings{alagappan2018par,
+  author    = {Ramnatthan Alagappan and Aishwarya Ganesan and Eric Lee and
+               Aws Albarghouthi and Vijay Chidambaram and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Protocol-Aware Recovery for Consensus-Based Storage},
+  booktitle = {16th USENIX Conference on File and Storage Technologies (FAST)},
+  pages     = {15--32},
+  year      = {2018},
+  url       = {https://www.usenix.org/conference/fast18/presentation/alagappan}
+}
+
+@article{saltzer1984endtoend,
+  author  = {Jerome H. Saltzer and David P. Reed and David D. Clark},
+  title   = {End-to-End Arguments in System Design},
+  journal = {ACM Transactions on Computer Systems},
+  volume  = {2},
+  number  = {4},
+  pages   = {277--288},
+  year    = {1984},
+  doi     = {10.1145/357401.357402}
+}
+
+@article{chandy1985snapshots,
+  author  = {K. Mani Chandy and Leslie Lamport},
+  title   = {Distributed Snapshots: Determining Global States of Distributed
+             Systems},
+  journal = {ACM Transactions on Computer Systems},
+  volume  = {3},
+  number  = {1},
+  pages   = {63--75},
+  year    = {1985},
+  doi     = {10.1145/214451.214456}
+}
+
+@article{carbone2015abs,
+  author  = {Paris Carbone and Gyula F{\'o}ra and Stephan Ewen and
+             Seif Haridi and Kostas Tzoumas},
+  title   = {Lightweight Asynchronous Snapshots for Distributed Dataflows},
+  journal = {CoRR},
+  volume  = {abs/1506.08603},
+  year    = {2015},
+  url     = {https://arxiv.org/abs/1506.08603}
 }
