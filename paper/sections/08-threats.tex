@@ -275,6 +275,44 @@ make the activity idempotent --- the first two land between our two points on
 the same duplicate/loss trade, and the third leaves the problem this paper is
 about.
 
+\paragraph{The engine itself was run, and it separates what B4 licenses from
+what it does not} The preceding paragraph was, until now, an assertion. We
+subsequently ran the production engine against the same non-cooperative
+endpoint, in the two configurations B4 and B4b instantiate, at the one crash
+point both the engine and our model can be cut at. With unlimited attempts it
+duplicated at \BfiveDup{} over \BfiveExec{} executions and lost effects at
+\BfiveLost{}; with Maximum Attempts set to one it lost at \BfivebLost{} over
+\BfivebExec{} executions and duplicated at \BfivebDup{}. Neither configuration
+declared ambiguity in any of \BfiveRuns{} non-void runs (\BfiveAmb{} and
+\BfivebAmb{} declarations), which is the third corner of
+\cref{sec:trilemma} going unreached by the engine itself and not merely by our
+model of it.
+
+\emph{The direction transfers; the magnitudes do not.} Each configuration lands
+in the corner \cref{tab:related} assigns it, with exactly zero events
+of the other kind. But at that same crash point B4 duplicates at
+\BfourAtBarrier{} over \BfourAtBarrierExec{} executions and B4b loses at
+\BfourbAtBarrier{} over \BfourbAtBarrierExec{}, roughly six times the engine's
+rates. \textbf{B4's rates are our model's, not the product's}, and no rate in
+this paper should be read as an engine's. That is what the paragraph above
+already claimed; it is now measured rather than asserted.
+
+Four things bound this and none of them is removed by having run the engine.
+The comparison is \emph{incomplete}: the engine has no position answering to
+\textsc{after-intent-before-barrier}, because its pre-dispatch record is written
+by the server inside one RPC, so there is no worker-side instant between the
+write and its acknowledgement --- a hole in the engine's coverage exactly where
+B4 and B4b have data at all three capability classes. The rates are conditional
+on a \BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analogue
+for; a different timeout is a different cell, and no timing number here is any
+engine's recovery latency. The interval arithmetic is asymmetric --- B4's
+intervals rest on three runs against the engine's thirty, and three clusters put
+resampled means on multiples of one thirtieth --- so the separation should be
+read from the point estimates, which differ by roughly $0.8$, and not from the
+intervals failing to overlap. And the crash window at the dispatch point is
+sized by the server and by loopback rather than by the protocol, so its width is
+not like-for-like with B4's.
+
 \paragraph{Declared ambiguity is not evaluated as an operational outcome} The
 paper measures how often AEP declares ambiguity and shows that it never
 substitutes a silent failure for it. It does \emph{not} show that declaring is

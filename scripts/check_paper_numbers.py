@@ -65,6 +65,7 @@ def check_generated_tables(
     analysis: Path,
     fsync_analysis: Path,
     flakey: Path,
+    b5_session: Path,
 ) -> None:
     """Regenerate into a temp dir and diff against what is committed.
 
@@ -80,6 +81,7 @@ def check_generated_tables(
     for label, path in (
         ("appendfsync=always analysis", fsync_analysis),
         ("G2 write-loss results", flakey),
+        ("WS-6 B5 session", b5_session),
     ):
         result.check(path.is_dir(), f"{label} is present", f"missing {path}")
     with tempfile.TemporaryDirectory() as scratch:
@@ -93,6 +95,8 @@ def check_generated_tables(
                 str(fsync_analysis),
                 "--flakey",
                 str(flakey),
+                "--b5-session",
+                str(b5_session),
                 "--out",
                 scratch,
             ],
@@ -422,6 +426,11 @@ def main() -> int:
         type=Path,
         default=ROOT / "experiments" / "results",
     )
+    parser.add_argument(
+        "--b5-session",
+        type=Path,
+        default=ROOT / "reports" / "raw" / "ws6-b5-s1-2026-09-08-attempt3",
+    )
     arguments = parser.parse_args()
     build_dir = arguments.build_dir or arguments.paper
 
@@ -433,6 +442,7 @@ def main() -> int:
     print(f"analysis       {arguments.analysis}")
     print(f"fsync analysis {arguments.fsync_analysis}")
     print(f"flakey results {arguments.flakey}")
+    print(f"b5 session     {arguments.b5_session}")
     print()
 
     result = Result()
@@ -443,6 +453,7 @@ def main() -> int:
         arguments.analysis,
         arguments.fsync_analysis,
         arguments.flakey,
+        arguments.b5_session,
     )
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)

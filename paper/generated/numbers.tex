@@ -647,6 +647,58 @@
 \newcommand{\CoreLoc}{6\,862}
 
 % lines of Python under experiments/, excluding __pycache__
-% 95 files; regenerated on every run of this script
-\newcommand{\HarnessLoc}{24\,523}
+% 104 files; regenerated on every run of this script
+\newcommand{\HarnessLoc}{27\,078}
+
+% b5-runs.jsonl | system=B5_TEMPORAL | non-void runs only
+% undetected_duplicate_executions / executions = 93/590
+\newcommand{\BfiveDup}{0.1576}
+
+% b5-runs.jsonl | system=B5_TEMPORAL | non-void runs only
+% lost_effect_executions / executions = 0/590
+\newcommand{\BfiveLost}{0.0000}
+
+% b5-runs.jsonl | executions behind \BfiveDup and \BfiveLost
+\newcommand{\BfiveExec}{590}
+
+% b5-runs.jsonl | system=B5_TEMPORAL | declared_ambiguous summed over 59 non-void runs
+\newcommand{\BfiveAmb}{0}
+
+% b5-runs.jsonl | system=B5B_TEMPORAL_AT_MOST_ONCE | non-void runs only
+% undetected_duplicate_executions / executions = 0/590
+\newcommand{\BfivebDup}{0.0000}
+
+% b5-runs.jsonl | system=B5B_TEMPORAL_AT_MOST_ONCE | non-void runs only
+% lost_effect_executions / executions = 84/590
+\newcommand{\BfivebLost}{0.1424}
+
+% b5-runs.jsonl | executions behind \BfivebDup and \BfivebLost
+\newcommand{\BfivebExec}{590}
+
+% b5-runs.jsonl | system=B5B_TEMPORAL_AT_MOST_ONCE | declared_ambiguous summed over 59 non-void runs
+\newcommand{\BfivebAmb}{0}
+
+% b5-runs.jsonl | non-void runs across both B5 arms
+% 120 collected, 2 voided as instrument failures and excluded
+\newcommand{\BfiveRuns}{118}
+
+% experiments/baselines/b5_temporal/collect.py START_TO_CLOSE_MS
+% fixed at 06d51b0 before any B5 data existed; a different timeout is a different cell
+\newcommand{\BfiveStartToClose}{4000}
+
+% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate
+% crash_point=after_barrier_before_dispatch | response_class in {AUTHORITATIVE_READBACK, NO_READBACK}
+% sum(successes)/sum(total) = 57/60 over 12 cells
+\newcommand{\BfourAtBarrier}{0.9500}
+
+% per-cell-metrics.csv | executions behind \BfourAtBarrier
+\newcommand{\BfourAtBarrierExec}{60}
+
+% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE metric=lost_effect_rate
+% crash_point=after_barrier_before_dispatch | response_class in {AUTHORITATIVE_READBACK, NO_READBACK}
+% sum(successes)/sum(total) = 55/60 over 12 cells
+\newcommand{\BfourbAtBarrier}{0.9167}
+
+% per-cell-metrics.csv | executions behind \BfourbAtBarrier
+\newcommand{\BfourbAtBarrierExec}{60}
 

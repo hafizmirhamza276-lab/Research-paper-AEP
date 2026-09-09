@@ -170,6 +170,33 @@ uv run --frozen --extra experiments python scripts/analyse_b5_agreement.py \
 fixed, so its H1 numerator is a different quantity computed over a degenerate
 sample.
 
+### 6.1 The prohibition above has teeth, and here is what breaks if it is ignored
+
+**Recorded 8 September, after the corrected cell was read. Deliberately not
+fixed.**
+
+`cell_interval` reads `int(run.get(metric_field, 0))`. The 2026-09-08 session's
+records **do not contain `undetected_duplicate_executions` at all** — the field
+is absent in all 30 and all 28 runs of its two `B5_TEMPORAL` cells, because
+`collect.py` only began writing it at `4f31c42`, after that session was
+collected.
+
+So running the **corrected** script against the **2026-09-08** session does not
+fail, and does not warn. It silently computes **H1 = 0.0000** from a missing
+field, and reports it beside a frozen B4 rate of 0.9333 as a `DISAGREES` with a
+zero-width interval. Every part of that output would be an artefact of a field
+that was never written.
+
+This is why §6's prohibition is not a matter of taste. It is also why the
+defect is recorded here, next to the prohibition, rather than in a bug list:
+the two only make sense together.
+
+**Not fixed**, for the reason the whole ordering exists — the script has now
+read data, and a `KeyError`-on-missing-field change made afterwards would be an
+edit to a verdict script after seeing results. If it is ever changed, it belongs
+in its own pass with its own record, and the change would be to *refuse* a
+missing metric field rather than to default it to zero.
+
 ## 7. The attempt budget — does the repair reset it?
 
 `1fecb1f` §4 set **three attempts**, and defined an attempt as a session that

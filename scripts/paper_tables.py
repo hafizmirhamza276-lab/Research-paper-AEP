@@ -974,6 +974,10 @@ def emit_numbers(
     coverage: dict[str, Any],
     execution_paths: dict[str, Path],
     out: Path,
+    # Optional, and defaulted, because this module's existing callers predate
+    # WS-6. An absent session means the B5 macros are not emitted at all --
+    # never emitted as zeros, which a reader could not tell from a measurement.
+    b5_runs: list[dict[str, Any]] | None = None,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
     lines: list[str] = []
@@ -2725,6 +2729,103 @@ def emit_numbers(
             f"{files} files; regenerated on every run of this script",
         )
 
+    # --- WS-6: the real Temporal baseline --------------------------------
+    # B5 is the vendor's engine, not our model of one mechanism of it, so its
+    # numbers answer a question B4's cannot: does the corner assignment B4 and
+    # B4b bracket survive contact with the product? Emitted only when the
+    # session is supplied, because a macro computed from an absent source is
+    # worse than a missing macro -- the reader cannot tell the difference.
+    if b5_runs:
+        live = [
+            run
+            for run in b5_runs
+            if not str(run.get("verdict", "")).startswith("VOID_")
+        ]
+        for arm, key in (
+            ("B5_TEMPORAL", "Bfive"),
+            ("B5B_TEMPORAL_AT_MOST_ONCE", "Bfiveb"),
+        ):
+            rows = [r for r in live if r.get("system") == arm]
+            if not rows:
+                continue
+            executions = sum(int(r.get("executions") or 0) for r in rows)
+            duplicates = sum(
+                int(r.get("undetected_duplicate_executions") or 0) for r in rows
+            )
+            lost = sum(int(r.get("lost_effect_executions") or 0) for r in rows)
+            ambiguous = sum(int(r.get("declared_ambiguous") or 0) for r in rows)
+            # EXECUTIONS, not applications: the frozen B4 numerator is
+            # int(execution.is_undetected_duplicate), a per-execution
+            # indicator, and the two are different quantities.
+            macro(
+                f"{key}Dup", rate(duplicates, executions),
+                f"b5-runs.jsonl | system={arm} | non-void runs only",
+                f"undetected_duplicate_executions / executions "
+                f"= {duplicates}/{executions}",
+            )
+            macro(
+                f"{key}Lost", rate(lost, executions),
+                f"b5-runs.jsonl | system={arm} | non-void runs only",
+                f"lost_effect_executions / executions = {lost}/{executions}",
+            )
+            macro(
+                f"{key}Exec", str(executions),
+                f"b5-runs.jsonl | executions behind \\{key}Dup and \\{key}Lost",
+            )
+            macro(
+                f"{key}Amb", str(ambiguous),
+                f"b5-runs.jsonl | system={arm} | declared_ambiguous summed "
+                f"over {len(rows)} non-void runs",
+            )
+        macro(
+            "BfiveRuns", str(len(live)),
+            "b5-runs.jsonl | non-void runs across both B5 arms",
+            f"{len(b5_runs)} collected, {len(b5_runs) - len(live)} voided as "
+            f"instrument failures and excluded",
+        )
+        macro(
+            "BfiveStartToClose", "4000",
+            "experiments/baselines/b5_temporal/collect.py START_TO_CLOSE_MS",
+            "fixed at 06d51b0 before any B5 data existed; a different timeout "
+            "is a different cell",
+        )
+
+        # B4/B4b at the SAME crash point, pooled over the same two capability
+        # classes, so the comparison in section VIII is like-for-like. The
+        # pooled B4 macros above span every crash point and would not be.
+        for system, tag, key in (
+            ("B4_DURABLE_WORKFLOW", "undetected_duplicate_rate", "BfourAtBarrier"),
+            (
+                "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+                "lost_effect_rate",
+                "BfourbAtBarrier",
+            ),
+        ):
+            subset = [
+                r
+                for r in crashed
+                if r["system"] == system
+                and r["crash_point"] == "after_barrier_before_dispatch"
+                and r["response_class"] in (
+                    "AUTHORITATIVE_READBACK", "NO_READBACK"
+                )
+            ]
+            successes, total = totals(subset, tag)
+            if not total:
+                continue
+            macro(
+                key, rate(successes, total),
+                f"per-cell-metrics.csv | system={system} metric={tag}",
+                "crash_point=after_barrier_before_dispatch | "
+                "response_class in {AUTHORITATIVE_READBACK, NO_READBACK}",
+                f"sum(successes)/sum(total) = {successes}/{total} "
+                f"over {len(subset)} cells",
+            )
+            macro(
+                f"{key}Exec", str(total),
+                f"per-cell-metrics.csv | executions behind \\{key}",
+            )
+
     (out / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -2744,6 +2845,13 @@ def main() -> int:
         default=None,
         help="directory holding g2-flakey-write-loss*.json; enables the "
         "host-level write-loss macros",
+    )
+    parser.add_argument(
+        "--b5-session",
+        type=Path,
+        default=None,
+        help="WS-6 B5 session root holding b5-runs.jsonl; enables the real "
+        "Temporal baseline macros",
     )
     parser.add_argument("--out", type=Path, required=True)
     arguments = parser.parse_args()
@@ -2796,9 +2904,18 @@ def main() -> int:
         execution_paths["always"] = (
             arguments.fsync_analysis / "per-execution.csv"
         )
+    b5_runs: list[dict[str, Any]] = []
+    if arguments.b5_session:
+        b5_path = arguments.b5_session / "b5-runs.jsonl"
+        if not b5_path.is_file():
+            raise SystemExit(f"no b5-runs.jsonl at {b5_path}")
+        for line in b5_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                b5_runs.append(json.loads(line))
+
     emit_numbers(
         per_cell, latency, kill, comparisons, flakey, always, coverage,
-        execution_paths, arguments.out,
+        execution_paths, arguments.out, b5_runs=b5_runs,
     )
     for name in sorted(p.name for p in arguments.out.glob("*.tex")):
         print(f"wrote {arguments.out / name}")
