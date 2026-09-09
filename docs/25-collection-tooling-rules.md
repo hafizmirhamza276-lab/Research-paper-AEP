@@ -379,7 +379,75 @@ they have a common cause**, and a future investigation should not assume one.
 
 ---
 
-### R9b. Third known flake, and the first that fails in isolation: `test_one_execution_produces_exactly_one_applied_mutation`
+### R9b. RESOLVED — a test-side defect, and the test's name pointed at the wrong thing
+
+**Investigated and fixed 9 September 2026.** The entry below is the original
+sighting, kept unedited; this section is what the investigation found. The short
+version: **the code was right and the test was wrong**, and the failure had
+nothing to do with the property the test is named after.
+
+**The rate.** 25 isolated runs: **9 failed, 16 passed — 36%.** Three runs said
+"not deterministic"; twenty-five said how often.
+
+**What actually failed.** Not the mutation counts. Every failure was raised
+before the assertions were reached:
+
+```
+7 x  WriteAheadWorkflowError: durability barrier did not acknowledge the
+     preceding write
+2 x  WriteAheadWorkflowError: durability barrier failed: DurabilityBarrierError
+```
+
+**The mechanism.** The test's own `_policy()` set `durability_timeout_ms=2_000`,
+copied from the harness default. `WAITAOF` against a shared Redis running
+`appendfsync everysec` can legitimately exceed two seconds under load, and when
+it does **the barrier refuses to dispatch**. That is the fail-closed behaviour
+§VI exists to describe, working correctly. The test asserted three successful
+executions while silently depending on an unstated assumption about barrier
+latency on whatever host ran it.
+
+So the earlier characterisation in this entry --- that the property the WS-4 and
+WS-6 oracles rest on might be nondeterministic --- **was wrong, and it was wrong
+because the test's name was taken as a description of its failure.** A test
+called `..._exactly_one_applied_mutation` failing does not mean applied
+mutations were miscounted. The counting assertions never ran.
+
+**Reachable in a collection? Yes, and it has fired --- but nowhere the paper
+reads.** Established by reading the event logs rather than by argument, because
+the worker records a failed execution as an `execution_failed` event carrying
+its `failure_class`:
+
+| tree | `WriteAheadWorkflowError` events |
+|---|---|
+| `experiments/results/matrix` (the frozen source the paper reads) | **0** |
+| WS-4 write-loss session (`reports/raw/ws4-writeloss-s1-2026-09-07`) | **0**, against 600 `execution_resolved` |
+| WS-6 B5 attempt 3 | **0** --- B5 never touches this barrier; its only `aep_core` mentions are docstring prose saying it deliberately does not import it |
+| `phase10-replication-{drvfs,ext4}[-arbb30]-2026-09-02` | **40** |
+
+**The paper's numbers are unaffected.** WS-4's 60 runs and WS-6's 120 runs are
+clean, verified by count and not by inference. The mechanism fails **loudly**:
+`worker.py` emits `execution_failed` with the class and sets
+`UNEXPECTED_FAILURE_EXIT`, so it cannot silently shift a rate.
+
+**Flagged, not chased:** the four Phase 10 replication roots do contain 40 such
+events, and `scripts/phase10_replication_analysis.py` reads those roots. Whether
+that analysis accounts for them is a separate question and is **not** touched
+here. No collected result was modified and no verdict script was re-run.
+
+**The fix, and why it is not tuning-to-pass.** `durability_timeout_ms` in that
+test file's `_policy()` raised from 2\,000 to 30\,000. It is local to the file
+and changes no collection semantics --- a collection keeps 2\,000 deliberately,
+because there a slow barrier is a *measured outcome* and must not be tuned away.
+The test's subject is applied-mutation accounting, and barrier latency was never
+part of that subject. A genuinely broken barrier still raises and still fails the
+test; only the "the host was busy" path is removed.
+
+**Proof the fix works:** the same 25-run protocol, after the change ---
+**0 failed, 25 passed.** 9/25 to 0/25.
+
+---
+
+### R9b (original sighting, kept unedited): `test_one_execution_produces_exactly_one_applied_mutation`
 
 **Observed 9 September 2026**, in the full-suite run during WS-9's first task
 (`1 failed, 1969 passed`). Unlike R9 and R9a, **it did not pass on re-run in
@@ -414,6 +482,55 @@ instrument and not only about the test.
 **Do not fold it into R9's entry.** R9 is `SIGKILL` timing, R9a is barrier
 validation, this is dispatch accounting, and the only property all three share
 is the word "flake".
+
+---
+
+### R9c. The four "flakes" are one environment sensitivity, and three are unfixed
+
+**Consolidated 9 September 2026, after R9b.** Three consecutive full-suite runs
+each failed exactly one barrier-adjacent test, a different one each time:
+
+| run | test | file |
+|---|---|---|
+| 1 | `test_one_execution_produces_exactly_one_applied_mutation` | `experiments/mock_api/tests/test_evaluation_dispatch.py` |
+| 2 | `test_cas_and_waitaof_are_ordered_on_the_same_pinned_connection` | `tests/test_phase2_waitaof_integration.py` |
+| 3 | `test_recovery_resolves_an_orphan_with_the_production_barrier` | `tests/test_recovery_durability_barrier.py` |
+
+R9a's sighting, `test_the_barrier_is_validated_once_not_per_resolution`, is in
+that third file too. **All four sit in tests that set
+`durability_timeout_ms=2_000`**, and each passes in isolation --- R9b being the
+exception severe enough to reproduce alone, at 36%.
+
+**The evidence for treating them as one phenomenon**, rather than four flakes
+filed adjacently:
+
+* four for four on the shared constant;
+* the only one investigated failed with a **barrier-timeout error**, not with
+  the assertion its name describes;
+* raising **only that one's** timeout took it from 9/25 to **0/25**, and it has
+  not recurred since;
+* the other three continue to appear, one per full-suite run, in the three runs
+  after that fix.
+
+The mechanism is the same one R9b established: `WAITAOF` against a shared Redis
+on `appendfsync everysec` exceeds two seconds under full-suite load, and the
+barrier does what it is designed to do --- refuses. **This is load, not
+nondeterminism, and not a protocol defect.**
+
+**Three are deliberately NOT fixed.** The one-line change that fixed R9b would
+very probably fix them, and applying it to tests that have not been *shown* to
+fail for that reason is tuning on a resemblance. R9b is precisely the warning:
+its original entry assumed the failure matched the test's name and was wrong.
+
+**What would settle them**, cheaply, for whoever takes it: run each 25 times
+**under concurrent load** rather than in isolation --- isolation is the
+condition under which they pass, so isolated repetition cannot answer the
+question. If a run reproduces a barrier-timeout error, the fix is the same
+one-line change with the same reasoning, and these entries collapse into R9b.
+
+**Until then the zero-skip gate keeps them loud**, which is correct: an
+intermittent failure that everyone recognises is better than a suppressed one
+nobody sees.
 
 ---
 

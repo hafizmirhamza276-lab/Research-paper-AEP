@@ -113,7 +113,27 @@ def _policy() -> ConnectorPolicy:
         settlement_lag_seconds=0,
         buffer_margin_seconds=15,
         lock_ttl_seconds=30,
-        durability_timeout_ms=2_000,
+        # docs/25 R9b. This was 2_000, copied from the harness default, and it
+        # made these tests fail 9 times in 25 -- always with
+        # "durability barrier did not acknowledge the preceding write", never on
+        # the mutation counts they exist to assert.
+        #
+        # THE CODE WAS RIGHT AND THE TEST WAS WRONG. `WAITAOF` against a shared
+        # Redis running `appendfsync everysec` can legitimately take longer than
+        # two seconds under load, and when it does the barrier refuses to
+        # dispatch. That is the fail-closed behaviour section VI is about, not a
+        # defect. What was wrong was a test whose subject is applied-mutation
+        # accounting silently depending on an unstated assumption about barrier
+        # latency on whatever machine happened to run it.
+        #
+        # A collection keeps 2_000 deliberately: there a slow barrier is a
+        # measured outcome and must not be tuned away. This value is local to
+        # this file and changes no collection semantics.
+        #
+        # Raising it does not make the test vacuous. A genuinely broken barrier
+        # still raises and still fails the test; only the "the host was busy"
+        # path is removed.
+        durability_timeout_ms=30_000,
         lease_acquire_attempts=1,
     )
 
