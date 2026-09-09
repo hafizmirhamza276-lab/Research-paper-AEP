@@ -1,0 +1,179 @@
+{
+  "cell_counts": {
+    "DISAGREES": 4,
+    "NOT_TESTABLE_ABSENT_IN_B5": 4
+  },
+  "cells": [
+    {
+      "b5": {
+        "ci_high": 0.19,
+        "ci_low": 0.12333333333333334,
+        "rate": 0.15666666666666668
+      },
+      "crash_point": "after_barrier_before_dispatch",
+      "frozen": {
+        "ci_high": 1.0,
+        "ci_low": 0.9,
+        "rate": 0.9333333333333333
+      },
+      "hypothesis": "H1",
+      "reading": "DISAGREES",
+      "reasons": [
+        "B5 0.1567 [0.1233,0.1900] does NOT overlap frozen 0.9333 [0.9000,1.0000] -- B4 would then be an artefact of our model rather than of event-sourced re-execution, and every B4 claim must be re-scoped"
+      ],
+      "response_class": "AUTHORITATIVE_READBACK",
+      "runs_pending": 0,
+      "runs_total": 30,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    },
+    {
+      "b5": {
+        "ci_high": 0.19310344827586207,
+        "ci_low": 0.12413793103448276,
+        "rate": 0.15862068965517243
+      },
+      "crash_point": "after_barrier_before_dispatch",
+      "frozen": {
+        "ci_high": 1.0,
+        "ci_low": 0.9,
+        "rate": 0.9666666666666667
+      },
+      "hypothesis": "H1",
+      "reading": "DISAGREES",
+      "reasons": [
+        "1/30 runs voided as instrument failures and excluded from the rate: {'VOID_WORKER_NEVER_READY': 1}",
+        "B5 0.1586 [0.1241,0.1931] does NOT overlap frozen 0.9667 [0.9000,1.0000] -- B4 would then be an artefact of our model rather than of event-sourced re-execution, and every B4 claim must be re-scoped"
+      ],
+      "response_class": "NO_READBACK",
+      "runs_pending": 0,
+      "runs_total": 30,
+      "runs_void": 1,
+      "voids_by_verdict": {
+        "VOID_WORKER_NEVER_READY": 1
+      }
+    },
+    {
+      "b5": {
+        "ci_high": 0.18333333333333332,
+        "ci_low": 0.10666666666666667,
+        "rate": 0.14333333333333334
+      },
+      "crash_point": "after_barrier_before_dispatch",
+      "frozen": {
+        "ci_high": 1.0,
+        "ci_low": 0.9,
+        "rate": 0.9666666666666667
+      },
+      "hypothesis": "H2",
+      "reading": "DISAGREES",
+      "reasons": [
+        "B5 0.1433 [0.1067,0.1833] does NOT overlap frozen 0.9667 [0.9000,1.0000] -- B4 would then be an artefact of our model rather than of event-sourced re-execution, and every B4 claim must be re-scoped"
+      ],
+      "response_class": "AUTHORITATIVE_READBACK",
+      "runs_pending": 0,
+      "runs_total": 30,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    },
+    {
+      "b5": {
+        "ci_high": 0.18275862068965518,
+        "ci_low": 0.10344827586206896,
+        "rate": 0.1413793103448276
+      },
+      "crash_point": "after_barrier_before_dispatch",
+      "frozen": {
+        "ci_high": 0.9,
+        "ci_low": 0.8,
+        "rate": 0.8666666666666667
+      },
+      "hypothesis": "H2",
+      "reading": "DISAGREES",
+      "reasons": [
+        "1/30 runs voided as instrument failures and excluded from the rate: {'VOID_WORKER_NEVER_READY': 1}",
+        "B5 0.1414 [0.1034,0.1828] does NOT overlap frozen 0.8667 [0.8000,0.9000] -- B4 would then be an artefact of our model rather than of event-sourced re-execution, and every B4 claim must be re-scoped"
+      ],
+      "response_class": "NO_READBACK",
+      "runs_pending": 0,
+      "runs_total": 30,
+      "runs_void": 1,
+      "voids_by_verdict": {
+        "VOID_WORKER_NEVER_READY": 1
+      }
+    },
+    {
+      "b5": null,
+      "crash_point": "after_intent_before_barrier",
+      "frozen": null,
+      "hypothesis": "H1",
+      "reading": "NOT_TESTABLE_ABSENT_IN_B5",
+      "reasons": [
+        "B5 has no 'after_intent_before_barrier' position: the worker issues an RPC and the server persists it transactionally, so there is no worker-side window between the write and its acknowledgement (B5_SEMANTICS.md 2.3). B4 and B4b HAVE frozen cells here, so this is a hole in B5 where B4 has numbers -- not a shared absence."
+      ],
+      "response_class": "AUTHORITATIVE_READBACK",
+      "runs_pending": 0,
+      "runs_total": 0,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    },
+    {
+      "b5": null,
+      "crash_point": "after_intent_before_barrier",
+      "frozen": null,
+      "hypothesis": "H1",
+      "reading": "NOT_TESTABLE_ABSENT_IN_B5",
+      "reasons": [
+        "B5 has no 'after_intent_before_barrier' position: the worker issues an RPC and the server persists it transactionally, so there is no worker-side window between the write and its acknowledgement (B5_SEMANTICS.md 2.3). B4 and B4b HAVE frozen cells here, so this is a hole in B5 where B4 has numbers -- not a shared absence."
+      ],
+      "response_class": "NO_READBACK",
+      "runs_pending": 0,
+      "runs_total": 0,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    },
+    {
+      "b5": null,
+      "crash_point": "after_intent_before_barrier",
+      "frozen": null,
+      "hypothesis": "H2",
+      "reading": "NOT_TESTABLE_ABSENT_IN_B5",
+      "reasons": [
+        "B5 has no 'after_intent_before_barrier' position: the worker issues an RPC and the server persists it transactionally, so there is no worker-side window between the write and its acknowledgement (B5_SEMANTICS.md 2.3). B4 and B4b HAVE frozen cells here, so this is a hole in B5 where B4 has numbers -- not a shared absence."
+      ],
+      "response_class": "AUTHORITATIVE_READBACK",
+      "runs_pending": 0,
+      "runs_total": 0,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    },
+    {
+      "b5": null,
+      "crash_point": "after_intent_before_barrier",
+      "frozen": null,
+      "hypothesis": "H2",
+      "reading": "NOT_TESTABLE_ABSENT_IN_B5",
+      "reasons": [
+        "B5 has no 'after_intent_before_barrier' position: the worker issues an RPC and the server persists it transactionally, so there is no worker-side window between the write and its acknowledgement (B5_SEMANTICS.md 2.3). B4 and B4b HAVE frozen cells here, so this is a hole in B5 where B4 has numbers -- not a shared absence."
+      ],
+      "response_class": "NO_READBACK",
+      "runs_pending": 0,
+      "runs_total": 0,
+      "runs_void": 0,
+      "voids_by_verdict": {}
+    }
+  ],
+  "frozen_source": "experiments/results/matrix/analysis/per-cell-metrics.csv",
+  "h3": {
+    "reasons": [
+      "0 declared ambiguities across 118 non-void runs, as predicted"
+    ],
+    "verdict": "HELD"
+  },
+  "session": "ws6-b5-s1-2026-09-08-attempt3",
+  "total_runs": 120,
+  "voided_runs": 2,
+  "voids_by_verdict": {
+    "VOID_WORKER_NEVER_READY": 2
+  }
+}

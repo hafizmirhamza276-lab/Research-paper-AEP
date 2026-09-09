@@ -1,4 +1,6 @@
 ac39f4fcc4ec343e1a342d2dc090ab342f14e36f60e2b34fc91e22a6a275690f  ./README.md
+20f7837dbc643a0437bf1ecc2960bbc2c081ca582d6014e324cc75c03d65a242  ./agreement.json
+567b8a5fa84af2de0478f850bda5337b4ad77539cfbec4dff134aa57c342b93a  ./agreement.txt
 ddb994c64087a968b65d61727dbe26052a81c62d901df7e1d85a4ec3fd40e906  ./b5-runs.jsonl
 79c24c052d963daf68cf6840d6909cb6b021ee551174c82efe3ee2e8ff4b4da0  ./b5_temporal-after_barrier_before_dispatch-ledger_postings-r0/b5-run.json
 332672bd757c2e83e5ae5927bb7413cf0c3f8772dcb36f01d83867a24c012cbd  ./b5_temporal-after_barrier_before_dispatch-ledger_postings-r0/events.jsonl
