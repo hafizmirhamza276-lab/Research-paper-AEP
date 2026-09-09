@@ -611,3 +611,51 @@
   url       = {https://www.vldb.org/conf/1990/P095.PDF}
 }
 
+% ---------------------------------------------------------------------------
+% Idempotency-key contracts as deployed, and exactly-once delivery.
+% Added WS-8 part 3. The two vendor entries are specifications, not research,
+% and are cited as such: the claim they support is about what the contract
+% requires, for which the normative text is the primary source.
+% ---------------------------------------------------------------------------
+
+@misc{stripe-idempotency,
+  author       = {{Stripe}},
+  title        = {Idempotent Requests --- {Stripe} {API} Reference},
+  howpublished = {\url{https://docs.stripe.com/api/idempotent_requests}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@misc{adyen-idempotency,
+  author       = {{Adyen}},
+  title        = {{API} Idempotency},
+  howpublished = {\url{https://docs.adyen.com/development-resources/api-idempotency/}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@article{halpern1990knowledge,
+  author  = {Joseph Y. Halpern and Yoram Moses},
+  title   = {Knowledge and Common Knowledge in a Distributed Environment},
+  journal = {Journal of the ACM},
+  volume  = {37},
+  number  = {3},
+  pages   = {549--587},
+  year    = {1990},
+  doi     = {10.1145/79147.79161}
+}
+
+@inproceedings{wang2021kafka,
+  author    = {Guozhang Wang and Lei Chen and Ayusman Dikshit and
+               Jason Gustafson and Boyang Chen and Matthias J. Sax and
+               John Roesler and Sophie Blee-Goldman and Bruno Cadonna and
+               Apurva Mehta and Varun Madan and Jun Rao},
+  title     = {Consistency and Completeness: Rethinking Distributed Stream
+               Processing in {Apache} {Kafka}},
+  booktitle = {Proceedings of the 2021 International Conference on Management
+               of Data (SIGMOD)},
+  pages     = {2602--2613},
+  year      = {2021},
+  doi       = {10.1145/3448016.3457556}
+}
+

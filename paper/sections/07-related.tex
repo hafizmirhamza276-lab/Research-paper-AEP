@@ -38,6 +38,36 @@ endpoint that does not implement such a contract. Helland describes the
 broader consequences of operating without distributed transactions and the
 centrality of idempotence~\cite{helland2007apostate,helland2012idempotence}.
 
+\paragraph{What an idempotency-key contract requires of the server} Because the
+paper's premise is an endpoint that offers no such contract, it is worth being
+precise about what one costs the server rather than treating it as a header.
+The draft places the burden squarely on the resource: it must manage the key's
+lifecycle, it \textsc{must} publish an idempotency specification including any
+expiration policy, and on a repeat it \textsc{should} respond with the result of
+the previously completed operation, success or error, rather than executing
+again~\cite{jena2025idempotencykey}. Storing the key is the least of it; the
+server must also retain the \emph{outcome}, scope the key, and decide how long
+the guarantee lasts.
+
+Notably the draft mandates little beyond publication --- it asks servers to
+declare a policy rather than prescribing retention or scope --- and the deployed
+contracts show why that matters. Stripe saves the status code and body of the
+first request for a key and returns that same result on a repeat, including
+\texttt{500}s, prunes keys after at least 24 hours, and rejects a reused key
+whose parameters differ~\cite{stripe-idempotency}. Adyen returns the original
+response without reprocessing, scopes keys to the company account, does not
+cross-check duplicates across regional endpoints, and holds keys for seven to
+fourteen days~\cite{adyen-idempotency}. The same header name therefore carries
+materially different guarantees: a retry that is protected at one provider is
+outside the window at another, and the caller cannot tell from the protocol.
+These are specifications and vendor documentation rather than research, and are
+cited as such --- the claim is about what the contract requires, for which the
+normative text is the primary source. AEP assumes the case beneath all of them:
+no key is interpreted at all. What the deployed contracts add is that even
+cooperation is bounded, so a caller's obligation to reason about an unsettled
+effect does not disappear where a key exists --- it merely shrinks to the
+retention window.
+
 \paragraph{Why not two-phase commit} The obvious objection to this whole
 framing is that atomic commit already solves it, so it is worth saying exactly
 what that would require of the endpoint. Under 2PC each participant durably
@@ -197,6 +227,33 @@ sides of the atomicity boundary. This is also the end-to-end
 argument~\cite{saltzer1984endtoend} in an uncomfortable form: the check that
 would settle whether the effect happened belongs at the endpoints, and the
 endpoint that would have to perform it is precisely the one that cannot.
+
+\paragraph{Exactly-once delivery, and what is provided instead} The paper
+declines the term ``exactly-once,'' and should say what it is declining. The
+obstacle is epistemic rather than engineering. For a sender and a receiver to
+agree that a message was delivered, each acknowledgement requires its own
+acknowledgement; Halpern and Moses formalise this as the unattainability of
+common knowledge when communication is not guaranteed, and connect it to the
+coordinated-attack problem~\cite{halpern1990knowledge}. No protocol removes that
+regress, which is why exactly-once \emph{delivery} is not on offer from any
+system.
+
+What systems provide instead is exactly-once \emph{processing}, obtained by
+enrolling the destination. Kafka couples an idempotent producer protocol with
+transactions so that output records, offset commits and state updates are
+committed atomically, and the read--process--write cycle either takes effect
+once or not at all~\cite{wang2021kafka}. That guarantee is real, and it is real
+\emph{because} the sink is inside the transaction: the records live in a log the
+system controls. The same construction is why the snapshot mechanisms above are
+usually paired with a transactional sink.
+
+This is the distinction the paper needs, and it is the one the term usually
+obscures. A message delivered once is not an external mutation performed once.
+Where the destination can be enrolled --- a Kafka topic, a database in the same
+commit scope --- exactly-once processing is available and AEP is unnecessary.
+Where it cannot, no amount of retry discipline on the caller's side reconstructs
+it, and the residual is not a weaker delivery guarantee but an unanswered
+question about an effect. AEP occupies exactly that gap.
 
 \paragraph{Fault-injection lineage} AEP's named crash boundaries and
 independent oracle follow a mature crash-consistency methodology. ALICE
