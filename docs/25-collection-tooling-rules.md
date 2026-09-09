@@ -429,10 +429,38 @@ clean, verified by count and not by inference. The mechanism fails **loudly**:
 `worker.py` emits `execution_failed` with the class and sets
 `UNEXPECTED_FAILURE_EXIT`, so it cannot silently shift a rate.
 
-**Flagged, not chased:** the four Phase 10 replication roots do contain 40 such
-events, and `scripts/phase10_replication_analysis.py` reads those roots. Whether
-that analysis accounts for them is a separate question and is **not** touched
-here. No collected result was modified and no verdict script was re-run.
+**The Phase 10 roots: settled, 9 September, and the answer is that nothing needs
+re-deriving.** The four replication roots do contain 40 such events, and
+`scripts/phase10_replication_analysis.py` reads those roots, so the question was
+whether it excludes them, counts them as ordinary executions, or carries them in
+a denominator they do not belong in. Read rather than assumed:
+
+* The script has **no notion of `execution_failed` at all.** It reads
+  `analysis/per-execution.csv` and counts every selected row, so it does not
+  exclude them.
+* It does not need to. The 12 distinct failed `execution_id`s appear as **26
+  rows across the four roots, and every one carries a terminal outcome class** —
+  8 `CONFIRMED_APPLIED`, 7 `CONFIRMED_NOT_APPLIED`, 6 `DECLARED_AMBIGUOUS`, and
+  the rest terminal likewise. **None is `NO_RECORD` or `UNVERIFIED_FAILURE`.**
+* On `recovery_success_rate` they score **26 of 26** in the numerator. On
+  `known_ambiguity_rate` 6 of 26 score, which is simply the rate's definition —
+  every execution is in that denominator whether or not it declared.
+
+**So they are counted as ordinary executions, and they are ordinary
+executions.** `execution_failed` records that the *initial dispatch attempt*
+raised because the barrier refused; recovery then settled the intent, which is
+the protocol behaving as designed. A refused dispatch that recovery resolves is
+not a missing execution.
+
+**And no paper number derives from that analysis.**
+`phase10-replication-analysis.json` is read only by its own script and its own
+prediction report; no macro in `paper/generated/numbers.tex` and no manuscript
+prose reads it. There is nothing to re-derive.
+
+**Scope of that claim, stated rather than implied:** what was verified is that
+*these* 12 failed executions settled to terminal outcomes. It was not shown, and
+is not claimed, that every possible barrier refusal settles. No collected result
+was modified and no verdict script was re-run.
 
 **The fix, and why it is not tuning-to-pass.** `durability_timeout_ms` in that
 test file's `_policy()` raised from 2\,000 to 30\,000. It is local to the file
@@ -756,12 +784,44 @@ Concretely, and each of these is one of the five above:
   already states this for artefacts: *"I could not read it" and "it is unchanged"
   must never render the same*. It applies to every probe.
 
+### R14a. A test's name describes what it asserts, not why it failed.
+
+**Added 9 September 2026, from R9b.** The sixth instance, and the first in which
+the object held to too low a standard was a **report** rather than an
+instrument.
+
+`test_one_execution_produces_exactly_one_applied_mutation` failed. It was
+recorded — by me, in this file — as possible nondeterminism in the property the
+WS-4 and WS-6 oracles rest on, because that is what the name says the test
+asserts. **The test never reached its assertions.** It raised in setup, on a
+durability-barrier timeout, and the mutation counts were never evaluated at all.
+The name described the intended subject; the failure was somewhere else
+entirely.
+
+The cost was not just a wrong entry. **A whole prompt was written on that
+premise** — investigate a possible nondeterminism in the oracles' foundation —
+and the investigation's first real finding was that the premise was false. The
+error propagated from a record into a plan before anything checked it.
+
+> **Read the failure, not the name.** A failing test tells you its name and its
+> traceback. Only one of those is evidence about what went wrong, and the cheap
+> step that settles it — capture the actual error before characterising the
+> failure — takes one run.
+
+This is R14's demand pointed at prose: a report is also an artefact, it also has
+a way of being wrong, and nothing in R3, R13 or R14 compels anyone to check that
+a summary matches the thing it summarises. R14's own widening anticipated this —
+*"a readiness check must fail closed and say which"*, and *"I could not read it"
+and "it is unchanged" must never render the same* — but it was stated about
+probes. It applies to sentences.
+
 ### Relation to the existing rules
 
 **R3** requires a gate be exercised on its failing branch; **R13** says a gate
 that cannot fail is decoration. R14 is the same demand pointed one level up: the
 *checker* is also code, it also has a failing branch, and nothing in R3 or R13
 compels anyone to exercise it. These five instances are what that gap produced.
+**R14a** points it one level up again, at the report describing the checker.
 
 ---
 
