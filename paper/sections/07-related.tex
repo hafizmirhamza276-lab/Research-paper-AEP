@@ -38,6 +38,52 @@ endpoint that does not implement such a contract. Helland describes the
 broader consequences of operating without distributed transactions and the
 centrality of idempotence~\cite{helland2007apostate,helland2012idempotence}.
 
+\paragraph{Why not two-phase commit} The obvious objection to this whole
+framing is that atomic commit already solves it, so it is worth saying exactly
+what that would require of the endpoint. Under 2PC each participant durably
+logs its own state transitions to stable storage and answers the coordinator
+from that log during recovery~\cite{mohan1986rstar}. A participant that has
+voted to commit then enters an uncertainty window in which it can neither
+commit nor abort on its own authority, and must block --- holding the prepared
+state --- until the coordinator is heard from again~\cite{skeen1981nonblocking}.
+Both are obligations on the \emph{participant}. A legacy endpoint that accepts a
+request and returns a response offers none of them: there is no prepare, no
+vote, and no way to ask it to hold a decision open. The barrier is not that 2PC
+is expensive here; it is that the protocol has no participant to run.
+
+Nor is this a counsel of despair about distributed transactions in general.
+Spanner shows the obligations can be met at global scale, with a
+2PC implementation integrated with replication and concurrency control and a
+time API that bounds clock uncertainty~\cite{corbett2012spanner} --- but it is
+built by an operator who controls every participant and can equip each one.
+That is the condition AEP assumes away. Helland's account of building without
+distributed transactions describes the same retreat from the application
+side~\cite{helland2007apostate,helland2012idempotence}: when enrolment is not
+available, the burden moves to the caller, and idempotence becomes the pivot on
+which correctness turns. AEP is what is left when the endpoint does not supply
+that pivot either.
+
+\paragraph{What compensation assumes} Compensation is the standard answer once
+atomic commit is off the table, and it rests on a premise worth stating.
+Gray observes that a committed transaction cannot be abrogated: its effects can
+only be altered by running a further transaction, which is why the remedy after
+commit is compensation rather than rollback~\cite{gray1981transaction}. Korth
+et al.\ formalise this, defining compensating transactions that undo committed
+work without cascading aborts, with conflict expressed as failure of operations
+to commute~\cite{korth1990compensating}. Sagas apply the idea to long-running
+activities by pairing each step with a compensating step~\cite{garciamolina1987sagas}.
+
+Every one of these presupposes two facts about the effect. The first is that it
+\emph{happened}: a compensating step is chosen and applied because a committed
+effect is known to exist. The second is that a semantically inverse operation
+exists and may itself be applied. AEP's endpoint reliably supplies neither. In
+the \textsc{no-readback} class the first is unobtainable by construction --- no
+participant can establish after a crash whether the mutation was applied --- and
+compensating for an effect that may not have occurred is itself a mutation with
+the same problem. That is why declared ambiguity is terminal here rather than a
+prelude to compensation: it is the honest report when the fact compensation
+needs cannot be recovered.
+
 \paragraph{Locks with intent and durable execution} Olive is the closest
 mechanistic antecedent. Its locks with intent durably associate code with a
 lock and provide exactly-once execution despite client failures and concurrent
@@ -180,7 +226,9 @@ when their stated assumptions fail.}
 \midrule
 Lease / fenced CAS~\cite{gray1989leases,kleppmann2016locking}
   & n/a & no & duplicate effect \\
-Sagas~\cite{garciamolina1987sagas}
+Two-phase commit~\cite{skeen1981nonblocking,mohan1986rstar}
+  & prepare and vote & no & blocked participant \\
+Sagas~\cite{garciamolina1987sagas,korth1990compensating}
   & compensation & no & compensation gap \\
 Transactional outbox~\cite{richardson-transactional-outbox}
   & idempotent consumer & no & duplicate delivery \\
