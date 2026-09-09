@@ -27,13 +27,21 @@ from scripts import verify_refs
 
 BACKSLASH = chr(92)
 
-# Counts measured from paper/refs.bib on 2026-08-21. They are asserted rather
-# than derived so that adding a citation fails this test loudly instead of
-# being tracked silently -- a new entry must be routed deliberately.
-EXPECTED_TOTAL = 34
-EXPECTED_URL = 13
-EXPECTED_DOI = 14
-EXPECTED_DBLP = 7
+# Counts measured from paper/refs.bib. They are asserted rather than derived so
+# that adding a citation fails this test loudly instead of being tracked
+# silently -- a new entry must be routed deliberately.
+#
+# Updated 2026-09-08 for WS-8, which took the bibliography from 34 entries to
+# 58 across five passes and removed three orphaned agent-era entries. This gate
+# did exactly what it was written to do: it went red on the first WS-8 commit
+# and stayed red until the new counts were entered by hand. It is worth noting
+# that it caught the change and the author did not -- the full suite was not
+# re-run between WS-8 parts 1 and 5, so the failure sat unobserved for four
+# commits. The lesson is about the running, not the gate.
+EXPECTED_TOTAL = 58
+EXPECTED_URL = 29
+EXPECTED_DOI = 24
+EXPECTED_DBLP = 5
 
 
 @pytest.fixture(scope="module")

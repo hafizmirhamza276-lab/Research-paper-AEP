@@ -150,11 +150,25 @@ participant can later establish whether it happened. AEP consequently offers
 no exactly-once claim; it terminates in declared ambiguity and prohibits
 automatic re-dispatch.
 
-Beldi~\cite{zhang2020beldi}, Durable
-Functions~\cite{burckhardt2021durable}, Boki~\cite{jia2021boki}, and
-ExoFlow~\cite{zhuang2023exoflow} develop transactional or replay-based durable
-execution. Their guarantees are appropriate when an effect is idempotent,
-transactional, compensable, or otherwise recoverable. Temporal states the
+Four systems develop transactional or replay-based durable execution, and each
+draws the same boundary in a different place. Beldi extends Olive's atomic
+logging to stateful serverless functions and adds a two-phase commit variant for
+transactions across them~\cite{zhang2020beldi}; the atomicity covers reads and
+writes on Beldi's own data structures and functions that speak its commit
+protocol, so an endpoint that implements neither is outside it. Boki gives
+functions a shared log and builds durability, consistency and fault tolerance on
+that primitive~\cite{jia2021boki}; state that lives in the log is recoverable,
+and an effect performed elsewhere is not in the log to recover. Durable
+Functions replays the orchestration from its history and re-invokes activities,
+which is safe when the activity can be re-run~\cite{burckhardt2021durable}.
+ExoFlow is the closest in spirit to this paper: it decouples recovery from
+execution and asks the author to annotate each task's semantics --- including
+nondeterminism --- so the system can choose a recovery strategy per
+task~\cite{zhuang2023exoflow}. That is a declaration about the task, made by
+someone who knows it; AEP's declarations are about the \emph{endpoint's}
+capability to answer after the fact, which is not a property the caller can
+annotate its way out of. Across all four the guarantee holds when an effect is
+idempotent, transactional, compensable, or otherwise recoverable. Temporal states the
 operational premise directly: activities should be idempotent because they may
 execute more than once~\cite{temporal-activity-definition}; setting Maximum
 Attempts to one selects the opposite retry policy~\cite{temporal-retry}, and
@@ -329,6 +343,29 @@ this lineage to a caller-to-endpoint protocol: real process kills at named
 instruction boundaries, a separately written provider ledger, and a
 \texttt{dm-flakey} write-loss probe. The harness is an evaluation instrument,
 not a claimed fault-injection contribution.
+
+What the harness borrows and what it cannot is clearest when each method is
+read by \emph{what it injects and at which layer}. Ferrite specifies
+crash-consistency models for a file system --- litmus tests and an operational
+semantics at the POSIX interface, validated against real implementations, which
+exposed unintuitive ext4 behaviour~\cite{bornholt2016ferrite}. That method is
+unavailable to us in the direction that matters: a legacy endpoint publishes no
+crash-consistency model to write litmus tests against, which is the problem
+rather than an oversight. FATE injects failures into cloud systems and
+systematically explores \emph{sequences} of several, pairing them with
+declarative specifications of correct recovery~\cite{gunawi2011fate}; our cells
+inject one fault at one named boundary, so they trade FATE's coverage of
+failure combinations for an exact statement of where the single fault landed.
+Lineage-driven fault injection inverts the search, reasoning backwards from a
+correct outcome to the fault combinations that could have prevented it, and its
+authors bound the fault model explicitly to dropped messages, failed nodes and
+partitions~\cite{alvaro2015ldfi} --- a model that excludes crash recovery, which
+is the class this paper is about. Elle checks a database's client-observed
+history for isolation anomalies while faults are injected, inferring a
+dependency graph from what clients saw~\cite{kingsbury2020elle}; the contrast
+with our setting is the oracle, because Elle must infer from the client's view
+whereas our provider ledger is written independently of the system under test
+and is never consulted by it.
 
 \begin{table*}[t]
 \centering

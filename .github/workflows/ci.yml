@@ -77,6 +77,14 @@ jobs:
       - name: Validate docs/22-formal-model.md citations
         run: uv run --frozen python scripts/validate_citations.py
 
+      # WS-8 task 8.4. Offline, so it is deterministic and needs no network:
+      # it checks that every refs.bib entry carries a route to its source (DOI,
+      # stable URL, or DBLP key) and fails on any that does not. It does NOT
+      # check that a reference says what it is cited for -- nothing automatic
+      # can -- which is why the WS-8 reports record verification separately.
+      - name: Every reference carries a route to its source
+        run: uv run --frozen python scripts/verify_refs.py --offline
+
   # =========================================================================
   # Main suite. Redis 7.2 from compose.phase2.yml, so redis/phase2.conf is
   # mounted rather than re-applied, and so `docker restart` brings the server
