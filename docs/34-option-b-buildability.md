@@ -7,6 +7,29 @@ touched Docker, the test suite, or the working tree.
 **This report makes no recommendation.** It states what is there and what it
 would take.
 
+> ### CORRECTED 2026-09-10 by `docs/35` §0 — two errors, both consequential
+>
+> **1. §5.3 is wrong about `write-loss-preack`.** It says that regime sets
+> `executions_per_run=1`; it sets **10**. The three single-execution regimes are
+> `redis-kill-preack`, `redis-kill-inflight` and `redis-pause-kill-preack` —
+> the last of which this document does not mention. The error came from reading
+> a grep window rather than the regime block.
+>
+> **This inverts §5.3's conclusion.** Drift *is* reachable in the write-loss
+> regime, and the claim that it "would be measured exactly where AEP-full and
+> B3 are hardest to tell apart" does not follow.
+>
+> **2. §4 states WS-4's prediction as a result.** *"Under write loss AEP-full
+> withholds and B3 dispatches"* is docs/26 task 4.2's **pre-registered
+> prediction**, not a measurement. WS-4 established a storage-level probe
+> (acked writes survive, unacked are lost, 90/90 across 3 replications). The
+> `write-loss-preack` regime is implemented and **has never been collected**.
+>
+> **Also revised:** §5.2's binding tension is overstated. The
+> `VOID_CRASH_POINT_MISMATCH` gate is B5-only; in the main harness the injector
+> fires only when the delivered point *is* the planned point, so no mismatch is
+> possible and no such gate exists there. See `docs/35` §1.
+
 ---
 
 ## 1. What docs/33 specifies, and what was built
