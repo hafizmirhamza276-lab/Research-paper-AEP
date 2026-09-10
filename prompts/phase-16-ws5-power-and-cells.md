@@ -101,10 +101,23 @@ durability policy under every other result in the paper.
   policy, and the harness's per-run wall-versus-monotonic check remains the
   backstop that made 249 frozen runs unusable rather than silently wrong.
 * **R12 pre-flight:** `ss -lptn 'sport = :8099'` shows no listener before launch.
-* **R12a, possible fourth occurrence, recorded and not chased.** Both containers'
-  `StartedAt` moved twice within a minute during pre-flight
-  (`09:52:12Z` then `09:52:34Z`) with `RestartCount=0`, then held steady and
-  healthy across a 24-second poll. Nothing of this session's issued commands
-  starts the stack. The origin is unestablished and stays that way, per R12a's
-  standing decision; it is recorded so a fifth occurrence is met as a pattern.
-  No collection had begun, so no data is implicated.
+* **Container restarts during pre-flight: observed, attributed, and NOT an
+  R12a occurrence.** Both containers' `StartedAt` moved repeatedly during
+  pre-flight, each time landing within a second or two of a newly issued
+  command, with `RestartCount=0` throughout. It was initially recorded here as
+  a possible fourth occurrence of R12a's unexplained-restart class. **That
+  attribution was wrong and is withdrawn.**
+
+  A 140-second continuous poll settles it: `StartedAt` changed once, at the
+  instant the poll began, and then held constant for the remaining 130 seconds.
+  The stack is not restarting on a timer. Each `wsl -u root -- bash …`
+  invocation restarts a distro that has idled out since the previous one, and
+  Docker Desktop's WSL integration brings the containers up with it;
+  `RestartCount=0` is the tell, because these are *starts*, not crash-restarts.
+
+  The distinction matters twice over. It would have been filed as a fourth
+  sighting of a pattern that does not exist, which is worse than not recording
+  it at all — R12a exists so that a real fourth occurrence is recognised, and
+  padding it with an explained one destroys that. And it does not threaten the
+  collection: a detached launcher holds the distro open continuously, which is
+  the condition under which the restarts do not occur.
