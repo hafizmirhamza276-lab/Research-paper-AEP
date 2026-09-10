@@ -1911,6 +1911,37 @@ def emit_numbers(
                 "the denominator of \\BarrierToProtocolRatio; its width is "
                 "why that factor is quoted as an estimate",
             )
+            # WS-5. Section VI-RQ3 now states this interval where the
+            # 28 ms figure is claimed rather than only in section VIII. The
+            # factor is emitted rather than left to the reader because the
+            # ratio of two macros is exactly the arithmetic a reader should
+            # not have to do to see that a decomposition is loose.
+            if low:
+                macro(
+                    "ProtocolMinusBarrierFactor",
+                    f"{high / low:.0f}",
+                    "analysis/per-execution.csv | "
+                    "\\ProtocolMinusBarrierHigh / \\ProtocolMinusBarrierLow",
+                    "how many times wider the interval's top is than its "
+                    "bottom, for the protocol-minus-barrier figure",
+                )
+
+    # --- WS-5: the sign test's floor, a property of the design ----------
+    # Not read from a CSV, because it is not a measurement: with n paired
+    # sessions the smallest attainable two-sided sign-test p-value is 2/2^n,
+    # whatever the data. Section VIII quotes both values to say that at four
+    # sessions no effect size could have produced a rejection, and that six is
+    # the smallest n at which the test can reject at all.
+    # scripts/power_analysis.py:sign_test_floor is the same expression, and
+    # tests/test_power_analysis.py checks it against hand-computed values.
+    for sessions, name in ((4, "SignFloorFour"), (6, "SignFloorSix")):
+        macro(
+            name,
+            f"{2.0 / (2 ** sessions):g}",
+            f"design property, not a measurement | 2/2^{sessions}",
+            f"smallest attainable two-sided sign-test p-value at "
+            f"{sessions} paired sessions",
+        )
 
     # --- Coverage, from the analysis tool's own census -------------------
     if coverage:

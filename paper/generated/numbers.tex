@@ -366,6 +366,18 @@
 % the denominator of \BarrierToProtocolRatio; its width is why that factor is quoted as an estimate
 \newcommand{\ProtocolMinusBarrierHigh}{1\,524.6}
 
+% analysis/per-execution.csv | \ProtocolMinusBarrierHigh / \ProtocolMinusBarrierLow
+% how many times wider the interval's top is than its bottom, for the protocol-minus-barrier figure
+\newcommand{\ProtocolMinusBarrierFactor}{56}
+
+% design property, not a measurement | 2/2^4
+% smallest attainable two-sided sign-test p-value at 4 paired sessions
+\newcommand{\SignFloorFour}{0.125}
+
+% design property, not a measurement | 2/2^6
+% smallest attainable two-sided sign-test p-value at 6 paired sessions
+\newcommand{\SignFloorSix}{0.03125}
+
 % analysis/coverage.json | runs
 \newcommand{\RunsCollected}{432}
 

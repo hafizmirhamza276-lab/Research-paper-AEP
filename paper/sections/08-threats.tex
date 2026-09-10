@@ -373,15 +373,25 @@ three clusters cannot resolve. Closing this needs more crash-free \emph{runs},
 not more executions per run. A deployment that needs a latency budget should
 measure its own.
 
-\paragraph{A failure to reject is not a null result here} Two comparisons in
-this paper fail to exclude zero for reasons of precision rather than of effect.
-The kill-latency attribution above has a half-width wider than the mean it
-brackets. So does the capability-class sweep reported in the supplementary
-material, where the applied-effect column moved --- contradicting our own
-registered prediction --- while the session-clustered interval on the difference
-still contains zero because the sessions disagree with one another. In both
-cases what we report is a failure to reject at a precision inadequate to the
-question, and neither should be read as evidence that the effect is absent.
+\paragraph{A failure to reject is not a null result here, and for two of them
+that is a theorem} Two comparisons in this paper fail to exclude zero for
+reasons of precision rather than of effect: the kill-latency attribution above,
+whose half-width is wider than the mean it brackets, and the capability-class
+sweep reported in the supplementary material, where the applied-effect column
+moved --- contradicting our own registered prediction --- while the
+session-clustered interval still contains zero because the sessions disagree
+with one another.
+
+For both, the weaker reading is not available. Each rests on four paired
+sessions, and with $n$ paired sessions the smallest attainable two-sided
+sign-test $p$-value is $2/2^{n}$, which at $n=4$ is
+$\SignFloorFour{}$. \textbf{No effect size, however large, could have produced a
+rejection at $\alpha=0.05$ from these designs.} Six sessions is the smallest at
+which the test becomes capable of rejecting at all
+($2/2^{6} = \SignFloorSix{}$). So what we report is not that we looked for an
+effect and failed to find one; it is that these designs could not have found
+one, whatever was there. Neither result should be read as evidence that the
+effect is absent, and neither is offered as one.
 
 \paragraph{Timing hygiene, and what it cost us} The host's modern-standby
 setting suspended it mid-run during earlier collection, silently inflating

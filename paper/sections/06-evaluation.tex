@@ -574,7 +574,8 @@ and the interesting quantity is the increment over it.
 
 \input{generated/table-latency}
 
-\textbf{The overhead is the barrier, and nothing else.} A median step costs
+\textbf{The overhead is the barrier, and nothing else --- at this sample
+size, and no more precisely than that.} A median step costs
 \AepStepMedian{}\,ms under AEP-full against \BzeroStepMedian{}\,ms under B0,
 which does nothing but call the provider. Almost all of that gap is one
 mechanism. Everything the write-ahead protocol does apart from waiting for
@@ -583,6 +584,16 @@ preflight, the recovery service --- costs \ProtocolMinusBarrier{}\,ms on a
 two-second call, or \ProtocolMinusBarrierPct{}\%. The two \texttt{WAITAOF}
 round trips cost \BarrierCost{}\,ms between them, or \BarrierCostEach{}\,ms
 each.
+
+Both figures come from three crash-free runs per arm, and the interval on the
+smaller one is \emph{much} wider than the figure suggests:
+[\ProtocolMinusBarrierLow{}, \ProtocolMinusBarrierHigh{}]\,ms, a factor of
+\ProtocolMinusBarrierFactor{}, against [\BarrierCostLow{}, \BarrierCostHigh{}]\,ms
+for the barrier. We state them here rather than only where the residual is
+discussed, because a decomposition quoted without its uncertainty in the section
+that features it is the defect \cref{sec:threats} names. What the decomposition
+supports is an ordering and an order of magnitude --- the barrier dominates ---
+and not the ratio of the two numbers.
 % All four from generated/numbers.tex: B3-B0 and AEP-B3 on
 % latency-and-throughput.csv, crash-free E5-gated runs only.
 
