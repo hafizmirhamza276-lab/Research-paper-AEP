@@ -484,3 +484,11 @@ experiments/results/phase13-inflight-s2-2026-09-04/analysis/*
 !experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-cell-metrics.csv
 !experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-execution.csv
 !experiments/results/phase13-inflight-s2-2026-09-04/analysis/redis-kill-ablation.csv
+
+# --- TLA+ / TLC (WS-7) --------------------------------------------------------
+# TLC writes a fingerprint/state working directory next to the module on every
+# run.  scripts/run_tlc.sh passes -cleanup, which removes it on a clean exit;
+# a run that is killed or times out leaves one behind, and it is hundreds of
+# megabytes of binary that means nothing outside the run that produced it.
+formal/states/
+formal/*.old
