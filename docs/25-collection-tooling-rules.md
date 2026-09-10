@@ -33,6 +33,60 @@ The failure is always silent and always in the unsafe direction: `pgrep` returns
 a match, so "is it still running?" answers *yes* forever, and `pkill` finds a
 target, so "stop that thing" stops the wrong thing.
 
+### R1a. Second occurrence, 10 September, in the WS-7 model-checking sweep.
+
+**R1 predates this by a month and was broken anyway, by the agent that had read
+it.** Recording it because R12a's convention applies -- a second occurrence is
+logged so a third is met as a pattern, not as a surprise -- and because the
+first four instances were all in collection tooling, which made R1 easy to file
+mentally as a collection rule. It is not. It is a rule about process control.
+
+**What happened.** A TLC sweep was running in the background. To start a
+corrected one, the old sweep was stopped with:
+
+```sh
+pkill -f tlc2.TLC; pkill -f run_tlc.sh
+```
+
+Both matched. Every `java ... tlc2.TLC` process died, and the report said so.
+But `run_tlc.sh` is a **loop**: killing the `java` child it was waiting on did
+not kill the loop, and `pkill -f run_tlc.sh` raced it. The wrapper survived and
+walked on to the next configuration. Two sweeps then ran concurrently for about
+twenty minutes.
+
+**Both failure modes were silent, and both were in the unsafe direction.**
+
+1. The two sweeps shared one log directory, and the second had begun with
+   `rm -rf`. Logs from configurations the first sweep was still writing
+   disappeared; one configuration reported `ERROR (see log)` for a log that no
+   longer existed.
+2. Worse, TLC writes its fingerprint and state files relative to the module
+   directory unless told otherwise, so the two runs shared `formal/states/`.
+   One deleted the other's files mid-run and it died with
+   `java.io.IOException: ... AEP_0.tmp (No such file or directory)` --- an
+   exception that looks nothing like a model-checking result and was, for a
+   few minutes, mistaken for one.
+
+**Neither was caught by noticing the kill had failed.** They were caught by the
+*results* being wrong, which is the expensive way round and is exactly what R1
+exists to prevent.
+
+**Fixes applied.**
+
+* Process control now collects PIDs first, prints them, then acts on each by
+  PID --- so the count is visible before anything is signalled, and afterwards
+  the process table is re-read and shown to be clear rather than assumed to be.
+* `scripts/run_tlc.sh` passes `-metadir` per configuration, so two runs cannot
+  share a state directory even when both are started deliberately. That is the
+  robustness fix R1 could not have given: not controlling the processes better,
+  but removing the shared resource they were fighting over.
+
+**The general lesson, which R1 as written does not quite say.** `pkill -f` on a
+*wrapper* is worse than on a leaf process, because killing the child a loop is
+waiting on looks exactly like success while leaving the loop alive. If a script
+iterates, the thing to kill is the script, by PID, captured at launch --- and
+then to verify the iteration stopped, not that a signal was sent.
+
 ## R2. Validate every gate and every derived count against a known answer first.
 
 Before a gate or a census is trusted on a case whose answer is unknown, run it on

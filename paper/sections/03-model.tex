@@ -23,6 +23,7 @@ serialisation point. This is the only atomicity primitive the protocol has and
 every invariant below is expressed inside one.
 
 \subsection{Clocks}
+\label{sec:model-clocks}
 
 There is no synchrony assumption beyond lease TTLs. All ordering decisions
 between principals are taken against the Redis server clock; no cross-worker
@@ -168,8 +169,10 @@ Durability beyond one local AOF fsync
 Operator alerting
   & Not implemented. ``Escalates'' means \emph{reaches a terminal automated
     state and pauses the execution}, nothing more. \\
-Machine-checked proofs
-  & Properties are argued from code paths, not model-checked. \\
+A verified implementation
+  & The properties are model-checked (\cref{sec:modelchecking}); the Python is
+    not. Refinement from the specification to the code is neither proven nor
+    claimed. \\
 \bottomrule
 \end{tabular}
 \end{table}

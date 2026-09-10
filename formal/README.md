@@ -1,6 +1,6 @@
 # WS-7 — the TLA+ specification
 
-**Status.** Design and specification complete; model-checked locally in sixteen
+**Status.** Design and specification complete; model-checked in fifteen
 configurations. **The CI job (WS-7 task 7.2) is deliberately not written yet**,
 and neither is the new §IV-D (task 7.3). This pass is the specification and the
 evidence about what it does and does not establish.
@@ -10,7 +10,7 @@ evidence about what it does and does not establish.
 | Path | Role |
 |---|---|
 | `AEP.tla` | The specification. |
-| `configs/*.cfg` | Sixteen configurations. Each declares, on its first line, whether it must pass or must fail and why. |
+| `configs/*.cfg` | Fifteen configurations. Each declares, on its first line, whether it must pass or must fail and why. |
 | `../scripts/run_tlc.sh` | Runs every configuration and holds it to its declared expectation. |
 | `../scripts/check_tla_transitions.py` | Holds `AEP.tla` to the implementation it claims to model. |
 | `../tests/test_check_tla_transitions.py` | Exercises that gate on the branches where it fails. |
@@ -46,7 +46,7 @@ did not have."*
 
 ```sh
 # needs a JRE and tla2tools.jar (TLA_TOOLS=/path/to/tla2tools.jar to override)
-scripts/run_tlc.sh                  # all sixteen configurations
+scripts/run_tlc.sh                  # all fifteen configurations
 scripts/run_tlc.sh base aof-rewind  # named ones
 
 python scripts/check_tla_transitions.py --all   # the drift gate
@@ -135,7 +135,7 @@ the safety result.
 
 ### 4.2 The configuration matrix
 
-Nine of the sixteen configurations exist to show that a stated assumption is
+Nine of the fifteen configurations exist to show that a stated assumption is
 *load-bearing*, or that a liveness antecedent is reachable. Each declares the
 outcome it must produce on its own first line, and `run_tlc.sh` reports a
 configuration that fails for the wrong reason, or that passes when it should
@@ -149,21 +149,22 @@ because the lost effect is seven steps cheaper. The runner reported
 the model actually does, and the duplicate horn got its own configuration —
 which is the outcome an expectation-free runner would have missed entirely.
 
-All sixteen matched their declared expectation. TLC 2.19; `scripts/run_tlc.sh`.
+All fifteen matched their declared expectation, in 137s total. TLC 2.19,
+pinned by digest; `scripts/run_tlc.sh`.
 
-**Assumptions hold — the protocol's claims (7 configurations).**
+**Assumptions hold — the protocol's claims (6 configurations).**
 
 | Configuration | Switched | Distinct states | Depth | Result |
 |---|---|---|---|---|
-| `base` | — (all assumptions hold) | 31,484 | 22 | **pass**, all 10 properties |
-| `b3-no-barrier` | `BarrierEnabled=FALSE` | 182,056 | 28 | **pass**, safety |
-| `b3-no-barrier-liveness` | `BarrierEnabled=FALSE`, `MaxVersion=4` | 87,156 | 27 | **pass**, liveness |
-| `write-loss-no-restart` | `TruthfulFsync=FALSE` | 200,400 | 28 | **pass**, safety |
+| `base` | — (all assumptions hold) | 31,484 | 22 | **pass** |
+| `b3-no-barrier` | `BarrierEnabled=FALSE` | 182,056 | 28 | **pass** |
+| `write-loss-no-restart` | `TruthfulFsync=FALSE` | 200,400 | 28 | **pass** |
 | `no-readback` | `Capability=NO_READBACK` | 10,568 | 22 | **pass** |
 | `positive-only` | `Capability=POSITIVE_ONLY_READBACK` | 16,012 | 22 | **pass** |
 | `undeclared-capability` | `Capability=UNDECLARED` | 10,568 | 22 | **pass** |
 
-These counts are complete state spaces and are reproducible run to run.
+All six check all ten properties. These counts are complete state spaces
+and reproduce exactly run to run.
 
 Three of them carry most of the weight. **`no-readback` is the configuration
 that matters most for the paper's framing**: the endpoint supplies nothing, can
@@ -206,28 +207,56 @@ because `P2_EventuallyResolved` is an implication: had its antecedent been
 unreachable it would have passed while meaning nothing, and a liveness result
 that cannot fail is the thing this whole file is trying not to produce.
 
-### 4.3 Bounds, and the one place they were reduced
+### 4.3 Bounds, cost, and what runs where
 
 2 workers, 2 intent slots, 5 versions, attempt budget 2, one execution, one
-step. `docs/26:212` asks for 2 workers and 3 versions; this is that or more on
-every axis. The bounds are small, and §7 says what that costs.
+step. The bounds are small, and §7 says what that costs.
 
-**One exception, recorded rather than absorbed.** The barrier ablation's safety
-is checked at `MaxVersion=5` (`b3-no-barrier`, 182,056 states) but its liveness
-at `MaxVersion=4` (`b3-no-barrier-liveness`, 87,156). Without a barrier the
-durable prefix advances only on the background flush and so lags by an arbitrary
-amount, which is what makes that configuration's state space roughly six times
-the base one's; liveness checking over the full graph did not finish inside 40
-minutes. So the ablation's liveness is verified one version shallower than its
-safety, and that is a cost decision, not a result.
+**All fifteen configurations run in CI, at exactly these bounds.** The whole
+sweep is 137s on a 4-worker TLC, so there is no CI-only model and no subset:
+the repository ships one set of configurations and CI checks all of them,
+including the nine that must fail. `scripts/run_tlc.sh` reads each
+configuration's declared expectation and exits non-zero if one passes when it
+should fail, or fails for a property other than the one it declares.
 
-Liveness is the whole expense here: `base` completes safety in seconds and
-spends about six minutes on the temporal properties. When WS-7 task 7.2 wires
-this into CI, the shape that follows is safety on every configuration and
-liveness on a named subset — but that is a decision for the pass that writes it,
-with its own budget.
+**`docs/26:212` suggests "2 workers, 3 versions". Three versions is too
+shallow, and the job does not use it.** At `MaxVersion=3` the `operator`
+configuration cannot reach `PERMANENTLY_AMBIGUOUS` at all, so the operator edge
+out of it is unreachable, the counterexample does not exist, and the
+configuration *passes* — silently converting one of the nine into a check that
+cannot fail. It was found because the runner reported `UNEXPECTED` rather than
+a green tick.
 
----
+| version bound | wall clock | outcome |
+|---|---|---|
+| 3 (as `docs/26` suggests) | 58s | **14/15** — `operator` passes; the bound is below its counterexample |
+| 4 | 93s | 15/15 |
+| **5 (as committed, and what CI runs)** | **137s** | **15/15** |
+| 6 | 242s | 15/15 |
+
+**Run by hand before submission, not on every push.** Small-scope bounds are
+the model's main limitation (§7), so the probes that stretch them are worth
+running deliberately:
+
+```sh
+TLC_MAX_VERSION=6 scripts/run_tlc.sh                 # 242s, all 15
+TLC_WORKER_SET='{w1, w2, w3}' scripts/run_tlc.sh base   # 188s, 373,944 states
+```
+
+A third worker across all fifteen configurations exceeds ten minutes and is not
+part of the routine; `base` alone at three workers passes, which is the useful
+part of that probe. This is the same shape as `verify_refs`' offline/online
+split: the cheap complete check runs per push, the expensive deeper one runs
+deliberately and is recorded when it does.
+
+**A measurement warning, because it cost a wrong decision here.** TLC keeps its
+fingerprint and state files under `-metadir`. An earlier revision of this file
+justified splitting the barrier ablation into separate safety and liveness
+configurations, on the strength of a liveness run that took 19 minutes and one
+that did not finish inside 40. Both numbers were the `/mnt/d` 9p mount, not the
+model: with `-metadir` on local disk the same configuration completes all ten
+properties in 53 seconds. The split has been removed. Put the log directory on
+a local filesystem, or you are measuring the filesystem.
 
 ## 5. What is **not** checked, and why
 

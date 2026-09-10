@@ -212,6 +212,44 @@ Add a workload in which a small LLM (or a scripted nondeterministic planner as a
 - 7.2 Add a CI job running TLC on the model (bounded: 2 workers, 3 versions).
 - 7.3 New §IV-D "Model checking" (½ page) and remove the "Machine-checked proofs" row from Table IV.
 **Acceptance.** TLC passes in CI; the paper states the bounds checked; the AOF-rewind residual is shown as a counterexample when the "single timeline" assumption is removed (this is a strong, honest figure).
+
+**DEFECTS IN THIS ENTRY, found while executing it (2026-09-10). Recorded, not
+fixed -- 7.1 and 7.2 above are left as written, because this file is a record of
+what was directed as well as a direction, and a brief that is silently corrected
+afterwards cannot be audited against what was built.**
+
+*(a) The state-machine sketch in 7.1 is missing four of the code's ten edges.*
+`LEGAL_INTENT_TRANSITIONS` (`aep_core/core/intents.py:65-96`, re-implemented in
+Lua at `:449-461`) has ten. The sketch omits `ABOUT_TO_FIRE -> FIRED_CONFIRMED`
+and `ABOUT_TO_FIRE -> FAILED_CONFIRMED` -- **the ordinary path every non-crashed
+dispatch takes** -- the `FIRED_UNCONFIRMED` self-loop that the P3 reconciliation
+budget counts on, and the two operator edges out of `PERMANENTLY_AMBIGUOUS`.
+Read literally it also implies a direct `ABOUT_TO_FIRE -> PERMANENTLY_AMBIGUOUS`
+edge, which does not exist: escalation must pass through `FIRED_UNCONFIRMED` via
+the recovery claim, and that claim is what advances the version and consumes the
+lease, which is in turn what stops a late original worker from persisting its
+own resolution. A model built from the sketch would have been a model of a
+different protocol, and would have verified cleanly.
+
+The manuscript is unaffected -- section IV defers to
+`scripts/gen_state_machine.py`, which imports the edge set from the code.
+`formal/AEP.tla` was transcribed from the code for the same reason, and
+`scripts/check_tla_transitions.py` now fails if the two ever disagree.
+
+*(b) "2 workers, 3 versions" in 7.2 is too shallow to be the CI bound.* At
+`MaxVersion=3` the `operator` configuration cannot reach `PERMANENTLY_AMBIGUOUS`
+at all, so the operator edge out of it is unreachable, its counterexample does
+not exist, and the configuration **passes** -- turning one of the nine
+must-fail configurations into a check that cannot fail, with no outward sign.
+CI therefore runs the committed bound of 5 versions, which costs 137s for all
+fifteen configurations against 58s for three. `formal/README.md` section 4.3 has
+the measurements. The defect was caught only because `scripts/run_tlc.sh` holds
+each configuration to a declared expectation instead of reporting a green tick.
+
+*Also worth recording: 7.3 budgets half a page for section IV-D and it came out
+at one.* The overrun is the nine failing configurations and the scoping
+paragraph, both directed explicitly, and both the section's substance.
+
 **Effort.** 3–4 days.
 
 ### WS-8 · Related work and positioning (M4)

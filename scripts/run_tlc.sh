@@ -22,10 +22,26 @@
 # rather than re-typed by hand.
 #
 # Usage:
-#   scripts/run_tlc.sh                 # every configuration
+#   scripts/run_tlc.sh                 # every configuration, committed bounds
 #   scripts/run_tlc.sh base aof-rewind # named configurations only
 #
-# Requires: a JRE and tla2tools.jar.  Override the jar with TLA_TOOLS=/path.
+# Environment:
+#   TLA_TOOLS         path to tla2tools.jar        (default /opt/tla/tla2tools.jar)
+#   TLC_MAX_VERSION   override the version bound   (default: as committed, 5)
+#   TLC_WORKER_SET    override the worker set,     (default: as committed, 2)
+#                     e.g. "{w1, w2, w3}"
+#   TLC_TIMEOUT       per-configuration seconds    (default 1800)
+#   TLC_LOGDIR        where logs and metadirs go   (default: a temp dir)
+#
+# The two bound overrides exist so that the CI run and the deeper by-hand run
+# share ONE set of configuration files.  See formal/README.md section 4.3 for
+# which bounds are run where, and what each costs.
+#
+# PUT THE LOG DIRECTORY ON A LOCAL FILESYSTEM.  TLC keeps its fingerprint and
+# state files under -metadir, and on a 9p mount (a Windows drive seen from
+# WSL) that dominates everything: the barrier-ablation configuration took 19
+# minutes there and 53 seconds on native ext4.  A cost measured with the
+# metadir on the wrong filesystem is a measurement of the filesystem.
 
 set -uo pipefail
 
@@ -52,7 +68,10 @@ fi
 # cheap; this never runs for a configuration that passes.
 _tlc_which_temporal() {
     local name="$1" formal="$2" logdir="$3"
-    local cfg="$formal/configs/$name.cfg"
+    # $4 is the config the main run actually used, which may have had its
+    # version bound rewritten.  Reading the pristine one here would name a
+    # violation from a different model than the one that failed.
+    local cfg="${4:-$formal/configs/$name.cfg}"
     local props
     props="$(sed -n '/^PROPERTIES/,$p' "$cfg" | tail -n +2 | tr -d ' \r' | grep -v '^$')"
     local hit=""
@@ -112,6 +131,37 @@ for name in "${NAMES[@]}"; do
         *) echo "FATAL: $name.cfg has no EXPECT line" >&2; exit 2 ;;
     esac
 
+    # TLC_MAX_VERSION rewrites the version bound for every configuration, so
+    # the CI run and the deeper pre-submission run share ONE set of config
+    # files.  A parallel set of CI-only configs would be a second source of
+    # truth for the same sixteen expectations, and the two would drift.
+    run_cfg="configs/$name.cfg"
+    if [ -n "${TLC_MAX_VERSION:-}" ] || [ -n "${TLC_WORKER_SET:-}" ]; then
+        derived_cfg="$LOGDIR/${name}.bounded.cfg"
+        cp "$cfg" "$derived_cfg"
+        if [ -n "${TLC_MAX_VERSION:-}" ]; then
+            sed -i -E "s/^([[:space:]]*MaxVersion[[:space:]]*=[[:space:]]*)[0-9]+/\\1${TLC_MAX_VERSION}/" \
+                "$derived_cfg"
+            # Assert the substitution landed.  A sed that quietly matches
+            # nothing leaves the original bound in place and the run reports a
+            # depth it was never given -- which happened once here, and was
+            # only caught because the state count came back identical.
+            if ! grep -qE "^[[:space:]]*MaxVersion[[:space:]]*=[[:space:]]*${TLC_MAX_VERSION}\$" "$derived_cfg"; then
+                echo "FATAL: could not set MaxVersion=$TLC_MAX_VERSION in $name.cfg" >&2
+                exit 2
+            fi
+        fi
+        if [ -n "${TLC_WORKER_SET:-}" ]; then
+            sed -i -E "s/^([[:space:]]*Workers[[:space:]]*=[[:space:]]*).*/\\1${TLC_WORKER_SET}/" \
+                "$derived_cfg"
+            if ! grep -qF "$TLC_WORKER_SET" "$derived_cfg"; then
+                echo "FATAL: could not set Workers=$TLC_WORKER_SET in $name.cfg" >&2
+                exit 2
+            fi
+        fi
+        run_cfg="$derived_cfg"
+    fi
+
     log="$LOGDIR/$name.log"
     # -metadir gives each configuration its own working directory.  Without it
     # TLC writes states/ relative to the module, so two runs in this directory
@@ -120,7 +170,7 @@ for name in "${NAMES[@]}"; do
     # already, and a future parallel CI job would hit it every time.
     ( cd "$FORMAL" && timeout "$TIMEOUT" java -XX:+UseParallelGC \
         -cp "$TLA_TOOLS" tlc2.TLC \
-        -config "configs/$name.cfg" -metadir "$LOGDIR/meta/$name" \
+        -config "$run_cfg" -metadir "$LOGDIR/meta/$name" \
         -workers "$WORKERS" -cleanup AEP.tla \
         >"$log" 2>&1 )
     rc=$?
@@ -135,7 +185,11 @@ for name in "${NAMES[@]}"; do
     elif grep -q "^Error: Temporal properties were violated" "$log"; then
         # TLC names the invariant inline but not the temporal property, so
         # re-run each temporal property alone to find out which one broke.
-        what="$(_tlc_which_temporal "$name" "$FORMAL" "$LOGDIR")"
+        case "$run_cfg" in
+            /*) rc_abs="$run_cfg" ;;
+            *)  rc_abs="$FORMAL/$run_cfg" ;;
+        esac
+        what="$(_tlc_which_temporal "$name" "$FORMAL" "$LOGDIR" "$rc_abs")"
         actual="fail"
     elif grep -q "^Error: Action property" "$log"; then
         what="$(grep -m1 "^Error: Action property" "$log" | sed 's/^Error: Action property //; s/ is violated.*//')"

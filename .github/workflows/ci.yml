@@ -55,6 +55,11 @@ env:
   #                 -> 1700 with Phase 4B's write-loss probe and the
   #                    manuscript number-generator tests (1721 collected).
   MINIMUM_TESTS: "1700"
+  # TLC, pinned by release and verified by digest for the same reason the Redis
+  # image is: "the model checker" is load-bearing for every claim in section
+  # IV-D, and a re-pointed release asset would change what those claims mean.
+  TLA_VERSION: "1.7.4"
+  TLA_SHA256: "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
 
 jobs:
   # =========================================================================
@@ -84,6 +89,100 @@ jobs:
       # can -- which is why the WS-8 reports record verification separately.
       - name: Every reference carries a route to its source
         run: uv run --frozen python scripts/verify_refs.py --offline
+
+  # =========================================================================
+  # WS-7 task 7.2. Model-check formal/AEP.tla in every configuration.
+  #
+  # THE POINT OF THIS JOB IS THE NINE CONFIGURATIONS THAT MUST FAIL. Six of
+  # the fifteen check that the properties hold; the other nine each remove one
+  # stated assumption -- the single Redis timeline, a truthful fsync, the
+  # barrier, a truthful endpoint, the reconciliation delay, operator
+  # authentication -- and must produce the declared counterexample. Two more
+  # are non-vacuity witnesses for the liveness property, which is an
+  # implication and would otherwise pass while meaning nothing.
+  #
+  # A job that only checked the six passing configurations would be the shape
+  # this repository keeps finding and removing: a gate that cannot fail. So
+  # scripts/run_tlc.sh reads the expectation from each config's own first line
+  # and exits non-zero if a configuration passes when it should fail, or fails
+  # for a property other than the one it declares. Both branches are exercised
+  # in tests/test_run_tlc_expectations.py.
+  #
+  # RUNTIME, MEASURED: all 15 configurations at the committed bounds (2
+  # workers, 5 versions) take 137s on a 4-worker TLC, plus ~30s for the JRE
+  # and the jar. That is cheap enough that no subset is needed -- CI runs the
+  # same bounds the repository ships, so there is no CI-only model.
+  #
+  # docs/26:212 suggests bounding at "2 workers, 3 versions". Three versions
+  # is too shallow and this job does not use it: at MaxVersion=3 the `operator`
+  # configuration cannot reach PERMANENTLY_AMBIGUOUS, so its counterexample
+  # becomes unreachable and it PASSES -- silently converting one of the nine
+  # into a check that cannot fail. run_tlc.sh reports that as UNEXPECTED,
+  # which is how it was found. formal/README.md section 4.3 has the numbers.
+  #
+  # NOT run here, by hand before submission (formal/README.md section 4.3):
+  # the scale probes -- MaxVersion=6 across all 15 (242s) and a third worker
+  # (188s for `base` alone; the full sweep exceeds ten minutes). Small-scope
+  # bounds are the model's main limitation, so those probes are worth running
+  # deliberately and not worth paying for on every push.
+  # =========================================================================
+  model-check:
+    name: TLA+ model checking (formal/AEP.tla)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Install a JRE
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Fetch tla2tools.jar
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tla"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/tla/tla2tools.jar" \
+            "https://github.com/tlaplus/tlaplus/releases/download/v${TLA_VERSION}/tla2tools.jar"
+          echo "${TLA_SHA256}  $RUNNER_TEMP/tla/tla2tools.jar" | sha256sum -c -
+
+      # The specification transcribes the transition table and the status
+      # alphabet from aep_core/core/intents.py. This gate re-derives both from
+      # the code and fails if the model has drifted -- which matters more than
+      # usual here, because a model checker asked about the wrong state machine
+      # does not complain, it reports success. --check-oracle additionally
+      # asserts that no protocol action reads the god-view variable.
+      - name: Gate -- the specification still matches the implementation
+        run: uv run --frozen python scripts/check_tla_transitions.py --all
+
+      - name: Model-check all 15 configurations, each against its expectation
+        env:
+          TLA_TOOLS: ${{ runner.temp }}/tla/tla2tools.jar
+          # Local disk. TLC's fingerprint files under -metadir dominate the
+          # runtime if they land on a slow mount.
+          TLC_LOGDIR: ${{ runner.temp }}/tlc-logs
+          TLC_TIMEOUT: "900"
+        run: bash scripts/run_tlc.sh
+
+      - name: Upload TLC logs and counterexample traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tlc-logs
+          # The counterexample traces live in these logs, and they are the
+          # point: a run that goes red should hand the reader the nine traces,
+          # not just the verdict.
+          path: ${{ runner.temp }}/tlc-logs/*.log
+          retention-days: 14
 
   # =========================================================================
   # Main suite. Redis 7.2 from compose.phase2.yml, so redis/phase2.conf is
