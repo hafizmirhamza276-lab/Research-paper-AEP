@@ -12,18 +12,18 @@
     "generated/table-deployment-choice.tex": "2344c0868071851cb86c2d7ca2e4a9761a88a477094f7a4475b6edab12fbf47d",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
     "generated/table-outcomes.tex": "57b6a4bf989e5cf75f85756dc0b2b91df8a4925b9cd12c813cc67eefa92e6f44",
-    "main.tex": "37821118da1383e7657b1bc6364155aea9ddd584c20c5c300174680b3d3b2635",
+    "main.tex": "5cb2f6a5b6977d519d3038e284632c34fd5ea05b49ab2a9183179123e0322693",
     "refs.bib": "2cbceda664596e9ab240193c819022e6757ab982320f45b9c4c688b3215487d4",
     "sections/01-introduction.tex": "3606d151c422f7dc3338778906bb4af1b4d486fd9e651721877ed375ef3a4f9c",
     "sections/02-motivating.tex": "f759ff9f8b7efd05b1d13ce4ce6ea9b8d80c355abb95c5e7882af31c5170b313",
     "sections/03-model.tex": "6d64dc9dd1a68b1e7cb7dcf7fa1cfb7d66aef244964423fb641926189283e5e6",
     "sections/04-protocol.tex": "371a3f97eab6956ba04323238f7d43f558f0d2d52c925696e8598dc518e2ab89",
     "sections/05-implementation.tex": "b2517f5ddb176bc0a1ae7246b4ca3dfccf19eac03270204b4fde3e54bef635df",
-    "sections/06-evaluation.tex": "577ae8e9b0d2c3c0d977253d4a89b297dbc36e100535c5c4ba525b838c73eb3b",
-    "sections/07-related.tex": "9bda5b83f2d7b5ff2ad3485a3a12adb4a98e4ceac12171b1100fd38d91bd8b24",
-    "sections/08-threats.tex": "9b7f783745136ce5384a847276cc6184b40bf4d082636c346b73b7a3c45f8a6c",
+    "sections/06-evaluation.tex": "d6694a980124907c54c9481272eb5d8345c0eecdd7dd58ebc0a8dcdaddcdebd8",
+    "sections/07-related.tex": "97413f26b54821bda3bb63b57c21c0a6e9151bd9c1acd1d5ec09d94c9e83f50a",
+    "sections/08-threats.tex": "4860c73b4ea50f495b2be2a64bea01e02b52182f9cf110873b0f3bde691a3574",
     "sections/09-artifact.tex": "5be04a5c247b8795afda8153ff65b5dd26f35142200b42f98c02eac1cc7d9882",
-    "supplementary.tex": "d6413ecce3c278d725515b8d93407e9f2aeb8912f8d8ca2cb7e47c3bc9ca6362"
+    "supplementary.tex": "ef284006230940d49a51a62a3df66b07270ff5a2364584a860a3931c3ef87647"
   },
   "version": 1
 }

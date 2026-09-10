@@ -24,7 +24,29 @@
 % annotated below has drifted from its source.
 % =====================================================================
 
-\documentclass[journal,10pt]{IEEEtran}
+% TSE is an IEEE Computer Society journal, and the IEEEtran options are
+% orthogonal: `journal` selects the mode, `compsoc` selects the Society's
+% layout, and the second has to be named explicitly. It was missing here while
+% paper/supplementary.tex already carried it, so the two documents disagreed
+% about their own venue. Three things say this file was always meant to be
+% compsoc: it uses \IEEEtitleabstractindextext and
+% \IEEEdisplaynontitleabstractindextext, which are the Computer Society
+% title/abstract macros, and \markboth names TSE. Adding the option is
+% compliance; that it also comes out a page shorter (Palatino sets tighter here
+% than Times did, and CS reference style is more compact) is incidental.
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
+% The Computer Society does not want citation runs compressed to ranges --
+% [1], [2], [3] rather than [1]--[3]. This file previously loaded no `cite`
+% package at all, which happens to produce the same result by doing nothing;
+% loading it with nocompress states the requirement instead of relying on an
+% absence, and adds numeric sorting within a multi-key \cite. Guarded on the
+% class option so a non-compsoc build still gets the plain behaviour.
+\ifCLASSOPTIONcompsoc
+  \usepackage[nocompress]{cite}
+\else
+  \usepackage{cite}
+\fi
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
