@@ -126,17 +126,49 @@ neither configuration reaches the third: across all \BfourFamilyAmbCells{}
 B4 and B4b cells the declared-ambiguity rate never exceeds
 \BfourFamilyAmbMax{}.
 
+\paragraph{The engine itself was run, and it separates what B4 licenses from
+what it does not} We ran the production engine against the same non-cooperative
+endpoint, in the two configurations B4 and B4b instantiate, at the one crash
+point both the engine and our model can be cut at. With unlimited attempts it
+duplicated at \BfiveDup{} over \BfiveExec{} executions and lost effects at
+\BfiveLost{}; with Maximum Attempts set to one it lost at \BfivebLost{} over
+\BfivebExec{} executions and duplicated at \BfivebDup{}. Neither configuration
+declared ambiguity in any of \BfiveRuns{} non-void runs (\BfiveAmb{} and
+\BfivebAmb{} declarations) --- the third corner of \cref{sec:trilemma} going
+unreached by the engine itself and not merely by our model of it.
+
+\emph{The direction transfers; the magnitudes do not.} Each configuration lands
+in the corner the supplementary comparison assigns it, with exactly zero events
+of the other kind. But at that same crash point B4 duplicates at
+\BfourAtBarrier{} over \BfourAtBarrierExec{} executions and B4b loses at
+\BfourbAtBarrier{} over \BfourbAtBarrierExec{}, roughly six times the engine's
+rates. \textbf{B4's rates are our model's, not the product's}, and no rate in
+this paper should be read as an engine's.
+
+Four things bound this and none is removed by having run the engine. The
+comparison is \emph{incomplete}: the engine has no position answering to
+\textsc{after-intent-before-barrier}, because its pre-dispatch record is written
+by the server inside one RPC, so there is no worker-side instant between the
+write and its acknowledgement --- a hole exactly where B4 and B4b have data at
+all three capability classes. The rates are conditional on a
+\BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analogue for; a
+different timeout is a different cell, and no timing number here is any engine's
+recovery latency. The interval arithmetic is asymmetric --- B4's intervals rest
+on three runs against the engine's thirty, and three clusters put resampled
+means on multiples of one thirtieth --- so the separation should be read from
+the point estimates, which differ by roughly $0.8$, and not from the intervals
+failing to overlap. And the crash window at the dispatch point is sized by the
+server and by loopback rather than by the protocol, so its width is not
+like-for-like with B4's.
+
 That is the sharpest form of the argument the paper can make \emph{against our
 model of a durable-execution engine} --- and that qualification is load-bearing
-rather than modest. B4 is our implementation of the pattern, not a product: at
-this same crash point the real engine duplicates at \BfiveDup{} over
-\BfiveExec{} executions where B4 reaches \BfourAtBarrier{}, roughly six times
-lower. We registered before collecting B5 that this outcome would oblige us to
-re-scope every B4 claim, so it is stated here where B4 carries the argument and
-not only in \cref{sec:threats}: the shape of the argument transfers, the
-magnitude is our model's, and no rate in this paper should be read as an
-engine's. The argument is nonetheless made against a system that has everything
-the write-ahead pattern is supposed to provide. The record is necessary and it is not sufficient, because the
+rather than modest, and the paragraphs above are why: B4 is our implementation
+of the pattern, not a product, and we registered before collecting B5 that a
+gap of that size would oblige us to re-scope every B4 claim. The shape of the
+argument transfers and the magnitude is our model's. The argument is nonetheless
+made against a system that has everything the write-ahead pattern is supposed to
+provide. The record is necessary and it is not sufficient, because the
 record cannot contain the fact that matters --- whether the provider applied
 the effect. What separates B3 and AEP-full from B4 is not durability but the
 \emph{absence of an edge back into the dispatching state}: the transition
@@ -557,8 +589,10 @@ the running instance; the probe refuses to measure if either is otherwise,
 because under \texttt{always} there is no unacknowledged write to lose and
 under \texttt{nobarrier} a surviving acknowledged one would prove nothing.
 
-\textbf{The barrier's durability benefit is therefore real and now measured,
-and the fault class matters more than the mechanism.} The Redis documentation's
+\textbf{The barrier's durability benefit to the \emph{record} is therefore real
+and now measured, and the fault class matters more than the mechanism.} What
+that benefit is worth to a \emph{dispatch} is the next subsubsection's question,
+and the answer there is not the one we expected. The Redis documentation's
 ``you may lose 1 second of data if there is a disaster''~\cite{redis-persistence}
 is correct; what our two probes add is that ``disaster'' must mean the host,
 that the widely repeated reading of the sentence as covering a crashed Redis
@@ -576,6 +610,51 @@ write approaches the start of the period. The design is deliberate and it is
 the same design that made the process-kill probe's $\ProcessKillUnackLost{}$
 strong: both probes
 give the loss hypothesis its best case, and only one of them finds loss.
+
+\subsubsection{Running the protocol under that fault, and what it refuted}
+\label{sec:eval-writeloss-cell}
+
+The probe above tests \texttt{WAITAOF}, not AEP. It runs two Redis keys against
+a device that stops accepting writes; it does not run AEP-full and B3 through
+the harness under that fault, and so it measures no difference in \emph{protocol}
+outcomes. What it establishes is the premise the durability argument rests on.
+We then ran the extension, and it is reported here rather than as a caveat
+because it refuted what we predicted.
+
+\paragraph{What was registered, and what happened} We pre-registered that
+AEP-full would withhold dispatch when its write-ahead record was destroyed and
+that B3 would proceed. A full session was collected with the harness's Redis
+running its append-only file on the flakey device: both arms,
+\WriteLossRunsPerArm{} runs each, \WriteLossExecPerRun{} executions per run,
+\texttt{drop\_writes} armed at the intent checkpoint, without a delivery
+failure. \textbf{The prediction is refuted.} AEP-full applied an effect in
+\WriteLossAepApplied{} of \WriteLossExecPerArm{} executions and B3 in
+\WriteLossBthreeApplied{}; both arms finished at ceiling, and neither withheld.
+
+\paragraph{Why, and it is the more useful finding} \textbf{\texttt{WAITAOF}
+returned success for every durability acknowledgement requested after the device
+had stopped accepting writes} --- \WriteLossAcksAfterFault{} of them, with
+\WriteLossAckFailures{} failures. \texttt{dm-flakey}'s \texttt{drop\_writes}
+discards each write bio and reports success, so the kernel sees no error,
+\texttt{fsync(2)} succeeds, and Redis has no way to learn otherwise. The barrier
+withholds dispatch on a \emph{failed or absent} acknowledgement; it was handed a
+successful one and dispatched, behaving exactly as specified on an input that
+was false.
+
+\paragraph{The bounds, stated narrowly} \textbf{This is not evidence that the
+barrier fails to withhold under write loss}: the condition the experiment exists
+to create --- the barrier meeting an acknowledgement that fails or never arrives
+--- was never reached, so no run exercised withholding. \textbf{Neither is it
+evidence that the barrier works.} What it establishes is that the durability
+guarantee rests on an unstated premise --- that a \texttt{WAITAOF} success means
+the record reached the device --- and that under storage which discards writes
+\emph{silently} the premise is false and the protocol cannot detect it. Storage
+returning \texttt{EIO} would let the acknowledgement fail and put the barrier
+back on the input its guarantee is defined over, so this result bounds the
+guarantee to storage that reports its own failures and says nothing about
+storage that does not. It is evidence about storage, not about the protocol. One
+host, one Redis version (7.2.5, \texttt{appendfsync everysec}), and we claim it
+for no other.
 
 \subsection{RQ3 --- cost, and how much of it is optional}
 \label{sec:eval-rq3}
@@ -692,7 +771,7 @@ clause is about the \emph{record}, and it does not license the protocol-level
 inference a reader may draw from it: when we ran both arms under exactly that
 fault, neither withheld, because the storage discarded the writes while
 reporting success and the barrier was handed an acknowledgement that looked
-good (\cref{sec:threats}).
+good (\cref{sec:eval-writeloss-cell}).
 
 \textbf{So the question a deployment answers is not ``can we afford AEP'' but
 ``do we need prevention, and at which fsync policy''.} If losing Redis is the

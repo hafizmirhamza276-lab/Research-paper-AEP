@@ -617,6 +617,71 @@ def mann_whitney_two_tailed(first: list[float], second: list[float]) -> float:
     return math.erfc(z / math.sqrt(2.0))
 
 
+def writeloss_cell_macros(root: Path) -> list[tuple[str, ...]]:
+    """WS-4's 60-run protocol cell: the session that ran both arms under the fault.
+
+    Distinct from :func:`flakey_macros`, which is the *device* probe (two Redis
+    keys, no protocol). This is the cell in which AEP-full and B3 ran the whole
+    workload with the append-only file on the flakey device, and it is the one
+    the manuscript's section VI-C reports.
+
+    The acknowledgement counts are not in any CSV, so they come from
+    ``analyse_write_loss.observe_behaviour`` -- the same function that produced
+    the committed verdict -- rather than being re-derived here. A manifest that
+    disagrees with the analysis is a second, quieter set of numbers
+    (``freeze_results.py`` learned this the expensive way).
+    """
+    ablation = root / "analysis" / "redis-kill-ablation.csv"
+    if not ablation.is_file():
+        return []
+    rows = {row["system"]: row for row in read_rows(ablation)}
+    aep = rows.get("AEP_FULL")
+    ablated = rows.get("B3_INTENT_NO_BARRIER")
+    if not aep or not ablated:
+        return []
+
+    runs = int(aep["runs"])
+    executions = int(aep["executions"])
+    out = [
+        ("WriteLossRunsPerArm", str(runs),
+         f"{root.name}/analysis/redis-kill-ablation.csv | runs, AEP_FULL row",
+         "runs per arm in the write-loss protocol session"),
+        ("WriteLossExecPerArm", str(executions),
+         f"{root.name}/analysis/redis-kill-ablation.csv | executions, AEP_FULL row"),
+        ("WriteLossExecPerRun", str(executions // runs) if runs else "0",
+         f"{root.name}/analysis/redis-kill-ablation.csv | executions / runs"),
+        ("WriteLossAepApplied", aep["executions_with_an_applied_effect"],
+         f"{root.name}/analysis/redis-kill-ablation.csv | "
+         "executions_with_an_applied_effect, AEP_FULL row"),
+        ("WriteLossBthreeApplied", ablated["executions_with_an_applied_effect"],
+         f"{root.name}/analysis/redis-kill-ablation.csv | "
+         "executions_with_an_applied_effect, B3_INTENT_NO_BARRIER row"),
+    ]
+
+    # The discriminator the verdict turns on, from the analyser rather than
+    # re-counted here.
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from analyse_write_loss import observe_behaviour  # noqa: E402
+
+        _behaviour, detail = observe_behaviour(root)
+    except Exception:  # pragma: no cover - absent tree or import failure
+        return out
+    out.append((
+        "WriteLossAcksAfterFault",
+        str(detail.get("durability_acks_after_the_fault", 0)),
+        f"{root.name} | analyse_write_loss.observe_behaviour, "
+        "durability_acks_after_the_fault",
+        "WAITAOF successes returned after the device stopped accepting writes",
+    ))
+    out.append((
+        "WriteLossAckFailures",
+        str(detail.get("post_fault_failures", 0)),
+        f"{root.name} | analyse_write_loss.observe_behaviour, post_fault_failures",
+    ))
+    return out
+
+
 def flakey_macros(payloads: list[dict[str, Any]]) -> list[tuple[str, ...]]:
     """The G2 write-loss probe's numbers, pooled over its replications.
 
@@ -983,6 +1048,9 @@ def emit_numbers(
     # WS-6. An absent session means the B5 macros are not emitted at all --
     # never emitted as zeros, which a reader could not tell from a measurement.
     b5_runs: list[dict[str, Any]] | None = None,
+    # Same defaulted shape, same reason: an absent session emits no
+    # write-loss macros rather than emitting zeros.
+    writeloss_cell: Path | None = None,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
     lines: list[str] = []
@@ -1843,6 +1911,11 @@ def emit_numbers(
     # --- G2: the fault class the barrier's durability claim names --------
     if flakey:
         for name, value, *why in flakey_macros(flakey):
+            macro(name, value, *why)
+
+    # --- WS-4's protocol cell: the session, not the device probe --------
+    if writeloss_cell is not None:
+        for name, value, *why in writeloss_cell_macros(writeloss_cell):
             macro(name, value, *why)
 
     # --- The barrier's cost, with an interval rather than a point --------
@@ -2883,6 +2956,12 @@ def main() -> int:
         "host-level write-loss macros",
     )
     parser.add_argument(
+        "--writeloss-cell",
+        type=Path,
+        default=ROOT / "reports" / "raw" / "ws4-writeloss-s1-2026-09-07",
+        help="WS-4's 60-run protocol session; its numbers are section VI-C's",
+    )
+    parser.add_argument(
         "--b5-session",
         type=Path,
         default=None,
@@ -2952,6 +3031,11 @@ def main() -> int:
     emit_numbers(
         per_cell, latency, kill, comparisons, flakey, always, coverage,
         execution_paths, arguments.out, b5_runs=b5_runs,
+        writeloss_cell=(
+            arguments.writeloss_cell
+            if arguments.writeloss_cell and arguments.writeloss_cell.is_dir()
+            else None
+        ),
     )
     for name in sorted(p.name for p in arguments.out.glob("*.tex")):
         print(f"wrote {arguments.out / name}")

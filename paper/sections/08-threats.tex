@@ -31,43 +31,15 @@ every system that trusts \texttt{fsync}. The probe also maximises the exposure
 window by phase-aligning to a just-completed fsync, so $\FlakeyUnackLost{}$ is
 the loss rate for a worst-placed cut rather than a uniformly-timed one.
 
-\paragraph{The write-loss probe tests \texttt{WAITAOF}, not AEP}
-\Cref{sec:eval-durability} runs two Redis keys against a device that stops
-accepting writes. It does not run AEP-full and B3 through the evaluation harness
-under that fault, and so it does not measure a difference in \emph{protocol}
-outcomes --- duplicates, lost effects, declared ambiguity --- attributable to
-write loss. What it establishes is the premise the durability argument rests on:
-that an acknowledged record survives an event that destroys an unacknowledged
-one, which under a process kill is false and under write loss is true.
-
-\paragraph{We ran the extension, and the fault is deliverable while the
-durability signal above it is not trustworthy} The harness's Redis now runs with
-its append-only file on the flakey device, and a full session --- both arms,
-thirty runs each, ten executions per run, \texttt{drop\_writes} armed at the
-intent checkpoint --- was collected without a delivery failure, so
-\textbf{the fault is deliverable} for a whole session on this host. The second
-half is answered in a way we did not predict. \textbf{\texttt{WAITAOF} returned
-success for every durability acknowledgement requested after the device had
-stopped accepting writes.} \texttt{dm-flakey}'s \texttt{drop\_writes} discards
-each write bio and reports success, so the kernel sees no error,
-\texttt{fsync(2)} succeeds, and Redis has no way to learn otherwise. The barrier
-withholds dispatch on a \emph{failed or absent} durability acknowledgement; it
-was handed a successful one and dispatched, behaving exactly as specified on an
-input that was false. Both arms finished at ceiling.
-
-We state the scope narrowly. \textbf{It is not evidence that the barrier fails
-to withhold under write loss}: the condition the experiment exists to create ---
-the barrier meeting an acknowledgement that fails or never arrives --- was never
-reached, so no run exercised withholding. \textbf{Neither is it evidence that
-the barrier works.} What it establishes is that the durability guarantee rests
-on an unstated premise --- that a \texttt{WAITAOF} success means the record
-reached the device --- and that under storage which discards writes
-\emph{silently} the premise is false and the protocol cannot detect it. Storage
-that returned \texttt{EIO} would let the acknowledgement fail and put the
-barrier back on the input its guarantee is defined over; this result therefore
-bounds the guarantee to storage that reports its own failures, and says nothing
-about storage that does not. It is one host and one Redis version (7.2.5,
-\texttt{appendfsync everysec}), and we claim it for no other.
+\paragraph{The write-loss result is a refutation, and it is reported as one}
+\Cref{sec:eval-writeloss-cell} runs both arms under the write-loss fault and
+refutes what we registered: neither arm withheld, because \texttt{WAITAOF}
+returned success after the device had stopped accepting writes. The threat that
+remains here is the one that result creates rather than settles --- the
+durability guarantee is bounded to storage that reports its own failures, and
+this paper contains no evidence about storage that does not. The finding, its
+counts and its bounds are in \cref{sec:eval-writeloss-cell} and are not repeated
+here.
 
 \paragraph{The write-loss probe runs several layers above hardware, and does not
 need to be closer} The \texttt{dm-flakey} target sits on a loop device backed by
@@ -143,40 +115,14 @@ set Maximum Attempts to 3, add a heartbeat, or make the activity idempotent ---
 the first two land between our two points on the same duplicate/loss trade, and
 the third leaves the problem this paper is about.
 
-\paragraph{The engine itself was run, and it separates what B4 licenses from
-what it does not} We ran the production engine against the same non-cooperative
-endpoint, in the two configurations B4 and B4b instantiate, at the one crash
-point both the engine and our model can be cut at. With unlimited attempts it
-duplicated at \BfiveDup{} over \BfiveExec{} executions and lost effects at
-\BfiveLost{}; with Maximum Attempts set to one it lost at \BfivebLost{} over
-\BfivebExec{} executions and duplicated at \BfivebDup{}. Neither configuration
-declared ambiguity in any of \BfiveRuns{} non-void runs (\BfiveAmb{} and
-\BfivebAmb{} declarations) --- the third corner of \cref{sec:trilemma} going
-unreached by the engine itself and not merely by our model of it.
-
-\emph{The direction transfers; the magnitudes do not.} Each configuration lands
-in the corner the supplementary comparison assigns it, with exactly zero events of the
-other kind. But at that same crash point B4 duplicates at \BfourAtBarrier{} over
-\BfourAtBarrierExec{} executions and B4b loses at \BfourbAtBarrier{} over
-\BfourbAtBarrierExec{}, roughly six times the engine's rates. \textbf{B4's rates
-are our model's, not the product's}, and no rate in this paper should be read as
-an engine's.
-
-Four things bound this and none is removed by having run the engine. The
-comparison is \emph{incomplete}: the engine has no position answering to
-\textsc{after-intent-before-barrier}, because its pre-dispatch record is written
-by the server inside one RPC, so there is no worker-side instant between the
-write and its acknowledgement --- a hole exactly where B4 and B4b have data at
-all three capability classes. The rates are conditional on a
-\BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analogue for; a
-different timeout is a different cell, and no timing number here is any engine's
-recovery latency. The interval arithmetic is asymmetric --- B4's intervals rest
-on three runs against the engine's thirty, and three clusters put resampled
-means on multiples of one thirtieth --- so the separation should be read from
-the point estimates, which differ by roughly $0.8$, and not from the intervals
-failing to overlap. And the crash window at the dispatch point is sized by the
-server and by loopback rather than by the protocol, so its width is not
-like-for-like with B4's.
+\paragraph{B4 is our model of a durable-execution engine, and the real one
+disagrees with it on magnitude} \Cref{sec:eval-rq1} reports the production
+engine run against the same endpoint in both configurations B4 and B4b
+instantiate, together with the four things that bound the comparison. The threat
+this leaves is narrow and is stated once: every B4 and B4b rate in this paper is
+our implementation's, the direction of the result transfers and the magnitude
+does not, and no rate here should be read as any engine's. We registered that
+obligation before collecting the engine data rather than after seeing it.
 
 \paragraph{Declared ambiguity is not evaluated as an operational outcome} The
 paper measures how often AEP declares ambiguity and shows that it never

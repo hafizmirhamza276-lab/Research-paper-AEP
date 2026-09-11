@@ -344,6 +344,29 @@
 % un-acknowledged writes destroyed, per replication; same guard
 \newcommand{\FlakeyPerRepUnackLost}{30/30}
 
+% ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv | runs, AEP_FULL row
+% runs per arm in the write-loss protocol session
+\newcommand{\WriteLossRunsPerArm}{30}
+
+% ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv | executions, AEP_FULL row
+\newcommand{\WriteLossExecPerArm}{300}
+
+% ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv | executions / runs
+\newcommand{\WriteLossExecPerRun}{10}
+
+% ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv | executions_with_an_applied_effect, AEP_FULL row
+\newcommand{\WriteLossAepApplied}{285}
+
+% ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv | executions_with_an_applied_effect, B3_INTENT_NO_BARRIER row
+\newcommand{\WriteLossBthreeApplied}{287}
+
+% ws4-writeloss-s1-2026-09-07 | analyse_write_loss.observe_behaviour, durability_acks_after_the_fault
+% WAITAOF successes returned after the device stopped accepting writes
+\newcommand{\WriteLossAcksAfterFault}{300}
+
+% ws4-writeloss-s1-2026-09-07 | analyse_write_loss.observe_behaviour, post_fault_failures
+\newcommand{\WriteLossAckFailures}{0}
+
 % analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
 % 2.5th percentile of (median AEP-full - median B3); point estimate 1968.1 ms from 3 and 3 runs
 \newcommand{\BarrierCostLow}{477.9}

@@ -177,6 +177,7 @@ reproduce-figures:
 	    --fsync-analysis experiments/results/fsync-always/analysis \
 	    --flakey experiments/results \
 	    --b5-session reports/raw/ws6-b5-s1-2026-09-08-attempt3 \
+	    --writeloss-cell reports/raw/ws4-writeloss-s1-2026-09-07 \
 	    --out "$(FIG_ROOT)/generated"
 	@echo
 	@echo "=== byte-comparing against paper/generated/ ==="
