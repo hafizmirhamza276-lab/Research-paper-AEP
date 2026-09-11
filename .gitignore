@@ -492,3 +492,31 @@ experiments/results/phase13-inflight-s2-2026-09-04/analysis/*
 # megabytes of binary that means nothing outside the run that produced it.
 formal/states/
 formal/*.old
+
+# --- WS-5 tiers 1 and 2, collected 10-11 September (612 runs) ----------------
+# Same rule as every other collection: the manifest and the digests, never a
+# run directory, never a sqlite ledger, never a log. The raw tree is 331 MB and
+# stays on the measurement host; SHA256SUMS is what lets the later analysis
+# pass prove it analysed what was collected.
+!experiments/results/ws5-2026-09-10/
+experiments/results/ws5-2026-09-10/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/
+experiments/results/ws5-2026-09-10/t1-p0-everysec/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t1-incomplete/
+experiments/results/ws5-2026-09-10/t1-incomplete/*
+!experiments/results/ws5-2026-09-10/t1-incomplete/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t1-incomplete/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-p30/
+experiments/results/ws5-2026-09-10/t2-p30/*
+!experiments/results/ws5-2026-09-10/t2-p30/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t2-p30/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t2-p30/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-keying/
+experiments/results/ws5-2026-09-10/t2-keying/*
+!experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t2-keying/SHA256SUMS
