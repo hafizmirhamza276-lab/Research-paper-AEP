@@ -10,6 +10,63 @@ read-only analysis cannot disturb a running collection, so they are done here;
 **the instrument is specified in §5 and deliberately not built.** Nothing in this
 pass ran Python against the harness, touched Docker, or ran the suite.
 
+
+> ### CORRECTED 2026-09-11 — §0.2 is wrong, and it is the error this document accuses its predecessor of
+>
+> **§0.2 says `write-loss-preack` "is implemented and has never been collected."
+> It was collected on 7 September**, pre-registered at `d8b2ca5`, collected at
+> `252e2d3`: 60 run directories in `reports/raw/ws4-writeloss-s1-2026-09-07/`,
+> 30 `AEP_FULL` + 30 `B3_INTENT_NO_BARRIER`, `regime: "write-loss-preack"` on
+> all 60, `redis_kill_point=after_intent_before_barrier`,
+> `executions_per_worker=10`, `environment.redis_fault_mechanism="write-loss"`,
+> 258 files tracked in git.
+>
+> **How the error was made.** §0.2 ran
+> `grep write-loss experiments/results/*/analysis/per-cell-metrics.csv`, found
+> nothing, and concluded the cell did not exist. WS-4's data lives under
+> `reports/raw/`. The grep was correct about the tree it searched and was
+> reported as a fact about the repository — which is exactly what §0.1 of this
+> same document accuses `docs/34` of doing, two paragraphs earlier. Recorded as
+> `docs/25` R14 instance 7.
+>
+> **§4 of this document does report it, and §0.2 did not reconcile with §4.**
+> §4's own table lists `write-loss-preack` as "never collected" on the strength
+> of §0.2. Both are wrong together.
+>
+> **What the cell found.** Verdict `REFUTED`: AEP-full applied 285/300 =
+> 0.9500, B3 287/300 = 0.9567 — 0.67 pp apart. Both arms zero on lost effects
+> and zero on undetected duplicates. Declared ambiguity 0.1633 [0.1233, 0.2033]
+> against 0.2033 [0.1600, 0.2467], overlapping.
+>
+> **The manuscript does report it**, in §VIII construct validity, under *"We ran
+> the extension, and the fault is deliverable while the durability signal above
+> it is not trustworthy"* — *"both arms, thirty runs each, ten executions per
+> run, `drop_writes` armed at the intent checkpoint"*, *"answered in a way we
+> did not predict"*, *"Both arms finished at ceiling"*. §VIII also bounds it
+> correctly: not evidence the barrier fails to withhold, because the condition
+> the experiment exists to create was never reached.
+
+> ### DECISION 2026-09-11 — Option B is closed
+>
+> **Not a cost decision.** §5 of this document argued that `write-loss-preack`
+> was the one regime where the arms might differ rather than tie, and that
+> collecting it was "a prerequisite for the drift experiment being worth running
+> at all". It was collected four days before this document was written, and the
+> arms are **0.67 pp apart** on applied effects with overlapping ambiguity
+> intervals. With `session-3` at **+0.37 pp** [−1.11, +2.04], **two of the three
+> drift-reachable regimes are measured and both tie** — which is what `docs/33`
+> §4.4 predicted in writing, as the outcome that would make the workstream
+> uninformative.
+>
+> Agents stay as motivating context. `24c0a0b` stands; `74ea31f` is **not**
+> restored, so the execution-id attribution machinery stays out.
+>
+> **Revisitable on evidence, not reopenable on cost.** `p30` — the third
+> drift-reachable regime — was collected on 10–11 September (315 runs,
+> `729fbfa`) and is **unanalysed**. If its ambiguity differential diverges from
+> the other two when WS-5's analysis runs, this decision can be revisited on
+> that evidence.
+
 ---
 
 ## 0. Two corrections to docs/34, both mine

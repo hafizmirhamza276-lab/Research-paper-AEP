@@ -179,6 +179,16 @@ Add a workload in which a small LLM (or a scripted nondeterministic planner as a
 **Tasks.**
 - 4.1 On the WS-0 host, put the harness's Redis `dir` on the dm-flakey-backed ext4 (design already in `docs/24-revision-backlog.md` B1). Verify `redis_storage_backing` is recorded and differs from frozen runs; state this in the report.
 - 4.2 Pre-register: AEP-full withholds dispatch when its record is destroyed; B3 proceeds. 30 runs × 10 executions per arm, NO_READBACK first, then AUTH if time allows.
+  - **STATUS 2026-09-11: COLLECTED AND REFUTED, not open.** Pre-registered
+    `d8b2ca5`, collected `252e2d3`, 60 runs in
+    `reports/raw/ws4-writeloss-s1-2026-09-07/` (30 per arm, NO_READBACK).
+    Verdict `REFUTED`: AEP-full applied 285/300 = 0.9500 against a refutation
+    threshold of 0.2; B3 287/300 = 0.9567, at ceiling. Both arms zero on lost
+    effects and duplicates. The prediction is false as written — AEP-full did
+    not withhold — because `WAITAOF` returned success after the device stopped
+    accepting writes, so the barrier never met the failed acknowledgement its
+    guarantee is defined over. Reported in §VIII construct validity. The AUTH
+    half was not collected.
 - 4.3 Collect; analyse with the existing unwanted-applied-effect metric + duplicates/lost effects.
 - 4.4 Add to §VI-C3 as the system-level result the paper currently says it lacks; update Table XI's "prevents" column semantics.
 **Acceptance.** Protocol-level outcomes measured under write loss; §VIII-A(b) "we have not done it" sentence removed; storage backing difference explicitly stated.

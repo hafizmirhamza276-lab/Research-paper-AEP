@@ -41,6 +41,21 @@ is **33**. Nothing else about the task changes.
 > measurable, and under Option A that exchange no longer happens.
 >
 > **§§1 and 3–5 below are unexecuted design.** Nothing in them was built.
+>
+> ### CLOSED 2026-09-11 — Option B will not be executed
+>
+> **§4.4's uncomfortable prediction is what closed it, and it closed it by being
+> right.** That paragraph registered in advance that under `NO_READBACK` there
+> might be *no difference at all* between the two arms, and that if so the
+> finding is about where the protocol's value sits rather than about the caller.
+> Two of the three drift-reachable regimes are now measured and both tie:
+> `session-3` at **+0.37 pp** [−1.11, +2.04], and `write-loss-preack` at
+> **0.67 pp** (`reports/raw/ws4-writeloss-s1-2026-09-07`, 60 runs, verdict
+> `REFUTED`).
+>
+> Agents remain the motivating deployment context of §I and §II. `24c0a0b`
+> stands; `74ea31f` is not restored. `p30` is collected and unanalysed, so the
+> third regime can still be checked — see `docs/35`'s 2026-09-11 banner.
 
 **Option B was decided, and this document is its design.** The A-versus-B
 question was closed at the time of writing and is not reopened below; where the

@@ -777,9 +777,10 @@ believed.
 
 ## R14. Hold the checking code to the standard of the code it checks.
 
-**Five instances now, four of them in a single session.** It has stopped being an
-observation and become the most reliable defect generator in this project, so it
-is a rule.
+**Seven instances now.** It has stopped being an observation and become the most
+reliable defect generator in this project, so it is a rule. Instance 6 is in
+R14a below; instance 7 is at the end of this list and is the first to have been
+caught by someone outside the project rather than by a number looking wrong.
 
 The shape is always the same: the instrument is written quickly *because it is
 "just" a check*, and then it becomes the thing every other conclusion is believed
@@ -812,6 +813,29 @@ caught it.
    provider configured with a **2 s** delay. The measurement was not merely
    imprecise; it was of the rejection path.
 
+7. **The `docs/35` grep, 10 September.** `docs/35` §0.2 ran
+   `grep write-loss experiments/results/*/analysis/per-cell-metrics.csv`, got
+   nothing, and wrote that the `write-loss-preack` regime *"is implemented and
+   has never been collected."* It had been collected on 7 September and lives
+   under `reports/raw/`, 60 runs, 258 files tracked in git. The grep was correct
+   about the tree it searched; it could report *found* and *not found* and had
+   no way to report **I looked in the wrong place**.
+
+   **Two things make this the worst instance so far.** It is in a document whose
+   own §0.1, two paragraphs earlier, accuses its predecessor of exactly this —
+   *"inference from a grep window presented as a fact about a file"* — so the
+   rule was not merely unapplied but stated and then broken in the same pass.
+   And it was load-bearing: §5 built the argument for a four-to-seven-week
+   workstream on that cell being uncollected, when the cell had already been
+   measured and showed the arms 0.67 pp apart. Caught by an external audit, not
+   by the instrument, which is instance 1's shape again.
+
+   *The cheap guard it did not have:* a search whose negative result is
+   load-bearing must be run against a **known positive** first (R2), or be
+   widened until it finds something and then narrowed. `git ls-files | grep`
+   would have found it; so would searching the repository rather than one
+   subtree.
+
 ### The rule
 
 A checking instrument must be able to report **three** outcomes, not two:
@@ -823,7 +847,7 @@ A checking instrument must be able to report **three** outcomes, not two:
 An instrument that can only express the first two will express the second when
 the third is true, and the second is usually the answer that lets work proceed.
 
-Concretely, and each of these is one of the five above:
+Concretely, and each of these comes from one of the instances above (the list runs 1-5 and 7; 6 is R14a):
 
 * **Never let `not found` and `could not ask` render the same.** Verify the probe
   against a **known positive** before trusting any negative (R2 applied to

@@ -30,6 +30,19 @@ would take.
 > fires only when the delivered point *is* the planned point, so no mismatch is
 > possible and no such gate exists there. See `docs/35` §1.
 
+> ### CORRECTED AGAIN 2026-09-11 — correction 2 above was itself wrong
+>
+> Correction 2 said the write-loss prediction was *"still unfired"*. **It had
+> fired three days before this document was written, and was refuted.**
+> `reports/raw/ws4-writeloss-s1-2026-09-07/`, 60 runs, pre-registered `d8b2ca5`,
+> collected `252e2d3`, verdict `REFUTED`: AEP-full applied 285/300 = 0.9500,
+> B3 287/300 = 0.9567.
+>
+> So the chain on this point runs: the body asserted a prediction as a result;
+> correction 2 downgraded it to an unfired prediction; both were wrong, and the
+> truth is that it is a *fired and refuted* prediction. `docs/26` task 4.2 is
+> **collected and refuted, not open**. See `docs/35`'s 2026-09-11 banner.
+
 ---
 
 ## 1. What docs/33 specifies, and what was built
