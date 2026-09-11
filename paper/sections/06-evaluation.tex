@@ -83,9 +83,13 @@ the three capability classes, AEP-full recorded an undetected-duplicate rate of
 \AepDupAuth{}, \AepDupPosOnly{} and \AepDupNoReadback{}, and a lost-effect rate
 of \AepLostAuth{}, \AepLostPosOnly{} and \AepLostNoReadback{}. Every one of
 those executions was killed by \texttt{SIGKILL} at a named point around the
-external call. This was the pre-registered halt condition of the experiment: a
-single undetected duplicate in AEP-full would have stopped the matrix and
-become the paper's primary result. It did not occur.
+external call. The matrix runner halted on this condition: a single undetected
+duplicate in AEP-full stops the matrix, a rule carried in the runner before any
+of these cells were collected. We do not call it a pre-registration. The
+governing document at the time described a contrary result as a defect to fix
+rather than a finding to report, and this project's pre-registration practice
+began later; what the runner gives is a stopping rule fixed in advance, not a
+commitment about how the outcome would have been written up. It did not occur.
 
 \paragraph{The baselines without a pre-dispatch record duplicate in most
 crashed executions} B0, B1 and B2 sit between \BaselineDupLow{} and
@@ -122,9 +126,17 @@ neither configuration reaches the third: across all \BfourFamilyAmbCells{}
 B4 and B4b cells the declared-ambiguity rate never exceeds
 \BfourFamilyAmbMax{}.
 
-That is the sharpest form of the argument the paper can make, because it is
-made against a system that has everything the write-ahead pattern is supposed
-to provide. The record is necessary and it is not sufficient, because the
+That is the sharpest form of the argument the paper can make \emph{against our
+model of a durable-execution engine} --- and that qualification is load-bearing
+rather than modest. B4 is our implementation of the pattern, not a product: at
+this same crash point the real engine duplicates at \BfiveDup{} over
+\BfiveExec{} executions where B4 reaches \BfourAtBarrier{}, roughly six times
+lower. We registered before collecting B5 that this outcome would oblige us to
+re-scope every B4 claim, so it is stated here where B4 carries the argument and
+not only in \cref{sec:threats}: the shape of the argument transfers, the
+magnitude is our model's, and no rate in this paper should be read as an
+engine's. The argument is nonetheless made against a system that has everything
+the write-ahead pattern is supposed to provide. The record is necessary and it is not sufficient, because the
 record cannot contain the fact that matters --- whether the provider applied
 the effect. What separates B3 and AEP-full from B4 is not durability but the
 \emph{absence of an edge back into the dispatching state}: the transition
@@ -675,7 +687,12 @@ two, over a third as many run clusters, puts the Bonferroni width at
 detection guarantee. What B3-mode forfeits is \cref{sec:eval-prevention}: under
 a hard Redis kill it will put an effect on the wire that AEP-full withholds, at
 \BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will not
-survive a host-level write loss (\cref{sec:eval-durability}).
+survive a host-level write loss (\cref{sec:eval-durability}). That second
+clause is about the \emph{record}, and it does not license the protocol-level
+inference a reader may draw from it: when we ran both arms under exactly that
+fault, neither withheld, because the storage discarded the writes while
+reporting success and the barrier was handed an acknowledgement that looked
+good (\cref{sec:threats}).
 
 \textbf{So the question a deployment answers is not ``can we afford AEP'' but
 ``do we need prevention, and at which fsync policy''.} If losing Redis is the
