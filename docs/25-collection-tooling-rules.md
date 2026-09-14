@@ -1237,3 +1237,51 @@ Account: `reports/phase-report-23-ws5-close-2026-09-14.md`.
 * **R15** is what caught it, and only just. `check_paper_numbers.py` failed
   with a `FileNotFoundError` on a path the pass had no reason to think it had
   touched. Nothing else in the pass would have.
+
+---
+
+## R17. Reaching a script's `main()` to prove it misbehaves *is* running it.
+
+**Do not** demonstrate a destructive defect by executing the defective code
+against a real tree — including from a test, including with a flag whose
+documentation says it is read-only. **Do** demonstrate it from the source
+text, or in a disposable root with `cwd` set so that every relative default
+resolves somewhere expendable.
+
+**Three occurrences in one week, each while proving the previous one's fix
+was needed.**
+
+| # | pass | what was run | what it cost |
+|---|---|---|---|
+| 1 | phase 19 | the unrepaired `fsync_always_benchmark.sh`, via its parametrised run-count test | the `fsync-always` raw tree, 60 executions, deleted |
+| 2 | phase 20 | the pre-guard `wsl_launch_matrix.sh`, inside the harness written to enforce R16 | a detached `run_matrix` launched; harmless only because its `cd` target was empty |
+| 3 | phase 23 | the pre-fix `run_matrix.main()` under pytest | 19 run directories, 240 files, written into the frozen 432-run matrix root |
+
+**The shape is identical every time.** A refusal test is safe against fixed
+code *by construction* — every path returns before acting — and unsafe against
+old code *by construction*, because the whole point of the old code is that
+nothing stops it. So the test that proves the fix works is exactly the test
+that must never meet the defect.
+
+**`--plan-only` is the warning worth remembering.** In occurrence 3 the flag
+documented as *"prints exactly which cells are in which tier before anything
+is launched"* writes `matrix-plan.json` into the results root before it
+returns. A flag's documentation is a claim about the code, not a property of
+it, and R3 applies to that claim like any other.
+
+**What to do instead, in order of preference:**
+
+1. Assert on the old version's **source text** — the `default=`, the constant,
+   the `rm -rf`. This is the weaker kind of check and the right one here.
+2. If behaviour must be seen, run it with **`cwd` in a throwaway directory**,
+   so a relative default like `experiments/results/matrix` resolves inside
+   the sandbox. Phase 23 obtained its `--plan-only` evidence this way safely,
+   in the same pass that then got it wrong under pytest.
+3. Point the new tests at the **fixed** code only.
+
+**Relation to the existing rules.** R3 says test every gate on its failing
+branch; R4 says a destructive gate needs a dry-run seam before R3 can be
+applied to it. R17 is the case R4 anticipated and nobody applied: **when the
+seam does not exist yet, the failing branch is demonstrated on paper, not on
+the data.** R16a records the same finding from R16's side; this is the
+general form, because occurrence 2 was not about a results root at all.

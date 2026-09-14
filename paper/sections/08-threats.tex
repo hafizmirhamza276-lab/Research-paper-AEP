@@ -339,6 +339,26 @@ effect and failed to find one; it is that these designs could not have found
 one, whatever was there. Neither result should be read as evidence that the
 effect is absent, and neither is offered as one.
 
+We stopped at four sessions deliberately rather than for want of machine
+time, and the class sweep is reported as a bound rather than as a test.
+Two further sessions were collected far enough to establish that they could
+not be pooled with the first four: the original sessions run one arm to
+completion and then the other, while the harness now alternates the arms
+run by run, a change made because the block order makes arm and drift
+collinear and therefore not separable by any number of sessions. Adding
+interleaved sessions to blocked ones would put two designs inside one
+paired test. Each session directory carries a note recording its order and
+what that confounds.
+
+\paragraph{One results directory was destroyed during tooling work and
+recovered from the archive} The raw runs behind the \texttt{appendfsync
+always} cell were deleted from a working checkout by a collection script
+whose clean path defaulted to on, and were restored from the verified
+evidence archive, whose manifest covers them by name and digest; the
+derived results are unchanged and remain recomputable from raw.
+% The archive's MANIFEST.sha256 digest is recorded in ARTIFACT.md 5; the
+% recovery verified 112 of 112 files against it with zero mismatches.
+
 \paragraph{Timing hygiene, and what it cost us} The host's modern-standby
 setting suspended it mid-run during earlier collection, silently inflating
 wall-clock durations. We now require both a pre-run declaration that the host
