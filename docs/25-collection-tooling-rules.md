@@ -777,13 +777,16 @@ believed.
 
 ## R14. Hold the checking code to the standard of the code it checks.
 
-**Eight instances now.** It has stopped being an observation and become the most
+**Nine instances now.** It has stopped being an observation and become the most
 reliable defect generator in this project, so it is a rule. Instance 6 is in
-R14a below; instances 7 and 8 are at the end of this list. Seven is the first to
-have been caught from outside the project rather than by a number looking wrong.
-Eight is the first in which the blank output would have been read as a
-**pre-registered hypothesis being refuted**, which is the most expensive form
-this defect has taken.
+R14a below; instances 7, 8 and 9 are at the end of this list. Seven is the
+first to have been caught from outside the project rather than by a number
+looking wrong. Eight is the first in which the blank output would have been
+read as a **pre-registered hypothesis being refuted**. Nine is the first in
+which the instrument was not a script at all — it was three shell globs and a
+conclusion written as though they had been a proof, and it declared sixty
+executions of published data dead while two verified copies sat on the same
+host.
 
 The shape is always the same: the instrument is written quickly *because it is
 "just" a check*, and then it becomes the thing every other conclusion is believed
@@ -865,6 +868,40 @@ caught it.
    splittable sample`. Rule 13 is discharged against the pre-fix module at
    `5ff3dc2`, which renders A2 as a heading followed directly by section B.
 
+
+9. **The search behind "not recoverable", 14 September, and mine.** The R16
+   incident report stated that sixty destroyed executions "existed in no
+   archive, no tarball, no WSL copy and no manifest — all five searched, all
+   five empty", and that they were **not recoverable**. Every part of that
+   sentence that was a *negative universal* was false. Two verified copies
+   existed the whole time.
+
+   The search was three globs: `find` inside the repository for `*.tar*`, a
+   `find -maxdepth 3` beside it, and `ls -d /root/*fsync* /tmp/*fsync*`. The
+   archive is at `/root/aep-raw-archive/aep-raw-evidence.tar` and the
+   canonical tree at `/root/aep/experiments/results/fsync-always`. **No glob
+   used contained either path**, and `maxdepth 3` could not have reached the
+   first even had it been pointed at `/root`.
+
+   **The instrument was a name-matcher and the conclusion was a statement
+   about existence.** Those are different claims, and nothing in the write-up
+   marked the gap. Worse, the answer was already in the repository:
+   `ARTIFACT.md` §5 names the archive, its manifest digest, and
+   `/root/aep/experiments/results/fsync-always` as the source of this exact
+   cell — and `README.md` describes the archive in its second paragraph. A
+   `grep` of the repo's own documentation would have beaten every filesystem
+   search that was run.
+
+   Caught by being told to look again, with named locations, rather than by
+   anything in the search — instance 1's shape for the fifth time in this
+   list.
+
+   *The general form, which is the reusable part:* **a search may only
+   support a negative as strong as its own coverage.** "I looked in A, B and
+   C and found nothing" is a finding. "It does not exist" is a different
+   claim and needs an argument that A, B and C exhaust the space. When the
+   negative decides whether data is gone, name the paths searched in the
+   report itself, so a reader can see the hole.
 ### The rule
 
 A checking instrument must be able to report **three** outcomes, not two:
@@ -1032,16 +1069,22 @@ into, and that is preserved as a `FileNotFoundError` traceback in the
 quarantined `matrix-progress.jsonl`.
 
 Sixty executions across six raw run directories, behind three published
-macros, gone. Not recoverable: they were gitignored, uncommitted, unmanifested.
+macros, deleted. **Recovered in phase 20** from the Phase-11 archive and from
+`/root/aep`, the tree the archive was built from: 112/112 files, 0 failed, 0
+missing, and the archived `analysis/` CSVs byte-identical to the tracked ones.
+The rule stands on the mechanism, not on the size of the loss it happened to
+cause — the script would have done the same to a root with no copy.
 
 **The compounding part is the gitignore.** That root un-ignores its two
 derived CSVs and ignores everything else. So `git status` reported *two*
 deleted files and could not report the *sixty* that mattered more --- and
 those two came back from git, which is exactly what makes the loss look
 survivable at a glance. **A tree whose valuable half is invisible to
-`git status` needs a manifest, and this one had none** --- a fact recorded in
-the same pass's report, hours before the deletion, as an observation rather
-than an action.
+`git status` needs a manifest, and this one had none *in the checkout*.** It
+had one in the Phase-11 archive, and that manifest is what recovered it. But
+nothing in the checkout points at that archive, so for several hours the loss
+looked total and was written up as total. **An off-repository manifest the
+repository never references protects the data and not the reader.**
 
 **R13 and this rule pull against each other, and R13 still wins.** Exercising
 the failing branch is what made the ruling worth anything: it is what surfaced

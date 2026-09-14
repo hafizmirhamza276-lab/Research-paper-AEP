@@ -1,9 +1,36 @@
 # Incident — the `fsync-always` raw run tree was destroyed, by me, during phase 19
 
+> **CORRECTION, 2026-09-14, phase 20 step 1. The data was recoverable, and this
+> report said it was not.** Two verified copies survive: the Phase-11 raw
+> archive at `/root/aep-raw-archive` (manifest digest `87fa2d53…`, the one
+> `README.md` names) and the canonical source tree at
+> `/root/aep/experiments/results/fsync-always`, which is where the cell was
+> collected on 2026-08-07 and which the archive was built from. Each holds all
+> six run directories and all 112 files, and each verifies against the manifest
+> with **0 failed, 0 missing**. The archived `analysis/` CSVs are
+> **byte-identical** to the two tracked ones, so the three `always` macros are
+> recomputable from raw.
+>
+> **The deletion happened exactly as described below; only the disposition
+> changes.** The body is unedited apart from the two marked corrections in §1
+> and the severity line.
+>
+> **Why this report got it wrong is the part worth keeping.** The negative was
+> asserted from three searches — `find` inside the repository, a
+> `find -maxdepth 3` next to it, and `ls /root/*fsync* /tmp/*fsync*` — and
+> then written up as "no archive, tarball, WSL copy or git blob exists, all
+> searched". None of the three could have reached `/root/aep-raw-archive`, and
+> `ARTIFACT.md` §5 — a tracked file in this repository — names both that
+> archive and `/root/aep/experiments/results/fsync-always` as the source of
+> this very cell. **The instrument was a glob; the claim was a universal.**
+> Filed as `docs/25` R14 instance **9**.
+
 **Date:** 2026-09-14, 14:03 local (WSL clock `started_at` 403740.9).
-**Severity:** irrecoverable loss of raw data underneath three published macros.
+**Severity:** ~~irrecoverable loss~~ **deletion of a redundant copy** of raw
+data underneath three published macros. Recovered; see the correction above.
 **Cause:** my own rule-13 demonstration executed the unrepaired script.
-**Paper impact:** none to the numbers. The provenance chain under them is gone.
+**Paper impact:** none. ~~The provenance chain under them is gone.~~ The chain
+holds: the archive reproduces both tracked CSVs byte-identically.
 
 ---
 
@@ -27,11 +54,23 @@ un-ignores exactly them — and were restored with `git checkout --`. The
 published numbers are intact and every gate is green again (33/33 in
 `check_paper_numbers.py`, 42/42 in `tests/test_power_analysis.py`, citations OK).
 
-**What does not.** The raw runs were gitignored (`.gitignore:154`), were never
-committed, and existed in no archive, no tarball, no WSL copy and no manifest —
-all five searched, all five empty. The cell's derived CSVs can no longer be
-**recomputed from raw**. For `fsync-always`, `make reproduce-figures` now
-reproduces from a CSV rather than from data.
+**What does not** — **wrong, corrected in phase 20.** The original text read:
+
+> The raw runs were gitignored (`.gitignore:154`), were never committed, and
+> existed in no archive, no tarball, no WSL copy and no manifest — all five
+> searched, all five empty. The cell's derived CSVs can no longer be
+> **recomputed from raw**.
+
+Gitignored and never committed: both true. **They existed in an archive and in
+a manifest, and they still do.** "All five searched" was the false part — three
+searches were run, none reached the archive, and the conclusion was written as
+though the search had been exhaustive.
+
+The cell **is** recomputable from raw, via the archive or via `/root/aep`.
+What is true is narrower and still worth saying: it is not recomputable *from
+this checkout alone* — and it never was. This checkout has never held a
+`fsync-always` raw tree, which is why `make reproduce-figures` reports the two
+analysis figures `SKIPPED` here with or without the deletion.
 
 ---
 
@@ -87,8 +126,9 @@ would have silently produced different published numbers from one broken run.
 * `experiments/results/fsync-always/` now contains exactly its tracked content
   and nothing else — `git status` on that path is empty.
 * `RAW-RUNS-DESTROYED.md` is placed in that root and un-ignored, so the next
-  reader of the directory learns the raw tree is gone from the directory itself
-  rather than from this report.
+  reader of the directory learns what happened from the directory itself
+  rather than from this report. **Phase 20 rewrote it**: it now records that
+  the deletion happened *and* that two copies survived it.
 
 ---
 
@@ -125,10 +165,14 @@ Three properties combined, each individually defensible:
    raw runs makes the recoverable part of the tree invisible in `git status` and
    the unrecoverable part invisible *everywhere*. `git status` showed two deleted
    files; it could not show the sixty that mattered more.
-3. **No manifest.** Phase 19 §7 had already recorded that this root has no
-   `RAW-SHA256SUMS`. That finding was written hours before the loss and was, at
-   that moment, describing the precise reason the loss would be undetectable.
-   It was filed as an observation rather than acted on.
+3. **No manifest** — **half wrong, corrected in phase 20.** Phase 19 §7 had
+   recorded that this root has no `RAW-SHA256SUMS`, and that is true *of this
+   checkout*. But the Phase-11 archive manifest covers all 112 of its files by
+   name and digest, and is what made the recovery provable rather than merely
+   likely. The real defect is not that no manifest existed. It is that **the
+   manifest lives outside the repository and nothing inside the repository
+   points a reader of this directory at it** — so a loss here looks total
+   from in here, which is exactly how it looked to me for several hours.
 
 The third is the one I would change first. `digest_results_tree.py` exists, is
 tested, and was built in phase 18 for exactly this. It had not been run over the
