@@ -1,0 +1,48 @@
+{
+  "schema": "aep.stage3.operator-declaration-correction/1",
+  "amendment": "E5",
+  "corrects": "operator-declaration-e5.json",
+  "corrected_at_utc": "2026-08-17T09:20:00Z",
+  "status": "The declaration recorded in operator-declaration-e5.json is contradicted by evidence collected during the run. It is retained unaltered, because it is the record of what was declared; this file records what was observed.",
+
+  "what_was_declared": "Windows power scheme set to High Performance; standby, monitor and hibernate timeouts all 0 on AC; machine on AC throughout the collection. Recorded into all 432 run configs as suspend_disabled_declared=true.",
+
+  "what_was_observed": {
+    "collection_span_hours": 94.0,
+    "measured_run_time_hours": 10.93,
+    "unaccounted_hours": 83.07,
+    "windows_event_log": "Microsoft-Windows-Kernel-Power IDs 506/507 (connected standby enter/exit) recorded repeatedly on 2026-08-15, 2026-08-16 and 2026-08-17, i.e. during the collection.",
+    "harness_detector": "experiments/analyze.py compares each run's wall-clock span against its monotonic span. CLOCK_MONOTONIC does not advance across a host suspend; CLOCK_REALTIME is resynchronised on resume. Tolerance TIMING_SUSPENSION_TOLERANCE_SECONDS = 2.0s.",
+    "runs_with_suspension_detected": 9,
+    "runs_with_usable_timing": 423,
+    "runs_dropped_for_clock_suspension": 9,
+    "runs_dropped_for_undeclared_suspend_policy": 0,
+    "worst_suspension_seconds": 49646.414
+  },
+
+  "why_the_declaration_was_not_dishonest": "powercfg independently confirmed STANDBYIDLE, HIBERNATEIDLE and VIDEOIDLE are all 0 on AC under the High Performance scheme, and PowerOnline was true. Those three settings govern *idle* transitions only. The host reports S0 Low Power Idle (Modern Standby), on which connected standby can be entered by lid close, by user action, or by policy none of those timeouts govern. On such a host the three settings named in the declaration are necessary but not sufficient, and no combination of them can make the declaration safe to assert.",
+
+  "affected_runs": [
+    {"run_id": "b4_durable_workflow-after_intent_before_barrier-notifications-4b75290a-r2", "seed": 1918076454, "suspension_seconds": 49646.4},
+    {"run_id": "b4_durable_workflow-after_intent_before_barrier-notifications-4b75290a-r1", "seed": 203917622, "suspension_seconds": 45249.4},
+    {"run_id": "b4_durable_workflow-after_intent_before_barrier-ledger_postings-7cb1f1f7-r1", "seed": 1185992689, "suspension_seconds": 43796.8},
+    {"run_id": "b4_durable_workflow-after_intent_before_barrier-ledger_postings-7cb1f1f7-r2", "seed": 1747149783, "suspension_seconds": 41874.6},
+    {"run_id": "b4_durable_workflow-after_intent_before_barrier-ledger_postings-7cb1f1f7-r0", "seed": 1971719917, "suspension_seconds": 41014.6},
+    {"run_id": "b4_durable_workflow-after_barrier_before_dispatch-ledger_postings-5a1a38f0-r2", "seed": 1933004781, "suspension_seconds": 35106.8},
+    {"run_id": "b4_durable_workflow-after_barrier_before_dispatch-ledger_postings-5a1a38f0-r0", "seed": 1060362507, "suspension_seconds": 21115.9},
+    {"run_id": "b4_durable_workflow-after_resolution_before_barrier-ledger_postings-55de1140-r1", "seed": 1419288621, "suspension_seconds": 20565.0},
+    {"run_id": "b4_durable_workflow-after_resolution_before_barrier-ledger_postings-55de1140-r0", "seed": 1493576680, "suspension_seconds": 1577.2}
+  ],
+
+  "scope_of_the_damage": {
+    "systems_affected": ["B4_DURABLE_WORKFLOW"],
+    "cells_affected": 4,
+    "cells_left_with_no_usable_timing_at_all": ["b4_durable_workflow-after_intent_before_barrier-ledger_postings-7cb1f1f7 (all 3 repetitions suspended)"],
+    "counts_affected": "None. An execution either duplicated or it did not; that observation does not depend on the clock. All 432 runs remain in every rate metric and all 432 reconciled against the independent ground-truth ledger.",
+    "timings_affected": "The 9 runs contribute no duration to any latency or throughput aggregate. B4_DURABLE_WORKFLOW's timing sample is therefore 48 of 57 runs where every other system's is complete, so any overhead comparison involving B4 has an asymmetric denominator and must say so."
+  },
+
+  "decision_not_to_recollect": "The 9 runs are NOT being re-run. Their counts are valid observations, and re-running a run because a property uncorrelated with its outcome came out badly is re-sampling: it discards an observed result and draws again. Amendment D4 forbids re-running or filtering to move a number, and the principle does not stop applying because the number in question is a timing. analyze.py already handles this case transparently -- counts kept, timings excluded, warning printed on every invocation -- which is a better record than a dataset silently reconstructed to look unblemished.",
+
+  "if_a_future_collection_needs_complete_timings": "Fix the host first, then collect from scratch rather than patching this dataset. Disabling Modern Standby (reg: HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\PlatformAoAcOverride = 0, reboot) makes STANDBYIDLE=0 actually sufficient. Verify afterwards by confirming no Kernel-Power 506/507 events appear for the duration of a test window."
+}

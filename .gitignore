@@ -520,3 +520,40 @@ experiments/results/ws5-2026-09-10/t2-keying/*
 !experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.md
 !experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.csv
 !experiments/results/ws5-2026-09-10/t2-keying/SHA256SUMS
+
+# --- Stage 3's 432-run replication, recovered from the office branch --------
+# Same rule as every other collection: manifests, digests and the analysis
+# outputs, never a run directory, never a sqlite ledger, never a log. The
+# branch carried exactly that shape already, so nothing is excluded here that
+# was on it -- the un-ignores below name every file it had.
+!experiments/results/stage3-replication-2026-08-13/
+experiments/results/stage3-replication-2026-08-13/*
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.md
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.csv
+!experiments/results/stage3-replication-2026-08-13/SHA256SUMS
+!experiments/results/stage3-replication-2026-08-13/matrix-plan.json
+!experiments/results/stage3-replication-2026-08-13/matrix-progress.jsonl
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5.json
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5-correction.json
+!experiments/results/stage3-replication-2026-08-13/analysis/
+experiments/results/stage3-replication-2026-08-13/analysis/*
+!experiments/results/stage3-replication-2026-08-13/analysis/*.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/*.json
+!experiments/results/stage3-replication-2026-08-13/analysis/*.pdf
+
+# --- Two untracked strays, dispositions recorded rather than guessed --------
+#
+# /main.bbl -- a 12-byte root-level file containing only 'SCRATCHWINS'. A
+# root-level main.bbl is not part of any build: the manuscript's is
+# paper/main.bbl, and build_paper.sh stages its own. The sentinel is NOT the
+# one tests/test_build_paper_safety.py writes (that one reads
+# 'last-known-good bibliography'), so its origin is NOT established and it is
+# ignored rather than deleted.
+/main.bbl
+#
+# phase8-driver/.build_keep.sh -- GENERATED, not authored. 
+# phase8-driver/verify_f0_in_pdf.sh line 26 writes it by sed-transforming
+# scripts/build_paper.sh to disable the cleanup trap, so it is a derived
+# artifact that regenerates on demand and goes stale the moment
+# build_paper.sh changes -- which it has, repeatedly. Ignored, not committed.
+phase8-driver/.build_keep.sh
