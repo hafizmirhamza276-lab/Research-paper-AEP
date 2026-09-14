@@ -359,8 +359,17 @@ Mark each item `[x]` only after verifying the phase report and, where possible, 
 - [ ] Measurements exist from a native Linux host; cross-host replication of ≥ 1 frozen cell reported (WS-0)
 - [ ] Prevention result collected under a controlled Redis fault on all 3 capability classes, ≥ 3 sessions each (WS-3)
 - [ ] Protocol outcomes measured under block-level write loss (WS-4)
-- [ ] Every timing interval rests on ≥ 15 runs; no CI containing zero is presented as a positive cost (WS-5)
-- [ ] 30%-crash regime, in-flight kill, read-back keying variant collected; zero "implemented but not collected" items remain (WS-5)
+- [x] Every timing interval rests on ≥ 15 runs; no CI containing zero is presented as a positive cost (WS-5)
+- [x] 30%-crash regime, in-flight kill, read-back keying variant collected; zero "implemented but not collected" items remain (WS-5)
+- [x] **WS-5 is closed to further collection** (amendment 4). The `always`
+      arm is collected (45 runs, phase 21). The capability-class sweep
+      **stays at four sessions by ruling**, reported as a bound with its
+      0.125 sign-test floor stated, not as a test: the four sessions are
+      cell-major and pre-date `5b601d0`'s interleaving, so a fifth and
+      sixth would have mixed two designs. Nothing in WS-5 is now
+      "implemented but not collected"; the class sweep is "collected and
+      deliberately not extended", which is a different statement and is
+      the one the paper must make.
 - [ ] Real durable-execution engine run as baseline in both configurations (WS-6) — *or* explicitly deferred with one sentence
 - [ ] TLA+ model of P1/P2 checked in CI (WS-7) — *or* explicitly deferred with one sentence
 - [ ] Every new cell has a pre-registration commit that predates its first data commit (`scripts/check_prereg_order.py`)

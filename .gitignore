@@ -649,3 +649,12 @@ experiments/results/fsync-always-2026-09-14/analysis/*
 !experiments/results/fsync-always-2026-09-14/analysis/latency-and-throughput.csv
 !experiments/results/fsync-always-2026-09-14/analysis/per-cell-metrics.csv
 !experiments/results/fsync-always-2026-09-14/analysis/per-execution.csv
+
+# Phase 23: the class sweep's four sessions are cell-major and pre-date
+# 5b601d0's run-level interleaving. That is permanent now, so it is
+# recorded beside the data rather than only in a report (docs/25 R16's
+# neighbourhood: a fact only a report carries is a fact nobody meets).
+!experiments/results/b2-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s1-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s2-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s3-2026-08-21/COLLECTION-NOTE.md

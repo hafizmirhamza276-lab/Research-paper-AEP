@@ -39,9 +39,13 @@ read-back-keying sensitivity variant last. A partial matrix is then a *usable*
 partial matrix, and ``--plan-only`` prints exactly which cells are in which
 tier before anything is launched.
 
-    python -m experiments.run_matrix --plan-only
-    python -m experiments.run_matrix --redis-url redis://127.0.0.1:6381/15
-    python -m experiments.run_matrix --resume        # skips completed runs
+    R=experiments/results/my-collection-2026-09-14
+    python -m experiments.run_matrix --results-root $R --plan-only
+    python -m experiments.run_matrix --results-root $R --redis-url redis://127.0.0.1:6381/15
+    python -m experiments.run_matrix --results-root $R --resume  # skips completed runs
+
+``--results-root`` is required and has no default. It used to default to
+the frozen ``experiments/results/matrix``; see RESULTS_ROOT_REQUIRED.
 """
 
 from __future__ import annotations
@@ -86,7 +90,24 @@ MATRIX_VERSION = "aep.matrix/1"
 SUSPEND_DISABLED_VARIABLE = "AEP_HARNESS_SUSPEND_DISABLED"
 
 DEFAULT_TEMPLATE = Path("experiments/configs/matrix.yaml")
-DEFAULT_RESULTS_ROOT = "experiments/results/matrix"
+#: There is deliberately NO default results root.
+#:
+#: This used to be ``"experiments/results/matrix"`` -- the frozen 432-run
+#: root every outcome rate in the paper is computed from. A bare invocation
+#: wrote into it, and ``--plan-only`` wrote into it too, because the plan
+#: files are written before that flag returns. The documented "just print
+#: the plan" path overwrote files inside published data.
+#:
+#: `docs/25` R16 instance 3. Phase 20 removed the same defect from the
+#: shell collection scripts and never reached this one, because that sweep
+#: only looked at shell scripts.
+RESULTS_ROOT_REQUIRED = (
+    "REFUSED: --results-root is required and has no default.\n"
+    "         It used to default to experiments/results/matrix, the frozen"
+    "         432-run root the paper's outcome rates come from, and even"
+    "         --plan-only writes matrix-plan.json into it (docs/25 R16).\n"
+    "         Name a new dated directory."
+)
 
 #: The response classes, named by the endpoint that declares each one in
 #: ``experiments/configs/matrix.yaml``. The dimension is the *capability*; the
@@ -1236,7 +1257,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the AEP evaluation matrix.")
     parser.add_argument("--redis-url", default="redis://127.0.0.1:6381/15")
     parser.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
-    parser.add_argument("--results-root", default=DEFAULT_RESULTS_ROOT)
+    # No default: see RESULTS_ROOT_REQUIRED above.
+    parser.add_argument("--results-root", default=None)
     parser.add_argument("--matrix-seed", type=int, default=20260806)
     parser.add_argument("--runs-per-cell", type=int, default=3)
     parser.add_argument("--executions-per-run", type=int, default=10)
@@ -1308,6 +1330,13 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     arguments = parser.parse_args(argv)
+
+    # Before build_plan, before render, before any mkdir: a caller that has
+    # not said where results go has not decided where results go.
+    if not arguments.results_root:
+        print(RESULTS_ROOT_REQUIRED)
+        return 2
+
     arguments.systems = _systems(arguments.systems)
     arguments.keyings = _keyings(arguments.keyings)
     arguments.crash_points = tuple(arguments.crash_points or ()) or None

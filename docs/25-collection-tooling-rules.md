@@ -1158,6 +1158,75 @@ its defaults point at --- and if the answer is a path under
 
 Account: `reports/incident-fsync-always-raw-destroyed-2026-09-14.md`.
 
+### R16 instance 3 — `experiments/run_matrix.py`, and the first in Python.
+
+`DEFAULT_RESULTS_ROOT = "experiments/results/matrix"` — the frozen 432-run
+root every outcome rate in the paper is computed from. A bare
+`python -m experiments.run_matrix` wrote into it.
+
+**And so did `--plan-only`, which is the documented safe path.** The plan
+files are written into the root *before* that flag returns, so the invocation
+the module's own docstring offers as "prints exactly which cells are in which
+tier before anything is launched" overwrote `matrix-plan.json` inside
+published data. Demonstrated in a sandbox before the fix:
+
+```
+$ cd /root/p23-sandbox && python -m experiments.run_matrix --plan-only
+exit=0
+created: experiments/results/matrix/matrix-plan.txt
+         experiments/results/matrix/matrix-plan.json
+```
+
+**Why it survived phase 20.** That sweep enumerated *shell* scripts, fixed
+`fsync_always_benchmark.sh` and `wsl_launch_matrix.sh`, and wrote a guard in
+bash. The Python driver both of those shell scripts call was never in its
+search. **A sweep is bounded by the file type it greps for**, and nothing in
+the sweep said so.
+
+Fixed: no default, `--results-root` required for every invocation including
+`--plan-only`, refusal before `build_plan`, and `DEFAULT_RESULTS_ROOT`
+deleted rather than set to `None` — a constant naming the frozen root is one
+`default=` away from returning.
+
+### R16a. Do not execute a collection driver to prove it is unguarded.
+
+**This is the third time in one week that demonstrating a destructive defect
+caused it.** Phase 19 deleted the `fsync-always` raw tree by running the
+unrepaired script. Phase 20 reproduced R16 inside the harness written to
+enforce R16, when the old `wsl_launch_matrix.sh` `nohup`'d a collection.
+Phase 23 wrote **19 run directories, 240 files, into the frozen matrix root**
+by running the pre-fix `run_matrix.main()` under pytest: with no refusal to
+return at, `main` went past `--plan-only` and started collecting.
+
+**The rule.** For a driver whose non-refusing path collects, R13 is
+discharged by **source evidence plus a sandbox**, never by calling it:
+
+* assert on the source text of the old version (`default=` and the constant);
+* if behaviour must be shown, run it with **CWD set to a throwaway directory**
+  so its relative default resolves somewhere disposable — which is how the
+  `--plan-only` evidence above was obtained safely, in the same pass that then
+  got it wrong under pytest;
+* point the new tests at the **fixed** module only. A refusal test is safe
+  against fixed code by construction and unsafe against old code by
+  construction, and that asymmetry is the whole point.
+
+**What made this recoverable rather than another incident:** phase 20's
+`RAW-SHA256SUMS` for that root. `--check` reported **0 missing, 0 changed,
+240 added**, named all 19 directories, and each was removed by name after
+confirming it was absent from the committed digest. The tree digest then
+returned to `abd4cebb5dac73f5...`. A forward-looking digest cannot bind the
+past (phase 20 §2), but it is exactly what tells you which files are *new*.
+
+Not recoverable: `matrix-plan.json` and `matrix-plan.txt` were overwritten.
+They are root-level files, so `RAW-SHA256SUMS` (run directories only) and
+`SHA256SUMS` both miss them, and this checkout's matrix root was excluded
+from the Phase-11 archive as an older incomplete copy. **The digest's
+coverage boundary is a real gap and this is the first time it has cost
+anything.**
+
+Account: `reports/phase-report-23-ws5-close-2026-09-14.md`.
+
+
 ### Relation to the existing rules
 
 * **Rule 2** (docs/26: frozen results are immutable) is the rule that was
