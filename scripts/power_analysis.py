@@ -320,6 +320,26 @@ def lower_mode_difference(
                 for run, values in per_run.items()}
 
     t_low, c_low = restrict(treatment, t_cut), restrict(control, c_cut)
+
+    # THE INVARIANT (amendment 3). Kept executions must equal the splitter's
+    # own lower-group size, for each arm. Phase 18 used a midpoint threshold
+    # that silently dropped 8 of B3's 120 lower-mode executions and returned an
+    # interval EXCLUDING zero where the correct boundary gives one that spans
+    # it -- the opposite headline. It was caught by a count mismatch noticed by
+    # eye. This asserts it instead, so the same class of error stops the
+    # analysis rather than producing a number.
+    for label, per_run, cut in (("treatment", treatment, t_cut),
+                                ("control", control, c_cut)):
+        pooled = [v for values in per_run.values() for v in values]
+        expected = largest_gap_split(pooled)["lower_n"]
+        kept = sum(1 for v in pooled if v <= cut)
+        if kept != expected:
+            raise AssertionError(
+                f"lower-mode threshold for the {label} arm keeps {kept} "
+                f"executions but the splitter's lower group holds {expected}. "
+                "The threshold and the split disagree; refusing to produce an "
+                "interval from it (amendment 3)."
+            )
     t_runs, c_runs = sorted(t_low), sorted(c_low)
     rng = random.Random(seed)
 

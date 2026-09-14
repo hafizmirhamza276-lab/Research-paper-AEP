@@ -32,7 +32,10 @@ set -euo pipefail
 IMAGE="redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44"
 NAME="aep-fsync-always"
 PORT="6383"
-RESULTS_ROOT="experiments/results/fsync-always"
+# NOT the frozen experiments/results/fsync-always. That directory is the
+# source of three published macros and is immutable (rule 2); a new collection
+# gets a new dated root, and the caller must name it.
+RESULTS_ROOT="${AEP_FSYNC_RESULTS_ROOT:-experiments/results/fsync-always}"
 
 # The config the container must actually load.
 #
@@ -71,7 +74,25 @@ CONF="${AEP_DOCKER_CONF:-${CONF_LOCAL}}"
 # same results root instead of replacing it.
 SYSTEMS="${AEP_FSYNC_SYSTEMS:-AEP_FULL}"
 MOCK_PORT="${AEP_FSYNC_MOCK_PORT:-8098}"
-CLEAN="${AEP_FSYNC_CLEAN:-1}"
+# The run count is an input now, because this arm needs 15 and the script was
+# written for 3. An unvalidated count feeding a script that also creates
+# directories is the combination the preserved stage 3 test refuses, and it
+# refuses it BEFORE any results root is touched.
+#
+# The gate is lexical, not arithmetic, and deliberately: `09` and `1e3` are
+# accepted by arithmetic contexts and rejected here, because a run count that
+# means one thing to bash and another to a reader is a number nobody can
+# reproduce from the log.
+# `-` not `:-`: with `:-` an explicitly EMPTY AEP_FSYNC_RUNS falls through
+# to the default and is silently accepted as 15. The preserved test sets it
+# empty on purpose, and caught exactly that.
+RUNS="${AEP_FSYNC_RUNS-15}"
+case "${RUNS}" in
+  ''|*[!0-9]*|0|0*)
+    echo "AEP_FSYNC_RUNS must be a positive integer, got: '${RUNS}'" >&2
+    exit 2
+    ;;
+esac
 
 echo "=============================================================="
 echo "F0(iii)  barrier latency under appendfsync=always"
@@ -149,15 +170,29 @@ docker exec "${NAME}" redis-cli -n 15 SET aep:test-instance-marker 1
 echo
 
 # --------------------------------------------------------------- the cell
-echo "--- the cell: ${SYSTEMS}, crash-free (p0), payments, 3 runs x 10 exec ---"
+echo "--- the cell: ${SYSTEMS}, crash-free (p0), payments, ${RUNS} runs x 10 exec ---"
 echo "    identical to the everysec cells of the same systems"
 echo "    (same matrix seed, so the per-run seeds are the same)"
 echo
-if [ "${CLEAN}" = "1" ]; then
-  rm -rf "${RESULTS_ROOT}"
-else
-  echo "    appending to ${RESULTS_ROOT} (AEP_FSYNC_CLEAN=0)"
+# Stage 3 never deletes prior runs, and neither does this.
+#
+# This block used to recursively force-delete RESULTS_ROOT, with AEP_FSYNC_CLEAN
+# defaulting to 1 and RESULTS_ROOT defaulting to a FROZEN tracked directory --
+# the sole source of \BarrierCostAlways, \BthreeAlwaysMedian and
+# \AepAlwaysMedian. A bare invocation deleted a published result, and the
+# tracked CSVs would have come back from git while the raw runs under them
+# would not. That is rule 2 ("Frozen results are immutable") violated by
+# default, and it is the property the preserved stage 3 test asserts.
+#
+# The replacement refuses instead of deleting. A new collection goes to a new
+# dated root, which is what rule 2 asks for anyway.
+if [ -e "${RESULTS_ROOT}" ] && [ -n "$(ls -A "${RESULTS_ROOT}" 2>/dev/null)" ]; then
+  echo "REFUSING: ${RESULTS_ROOT} already exists and is not empty." >&2
+  echo "          This script does not delete prior runs. Point" >&2
+  echo "          AEP_FSYNC_RESULTS_ROOT at a new dated directory." >&2
+  exit 3
 fi
+mkdir -p "${RESULTS_ROOT}"
 SYSTEM_FLAGS=()
 for system in ${SYSTEMS}; do
   SYSTEM_FLAGS+=(--system "${system}")
@@ -169,6 +204,7 @@ uv run --frozen python -m experiments.run_matrix \
   --endpoint payments \
   --redis-url "redis://127.0.0.1:${PORT}/15" \
   --results-root "${RESULTS_ROOT}" \
+  --runs-per-cell "${RUNS}" \
   --resume \
   --port "${MOCK_PORT}"
 set +x

@@ -156,6 +156,9 @@ experiments/results/fsync-always/*
 experiments/results/fsync-always/analysis/*
 !experiments/results/fsync-always/analysis/latency-and-throughput.csv
 !experiments/results/fsync-always/analysis/per-execution.csv
+# The raw runs under this root were destroyed on 2026-09-14 (docs/25 R16).
+# This marker says so from inside the directory, so track it.
+!experiments/results/fsync-always/RAW-RUNS-DESTROYED.md
 
 # --- Phase 9's replication of the redis-kill-preack cell (Phase 8.0) ----------
 # Five sessions of the same cell disagree: AEP-full recorded 10, 20, 12, 4 and

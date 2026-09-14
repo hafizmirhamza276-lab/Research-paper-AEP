@@ -1010,3 +1010,56 @@ cost and its own R14 treatment --- and a third occurrence is the trigger, in the
 same sense R12a records a third unexplained restart so a fourth is met as a
 pattern.
 
+---
+
+## R16. A test that inspects a destructive script must not execute it.
+
+**Do not** let a parametrised test invoke a collection script whose results
+root is a compiled-in default. **Do** make the root an input and point the
+test at a sacrificial directory, or assert against the source text.
+
+**Why, from 14 September, phase 19 --- and the victim was published data.**
+
+`scripts/fsync_always_benchmark.sh` had `CLEAN` defaulting to `1` and a
+recursive delete of the hardcoded `experiments/results/fsync-always`. Ruling
+on the preserved stage 3 safety test required R13 --- run the test against the
+old code first and watch it fail. Three of its four properties are source
+inspections and are inert. The fourth is a run-count gate, it is parametrised,
+and **it runs the script**. On the old script there was no gate to stop at, so
+every invocation fell into the delete and then into a real collection. They
+raced: one invocation's `rm -rf` removed the run directory another was writing
+into, and that is preserved as a `FileNotFoundError` traceback in the
+quarantined `matrix-progress.jsonl`.
+
+Sixty executions across six raw run directories, behind three published
+macros, gone. Not recoverable: they were gitignored, uncommitted, unmanifested.
+
+**The compounding part is the gitignore.** That root un-ignores its two
+derived CSVs and ignores everything else. So `git status` reported *two*
+deleted files and could not report the *sixty* that mattered more --- and
+those two came back from git, which is exactly what makes the loss look
+survivable at a glance. **A tree whose valuable half is invisible to
+`git status` needs a manifest, and this one had none** --- a fact recorded in
+the same pass's report, hours before the deletion, as an observation rather
+than an action.
+
+**R13 and this rule pull against each other, and R13 still wins.** Exercising
+the failing branch is what made the ruling worth anything: it is what surfaced
+the default-on delete at all. The defect is not that the old code was run. It
+is that it was run *in the repository*, against its own default root, instead
+of in a copy. Before running the old version of anything destructive, ask what
+its defaults point at --- and if the answer is a path under
+`experiments/results/`, run it somewhere else.
+
+Account: `reports/incident-fsync-always-raw-destroyed-2026-09-14.md`.
+
+### Relation to the existing rules
+
+* **Rule 2** (docs/26: frozen results are immutable) is the rule that was
+  broken. R16 is about the mechanism that broke it.
+* **R4** already says a destructive gate needs a dry-run seam before R3 can be
+  applied to it. R16 is R4 read in the other direction: the seam is needed
+  before the *test* can be applied to it either.
+* **R15** is what caught it, and only just. `check_paper_numbers.py` failed
+  with a `FileNotFoundError` on a path the pass had no reason to think it had
+  touched. Nothing else in the pass would have.
