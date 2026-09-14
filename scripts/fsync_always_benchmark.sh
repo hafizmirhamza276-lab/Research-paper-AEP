@@ -50,6 +50,13 @@ PORT="6383"
 . "$(dirname "${BASH_SOURCE[0]}")/results_root_guard.sh"
 aep_require_explicit_results_root AEP_FSYNC_RESULTS_ROOT || exit $?
 RESULTS_ROOT="${AEP_FSYNC_RESULTS_ROOT}"
+# Checked HERE, not down beside the collection, because the refusal has to
+# come before any side effect. Phase 21 found it firing correctly but late:
+# a container on this fixed name and port had already been started, the
+# config gate had passed and the disposability marker had been SET. A second
+# invocation racing the first over one container name is the shape that
+# destroyed data in phase 19.
+aep_refuse_nonempty_results_root "${AEP_FSYNC_RESULTS_ROOT}" || exit $?
 
 # The config the container must actually load.
 #
@@ -200,7 +207,6 @@ echo
 #
 # The replacement refuses instead of deleting. A new collection goes to a new
 # dated root, which is what rule 2 asks for anyway.
-aep_refuse_nonempty_results_root "${RESULTS_ROOT}" || exit $?
 mkdir -p "${RESULTS_ROOT}"
 SYSTEM_FLAGS=()
 for system in ${SYSTEMS}; do

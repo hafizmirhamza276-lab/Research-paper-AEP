@@ -631,3 +631,21 @@ experiments/results/ws5-2026-09-10/t2-keying/analysis/*
 !experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/RAW-SHA256SUMS
 !experiments/results/phase10-replication-ext4-2026-09-02/RAW-SHA256SUMS
 !experiments/results/phase10-replication-ext4-arbb30-2026-09-02/RAW-SHA256SUMS
+
+# WS-5.1, the `always` arm (phase 21, 45 runs). The first collection whose
+# RAW-SHA256SUMS was taken minutes after the last run rather than later, so
+# it has no temporal gap -- see docs/25 R16 and the phase 20 report for what
+# that gap cost. Never a run directory, never a ledger, never a log.
+!experiments/results/fsync-always-2026-09-14/
+experiments/results/fsync-always-2026-09-14/*
+!experiments/results/fsync-always-2026-09-14/MANIFEST.md
+!experiments/results/fsync-always-2026-09-14/MANIFEST.csv
+!experiments/results/fsync-always-2026-09-14/SHA256SUMS
+!experiments/results/fsync-always-2026-09-14/RAW-SHA256SUMS
+!experiments/results/fsync-always-2026-09-14/analysis/
+experiments/results/fsync-always-2026-09-14/analysis/*
+!experiments/results/fsync-always-2026-09-14/analysis/comparisons-vs-aep-full.csv
+!experiments/results/fsync-always-2026-09-14/analysis/coverage.json
+!experiments/results/fsync-always-2026-09-14/analysis/latency-and-throughput.csv
+!experiments/results/fsync-always-2026-09-14/analysis/per-cell-metrics.csv
+!experiments/results/fsync-always-2026-09-14/analysis/per-execution.csv
