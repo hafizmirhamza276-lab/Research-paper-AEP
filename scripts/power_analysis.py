@@ -521,6 +521,19 @@ def build_report() -> dict:
     }
 
 
+def _empty(section: str) -> None:
+    """Say which of the two empty-looking outcomes this is.
+
+    A heading with nothing under it is ambiguous between "this view did not
+    compute the section" and "the section was computed and found nothing".
+    The first is routine; the second would, for section A2, mean no arm was
+    flagged as a mixture -- which is H2 of the WS-5 pre-registration being
+    refuted. Those must never render alike.
+    """
+    print(f"  ({section})")
+    print()
+
+
 def print_report(report: dict) -> None:
     print("=" * 74)
     print("WS-5 power assessment -- frozen data, no collection")
@@ -529,6 +542,8 @@ def print_report(report: dict) -> None:
     print("\n-- A. What the three-run bootstrap intervals can support --\n")
     print("A cluster bootstrap over n runs can take at most C(2n-1, n) distinct")
     print("values. Ten thousand resamples do not change that.\n")
+    if not report.get("degeneracy"):
+        _empty("not computed in this view")
     for row in report["degeneracy"]:
         print(f"  {row['quantity']}  [appendfsync={row['policy']}]")
         print(f"    clusters per arm      : {row['treatment_clusters']} vs "
@@ -550,6 +565,10 @@ def print_report(report: dict) -> None:
         print()
 
     print("-- A2. Why those intervals are wide: the arms are mixtures --\n")
+    if "mixtures" not in report:
+        _empty("not computed in this view")
+    elif not report["mixtures"]:
+        _empty("computed: no arm has a splittable sample")
     for row in report.get("mixtures", []):
         mix = row["mixture"]
         if not mix:
@@ -578,6 +597,8 @@ def print_report(report: dict) -> None:
         print()
 
     print("-- B. The two comparisons §VIII calls precision failures --\n")
+    if not report.get("session_comparisons"):
+        _empty("not computed in this view")
     for row in report["session_comparisons"]:
         print(f"  {row['label']}")
         print(f"    sessions              : {row['sessions']}")
@@ -598,6 +619,8 @@ def print_report(report: dict) -> None:
         print()
 
     print("-- C. Sizing the timing arms (task 5.1) --\n")
+    if not report.get("timing_sizing"):
+        _empty("not computed in this view")
     for row in report["timing_sizing"]:
         print(f"  {row['system']:<22} [appendfsync={row['policy']}]  "
               f"clusters={row['clusters']}")
@@ -619,20 +642,50 @@ def main() -> int:
     parser.add_argument("--section",
                         choices=("degeneracy", "session", "timing"),
                         help="print one section only")
+    # The instrument is fixed; the tree it reads is not. Pre-registration
+    # section 2.3 names this module as the mixture instrument, and the arms it
+    # has to judge are the fifteen-run ones collected later, not the three-run
+    # ones that motivated the workstream. Overriding the path changes which
+    # data is read and nothing else: estimator, resamples and seed are
+    # module constants and stay where they are.
+    parser.add_argument("--everysec", type=Path, default=None,
+                        help="per-execution.csv for the appendfsync=everysec arm")
+    parser.add_argument("--always", type=Path, default=None,
+                        help="per-execution.csv for the appendfsync=always arm")
     args = parser.parse_args()
+
+    if args.everysec or args.always:
+        chosen = {}
+        if args.everysec:
+            chosen["everysec"] = args.everysec
+        if args.always:
+            chosen["always"] = args.always
+        for label, path in chosen.items():
+            if not path.is_file():
+                raise SystemExit(f"FAIL: no per-execution.csv at {path}")
+        EXECUTION_PATHS.clear()
+        EXECUTION_PATHS.update(chosen)
+        print("# reading:", ", ".join(f"{k}={v}" for k, v in chosen.items()))
 
     report = build_report()
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
         return 0
     if args.section == "degeneracy":
-        report = {"degeneracy": report["degeneracy"], "session_comparisons": [],
-                  "timing_sizing": []}
+        # "mixtures" travels WITH degeneracy and is not optional: section A2
+        # is the explanation for section A, and dropping it made the report
+        # print an empty A2 that reads exactly like "no arm was flagged".
+        # An instrument that renders "not computed" and "nothing found"
+        # identically is the R14 shape, inside the instrument written to
+        # judge the mixture. Caught on the first fifteen-run run.
+        report = {"degeneracy": report["degeneracy"],
+                  "mixtures": report["mixtures"],
+                  "session_comparisons": [], "timing_sizing": []}
     elif args.section == "session":
-        report = {"degeneracy": [], "session_comparisons":
+        report = {"degeneracy": [], "mixtures": [], "session_comparisons":
                   report["session_comparisons"], "timing_sizing": []}
     elif args.section == "timing":
-        report = {"degeneracy": [], "session_comparisons": [],
+        report = {"degeneracy": [], "mixtures": [], "session_comparisons": [],
                   "timing_sizing": report["timing_sizing"]}
     print_report(report)
     return 0

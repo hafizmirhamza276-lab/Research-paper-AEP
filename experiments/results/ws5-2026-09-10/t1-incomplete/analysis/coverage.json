@@ -1,0 +1,34 @@
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 4,
+  "crash_free_runs": 3,
+  "crash_points": [
+    "after_barrier_before_dispatch",
+    "mid_dispatch",
+    "none"
+  ],
+  "executions": 120,
+  "readback_keyings": [
+    "CALLER_REFERENCE",
+    "ORACLE_FINGERPRINT"
+  ],
+  "regimes": [
+    "crashed",
+    "p0",
+    "p30"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK"
+  ],
+  "runs": 12,
+  "runs_dropped_for_clock_suspension": 0,
+  "runs_dropped_for_undeclared_suspend_policy": 0,
+  "runs_with_a_hard_redis_kill": 0,
+  "runs_with_usable_timing": 12,
+  "systems": [
+    "B4_DURABLE_WORKFLOW"
+  ],
+  "worst_suspension_seconds": 0.242
+}

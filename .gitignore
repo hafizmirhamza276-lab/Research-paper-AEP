@@ -557,3 +557,42 @@ experiments/results/stage3-replication-2026-08-13/analysis/*
 # artifact that regenerates on demand and goes stale the moment
 # build_paper.sh changes -- which it has, repeatedly. Ignored, not committed.
 phase8-driver/.build_keep.sh
+
+# --- WS-5 analysis outputs (phase 17) ---------------------------------------
+# Same six names the matrix and every phase13 session track. NOT table-1.csv:
+# check_paper_numbers bans it as a source for rates, and tracking a banned
+# table invites reading from it. Not the metric-*.csv slices either -- they are
+# views of per-cell-metrics.csv, which is tracked whole -- and not the figures,
+# which `make reproduce-figures` regenerates.
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/
+experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/
+experiments/results/ws5-2026-09-10/t1-incomplete/analysis/*
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/
+experiments/results/ws5-2026-09-10/t2-p30/analysis/*
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/
+experiments/results/ws5-2026-09-10/t2-keying/analysis/*
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/redis-kill-ablation.csv

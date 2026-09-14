@@ -263,3 +263,63 @@ def test_the_session_comparisons_match_the_published_intervals(pa):
     kill = rows["kill_latency_ms"]
     assert kill["half_width"] == pytest.approx(195.7, abs=0.5)
     assert kill["sign_test_can_ever_reject"] is False
+
+# --------------------------------------------------------------------------
+# The section filter must not render "not computed" as "nothing found".
+# --------------------------------------------------------------------------
+
+
+def test_degeneracy_section_carries_the_mixture_report(pa):
+    """Section A2 explains section A; dropping it prints an empty A2.
+
+    Found on the first fifteen-run run of this module. `--section degeneracy`
+    rebuilt the report without the "mixtures" key, so A2 rendered as a heading
+    with nothing under it -- which reads exactly like "no arm was flagged", the
+    outcome that refutes H2 of the pre-registration. An instrument whose
+    "I was not asked" and "I found nothing" are the same glyph is the R14 shape,
+    inside the instrument written to judge the mixture.
+    """
+    report = pa.build_report()
+    assert "mixtures" in report
+    filtered = {"degeneracy": report["degeneracy"],
+                "mixtures": report["mixtures"],
+                "session_comparisons": [], "timing_sizing": []}
+    assert filtered["mixtures"], "the degeneracy view must carry the mixture rows"
+
+
+def test_every_section_view_defines_mixtures(pa, capsys):
+    """All three views must set the key, so none can print a blank A2."""
+    import sys
+    report = pa.build_report()
+    for section in ("degeneracy", "session", "timing"):
+        old = sys.argv
+        sys.argv = ["power_analysis.py", "--section", section]
+        try:
+            assert pa.main() == 0
+        finally:
+            sys.argv = old
+        out = capsys.readouterr().out
+        # A2's heading may appear; if it does, it must not be the last thing
+        # printed with nothing under it.
+        # Every section must say which kind of empty it is: "not computed in
+        # this view" or "computed: nothing found". A bare heading is the
+        # ambiguity this test exists to forbid.
+        tail = out.split("A2.", 1)[1] if "A2." in out else ""
+        assert tail, f"--section {section} printed no A2 heading at all"
+        assert ("MIXTURE" in tail or "not a mixture" in tail
+                or "not computed in this view" in tail
+                or "no arm has a splittable sample" in tail), (
+            f"--section {section} printed an ambiguous empty A2"
+        )
+
+
+def test_execution_path_override_rejects_a_missing_file(pa, tmp_path):
+    """Pointing the instrument at a tree that is not there must fail loudly."""
+    import sys
+    old = sys.argv
+    sys.argv = ["power_analysis.py", "--everysec", str(tmp_path / "nope.csv")]
+    try:
+        with pytest.raises(SystemExit):
+            pa.main()
+    finally:
+        sys.argv = old

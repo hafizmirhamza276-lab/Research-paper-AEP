@@ -1,0 +1,35 @@
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 7,
+  "crash_free_runs": 105,
+  "crash_points": [
+    "none"
+  ],
+  "executions": 1050,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "p0"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK"
+  ],
+  "runs": 105,
+  "runs_dropped_for_clock_suspension": 0,
+  "runs_dropped_for_undeclared_suspend_policy": 0,
+  "runs_with_a_hard_redis_kill": 0,
+  "runs_with_usable_timing": 105,
+  "systems": [
+    "AEP_FULL",
+    "B0_NAIVE_RETRY",
+    "B1_LEASE_ONLY",
+    "B2_CAS_ONLY",
+    "B3_INTENT_NO_BARRIER",
+    "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    "B4_DURABLE_WORKFLOW"
+  ],
+  "worst_suspension_seconds": 0.082
+}
