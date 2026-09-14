@@ -9,6 +9,24 @@ digest `87fa2d53…` — is **built and verified but not yet deposited**, so no 
 exists yet; `ARTIFACT.md` §5 records exactly what is pending and
 `docs/29-archive-deposit.md` is the checklist that closes it.
 
+**Where the raw actually is, until that deposit happens.** Until there is a
+DOI, the raw runs exist only on the measurement host, and this repository
+cannot hand you a path to them. It can at least name them:
+
+| copy | path | holds |
+|---|---|---|
+| the archive | `/root/aep-raw-archive/` | `aep-raw-evidence.tar`, `.tar.gz`, `MANIFEST.sha256`, `ARCHIVE-METADATA.json` |
+| a second copy | `/mnt/d/personal/AEP/aep-raw-archive/` | the same, without the uncompressed `.tar` |
+| the collection trees | `/root/aep`, `/root/aep-phase8`, `/root/aep-phase10` | the roots the archive was built from; `ARCHIVE-METADATA.json` names each one's `source_path` |
+
+This paragraph exists because on 2026-09-14 a script deleted a results
+directory and the deletion was written up as unrecoverable — for several
+hours, and in a committed file — while two verified copies sat on the same
+host. `ARTIFACT.md` §5 had named them the whole time and nobody read it.
+**An archive the repository describes but never locates protects the data and
+not the reader.** `docs/25` R16, R14 instance 9, and
+`reports/incident-fsync-always-raw-destroyed-2026-09-14.md`.
+
 **Start at [`ARTIFACT.md`](ARTIFACT.md)** if you are here to check a number in
 the paper. It maps every quantitative claim to the command that reproduces it.
 

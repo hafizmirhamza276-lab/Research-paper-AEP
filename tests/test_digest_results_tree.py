@@ -166,3 +166,71 @@ def test_the_analysis_directory_is_not_treated_as_a_run(dt, tree):
 
 def test_main_rejects_a_missing_root(dt, tmp_path):
     assert dt.main(["--results-root", str(tmp_path / "nope")]) == 2
+
+
+# --------------------------------------------------------------------------
+# A root with no run directories. Thirteen of this repository's twenty-two
+# results roots are analysis-only copies: the collection happened elsewhere
+# and only its analysis products were carried across. Digesting one of those
+# produces a file with no file lines and a tree digest of sha256(b""), which
+# is a constant -- so two unrelated empty roots get the SAME tree digest, and
+# both look exactly like a covered collection. `docs/25` R14: an empty result
+# must say which kind of empty it is.
+# --------------------------------------------------------------------------
+
+
+def test_a_root_with_no_run_directories_is_refused(dt, tmp_path):
+    """The refusal, which is the whole point: no file may be written."""
+    root = tmp_path / "analysis-only"
+    (root / "analysis").mkdir(parents=True)
+    (root / "analysis" / "per-execution.csv").write_text(
+        "a,b" + chr(10) + "1,2" + chr(10), encoding="utf-8")
+
+    with pytest.raises(dt.NoRunDirectories):
+        dt.write(root)
+
+    assert not (root / dt.DIGEST_NAME).exists(), (
+        "a refused root must be left with no digest file at all"
+    )
+
+
+def test_the_refusal_exits_three_and_says_why(dt, tmp_path, capsys):
+    """Exit 3 is distinct from 2 (not a directory) and 1 (mismatch), so a
+    caller sweeping roots can tell 'nothing to bind' from 'does not match'.
+    """
+    root = tmp_path / "analysis-only"
+    (root / "analysis").mkdir(parents=True)
+
+    code = dt.main(["--results-root", str(root)])
+
+    assert code == 3
+    out = capsys.readouterr().out
+    assert "REFUSED" in out
+    assert "no run directories" in out
+
+
+def test_two_unrelated_empty_roots_would_have_shared_a_tree_digest(dt, tmp_path):
+    """Why the refusal and not a warning.
+
+    The pre-fix tool gave every empty root the identical tree digest, because
+    it is sha256 of the empty string. A digest equal across unrelated
+    collections is not an identifier. This pins the reason, so a later
+    "write it anyway, it is harmless" cannot be argued.
+    """
+    import hashlib
+
+    a = tmp_path / "a"
+    b = tmp_path / "b"
+    for root in (a, b):
+        (root / "analysis").mkdir(parents=True)
+
+    for root in (a, b):
+        with pytest.raises(dt.NoRunDirectories):
+            dt.digest_tree(root)
+
+    # The value the pre-fix code produced for BOTH of them, and for every
+    # other empty root in the project:
+    assert hashlib.sha256(b"").hexdigest() == (
+        "e3b0c44298fc1c149afbf4c8996fb924"
+        "27ae41e4649b934ca495991b7852b855"
+    )

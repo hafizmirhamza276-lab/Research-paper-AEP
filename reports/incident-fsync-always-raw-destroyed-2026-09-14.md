@@ -121,8 +121,38 @@ would have silently produced different published numbers from one broken run.
 ## 3. Disposition
 
 * The 14:03 artefacts are **quarantined, not deleted**, at
-  `reports/raw/INCIDENT-fsync-always-destroyed-2026-09-14/`. They are the
-  evidence for §2 and they are committed as such.
+  `reports/raw/INCIDENT-fsync-always-destroyed-2026-09-14/`. Five of the
+  twelve are committed (`run-config.json`, `mock-api.yaml`,
+  `matrix-plan.json`, `matrix-plan.txt`, `matrix-progress.jsonl` — the last
+  carries the traceback that is the evidence for §2). The other seven are
+  a SQLite ledger, its side files and three logs, which `.gitignore:82-88`
+  forbids committing.
+
+  **Ruled in phase 20: digests recorded here, files left untracked.** The
+  exception was worth considering while these looked like the last trace of
+  destroyed data. They are not: step 1 recovered two verified copies of the
+  real runs, so this is debris from a failed collection, and the ledger of a
+  run that crashed before writing a summary proves nothing the traceback
+  does not. Weakening a gitignore rule that exists to keep ledgers and logs
+  out of the history, to preserve debris, would be the worse trade. What
+  the digests below buy is the only thing actually needed: if these files
+  are ever cited, it can be shown they are the ones this incident produced.
+
+  ```
+  sha256                                                            bytes  path
+  0e6fe9f4206c791b66e2e781c9bfdd12793f8d93a807de673ccaee53c1911487   1750  aep_full-.../ground_truth.run.jsonl
+  1fe8f6113488865c546d2faa55b21482662ce4be19d4f505eeefa09bc3131489   4096  aep_full-.../ground_truth.sqlite3
+  b19fc17c468f7fc7aa8aec642f6b9c758f870ddabd3f29f884a96eb45ded74a9  32768  aep_full-.../ground_truth.sqlite3-shm
+  7c328a3421154281ee5d5ae4b272f7eebf68ff0352c94b2cb00d170f80a46cd0  74192  aep_full-.../ground_truth.sqlite3-wal
+  928b28e8bcecadd9b6b5995cc37ba643388a59636334fe1e3a147dcc905c0228    288  aep_full-.../mock-api.log
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855      0  aep_full-.../recovery-stderr.log
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855      0  aep_full-.../recovery-stdout.log
+  ```
+
+  The two zero-byte logs share `e3b0c442…`, the SHA-256 of the empty
+  string. That constant turns up again in phase 20 step 3 as the tree
+  digest `digest_results_tree.py` used to hand every empty results root,
+  which is why that tool now refuses them.
 * `experiments/results/fsync-always/` now contains exactly its tracked content
   and nothing else — `git status` on that path is empty.
 * `RAW-RUNS-DESTROYED.md` is placed in that root and un-ignored, so the next

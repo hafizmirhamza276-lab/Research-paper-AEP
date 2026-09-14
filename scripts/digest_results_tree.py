@@ -74,6 +74,22 @@ def run_directories(root: Path) -> list[Path]:
     )
 
 
+class NoRunDirectories(Exception):
+    """Raised for a root with nothing this tool can bind.
+
+    A results root with no run directories yields a RAW-SHA256SUMS with no
+    file lines and a tree digest of ``sha256(b"")`` -- a constant. Such a
+    file is indistinguishable, by eye or by ``--check``, from one covering a
+    real collection, so it reads as coverage while binding nothing.
+
+    Thirteen roots in this repository are analysis-only copies of
+    collections whose raw runs live elsewhere. Writing them a digest would
+    assert custody this checkout does not have. Refusing is the honest
+    answer and it names the reason (`docs/25` R14: an empty result must say
+    which kind of empty it is).
+    """
+
+
 def digest_tree(root: Path) -> tuple[list[tuple[str, str]], dict[str, str], str]:
     """Return (file lines, per-run digests, tree digest).
 
@@ -81,9 +97,19 @@ def digest_tree(root: Path) -> tuple[list[tuple[str, str]], dict[str, str], str]
     it changes if a file is added, removed or altered. The tree digest is over
     the sorted per-run digests, for the same reason one level up.
     """
+    runs = run_directories(root)
+    if not runs:
+        raise NoRunDirectories(
+            str(root) + " has no run directories. Refusing to write a"
+            " RAW-SHA256SUMS: it would contain no file lines and a tree"
+            " digest of the empty string, which is a constant and binds"
+            " nothing, while looking exactly like coverage. If this root is"
+            " an analysis-only copy, its raw runs are somewhere else and"
+            " that is where the digest belongs."
+        )
     lines: list[tuple[str, str]] = []
     per_run: dict[str, str] = {}
-    for run in run_directories(root):
+    for run in runs:
         run_lines: list[str] = []
         for path in sorted(run.rglob("*")):
             if not path.is_file() or is_volatile(path):
@@ -184,10 +210,17 @@ def main(argv: list[str] | None = None) -> int:
     if not root.is_dir():
         print(f"FAIL: {root} is not a directory")
         return 2
-    if args.check:
-        return check(root)
-    out = write(root)
-    _lines, per_run, tree = digest_tree(root)
+    try:
+        if args.check:
+            return check(root)
+        out = write(root)
+        _lines, per_run, tree = digest_tree(root)
+    except NoRunDirectories as exc:
+        # Exit 3, distinct from 2 ("not a directory") and 1 ("digest
+        # mismatch"), so a caller looping over roots can tell "nothing
+        # here to bind" apart from "what is here does not match".
+        print("REFUSED: " + str(exc))
+        return 3
     print(f"wrote {out}  ({len(per_run)} runs, tree {tree[:16]}...)")
     return 0
 

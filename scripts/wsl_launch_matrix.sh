@@ -10,7 +10,13 @@
 set -uo pipefail
 
 DST="${AEP_LINUX_TREE:-$HOME/aep}"
-RESULTS_ROOT="${RESULTS_ROOT:-experiments/results/matrix}"
+# This defaulted to experiments/results/matrix -- the frozen 432-run root
+# every outcome rate in the paper is computed from. A bare invocation aimed
+# a resumable collection at it. Second instance of the shape that caused the
+# phase 19 accident (docs/25 R16), found while wiring the guard in phase 20.
+# shellcheck source=scripts/results_root_guard.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/results_root_guard.sh"
+aep_require_explicit_results_root RESULTS_ROOT || exit $?
 LOG="${MATRIX_LOG:-$DST/experiments/results/matrix-run.log}"
 export PATH="$HOME/.local/bin:$PATH"
 cd "$DST"

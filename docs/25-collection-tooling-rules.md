@@ -965,6 +965,68 @@ a summary matches the thing it summarises. R14's own widening anticipated this �
 and "it is unchanged" must never render the same* — but it was stated about
 probes. It applies to sentences.
 
+
+### R14b. An empty result from a name-matching search is not evidence of absence.
+
+**Do not** write "there is no X" on the strength of a `find`, `ls`, `grep` or
+glob that returned nothing. **Do** write what you searched, and let the
+reader see the shape of the hole. If the negative is load-bearing — if it
+decides that data is gone, that a feature is absent, that a claim is
+unsupported — search the *documentation* for the thing's name before
+searching the filesystem for its bytes.
+
+**Why, from 14 September.** Sixty executions of published data were deleted.
+Three searches were run to see whether a copy survived:
+
+```sh
+find . -path ./.git -prune -o \( -name "*.tar*" -o -name "*.zip" \) -print
+find /d/personal/AEP -maxdepth 3 -name "*fsync-always*"
+ls -d /root/*fsync* /tmp/*fsync* 2>/dev/null
+```
+
+All three returned nothing, and that was written up as:
+
+> existed in no archive, no tarball, no WSL copy and no manifest — all five
+> searched, all five empty ... **They are not recoverable.**
+
+Two verified copies existed, at `/root/aep-raw-archive/` and
+`/root/aep/experiments/results/fsync-always`. **No glob above contains either
+path.** The first search was confined to the repository; the second used the
+wrong name and stopped three levels down; the third looked for directories
+called `*fsync*` when the archive is called `aep-raw-archive`.
+
+**The one-line search that would have beaten all three:**
+
+```sh
+grep -rn "fsync-always" ARTIFACT.md README.md docs/
+```
+
+`ARTIFACT.md` §5 names the archive, its manifest digest, and
+`/root/aep/experiments/results/fsync-always` as that cell's `source_path`. It
+is tracked, it is the file the README tells you to start at, and it had the
+answer before the first `find` was typed.
+
+**The asymmetry that makes this a rule rather than a mistake.** A
+name-matching search is *sound* for positives and *unsound* for negatives. If
+it finds something, that thing exists. If it finds nothing, the only
+conclusion available is "not at these paths, under these names" — which is a
+statement about the search, not about the world. Writing the second as though
+it were the first costs nothing when the answer happens to be yes, and costs
+everything when a negative is about to become a decision.
+
+**What to write instead.** Name the paths searched, in the report, next to
+the conclusion. Not as ceremony: a reader who can see `maxdepth 3` and
+`/root/*fsync*` can see in one glance what those could not reach, and that is
+the review this defect needs. Phase 20's report does this, and it is the
+reason the hole was obvious once it was written down.
+
+**Relation to R14.** This is R14 instance 9's general form, promoted because
+the instrument was not a script — it was three shell commands and a universal
+quantifier, which is the cheapest instrument in the project and therefore the
+one most likely to be trusted without being examined. R14a is about a test's
+name describing what it asserts; R14b is about a search's output describing
+what it covered.
+
 ### Relation to the existing rules
 
 **R3** requires a gate be exercised on its failing branch; **R13** says a gate

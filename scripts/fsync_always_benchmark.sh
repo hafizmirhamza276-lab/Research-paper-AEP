@@ -24,7 +24,11 @@
 #      benchmark.
 #
 # Usage (from the repository root, on the Linux measurement host):
+#   AEP_FSYNC_RESULTS_ROOT=experiments/results/fsync-always-<date> \
 #   AEP_HARNESS_SUSPEND_DISABLED=1 bash scripts/fsync_always_benchmark.sh
+#
+# The root is REQUIRED. The bare form this header used to document is what
+# deleted a published result on 2026-09-14 (docs/25 R16); it now exits 2.
 set -euo pipefail
 
 # Same image digest as compose.phase2.yml -- a different Redis build would
@@ -35,7 +39,17 @@ PORT="6383"
 # NOT the frozen experiments/results/fsync-always. That directory is the
 # source of three published macros and is immutable (rule 2); a new collection
 # gets a new dated root, and the caller must name it.
-RESULTS_ROOT="${AEP_FSYNC_RESULTS_ROOT:-experiments/results/fsync-always}"
+#
+# Phase 19 left a DEFAULT here, pointing at the frozen root. That is the
+# property that caused the accident in the first place, so phase 20 removes
+# it: there is no default, and an unset variable is a refusal.
+# NOT scripts/lib/: .gitignore line 14 ignores any `lib/`, so a guard living
+# there would be untracked and absent from every clone -- and this script
+# would die at this line. Caught in phase 20 before it was committed.
+# shellcheck source=scripts/results_root_guard.sh
+. "$(dirname "${BASH_SOURCE[0]}")/results_root_guard.sh"
+aep_require_explicit_results_root AEP_FSYNC_RESULTS_ROOT || exit $?
+RESULTS_ROOT="${AEP_FSYNC_RESULTS_ROOT}"
 
 # The config the container must actually load.
 #
@@ -186,12 +200,7 @@ echo
 #
 # The replacement refuses instead of deleting. A new collection goes to a new
 # dated root, which is what rule 2 asks for anyway.
-if [ -e "${RESULTS_ROOT}" ] && [ -n "$(ls -A "${RESULTS_ROOT}" 2>/dev/null)" ]; then
-  echo "REFUSING: ${RESULTS_ROOT} already exists and is not empty." >&2
-  echo "          This script does not delete prior runs. Point" >&2
-  echo "          AEP_FSYNC_RESULTS_ROOT at a new dated directory." >&2
-  exit 3
-fi
+aep_refuse_nonempty_results_root "${RESULTS_ROOT}" || exit $?
 mkdir -p "${RESULTS_ROOT}"
 SYSTEM_FLAGS=()
 for system in ${SYSTEMS}; do

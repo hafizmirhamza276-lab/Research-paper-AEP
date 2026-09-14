@@ -10,6 +10,30 @@ re-checked with the commands in §6.
 
 ---
 
+## 0a. Precondition added 2026-09-14: this deposit is not a formality
+
+Every copy of the raw evidence is on **one machine**. Two of them
+(`/root/aep-raw-archive`, and the collection trees under `/root/aep*`) are in
+the WSL distro's ext4 image; the third
+(`/mnt/d/personal/AEP/aep-raw-archive`) is on the Windows volume and holds
+the `.tar.gz` but not the uncompressed `.tar`. All three verified clean on
+2026-09-14 — 26 300/26 300 files, 0 failed, 0 missing — which is the good news
+and also the whole exposure: a verified copy on the same host as the other
+verified copies is redundancy against deletion, not against loss.
+
+**What made this concrete rather than theoretical.** On 2026-09-14 a
+collection script's default-on clean path deleted a frozen results
+directory, and the loss was reported as permanent in a committed file
+before anyone looked at the archive (`docs/25` R16 and R14 instance 9). The
+data survived. It survived because of an artefact that has no DOI, no
+external location, and no reference from inside the repository — and the
+recovery took a direct instruction to go and look for it.
+
+So the deposit is not the last administrative step before a DOI can be
+cited. **It is the first copy that survives this host, and the first one a
+reader can reach without being told where to look.** Treat the checklist
+below accordingly.
+
 ## 0. Before you start: what the leakage scan found
 
 `scripts/scan_archive_for_leakage.py` read all 26 300 files, 493 MB, before

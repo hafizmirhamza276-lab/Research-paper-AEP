@@ -610,3 +610,24 @@ experiments/results/ws5-2026-09-10/t2-keying/analysis/*
 !experiments/results/ws5-2026-09-10/t1-incomplete/RAW-SHA256SUMS
 !experiments/results/ws5-2026-09-10/t2-p30/RAW-SHA256SUMS
 !experiments/results/ws5-2026-09-10/t2-keying/RAW-SHA256SUMS
+
+# Phase 20 step 3: the pre-WS-5 roots, which were unmonitored precisely
+# because they were 'already frozen'. Frozen is not a property that
+# protects anything -- docs/25 R16. Each file states, inside itself, the
+# date it binds from and that it cannot bind any pass that ran earlier.
+#
+# Not here: experiments/results/smoke, whose root `make reproduce-smoke`
+# rewrites on every invocation -- a tracked digest over it would fail
+# --check during ordinary use, and a gate that cries wolf gets ignored.
+# Not here either: the sixteen analysis-only roots, which have no run
+# directories; the tool now REFUSES those rather than writing a digest of
+# the empty string that reads as coverage.
+!experiments/results/b2-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s1-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s2-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s3-2026-08-21/RAW-SHA256SUMS
+!experiments/results/matrix/RAW-SHA256SUMS
+!experiments/results/phase10-replication-drvfs-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-ext4-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/RAW-SHA256SUMS
