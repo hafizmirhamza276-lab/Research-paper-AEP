@@ -201,7 +201,22 @@ reproduce-figures:
 	$(UV) run --frozen python scripts/gen_state_machine.py --check paper/figures/state-machine.tex
 	@echo
 	@echo "=== the two analysis figures ==="
-	if compgen -G "$(ARCHIVE)/*-r0" > /dev/null 2>&1 || compgen -G "$(ARCHIVE)/*-r1" > /dev/null 2>&1; then
+	# The guard asks how many run directories are present AND whether that
+	# matches what the archive's own manifest says it contains. Presence
+	# alone is not enough: a partial tree -- 84 of 432, say, which is what a
+	# rescued snapshot looks like -- passes a presence test, runs analyze.py
+	# over a quarter of the data, and reports "a plotted value moved" when
+	# the truth is "I had a quarter of the runs". That is a gate that cannot
+	# say "I could not look properly" (docs/25 R14).
+	have=$$(find "$(ARCHIVE)" -maxdepth 1 -type d -name "*-r[0-9]*" 2>/dev/null | wc -l)
+	want=$$(sed -n "s/^- completed runs: \*\*\([0-9]\+\)\*\*.*/\1/p" "$(ARCHIVE)/MANIFEST.md" 2>/dev/null | head -1)
+	if [[ -n "$$want" && "$$have" -gt 0 && "$$have" -ne "$$want" ]]; then
+	  echo "  SKIPPED: $(ARCHIVE) holds $$have run directories, but its MANIFEST.md"
+	  echo "           records $$want. Regenerating from a partial tree would compare"
+	  echo "           figures built from $$have runs against figures built from $$want,"
+	  echo "           and report the difference as a moved value. Unpack the full"
+	  echo "           results archive and re-run with ARCHIVE=<path>."
+	elif [[ "$$have" -gt 0 ]]; then
 	  $(UV) run --frozen python -m experiments.analyze \
 	      --results-root "$(ARCHIVE)" \
 	      --destination "$(FIG_ROOT)/analysis" > "$(FIG_ROOT)/analyze.log" 2>&1

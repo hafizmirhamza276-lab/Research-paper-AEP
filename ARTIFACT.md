@@ -27,6 +27,15 @@ regenerates every generated table and every macro from the frozen CSVs and
 byte-compares them against what is committed. The same comparison runs in CI on
 every push (the `Numbers gate` job).
 
+**What it does not cover, stated so nobody infers it does.** The two analysis
+figures (`figure-1-undetected-vs-ambiguity.pdf`,
+`figure-2-duplicates-by-crash-point.pdf`) are regenerated only when `ARCHIVE`
+holds the *complete* raw run tree, which is not tracked. From a fresh clone the
+target reports them `SKIPPED`. It also skips — rather than failing — when the
+tree is present but **incomplete**: comparing figures built from part of the
+data against figures built from all of it produces a difference that looks like
+a moved result and is not one. The skip message names both counts.
+
 ---
 
 ## 2. Requirements

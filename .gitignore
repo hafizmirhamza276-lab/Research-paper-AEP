@@ -596,3 +596,14 @@ experiments/results/ws5-2026-09-10/t2-keying/analysis/*
 !experiments/results/ws5-2026-09-10/t2-keying/analysis/per-cell-metrics.csv
 !experiments/results/ws5-2026-09-10/t2-keying/analysis/per-execution.csv
 !experiments/results/ws5-2026-09-10/t2-keying/analysis/redis-kill-ablation.csv
+
+# --- WS-5 raw-tree digests (phase 18) ----------------------------------------
+# RAW-SHA256SUMS covers every file in every run directory, which SHA256SUMS
+# does not -- that file holds the two manifests only, and 729fbfa's claim that
+# it proves what was analysed is corrected in
+# reports/correction-729fbfa-sha256sums-scope-2026-09-14.md. The digest itself
+# is tracked; the 331 MB it covers stays on the measurement host.
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t1-incomplete/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-p30/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-keying/RAW-SHA256SUMS

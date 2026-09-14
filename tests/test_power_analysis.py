@@ -323,3 +323,43 @@ def test_execution_path_override_rejects_a_missing_file(pa, tmp_path):
             pa.main()
     finally:
         sys.argv = old
+
+def test_an_empty_A2_emits_an_explicit_sentinel(pa, tmp_path, monkeypatch, capsys):
+    """Rule 13: feed it a tree that really produces an empty section.
+
+    R14 instance 8 was an A2 heading with nothing under it, which read exactly
+    like "no arm was flagged" -- that is, H2 refuted. The repair is a sentinel,
+    and a sentinel is only evidence once something has been seen to trigger it.
+    This builds a per-execution.csv whose arms hold one execution each, so
+    ``largest_gap_split`` returns {} and no mixture row exists at all.
+
+    Confirmed to fail against the pre-fix module at 5ff3dc2, whose A2 renders as
+    a heading followed directly by section B.
+    """
+    rows = [
+        "regime,system,run_id,step_latency_ms",
+        "p0,AEP_FULL,r0,4000.0",
+        "p0,B3_INTENT_NO_BARRIER,r0,2000.0",
+        "p0,B0_NAIVE_RETRY,r0,2000.0",
+    ]
+    csv_path = tmp_path / "per-execution.csv"
+    csv_path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
+
+    monkeypatch.setitem(pa.EXECUTION_PATHS, "everysec", csv_path)
+    monkeypatch.delitem(pa.EXECUTION_PATHS, "always", raising=False)
+
+    mixture_rows = pa.assess_mixtures()
+    assert all(not r["mixture"] for r in mixture_rows), (
+        "fixture must yield no mixture rows, or it is not testing an empty A2"
+    )
+
+    pa.print_report({"degeneracy": [], "mixtures": [],
+                     "session_comparisons": [], "timing_sizing": []})
+    out = capsys.readouterr().out
+    assert "A2." in out
+    tail = out.split("A2.", 1)[1]
+    assert ("no arm has a splittable sample" in tail
+            or "not computed" in tail), (
+        "an empty A2 printed no sentinel -- indistinguishable from "
+        "'no arm was flagged', which is H2 refuted"
+    )

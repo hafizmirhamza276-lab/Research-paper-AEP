@@ -186,6 +186,12 @@ def largest_gap_split(values: list[float]) -> dict:
     spread = ordered[-1] - ordered[0]
     return {
         "gap": gap,
+        # The boundary itself, not a midpoint: the largest value still in the
+        # lower group. A midpoint rule (lower_median + gap/2) sits below the
+        # top of the lower group whenever that group is skewed, and silently
+        # drops genuine lower-mode observations -- it dropped 8 of B3's 120 on
+        # the first attempt at this.
+        "lower_max": lower[-1],
         "gap_share_of_range": gap / spread if spread else 0.0,
         "lower_n": len(lower),
         "upper_n": len(upper),
@@ -269,6 +275,86 @@ def crash_free_latencies(path: Path, system: str) -> dict[str, list[float]]:
         if value:
             grouped[row["run_id"]].append(float(value))
     return dict(grouped)
+
+
+def lower_mode_threshold(per_run: dict[str, list[float]]) -> float | None:
+    """The cut between the two modes, from the arm's pooled sample.
+
+    Computed once per arm and then applied to every run, so the split is a
+    property of the arm rather than of whichever run is being resampled. A
+    per-run split would move under the bootstrap and make the estimator depend
+    on the resample, which is the defect amendment 1 exists to avoid.
+    """
+    pooled = [v for values in per_run.values() for v in values]
+    split = largest_gap_split(pooled)
+    if not split:
+        return None
+    return split["lower_max"]
+
+
+def lower_mode_difference(
+    treatment: dict[str, list[float]],
+    control: dict[str, list[float]],
+    *,
+    resamples: int = BOOTSTRAP_RESAMPLES,
+    seed: int = BOOTSTRAP_SEED,
+) -> dict:
+    """Cluster bootstrap of (lower-mode median treatment - lower-mode control).
+
+    The same estimator as :func:`bootstrap_difference_support` -- resample runs
+    with replacement, 10 000 times, seed 20260806 -- applied after each arm's
+    executions have been restricted to its lower mode.
+
+    A run that contributes NO lower-mode execution contributes nothing to that
+    resample rather than being dropped from the cluster list: dropping it would
+    silently shrink the cluster count and narrow the interval, which is the
+    direction that flatters the result.
+    """
+    t_cut = lower_mode_threshold(treatment)
+    c_cut = lower_mode_threshold(control)
+    if t_cut is None or c_cut is None:
+        return {}
+
+    def restrict(per_run, cut):
+        return {run: [v for v in values if v <= cut]
+                for run, values in per_run.items()}
+
+    t_low, c_low = restrict(treatment, t_cut), restrict(control, c_cut)
+    t_runs, c_runs = sorted(t_low), sorted(c_low)
+    rng = random.Random(seed)
+
+    def draw(runs, data):
+        picked = []
+        for _ in runs:
+            picked.extend(data[rng.choice(runs)])
+        return picked
+
+    def med(values):
+        return statistics.median(values) if values else None
+
+    point = (med([v for r in t_runs for v in t_low[r]])
+             - med([v for r in c_runs for v in c_low[r]]))
+
+    diffs = []
+    for _ in range(resamples):
+        a, b = med(draw(t_runs, t_low)), med(draw(c_runs, c_low))
+        if a is not None and b is not None:
+            diffs.append(a - b)
+    diffs.sort()
+    low = diffs[int(0.025 * len(diffs))]
+    high = diffs[int(0.975 * len(diffs))]
+    return {
+        "point": point,
+        "ci_low": low,
+        "ci_high": high,
+        "half_width": (high - low) / 2.0,
+        "spans_zero": low <= 0.0 <= high,
+        "treatment_cut": t_cut,
+        "control_cut": c_cut,
+        "treatment_kept": sum(len(v) for v in t_low.values()),
+        "control_kept": sum(len(v) for v in c_low.values()),
+        "resamples_used": len(diffs),
+    }
 
 
 def bootstrap_difference_support(

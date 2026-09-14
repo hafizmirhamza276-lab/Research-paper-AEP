@@ -777,10 +777,13 @@ believed.
 
 ## R14. Hold the checking code to the standard of the code it checks.
 
-**Seven instances now.** It has stopped being an observation and become the most
+**Eight instances now.** It has stopped being an observation and become the most
 reliable defect generator in this project, so it is a rule. Instance 6 is in
-R14a below; instance 7 is at the end of this list and is the first to have been
-caught by someone outside the project rather than by a number looking wrong.
+R14a below; instances 7 and 8 are at the end of this list. Seven is the first to
+have been caught from outside the project rather than by a number looking wrong.
+Eight is the first in which the blank output would have been read as a
+**pre-registered hypothesis being refuted**, which is the most expensive form
+this defect has taken.
 
 The shape is always the same: the instrument is written quickly *because it is
 "just" a check*, and then it becomes the thing every other conclusion is believed
@@ -836,6 +839,32 @@ caught it.
    would have found it; so would searching the repository rather than one
    subtree.
 
+8. **`power_analysis.py`'s empty section, 14 September, and mine.** Phase 17
+   ran the mixture instrument as pre-registered,
+   `power_analysis.py --section degeneracy`. That view rebuilt the report
+   without the `mixtures` key, so section A2 printed its heading with **nothing
+   under it** — and `print_report` emitted every heading unconditionally, so an
+   uncomputed section and an empty result rendered identically.
+
+   **What made it dangerous is what the blank meant.** Amendment 1 of the WS-5
+   pre-registration fixes the decision rule as *"If no arm is flagged at fifteen
+   runs, the mixture reporting is omitted and the pooled median stands. That
+   outcome is H2 of the pre-registration being refuted."* A blank A2 is exactly
+   what "no arm was flagged" looks like. The instrument was one glance away from
+   reporting a pre-registered hypothesis refuted because a dictionary key was
+   missing.
+
+   Caught only because the fifteen-run B3 arm visibly has two modes — 120
+   executions near 2 056 ms and 30 near 5 048 ms — so a blank A2 contradicted
+   something already known by hand. That is instance 1's shape again, and the
+   fourth time in this list that the instrument was not what noticed.
+
+   *Fixed twice, because one fix was too narrow.* The key now travels with the
+   degeneracy view; and **every** section, in every view, now prints which kind
+   of empty it is — `not computed in this view` or `computed: no arm has a
+   splittable sample`. Rule 13 is discharged against the pre-fix module at
+   `5ff3dc2`, which renders A2 as a heading followed directly by section B.
+
 ### The rule
 
 A checking instrument must be able to report **three** outcomes, not two:
@@ -847,7 +876,7 @@ A checking instrument must be able to report **three** outcomes, not two:
 An instrument that can only express the first two will express the second when
 the third is true, and the second is usually the answer that lets work proceed.
 
-Concretely, and each of these comes from one of the instances above (the list runs 1-5 and 7; 6 is R14a):
+Concretely, and each of these comes from one of the instances above (the list runs 1-5, 7 and 8; 6 is R14a):
 
 * **Never let `not found` and `could not ask` render the same.** Verify the probe
   against a **known positive** before trusting any negative (R2 applied to
@@ -856,6 +885,12 @@ Concretely, and each of these comes from one of the instances above (the list ru
   command (instance 3).
 * **Compare like with like** — if two extracts are to be diffed, build them with
   the same expression (instance 4).
+* **A section that computed nothing must not render like a section that found
+  nothing** (instance 8). Print which kind of empty it is, or exit non-zero. The
+  same applies to a gate whose inputs are incomplete: `make reproduce-figures`
+  tested the *presence* of run directories and so ran over 84 of 432, reporting
+  the shortfall as a moved value. It now tests the count against the archive's
+  own manifest and skips with both numbers named.
 * **Check the success shape, not the absence of an error shape.** `< 500` is not
   success; `2xx` is (instance 5).
 * **A readiness check must fail closed and say which** — `paper_provenance`

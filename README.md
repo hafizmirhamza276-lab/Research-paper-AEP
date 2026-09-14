@@ -17,6 +17,13 @@ make reproduce-figures   # the paper's tables, regenerated from the frozen CSVs 
 make reproduce-smoke     # one cell per system, end to end, under real SIGKILL
 ```
 
+`make reproduce-figures` covers the generated tables, the macros and the
+state-machine figure, all of which regenerate from tracked inputs. The paper's
+**two analysis figures** are not among them: they need the raw run directories,
+which are not tracked (`.gitignore`: never a run directory, never a ledger,
+never a log). Without the full results archive the target reports them
+`SKIPPED` and says so — it does not pass over them silently.
+
 ## The problem
 
 An autonomous agent calls a legacy API that is non-idempotent, accepts no
