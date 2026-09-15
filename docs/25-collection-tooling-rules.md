@@ -777,16 +777,13 @@ believed.
 
 ## R14. Hold the checking code to the standard of the code it checks.
 
-**Nine instances now.** It has stopped being an observation and become the most
-reliable defect generator in this project, so it is a rule. Instance 6 is in
-R14a below; instances 7, 8 and 9 are at the end of this list. Seven is the
-first to have been caught from outside the project rather than by a number
-looking wrong. Eight is the first in which the blank output would have been
-read as a **pre-registered hypothesis being refuted**. Nine is the first in
-which the instrument was not a script at all — it was three shell globs and a
-conclusion written as though they had been a proof, and it declared sixty
-executions of published data dead while two verified copies sat on the same
-host.
+**Ten instances now.** It has stopped being an observation and become the
+most reliable defect generator in this project, so it is a rule. Instance 6
+is in R14a below; 7, 8, 9 and 10 are at the end of this list. Nine is the
+first whose faulty instrument was not a script at all. **Ten is the first
+where no instrument was faulty** — every gate was correct and every gate
+was green, and the number they all agreed about was outside the mechanism
+all of them are built on.
 
 The shape is always the same: the instrument is written quickly *because it is
 "just" a check*, and then it becomes the thing every other conclusion is believed
@@ -902,6 +899,43 @@ caught it.
    claim and needs an argument that A, B and C exhaust the space. When the
    negative decides whether data is gone, name the paths searched in the
    report itself, so a reader can see the hole.
+
+10. **The caption the macro gates could not see, 15 September, and mine.**
+    `paper_tables.py` built the deployment table's caption with
+    `f"{tex(b3 - b0)}"` — 28.0 ms, computed inline from the three-run
+    medians. It was never a `\newcommand`.
+
+    Phase 26 retired that figure: removed it from every `.tex`, removed
+    `\ProtocolMinusBarrier` from the macro set, and replaced it with both
+    pre-registered readings, each with an interval spanning zero. Every gate
+    passed. `check_macros_are_used` confirmed no macro was orphaned; the
+    numbers gate confirmed `numbers.tex` matched the CSVs; 39 of 39 green.
+
+    **And the built PDF went on stating 28.0 ms**, in a caption, opposite a
+    section saying the decomposition "supports an ordering and not a
+    partition". It survived nine passes and was found by accident, during
+    an unrelated migration in phase 30, when moving the table happened to
+    put its caption under a reader's eye.
+
+    **The shape, and it is the general one.** *A gate whose coverage is
+    defined by a mechanism is blind to everything outside that mechanism,
+    and "every gate green" then means "every gate green over the part it
+    can see."* Rule 3's whole apparatus — provenance comments, the
+    regenerate-and-diff check, the orphan check — is built on macros. A
+    number that never becomes a macro is not checked *less* carefully; it
+    is not checked at all, and nothing reports that it went unchecked.
+
+    This is instance 1's shape at one remove. There the instrument was
+    wrong; here the instrument was right and its *domain* was smaller than
+    anyone had stated. Phase 26 is where it cost something: the pass that
+    retired the number had every reason to believe it had, and said so.
+
+    *Fixed:* the caption emits macros, both readings. And
+    `check_generated_captions_use_macros` now asserts that every number in a
+    generated caption is either a macro value or named in a four-entry
+    allowlist with its reason — so the domain is stated and enforced
+    rather than assumed. Rule 13 discharged against the real pre-fix caption
+    text, kept verbatim as a fixture.
 ### The rule
 
 A checking instrument must be able to report **three** outcomes, not two:

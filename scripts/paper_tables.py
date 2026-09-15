@@ -1027,10 +1027,24 @@ def emit_deployment_choice(
         # subsection that still carries the claim in the main paper rather than
         # at the table that no longer does.
         r"column's second word, and \cref{sec:eval-prevention} is what it is "
+        # The caption used to print `tex(b3 - b0)` -- 28.0 ms, computed
+        # inline from the three-run medians. It was not a macro, so rule 3
+        # never saw it: phase 26 retired that figure from every .tex and
+        # from the macro set, every gate stayed green, and the number
+        # survived in the built PDF contradicting section VI-RQ3 on the
+        # facing page. It now emits macros, both readings, per amendment 2
+        # -- choosing one silently is the move the paper argues against.
         r"worth. `Over floor' is the same median less the provider's "
-        r"2\,000\,ms delay, and so includes the "
-        f"{tex(b3 - b0)}"
-        r"\,ms the protocol costs with the barrier already removed.}\\",
+        r"2\,000\,ms delay, and so includes whatever the "
+        r"protocol costs with the barrier already removed -- a quantity "
+        r"this evaluation cannot separate from zero: "
+        r"\ProtocolMinusBarrierFifteen{}\,ms "
+        r"[\ProtocolMinusBarrierFifteenLow{}, "
+        r"\ProtocolMinusBarrierFifteenHigh{}] pooled, and "
+        r"\ProtocolMinusBarrierLowerMode{}\,ms "
+        r"[\ProtocolMinusBarrierLowerModeLow{}, "
+        r"\ProtocolMinusBarrierLowerModeHigh{}] over each arm's lower "
+        r"mode, both spanning zero.}\\",
         r"\bottomrule",
         r"\end{tabularx}",
         r"\end{table*}",

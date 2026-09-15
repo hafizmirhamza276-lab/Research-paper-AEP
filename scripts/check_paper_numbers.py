@@ -307,6 +307,76 @@ def _labels_and_refs(paths: "list[Path]") -> "tuple[set[str], set[str]]":
     return labels, refs
 
 
+
+#: Numbers allowed to appear as literals in generated caption text, with the
+#: reason each is not a measurement. Everything else must come from a macro.
+#:
+#: The list is deliberately tiny. A generous one would re-open the hole this
+#: check exists to close: phase 30 found `28.0` sitting in the deployment
+#: caption, computed inline from three-run medians, contradicting section
+#: VI-RQ3 on the facing page, with every gate green.
+CAPTION_LITERALS: dict[str, str] = {
+    "2000": "the provider's configured delay -- a setting, not a measurement",
+    "90": "a confidence level",
+    "95": "a confidence level",
+    "0": "a count of zero, or a bound of zero",
+}
+
+_CAPTION_RE = re.compile(
+    r"footnotesize (.*?)\}\\\\", re.S)
+_MACRO_CALL_RE = re.compile(r"\\[A-Za-z]+\{\}|\\[A-Za-z]+")
+_CAPTION_NUM_RE = re.compile(r"(?<![A-Za-z0-9_.])(\d[\d.]*)")
+
+
+def check_generated_captions_use_macros(result: Result, paper: Path) -> None:
+    r"""A caption is a claim, and rule 3 says claims come from macros.
+
+    **The defect this exists for.** ``paper_tables.py`` built the deployment
+    table's caption with ``f"{tex(b3 - b0)}"`` -- 28.0 ms, computed inline from
+    the three-run medians. It was never a ``
+ewcommand``, so
+    ``check_macros_are_used`` could not see it, the numbers gate could not see
+    it, and when phase 26 retired that figure from every ``.tex`` and from the
+    macro set, the caption kept printing it. The paper stated it in the built
+    PDF, next to a section saying the decomposition "supports an ordering and
+    not a partition", and every gate stayed green.
+
+    So: every number in a generated file's caption prose must either be the
+    value of some macro in ``numbers.tex`` or be named in
+    ``CAPTION_LITERALS`` with a reason. Data cells are exempt -- producing
+    numbers from a CSV is what a table is for, and the CSV is their provenance.
+    """
+    generated = paper / "generated"
+    numbers = generated / "numbers.tex"
+    if not numbers.is_file():
+        result.check(False, "numbers.tex exists", f"missing {numbers}")
+        return
+
+    values = set()
+    for raw in re.findall(r"\\newcommand\{\\[A-Za-z]+\}\{([^}]*)\}",
+                          numbers.read_text(encoding="utf-8")):
+        values.add(raw.replace("\\,", "").replace(",", "").strip())
+
+    offenders: list[str] = []
+    for path in sorted(generated.glob("table-*.tex")):
+        text = path.read_text(encoding="utf-8")
+        for caption in _CAPTION_RE.findall(text):
+            # A thousands separator is typography, not two numbers.
+            prose = caption.replace("\\,", "")
+            prose = _MACRO_CALL_RE.sub(" ", prose)
+            for number in _CAPTION_NUM_RE.findall(prose):
+                clean = number.rstrip(".")
+                if clean in values or clean in CAPTION_LITERALS:
+                    continue
+                offenders.append(f"{path.name}: {number}")
+
+    result.check(
+        not offenders,
+        "every number in a generated caption comes from a macro",
+        f"{len(offenders)} with nothing behind them: {', '.join(offenders)}",
+    )
+
+
 def check_cross_document_references(result: Result, paper: Path) -> None:
     r"""The paper and the supplementary are two documents, not one.
 
@@ -815,6 +885,7 @@ def main() -> int:
         arguments.ws5_keying,
         arguments.fsync_always_45,
     )
+    check_generated_captions_use_macros(result, arguments.paper)
     check_cross_document_references(result, arguments.paper)
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
