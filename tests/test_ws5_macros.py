@@ -196,16 +196,23 @@ def test_both_readings_of_protocol_minus_barrier_are_emitted(generated):
         )
 
 
-def test_the_fifteen_run_macros_are_distinguishable_from_the_three_run_ones(generated):
-    """Both exist on purpose; section VIII argues from the three-run figures.
 
-    So the names must say which is which at the point of use.
+def test_the_superseded_three_run_macros_are_gone(generated):
+    """Phase 25 kept both and asserted they differ. Phase 26 removed the old
+    ones, because the paper quoting two estimates of one quantity from samples
+    five times apart is the thing the naming convention was guarding against.
+
+    The convention survives in the names that remain --- ``Fifteen``,
+    ``FortyFive`` --- so a reader can still tell the sample size at the point
+    of use.
     """
-    assert "BarrierCost" in generated and "BarrierCostFifteen" in generated
-    assert _number(generated["BarrierCost"]) != _number(
-        generated["BarrierCostFifteen"])
-    assert "BarrierCostAlways" in generated
-    assert "BarrierCostAlwaysFortyFive" in generated
+    for name in ("BarrierCost", "BarrierCostAlways", "ProtocolMinusBarrier",
+                 "BarrierToProtocolRatio"):
+        assert name not in generated, f"{name} is superseded and still emitted"
+
+    for name in ("BarrierCostFifteen", "BarrierCostAlwaysFortyFive",
+                 "ProtocolMinusBarrierFifteen"):
+        assert name in generated
 
 
 def test_no_ws5_input_means_no_ws5_macro(tmp_path):

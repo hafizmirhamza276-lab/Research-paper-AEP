@@ -187,6 +187,30 @@ Where it can only confirm presence, absence is uninformative and the honest
 answer is ``I do not know''. Where it cannot be queried at all, no amount of
 protocol recovers the fact.
 
+\paragraph{The \textsc{pos-only} rate depends on how the read-back is keyed, and
+we did not expect it to} The read-back in the cells above is keyed by the
+caller's own reference. We pre-registered an alternative keying --- an oracle
+fingerprint of the request --- as a sensitivity check, and predicted it would
+leave every headline rate inside a $\pm\BthreeVsAepAmbMargin{}$ percentage-point
+margin. On \textsc{pos-only} it does not: declared ambiguity is
+\KeyingAmbiguityCaller{}\% under the caller's reference and
+\KeyingAmbiguityOracle{}\% under the fingerprint, a difference of
+\KeyingAmbiguityDelta{} percentage points, and the margin was
+\BthreeVsAepAmbMargin{}.
+% generated/numbers.tex | ws5-2026-09-10/t2-keying/analysis/
+% per-cell-metrics.csv against analysis/per-cell-metrics.csv, metric=
+% known_ambiguity_rate, system=AEP_FULL, response_class=POSITIVE_ONLY_READBACK,
+% pooled over the six crash points as sum(successes)/sum(total).
+
+The two columns that carry the safety claim are unmoved: undetected duplicates
+and lost effects are zero under both keyings. What moves is the residual, and
+the consequence is a limit on generality rather than on correctness. **The
+\textsc{pos-only} ambiguity rate is a property of the protocol \emph{and} of how
+the recovering worker phrases its question**, so the figure quoted above should
+be read as this keying's, not as the class's. \textsc{auth} is unaffected,
+because a read-back that can prove absence resolves the execution whichever key
+it is asked under.
+
 The supplementary material plots the same executions as one bar pair per system,
 pooled over crash points and capabilities: the three systems on the right have an
 empty left bar, and only AEP-full and its ablation B3 have a right bar at all.
@@ -665,43 +689,55 @@ and the interesting quantity is the increment over it.
 
 \input{generated/table-latency}
 
-\textbf{The overhead is the barrier, and nothing else --- at this sample
-size, and no more precisely than that.} A median step costs
-\AepStepMedian{}\,ms under AEP-full against \BzeroStepMedian{}\,ms under B0,
-which does nothing but call the provider. Almost all of that gap is one
-mechanism. Everything the write-ahead protocol does apart from waiting for
-\texttt{fsync} --- the intent ledger, the vault, the request binding, the
-preflight, the recovery service --- costs \ProtocolMinusBarrier{}\,ms on a
-two-second call, or \ProtocolMinusBarrierPct{}\%. The two \texttt{WAITAOF}
-round trips cost \BarrierCost{}\,ms between them, or \BarrierCostEach{}\,ms
-each.
+\textbf{The overhead is the barrier, and the rest is not separable from
+zero.} A median step costs \AepStepMedian{}\,ms under AEP-full against
+\BzeroStepMedian{}\,ms under B0, which does nothing but call the provider.
+Almost all of that gap is one mechanism. At fifteen crash-free runs per arm the
+two \texttt{WAITAOF} round trips cost \BarrierCostFifteen{}\,ms between them,
+with a 95\% interval of
+[\BarrierCostFifteenLow{}, \BarrierCostFifteenHigh{}]\,ms.
+% generated/numbers.tex | ws5-2026-09-10/t1-p0-everysec/analysis/
+% per-execution.csv, cluster bootstrap over runs, 10000 resamples, seed
+% 20260806: median AEP-full - median B3.
 
-Both figures come from three crash-free runs per arm, and the interval on the
-smaller one is \emph{much} wider than the figure suggests:
-[\ProtocolMinusBarrierLow{}, \ProtocolMinusBarrierHigh{}]\,ms, a factor of
-\ProtocolMinusBarrierFactor{}, against [\BarrierCostLow{}, \BarrierCostHigh{}]\,ms
-for the barrier. We state them here rather than only where the residual is
-discussed, because a decomposition quoted without its uncertainty in the section
-that features it is the defect \cref{sec:threats} names. What the decomposition
-supports is an ordering and an order of magnitude --- the barrier dominates ---
-and not the ratio of the two numbers.
-% All four from generated/numbers.tex: B3-B0 and AEP-B3 on
-% latency-and-throughput.csv, crash-free E5-gated runs only.
+Everything the write-ahead protocol does apart from waiting for \texttt{fsync}
+--- the intent ledger, the vault, the request binding, the preflight, the
+recovery service --- costs
+\ProtocolMinusBarrierFifteen{}\,ms
+[\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]\,ms on
+a two-second call. That interval spans zero. B3's arm is a mixture of two
+modes, and restricting both arms to their lower mode gives
+\ProtocolMinusBarrierLowerMode{}\,ms
+[\ProtocolMinusBarrierLowerModeLow{}, \ProtocolMinusBarrierLowerModeHigh{}]\,ms,
+which spans zero as well. We report both because they were both pre-registered
+and they disagree, and choosing between them after seeing them is the move this
+paper is arguing against.
+% generated/numbers.tex | same CSV and bootstrap: median B3 - median B0,
+% pooled over both modes, and again restricted to each arm's lower mode. The
+% lower-mode boundary is the splitter's own lower_max, fixed before this arm
+% was collected.
 
-Read against \cref{sec:eval-detection} that decomposition says something
-stronger than ``AEP costs two seconds''. The \ProtocolMinusBarrier{}\,ms is
-what the detection guarantee costs, because \ProtocolMinusBarrier{}\,ms is the
-difference between B0 and B3 and B3 is the system that already has the
-detection guarantee in full. The \BarrierCost{}\,ms buys the prevention
+\textbf{So the decomposition supports an ordering and not a partition.} The
+barrier dominates: its interval is nowhere near zero and the residual's
+contains it under both readings. What cannot be said is what fraction of the
+protocol's cost is optional, because at this precision the non-barrier
+remainder is not distinguishable from nothing at all. An earlier draft of this
+paper quoted that remainder as a point figure of about thirty milliseconds; it
+rested on three runs per arm, and twelve more did not confirm it.
+
+Read against \cref{sec:eval-detection} the ordering still says something
+stronger than ``AEP costs two seconds''. Whatever the detection guarantee
+costs, it is the difference between B0 and B3 --- B3 is the system that already
+has that guarantee in full --- and it is small enough that fifteen runs cannot
+separate it from zero. The \BarrierCostFifteen{}\,ms buys the prevention
 guarantee of \cref{sec:eval-prevention} and nothing else.
 
 That figure is also a property of a \emph{configuration}, not of AEP. Under
 \texttt{appendfsync everysec} an acknowledgement cannot return until the next
 scheduled fsync, and those are one second apart, so a barrier costs up to a
-second and the protocol pays that twice. What we measure is
-\BarrierCostEach{}\,ms per barrier, which sits near the top of that range
-rather than in the middle of it; we did not measure why, and we do not claim a
-mechanism for it here.
+second and the protocol pays that twice. The measured total sits near the top
+of that range rather than in the middle of it; we did not measure why, and we
+do not claim a mechanism for it here.
 
 \subsubsection{The barrier is a deployment choice, with three measured points}
 \label{sec:eval-deployment}
@@ -726,34 +762,57 @@ whose only changed line is \texttt{appendfsync always}.
 % source: reports/raw/f0iii-appendfsync-always.txt and the G2 re-run that
 % added the B3 arm; both refuse to proceed unless CONFIG GET appendfsync
 % reads back 'always' on the live server.
-The barrier's cost falls from \BarrierCost{}\,ms to \BarrierCostAlways{}\,ms,
-because under \texttt{always} the fsync has already happened by the time the
-write returns, so \texttt{WAITAOF} has nothing left to wait for.
+The barrier's cost is \BarrierCostAlwaysFortyFive{}\,ms
+[\BarrierCostAlwaysFortyFiveLow{}, \BarrierCostAlwaysFortyFiveHigh{}]\,ms over
+fifteen runs per arm: negative, and not distinguishable from zero. Under
+\texttt{always} the fsync has already happened by the time the write returns,
+so \texttt{WAITAOF} has nothing left to wait for.
+% generated/numbers.tex | fsync-always-2026-09-14/analysis/
+% latency-and-throughput.csv and per-execution.csv, same bootstrap as above.
+
+\textbf{That is the measurement this section turns on.} The barrier does not
+become cheap under \texttt{always}; it costs nothing, and the
+\BarrierCostFifteen{}\,ms it costs under \texttt{everysec} is therefore the
+price of the fsync boundary rather than of the barrier. A protocol step under
+\texttt{everysec} waits for the next scheduled flush, and there are two of
+them. Nothing in the mechanism is expensive.
+
+The sign is not a puzzle to explain away. The two medians it separates are
+\AepAlwaysFortyFiveMedian{}\,ms with the barrier and
+\BthreeAlwaysFortyFiveMedian{}\,ms without it, on a two-second call; the gap
+between them is noise around a mechanism that is doing no waiting. This arm was
+pre-registered with the interval's exclusion of zero explicitly ruled out as an
+acceptance criterion, because a mechanism with nothing to wait for should cost
+nothing and a measurement of nothing lands on either side of it.
+% generated/numbers.tex | fsync-always-2026-09-14/analysis/
+% latency-and-throughput.csv, step_latency_ms_median per system.
 
 Both figures are ablation differences \emph{within} one policy, which required
 collecting the barrier-less arm twice. It would have been easier to subtract
 the \texttt{everysec} B3 median from the \texttt{always} AEP-full median, and
 that would have assumed the ablated protocol's own writes cost the same under
 both policies. They nearly do --- B3 is \BthreeStepMedian{}\,ms under
-\texttt{everysec} and \BthreeAlwaysMedian{}\,ms under \texttt{always} --- but
+\texttt{everysec} and \BthreeAlwaysFortyFiveMedian{}\,ms under
+\texttt{always} --- but
 ``nearly'' is a measurement, and an order-of-magnitude claim resting on an
 unmeasured premise is the kind of number this paper is trying not to publish.
 
-\paragraph{How precise these two figures are, which is: not very} Each is a
-difference of two medians over three runs per arm, bootstrapped over runs rather
-than executions, and the honest form of the claim is therefore directional and
-bounded rather than a ratio: under \texttt{everysec} the barrier costs
-\BarrierCost{}\,ms with a 95\% interval of
-[\BarrierCostLow{}, \BarrierCostHigh{}], pinned only to within about a factor of
-four, while under \texttt{always} it is \BarrierCostAlways{}\,ms with an interval
-of [\BarrierCostAlwaysLow{}, \BarrierCostAlwaysHigh{}] that spans zero --- so at
-this sample size we cannot show the barrier costs anything at all under that
-policy (\cref{sec:threats}).
+\paragraph{How precise these two figures are} Each is a difference of two
+medians over fifteen runs per arm, bootstrapped over runs rather than
+executions. Under \texttt{everysec} the barrier costs
+\BarrierCostFifteen{}\,ms, [\BarrierCostFifteenLow{}, \BarrierCostFifteenHigh{}];
+under \texttt{always} it is \BarrierCostAlwaysFortyFive{}\,ms,
+[\BarrierCostAlwaysFortyFiveLow{}, \BarrierCostAlwaysFortyFiveHigh{}]. The first
+excludes zero by a wide margin and the second contains it, which is the whole
+of the claim: the policy decides whether the barrier is expensive, and the
+barrier itself is not.
 
 \paragraph{B3-mode: the barrier removed entirely} Not a baseline we are beating
 but a supported configuration of the same implementation, licensed by
-\cref{sec:eval-detection}. It pays \ProtocolMinusBarrier{}\,ms over a system
-with no protocol at all. On the detection metrics, pooled across capability
+\cref{sec:eval-detection}. What it pays over a system with no protocol at all
+is not resolvable from zero at fifteen runs per arm
+(\ProtocolMinusBarrierFifteen{}\,ms,
+[\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]). On the detection metrics, pooled across capability
 classes, we observe no difference between it and AEP-full, supported by a bound
 rather than a test: both the undetected-duplicate and lost-effect rates lie in
 $[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%, and the
@@ -779,7 +838,7 @@ fault to worry about --- an instance on the same host as the workers, an
 unreplicated instance, a VM that can vanish --- the barrier is the point of the
 protocol and \texttt{always} makes it nearly free at this workload's shape. If
 Redis is well protected and worker crashes are the concern, B3-mode gives the
-paper's headline result for \ProtocolMinusBarrier{}\,ms.
+paper's headline result for a cost this evaluation cannot distinguish from zero.
 
 \textbf{One measurement this table does not support} is what \texttt{always}
 costs under load, and we are not recommending it on this evidence. The Redis

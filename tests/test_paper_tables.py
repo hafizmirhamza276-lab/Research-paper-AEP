@@ -482,9 +482,19 @@ def test_an_unknown_response_class_is_refused(tmp_path: Path) -> None:
         _numbers_from_kill(rows, tmp_path)
 
 
-def test_the_barrier_costs_are_within_policy_and_no_ratio_is_emitted(
+
+def test_the_superseded_three_run_barrier_macros_are_not_emitted(
     tmp_path: Path,
 ) -> None:
+    """Phase 26 replaced these with fifteen- and forty-five-run figures.
+
+    They were point estimates on three runs per arm, and the larger samples
+    moved two of them: the protocol-minus-barrier residual went from a quoted
+    28.0 ms to an interval containing zero, and the `always` barrier cost went
+    from +15.0 ms to -9.2 ms. A superseded estimate belongs in reports/, not in
+    a macro the manuscript can reach --- so the property asserted now is that
+    the generator refuses to emit them at all.
+    """
     emit_numbers(
         per_cell=[],
         latency=EVERYSEC,
@@ -497,13 +507,17 @@ def test_the_barrier_costs_are_within_policy_and_no_ratio_is_emitted(
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
-    assert "\\newcommand{\\BarrierCost}{1\\,966.7}" in text
-    assert "\\newcommand{\\BarrierCostAlways}{15.0}" in text
-    # No ratio macro. The obvious one -- 1966.7 / 15.0 = 131 -- was emitted
-    # and quoted until a cluster bootstrap showed the denominator's 95%
-    # interval spans zero. A ratio whose denominator is not distinguishable
-    # from zero is not a measurement, and generating it is what let it back
-    # into the prose the first time.
+
+    for name in ("BarrierCost", "BarrierCostAlways", "BarrierCostLow",
+                 "BarrierCostHigh", "BarrierCostAlwaysLow",
+                 "BarrierCostAlwaysHigh", "ProtocolMinusBarrier",
+                 "BarrierToProtocolRatio"):
+        assert ("\\newcommand{\\" + name + "}") not in text, (
+            f"{name} is superseded and must not be emitted"
+        )
+
+    # And the ratio, which was never emitted and must stay that way: a ratio
+    # whose denominator is not distinguishable from zero is not a measurement.
     assert "BarrierCostRatio" not in text
 
 
@@ -782,16 +796,14 @@ def test_the_third_barrier_cost_is_a_share_of_the_step_not_the_barrier_bill(
     assert "\\newcommand{\\ThirdBarrierStepPct}{24.6}" in text
 
 
-def test_the_barrier_to_protocol_ratio_is_the_two_macros_divided(
-    tmp_path: Path,
-) -> None:
-    """D6. The threats section called this "two orders of magnitude".
 
-    It is 70x, which is nearer one and a half. The macro exists so the phrase
-    cannot drift from the measurement again, and the arithmetic is asserted
-    here against the same fixture the two operand macros are asserted against:
-    (4004.9 - 2038.2) / (2038.2 - 2010.2) = 1966.7 / 28.0 = 70.2, which is 70
-    to two significant figures.
+def test_no_barrier_to_protocol_ratio_is_emitted(tmp_path: Path) -> None:
+    """The ratio is gone, and this is the test that keeps it gone.
+
+    It divided the barrier's cost by the protocol's cost apart from the
+    barrier. At fifteen runs per arm the denominator's interval contains zero
+    under both pre-registered readings, so the quotient is not a quantity.
+    Section VIII now says exactly that instead of quoting a factor.
     """
     emit_numbers(
         per_cell=[],
@@ -805,45 +817,21 @@ def test_the_barrier_to_protocol_ratio_is_the_two_macros_divided(
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
-    # The operands, so a change to either is caught here and not only
-    # downstream.
-    assert "\\newcommand{\\BarrierCost}{1\\,966.7}" in text
-    assert "\\newcommand{\\ProtocolMinusBarrier}{28.0}" in text
-    assert "\\newcommand{\\BarrierToProtocolRatio}{70}" in text
-    # Not a coincidence of this fixture: the quotient, recomputed.
-    assert round((4004.9 - 2038.2) / (2038.2 - 2010.2)) == 70
+    assert "BarrierToProtocolRatio" not in text
+    assert "ProtocolMinusBarrierFactor" not in text
 
 
-def test_the_ratios_denominator_carries_its_own_interval(tmp_path: Path) -> None:
-    """The other half of the decomposition, which had no interval until now.
 
-    ``\\BarrierToProtocolRatio`` divides one median difference by another. The
-    numerator has been reported with a cluster bootstrap since the hostile
-    read asked for one; the denominator had a point estimate and nothing else,
-    which is what let the ratio read as a measurement rather than an estimate.
+def test_the_superseded_denominator_interval_is_not_emitted(
+    tmp_path: Path,
+) -> None:
+    """``\\ProtocolMinusBarrierLow``/``High`` were the three-run interval.
 
-    Asserted structurally rather than against fixed numbers: the bootstrap is
-    seeded, but pinning percentiles of a resample to four significant figures
-    would make this a test of the RNG. What must hold is that both macros are
-    emitted for ``everysec``, that they bracket the point estimate, and --
-    the property the sentence in Section VIII actually leans on -- that the
-    interval is not degenerate.
+    They existed to stop a ratio reading as a measurement. The ratio is gone
+    and the interval that qualified it is superseded by
+    ``ProtocolMinusBarrierFifteen{Low,High}`` and the lower-mode pair, both of
+    which section VI quotes in the same sentence as their point estimate.
     """
-    rows = ["regime,system,run_id,step_latency_ms"]
-    # Three runs per arm, ten executions each, B3 above B0 by ~28 ms with
-    # enough per-run spread that the resample has something to move.
-    for run in range(3):
-        for execution in range(10):
-            rows.append(
-                f"p0,B0_NAIVE_RETRY,b0-run{run},{2010 + run * 4 + execution}"
-            )
-            rows.append(
-                f"p0,B3_INTENT_NO_BARRIER,b3-run{run},"
-                f"{2038 + run * 9 + execution}"
-            )
-    path = tmp_path / "per-execution.csv"
-    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
-
     emit_numbers(
         per_cell=[],
         latency=EVERYSEC,
@@ -852,25 +840,13 @@ def test_the_ratios_denominator_carries_its_own_interval(tmp_path: Path) -> None
         flakey=[],
         always=ALWAYS,
         coverage={},
-        execution_paths={"everysec": path},
+        execution_paths={},
         out=tmp_path,
     )
     text = (tmp_path / "numbers.tex").read_text(encoding="utf-8")
-
-    def value(name: str) -> float:
-        match = re.search(
-            r"\\newcommand\{\\" + name + r"\}\{([^}]*)\}", text
-        )
-        assert match, f"{name} was not emitted"
-        return float(match.group(1).replace("\\,", ""))
-
-    low = value("ProtocolMinusBarrierLow")
-    high = value("ProtocolMinusBarrierHigh")
-    assert low <= high
-    assert low < high, "a degenerate interval would make the qualifier a lie"
-    # And it is the everysec arm only: an `always` twin would be orphaned,
-    # and the "every generated number is used" gate fails on orphans.
-    assert "ProtocolMinusBarrierAlwaysLow" not in text
+    for name in ("ProtocolMinusBarrierLow", "ProtocolMinusBarrierHigh",
+                 "ProtocolMinusBarrierPct"):
+        assert ("\\newcommand{\\" + name + "}") not in text
 
 
 def test_a_ratio_is_rounded_to_significant_figures_without_an_exponent() -> None:

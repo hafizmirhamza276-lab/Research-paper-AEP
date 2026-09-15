@@ -206,23 +206,12 @@ def check_no_banned_source(result: Result, paper: Path) -> None:
 #: if a name here IS used (an entry nobody deleted). Both directions, so
 #: the list cannot quietly outlive its reason.
 PENDING_MACROS: dict[str, str] = {
-    "BarrierCostFifteen": "phase 26, section VI-RQ3",
-    "BarrierCostFifteenLow": "phase 26, section VI-RQ3",
-    "BarrierCostFifteenHigh": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierFifteen": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierFifteenLow": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierFifteenHigh": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierLowerMode": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierLowerModeLow": "phase 26, section VI-RQ3",
-    "ProtocolMinusBarrierLowerModeHigh": "phase 26, section VI-RQ3",
-    "BarrierCostAlwaysFortyFive": "phase 26, section VI-RQ3",
-    "BarrierCostAlwaysFortyFiveLow": "phase 26, section VI-RQ3",
-    "BarrierCostAlwaysFortyFiveHigh": "phase 26, section VI-RQ3",
-    "AepAlwaysFortyFiveMedian": "phase 26, section VI-RQ3",
-    "BthreeAlwaysFortyFiveMedian": "phase 26, section VI-RQ3",
-    "KeyingAmbiguityOracle": "phase 26, section VI-RQ3",
-    "KeyingAmbiguityCaller": "phase 26, section VI-RQ3",
-    "KeyingAmbiguityDelta": "phase 26, section VI-RQ3",
+    # Empty, and that is the point. Phase 25 staged seventeen WS-5 macros here
+    # ahead of the prose; phase 26 wrote the prose and every one of them is now
+    # quoted, so every entry was deleted. The mechanism stays: the next pass
+    # that has to emit a macro before it can be used gets the same two checks
+    # -- a stale entry fails, an entry already in use fails -- rather than a
+    # silent exemption.
 }
 
 def check_macros_are_used(result: Result, paper: Path) -> None:

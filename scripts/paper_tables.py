@@ -1040,6 +1040,44 @@ def emit_deployment_choice(
     )
 
 
+#: Macros computed from THREE runs per arm and superseded in phase 26 by the
+#: fifteen- and forty-five-run cells. They are not emitted.
+#:
+#: Every one of them was a point estimate or an interval on a sample that
+#: WS-5 re-collected at five times the size, and in two cases the larger
+#: sample moved the answer: the protocol-minus-barrier residual went from a
+#: quoted 28.0 ms to an interval containing zero, and the `always` barrier
+#: cost went from +15.0 ms to -9.2 ms. A superseded estimate belongs in
+#: reports/, which is where these now live -- phase 17, 18 and 25's reports
+#: keep them with their provenance.
+#:
+#: Emitting them unused would fail check_paper_numbers' orphan check, and
+#: PENDING_MACROS is the wrong home: that list is for macros whose prose is
+#: not written YET, and it asserts they are not in use. These will never be
+#: in use.
+#: NOT here: \BarrierCostEach. paper/supplementary.tex:202 still quotes it,
+#: and suppressing it broke that build. It is a three-run derived figure
+#: (half the three-run barrier cost) surviving in the supplementary while
+#: section VI quotes fifteen-run figures -- recorded in phase 26's report
+#: as a follow-up, because supplementary.tex was out of that pass's scope.
+SUPERSEDED_MACROS: frozenset[str] = frozenset({
+    "ProtocolMinusBarrier",
+    "ProtocolMinusBarrierPct",
+    "ProtocolMinusBarrierLow",
+    "ProtocolMinusBarrierHigh",
+    "ProtocolMinusBarrierFactor",
+    "BarrierToProtocolRatio",
+    "BarrierCost",
+    "BarrierCostLow",
+    "BarrierCostHigh",
+    "BarrierCostAlways",
+    "BarrierCostAlwaysLow",
+    "BarrierCostAlwaysHigh",
+    "BthreeAlwaysMedian",
+    "AepAlwaysMedian",
+    "AepAlwaysPninetyfive",
+})
+
 def emit_numbers(
     per_cell: list[dict[str, str]],
     latency: list[dict[str, str]],
@@ -1079,6 +1117,8 @@ def emit_numbers(
     lines.append("")
 
     def macro(name: str, value: str, *provenance: str) -> None:
+        if name in SUPERSEDED_MACROS:
+            return
         for line in provenance:
             lines.append(f"% {line}")
         lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")

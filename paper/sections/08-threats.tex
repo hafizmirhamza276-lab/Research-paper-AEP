@@ -300,24 +300,21 @@ that is an argument and not a measurement.
 
 \subsection{Conclusion validity}
 
-\paragraph{Every timing number rests on three runs, and one does not survive its
-own interval} Each cell behind \cref{tab:deployment} is three crash-free runs of
-ten executions, and the four medians there are what the barrier's cost is
-computed from. A cluster bootstrap over runs (\cref{sec:eval-deployment}) changes
-what can be claimed. Under \texttt{everysec} the barrier's cost is
-\BarrierCost{}\,ms with a 95\% interval of
-[\BarrierCostLow{}, \BarrierCostHigh{}] --- positive, but pinned only to within
-about a factor of four. Under \texttt{always} the point estimate is
-\BarrierCostAlways{}\,ms and the interval [\BarrierCostAlwaysLow{},
-\BarrierCostAlwaysHigh{}] spans zero: at three runs per arm we cannot show the
-barrier costs anything under that policy. An earlier draft quoted a factor
-between the two point estimates; it is not supported by these data and has been
-removed. The cause is the sample, not the metric: three clusters admit only ten
-distinct bootstrap multisets, and the \texttt{always} cell has a heavy upper tail
-(p95 \AepAlwaysPninetyfive{}\,ms against a \AepAlwaysMedian{}\,ms median) that
-three clusters cannot resolve. Closing this needs more crash-free \emph{runs},
-not more executions per run. A deployment that needs a latency budget should
-measure its own.
+\paragraph{What fifteen runs per arm settled, and what they did not} The
+timing cells were re-collected at fifteen crash-free runs per arm under both
+fsync policies, and the two questions they were meant to separate came apart.
+The barrier's cost under \texttt{everysec} is now pinned:
+\BarrierCostFifteen{}\,ms,
+[\BarrierCostFifteenLow{}, \BarrierCostFifteenHigh{}]. The protocol's cost
+apart from the barrier is not, under either pre-registered reading of B3's
+bimodal arm, and both intervals contain zero (\cref{sec:eval-rq3}). That is a
+statement about resolution and not about the effect: a residual of a few tens of
+milliseconds on a two-second call is below what fifteen runs of this workload
+can separate from nothing, and more runs would narrow it rather than move it. A
+deployment that needs a latency budget should measure its own. The four medians
+in \cref{tab:deployment} are the earlier three-run cells and are shown as the
+deployment points they were collected to compare, not as the source of the
+costs quoted above.
 
 \paragraph{A failure to reject is not a null result here, and for two of them
 that is a theorem} Two comparisons in this paper fail to exclude zero for
@@ -374,11 +371,11 @@ If the endpoint accepts an idempotency key, or can be enrolled in a
 transaction, or the effect can be made idempotent, then a durable-execution
 engine gives a strictly stronger guarantee at lower cost and AEP is the wrong
 tool. Its cost is real: two fsync barriers, which under \texttt{appendfsync
-everysec} dominate the protocol's latency by a factor of roughly
-\BarrierToProtocolRatio{} (\cref{tab:latency}) --- a ratio of medians, and one
-whose denominator is pinned only to
-[\ProtocolMinusBarrierLow{}, \ProtocolMinusBarrierHigh{}]\,ms at three runs per
-arm, so the factor is an estimate of an order of magnitude rather than of a
-figure. AEP is for the case where the precondition those systems
+everysec} dominate the protocol's latency. We do not put a factor on that
+dominance: the denominator is the protocol's cost apart from the barrier, and
+at fifteen runs per arm that quantity is
+[\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]\,ms,
+an interval containing zero (\cref{sec:eval-rq3}). A ratio whose denominator
+is not distinguishable from zero is not a measurement. AEP is for the case where the precondition those systems
 require cannot be obtained, and its value is a declared residual rather than a
 better guarantee.

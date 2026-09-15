@@ -82,44 +82,12 @@
 % E5 gate: runs without a declared suspend-disabled host contribute NO timing
 \newcommand{\BthreeStepMedian}{2\,038.2}
 
-% latency-and-throughput.csv | B3 median - B0 median
-% = 2038.2 - 2010.2; the whole write-ahead protocol except the barrier
-\newcommand{\ProtocolMinusBarrier}{28.0}
-
-% = (2038.2 - 2010.2) / 2010.2 x 100
-\newcommand{\ProtocolMinusBarrierPct}{1.4}
-
-% latency-and-throughput.csv | AEP-full median - B3 median, both under appendfsync=everysec
-% = 4004.9 - 2038.2; the two WAITAOF round trips together
-\newcommand{\BarrierCost}{1\,966.7}
-
 % half of \BarrierCost -- the protocol runs exactly two barriers per step
 \newcommand{\BarrierCostEach}{983.3}
 
 % = \BarrierCostEach / \AepStepMedian x 100
 % = 983.3 / 4004.9 x 100; the end-to-end cost of adding one more barrier to the step, not the increase in the barrier bill alone
 \newcommand{\ThirdBarrierStepPct}{24.6}
-
-% latency-and-throughput.csv | \BarrierCost / \ProtocolMinusBarrier, both under appendfsync=everysec
-% = (4004.9 - 2038.2) / (2038.2 - 2010.2) = 1966.7 / 28.0 = 70.14, to two significant figures
-% how much more the two fsync barriers cost than everything else the protocol does
-\newcommand{\BarrierToProtocolRatio}{70}
-
-% fsync-always/analysis/latency-and-throughput.csv | AEP-full median - B3 median, both under appendfsync=always
-% = 2063.4 - 2048.4
-\newcommand{\BarrierCostAlways}{15.0}
-
-% fsync-always/analysis/latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER, appendfsync=always
-% against 2038.2 ms under everysec: the ablated protocol's own cost is nearly policy-independent, which is what makes the two barrier figures comparable
-\newcommand{\BthreeAlwaysMedian}{2\,048.4}
-
-% fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
-% step_latency_ms_median; quoted in the threats section against the p95 below, to show the tail the three-run interval is drawn from
-\newcommand{\AepAlwaysMedian}{2\,063.4}
-
-% fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
-% step_latency_ms_p95
-\newcommand{\AepAlwaysPninetyfive}{5\,067.8}
 
 % fsync-always/analysis/latency-and-throughput.csv | system=AEP_FULL, appendfsync=always
 % executions_per_second
@@ -366,32 +334,6 @@
 
 % ws4-writeloss-s1-2026-09-07 | analyse_write_loss.observe_behaviour, post_fault_failures
 \newcommand{\WriteLossAckFailures}{0}
-
-% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
-% 2.5th percentile of (median AEP-full - median B3); point estimate 1968.1 ms from 3 and 3 runs
-\newcommand{\BarrierCostLow}{477.9}
-
-% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=everysec
-\newcommand{\BarrierCostHigh}{1\,978.8}
-
-% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=always
-% 2.5th percentile of (median AEP-full - median B3); point estimate 16.5 ms from 3 and 3 runs
-\newcommand{\BarrierCostAlwaysLow}{-1\,474.6}
-
-% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=always
-\newcommand{\BarrierCostAlwaysHigh}{22.7}
-
-% analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
-% 2.5th percentile of (median B3 - median B0); point estimate 30.5 ms from 3 and 3 runs
-\newcommand{\ProtocolMinusBarrierLow}{27.1}
-
-% analysis/per-execution.csv | 97.5th percentile of the same bootstrap, appendfsync=everysec
-% the denominator of \BarrierToProtocolRatio; its width is why that factor is quoted as an estimate
-\newcommand{\ProtocolMinusBarrierHigh}{1\,524.6}
-
-% analysis/per-execution.csv | \ProtocolMinusBarrierHigh / \ProtocolMinusBarrierLow
-% how many times wider the interval's top is than its bottom, for the protocol-minus-barrier figure
-\newcommand{\ProtocolMinusBarrierFactor}{56}
 
 % design property, not a measurement | 2/2^4
 % smallest attainable two-sided sign-test p-value at 4 paired sessions
