@@ -56,10 +56,23 @@ DATA = "experiments/results/cell-2026-01-02/MANIFEST.md"
 CELL = "experiments/results/cell-2026-01-02"
 
 
+def record_blobs(repo, table):
+    """Write the repo's own blob record, as --update-blobs would."""
+    import json as _json
+    blobs = {rel: {"first": audit.first_blob(rel, repo),
+                   "current": audit.head_blob(rel, repo)}
+             for rel in audit.prediction_paths(table)}
+    out = repo / "reports" / "prereg-blobs.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(_json.dumps({"blobs": blobs}), encoding="utf-8")
+
+
 def test_prediction_before_data_passes(tmp_path, capsys):
     repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
                                 (DATA, "2026-01-02T09:00:00")])
-    code = audit.audit(repo, {CELL: audit.Cell(PRED, None)})
+    table = {CELL: audit.Cell(PRED, None)}
+    record_blobs(repo, table)
+    code = audit.audit(repo, table)
     capsys.readouterr()
     assert code == 0
 
@@ -126,7 +139,9 @@ def test_an_exempt_cell_is_reported_not_hidden(tmp_path, capsys):
     be the audit's own R14 instance.
     """
     repo = make_repo(tmp_path, [(DATA, "2026-01-02T09:00:00")])
-    code = audit.audit(repo, {CELL: audit.Cell(None, None, predates_rule=True)})
+    table = {CELL: audit.Cell(None, None, predates_rule=True)}
+    record_blobs(repo, table)
+    code = audit.audit(repo, table)
     out = capsys.readouterr().out
     assert code == 0
     assert "EXEMPT" in out
@@ -140,3 +155,84 @@ def test_the_domain_is_printed_every_run(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "DOES NOT" in out
     assert "COLLECTED" in out
+
+
+# --------------------------------------------------------------------------
+# The content gap phase 37 named: the audit reads commit ORDER, never the
+# prediction's CONTENT, so a file committed early and rewritten later passed.
+# These exercise the comparison that closes it.
+# --------------------------------------------------------------------------
+
+import json  # noqa: E402
+
+
+def blobs_file(tmp_path: Path, payload: dict) -> Path:
+    path = tmp_path / "prereg-blobs.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_an_edited_prediction_is_detected(tmp_path, capsys):
+    """Rule 13. The prediction is committed, then rewritten, then checked."""
+    repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
+                                (DATA, "2026-01-02T09:00:00")])
+    table = {CELL: audit.Cell(PRED, None)}
+    first = audit.first_blob(PRED, repo)
+
+    # The rewrite, after the data landed.
+    commit(repo, PRED, "x\nsomething added after the results\n",
+           "2026-01-03T09:00:00")
+
+    record = blobs_file(tmp_path, {"blobs": {PRED: {"first": first,
+                                                    "current": first}}})
+    problems = audit.check_blobs(repo, table, record)
+
+    assert problems, "an edited pre-registration went undetected"
+    assert any("EDITED" in p for p in problems), problems
+
+
+def test_an_unexplained_first_current_divergence_is_flagged(tmp_path):
+    """A record written from an already-edited history must not bless it.
+
+    The two blobs differ, both match what git says, and nothing in EDITED
+    explains why -- which is the shape that would otherwise absorb an edit
+    simply by recording it.
+    """
+    repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
+                                (DATA, "2026-01-02T09:00:00")])
+    commit(repo, PRED, "x\nedited\n", "2026-01-03T09:00:00")
+    table = {CELL: audit.Cell(PRED, None)}
+    record = blobs_file(tmp_path, {"blobs": {PRED: {
+        "first": audit.first_blob(PRED, repo),
+        "current": audit.head_blob(PRED, repo),
+    }}})
+
+    problems = audit.check_blobs(repo, table, record)
+    assert any("nobody has said why" in p for p in problems), problems
+
+
+def test_a_classified_edit_passes_but_a_further_one_does_not(tmp_path):
+    """An EDITED entry records a ruling; it does not open the door."""
+    repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
+                                (DATA, "2026-01-02T09:00:00")])
+    commit(repo, PRED, "x\nedited once\n", "2026-01-03T09:00:00")
+    table = {CELL: audit.Cell(PRED, None)}
+    record = blobs_file(tmp_path, {"blobs": {PRED: {
+        "first": audit.first_blob(PRED, repo),
+        "current": audit.head_blob(PRED, repo),
+        "edited": "examined and classified",
+    }}})
+    assert not audit.check_blobs(repo, table, record)
+
+    commit(repo, PRED, "x\nedited twice\n", "2026-01-04T09:00:00")
+    problems = audit.check_blobs(repo, table, record)
+    assert any("EDITED" in p for p in problems), problems
+
+
+def test_a_prediction_with_no_recorded_blob_fails(tmp_path):
+    """Adding a pre-registration without recording it must not be silent."""
+    repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
+                                (DATA, "2026-01-02T09:00:00")])
+    record = blobs_file(tmp_path, {"blobs": {}})
+    problems = audit.check_blobs(repo, {CELL: audit.Cell(PRED, None)}, record)
+    assert any("no recorded blob" in p for p in problems), problems

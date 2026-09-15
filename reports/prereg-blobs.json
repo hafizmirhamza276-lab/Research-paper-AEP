@@ -1,0 +1,55 @@
+{
+  "blobs": {
+    "reports/phase-report-10-prediction-2026-09-02.md": {
+      "current": "ec6f380a41dbb545e747347189ae16f78f7c474a",
+      "first": "ec6f380a41dbb545e747347189ae16f78f7c474a"
+    },
+    "reports/phase-report-13-prediction-armA-2026-09-03.md": {
+      "current": "a77562596594bba19e9f2a9dd8b717eaef2864a7",
+      "first": "a77562596594bba19e9f2a9dd8b717eaef2864a7"
+    },
+    "reports/phase-report-13-prediction-inflight-2026-09-04.md": {
+      "current": "422901b4a881d2f7eb6c46150298185a03aeeb13",
+      "first": "422901b4a881d2f7eb6c46150298185a03aeeb13"
+    },
+    "reports/phase-report-8-prediction-2026-08-27.md": {
+      "current": "11253db26d4420eea86132f726b5a54b7bab6e31",
+      "first": "11253db26d4420eea86132f726b5a54b7bab6e31"
+    },
+    "reports/phase-report-8-prediction-amendment-1-2026-08-28.md": {
+      "current": "61aff236bd2a8f827bc7e3d7584783c72cbeba0d",
+      "first": "61aff236bd2a8f827bc7e3d7584783c72cbeba0d"
+    },
+    "reports/phase-report-9-prediction-2026-08-21.md": {
+      "current": "85fdaa292ebe0add6702bb7d528a0f98738e58a8",
+      "edited": "Two amendments appended in-file on 2026-08-21 at 19:55 and 20:09, SIX DAYS before the first data commit (2026-08-27). Ordering is sound; the deviation is that they were written into the original rather than as separate files, which is the convention rule 5 settled on later. 135 insertions, 0 deletions.",
+      "first": "1196e8fc2eb993db491ff86b94f316c883c4f1ac"
+    },
+    "reports/phase-report-9c-prediction-2026-08-21.md": {
+      "current": "f9287dffddd25f30d339cc77c28ec7ec15ddb617",
+      "first": "f9287dffddd25f30d339cc77c28ec7ec15ddb617"
+    },
+    "reports/phase-report-ws4-prediction-2026-09-04.md": {
+      "current": "b561d9ca3a85b352b1dc278bcc790680db23ce76",
+      "first": "b561d9ca3a85b352b1dc278bcc790680db23ce76"
+    },
+    "reports/phase-report-ws5-prediction-2026-09-10.md": {
+      "current": "3612b961be636fa731c46782f8b07a2119cfbd01",
+      "first": "3612b961be636fa731c46782f8b07a2119cfbd01"
+    },
+    "reports/phase-report-ws5-prediction-amendment-3-2026-09-14.md": {
+      "current": "2c9d4e6d5e42a256ed85d7fb8e91f1acfd08171f",
+      "first": "2c9d4e6d5e42a256ed85d7fb8e91f1acfd08171f"
+    },
+    "reports/phase-report-ws6-prediction-2026-09-07.md": {
+      "current": "3a8e49180eaee02111b7c7c5017c6313cdeb6a1b",
+      "first": "3a8e49180eaee02111b7c7c5017c6313cdeb6a1b"
+    },
+    "reports/phase-report-ws6-prediction-corrected-2026-09-08.md": {
+      "current": "7e86730a770c22b283a4ec2a6d76e789f24d394e",
+      "edited": "Edited twice on 2026-09-09, AFTER the 2026-09-08 data commit. Examined: 104 insertions, 0 deletions, and the added text labels itself in its first line -- 'Recorded 8 September, after the corrected cell was read. Deliberately not fixed.' It documents a defect found in the verdict script and declines to change it, precisely because the script had read data. No hypothesis, threshold or margin was altered. So: a convention violation, not a changed prediction -- post-data material belongs in a report, not appended to the pre-registration, because a reader should not need git to tell which half is which.",
+      "first": "4bd837d0859e8dec2b0b319de51e842ef79b16a8"
+    }
+  },
+  "note": "Blob hash of each pre-registration at its FIRST commit. Written by scripts/check_prereg_order.py --update-blobs. A mismatch means the file was edited after it was pre-registered, or the history was rewritten under it. Rule 5: amendments are NEW FILES; the original stays unedited."
+}

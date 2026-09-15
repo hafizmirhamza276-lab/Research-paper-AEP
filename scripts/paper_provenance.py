@@ -88,7 +88,21 @@ ARTIFACT_NAMES = {
 _STAGING = re.compile(r"^\..+\.stage\.\d+$")
 
 
+#: Directories under paper/ that are not build inputs. Kept deliberately short:
+#: every name here is a file the stamp stops covering, and the default must be
+#: that a file under paper/ IS a source.
+NON_SOURCE_DIRS: tuple[str, ...] = (".ai/",)
+
+
 def _is_artifact(rel: str) -> bool:
+    # A session log is not a build input. `.ai/track.md` is written by tooling
+    # on every session and is gitignored, so a clone does not have it -- and
+    # `verify` treats a recorded-but-absent source as STALE. Including it meant
+    # the committed stamps could not verify in a clean clone: a gate that
+    # passed on this machine and failed on any other, for a reason nobody had
+    # written down. Excluded here so the stamp is reproducible from a clone.
+    if rel.startswith(NON_SOURCE_DIRS):
+        return True
     # Only at the top level: paper/figures/figure-1-....pdf is an INPUT, and
     # excluding it by extension would drop a real source from coverage.
     if "/" in rel:

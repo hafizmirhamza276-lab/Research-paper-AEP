@@ -28,6 +28,7 @@ see. This one's domain is stated in ``DOMAIN`` below and printed on every run.
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -174,6 +175,143 @@ EXPECTED: dict[str, Cell] = {
 }
 
 
+
+#: Tracked record of each prediction's blob at its FIRST commit.
+#:
+#: Phase 37 stated the audit's largest blind spot: it reads commit ORDER, never
+#: the prediction's CONTENT, so a file committed early and rewritten later
+#: passes. This closes it the way ``RAW-SHA256SUMS`` closes the equivalent gap
+#: for raw trees -- it does not PREVENT a rewrite, it makes one visible.
+#:
+#: Two comparisons, because they catch different things:
+#:   current vs recorded  -- the file was edited after being pre-registered
+#:   first-commit vs recorded -- the HISTORY was rewritten under it
+BLOBS = ROOT / "reports" / "prereg-blobs.json"
+
+
+
+#: Pre-registrations whose current blob differs from their first, with the
+#: ruling on each. An entry here does NOT excuse a future edit: the check
+#: compares the CURRENT blob against the recorded current, so any further change
+#: fails. It records that this difference was examined and classified.
+EDITED: dict[str, str] = {
+    "reports/phase-report-9-prediction-2026-08-21.md":
+        "Two amendments appended in-file on 2026-08-21 at 19:55 and 20:09, "
+        "SIX DAYS before the first data commit (2026-08-27). Ordering is "
+        "sound; the deviation is that they were written into the original "
+        "rather than as separate files, which is the convention rule 5 "
+        "settled on later. 135 insertions, 0 deletions.",
+    "reports/phase-report-ws6-prediction-corrected-2026-09-08.md":
+        "Edited twice on 2026-09-09, AFTER the 2026-09-08 data commit. "
+        "Examined: 104 insertions, 0 deletions, and the added text labels "
+        "itself in its first line -- 'Recorded 8 September, after the "
+        "corrected cell was read. Deliberately not fixed.' It documents a "
+        "defect found in the verdict script and declines to change it, "
+        "precisely because the script had read data. No hypothesis, "
+        "threshold or margin was altered. So: a convention violation, not a "
+        "changed prediction -- post-data material belongs in a report, not "
+        "appended to the pre-registration, because a reader should not need "
+        "git to tell which half is which.",
+}
+
+
+def first_blob(path: str, repo: Path = ROOT) -> str:
+    """The blob hash of `path` as it stood in its first commit."""
+    sha, _ = first_commit(path, repo)
+    if not sha:
+        return ""
+    return git("rev-parse", f"{sha}:{path}", repo=repo)
+
+
+def head_blob(path: str, repo: Path = ROOT) -> str:
+    return git("rev-parse", f"HEAD:{path}", repo=repo)
+
+
+def prediction_paths(table: dict[str, Cell]) -> list[str]:
+    seen = {c.prediction for c in table.values() if c.prediction}
+    return sorted(seen)
+
+
+def write_blobs(repo: Path = ROOT, table: dict[str, Cell] | None = None) -> int:
+    table = EXPECTED if table is None else table
+    payload = {
+        "note": (
+            "Blob hash of each pre-registration at its FIRST commit. Written by "
+            "scripts/check_prereg_order.py --update-blobs. A mismatch means the "
+            "file was edited after it was pre-registered, or the history was "
+            "rewritten under it. Rule 5: amendments are NEW FILES; the original "
+            "stays unedited."
+        ),
+        "blobs": {
+            rel: {
+                "first": first_blob(rel, repo),
+                "current": head_blob(rel, repo),
+                **({"edited": EDITED[rel]} if rel in EDITED else {}),
+            }
+            for rel in prediction_paths(table)
+        },
+    }
+    BLOBS.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                     encoding="utf-8")
+    print(f"wrote {BLOBS} ({len(payload['blobs'])} predictions)")
+    return 0
+
+
+def check_blobs(repo: Path = ROOT, table: dict[str, Cell] | None = None,
+                blobs_path: Path | None = None) -> list[str]:
+    """Every pre-registration is byte-identical to its first commit."""
+    table = EXPECTED if table is None else table
+    # Repo-relative: the record lives in the repository being audited, not in
+    # whichever checkout this module happens to be imported from. Using the
+    # module constant made a synthetic repo read the real record.
+    path = blobs_path or (repo / "reports" / "prereg-blobs.json")
+    if not path.is_file():
+        return [f"{path.name} is missing; run --update-blobs"]
+
+    recorded = json.loads(path.read_text(encoding="utf-8")).get("blobs", {})
+    problems: list[str] = []
+
+    for rel in prediction_paths(table):
+        if rel not in recorded:
+            problems.append(
+                f"{rel}: pre-registered but has no recorded blob -- a new "
+                "prediction was added without recording it, so a later edit "
+                "to it would be invisible"
+            )
+            continue
+        entry = recorded[rel]
+        got_first = first_blob(rel, repo)
+        got_head = head_blob(rel, repo)
+        if got_first and got_first != entry.get("first"):
+            problems.append(
+                f"{rel}: first-commit blob {got_first[:8]} != recorded "
+                f"{str(entry.get('first'))[:8]} -- the history was rewritten "
+                "under it"
+            )
+        if got_head and got_head != entry.get("current"):
+            problems.append(
+                f"{rel}: current blob {got_head[:8]} != recorded "
+                f"{str(entry.get('current'))[:8]} -- the pre-registration was "
+                "EDITED. Rule 5: amendments are new files; the original stays "
+                "unedited. If the edit is deliberate, classify it in EDITED "
+                "and re-run --update-blobs, so the change is examined rather "
+                "than absorbed"
+            )
+        # An unexamined divergence between first and current is a finding even
+        # when both match the record, because the record was written from this
+        # same history and would otherwise bless it silently.
+        if (entry.get("first") != entry.get("current")
+                and "edited" not in entry):
+            problems.append(
+                f"{rel}: recorded first and current blobs differ with no "
+                "ruling in EDITED -- it was edited after pre-registration and "
+                "nobody has said why"
+            )
+    for rel in sorted(set(recorded) - set(prediction_paths(table))):
+        problems.append(f"{rel}: recorded but no longer pre-registers any cell")
+    return problems
+
+
 def git(*args: str, repo: Path = ROOT) -> str:
     done = subprocess.run(["git", "-C", str(repo), *args],
                           capture_output=True, text=True)
@@ -282,6 +420,11 @@ def audit(repo: Path = ROOT, expected: dict[str, Cell] | None = None) -> int:
     for row in rows:
         print("%-52s %-9s %-11s %-9s %-11s %s" % row)
     print()
+    blob_problems = check_blobs(repo, table)
+    failures.extend(blob_problems)
+    print(f"pre-registrations byte-identical to their first commit: "
+          f"{'yes' if not blob_problems else 'NO'}")
+    print()
     print(f"cells: {len(rows)}   "
           f"ok: {sum(1 for r in rows if r[-1] == 'ok')}   "
           f"exempt: {sum(1 for r in rows if r[-1] == 'EXEMPT')}   "
@@ -297,7 +440,14 @@ def audit(repo: Path = ROOT, expected: dict[str, Cell] | None = None) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=ROOT)
+    parser.add_argument(
+        "--update-blobs",
+        action="store_true",
+        help="record each pre-registration's first-commit blob and exit",
+    )
     args = parser.parse_args(argv)
+    if args.update_blobs:
+        return write_blobs(args.repo)
     return audit(args.repo)
 
 

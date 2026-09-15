@@ -98,9 +98,22 @@ paper/*.aux
 paper/*.bbl
 paper/*.blg
 paper/*.log
-# The build-provenance stamp (B21 item 3). It is a build product like the four
-# above, and it is deliberately NOT tracked: it describes one machine's last
-# build, not the repository's state.
+# The build-provenance stamp (B21 item 3). RULED 2026-09-15, phase 38: all
+# FOUR stamps are TRACKED, and this rule is the correction of an asymmetry
+# phase 34 found -- three tracked, this one ignored, on a reason that does
+# not survive reading the file.
+#
+# The old reason said it 'describes one machine's last build, not the
+# repository's state'. It does not: the payload is
+# {sources: {relpath: sha256}, version} -- no absolute path, no hostname. It
+# records source-to-artifact correspondence, which IS repository state, and
+# tracking it is what lets a CLONE check that the shipped PDFs were built
+# from the shipped sources. Untracked, that check fails in every clone with
+# 'no stamp'.
+#
+# One entry blocked this: paper/.ai/track.md, a gitignored session log that
+# a clone does not have, which made every tracked stamp read STALE there.
+# paper_provenance.NON_SOURCE_DIRS now excludes it.
 #
 # It sits in the same directory as the artifacts whose staleness caused the
 # problem, which invites cleaning it up as an instance of that problem. It is
@@ -108,7 +121,7 @@ paper/*.log
 # SILENT WHEN WRONG; THE STAMP FAILS THE GATE WHEN WRONG. Deleting it does not
 # restore the old behaviour -- it makes the gate refuse until the next build,
 # which is the safe direction. See B21 item 3 and B40.
-paper/.build-provenance.json
+!paper/.build-provenance.json
 paper/*.out
 paper/*.pdf
 paper/*.synctex.gz
