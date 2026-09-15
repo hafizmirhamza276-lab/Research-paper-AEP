@@ -282,6 +282,92 @@ def check_macros_are_used(result: Result, paper: Path) -> None:
         )
 
 
+
+#: ``\label`` and the reference commands that consume one.
+_LABEL_RE = re.compile(r"\\label\{([^}]*)\}")
+_REF_RE = re.compile(r"\\(?:cref|Cref|ref|autoref|eqref)\*?\{([^}]*)\}")
+
+
+def _labels_and_refs(paths: "list[Path]") -> "tuple[set[str], set[str]]":
+    r"""Labels defined and labels referenced, with LaTeX comments stripped.
+
+    Comments are stripped because a commented-out ``\cref`` is not a
+    reference, and a migration that comments a block out rather than deleting
+    it would otherwise read as still-referencing.
+    """
+    labels: set[str] = set()
+    refs: set[str] = set()
+    for path in paths:
+        if not path.is_file():
+            continue
+        text = re.sub(r"(?m)^[ \t]*%.*$", "", path.read_text(encoding="utf-8"))
+        labels.update(_LABEL_RE.findall(text))
+        for group in _REF_RE.findall(text):
+            refs.update(name.strip() for name in group.split(",") if name.strip())
+    return labels, refs
+
+
+def check_cross_document_references(result: Result, paper: Path) -> None:
+    r"""The paper and the supplementary are two documents, not one.
+
+    ``supplementary.tex`` says so in its own header: it "cannot ``\cref``
+    labels defined in main.tex", so references to the paper are spelled out by
+    name. That convention is only worth anything if something enforces it.
+
+    **The failure mode this exists for.** WS-9 moves sections out of the main
+    text and into the supplementary. Move a block but leave its ``\cref`` in
+    main and LaTeX says "undefined reference" -- already caught. *Copy* a block
+    instead of moving it, and both documents define the label: LaTeX is silent
+    in both, every existing gate passes, and a reader following the pointer in
+    the main text lands on whichever copy went stale. Nothing in this file saw
+    that before.
+    """
+    main_sources = (
+        [paper / "main.tex"]
+        + sorted((paper / "sections").glob("*.tex"))
+        + sorted((paper / "generated").glob("*.tex"))
+    )
+    supplementary = paper / "supplementary.tex"
+    if not supplementary.is_file():
+        result.check(False, "supplementary.tex exists",
+                     f"missing {supplementary}")
+        return
+
+    main_labels, main_refs = _labels_and_refs(main_sources)
+    supp_labels, supp_refs = _labels_and_refs([supplementary])
+
+    dangling_main = sorted(main_refs - main_labels)
+    result.check(
+        not dangling_main,
+        "every reference in the main text resolves inside the main text",
+        f"{len(dangling_main)} unresolved: {', '.join(dangling_main)}",
+    )
+
+    dangling_supp = sorted(supp_refs - supp_labels)
+    result.check(
+        not dangling_supp,
+        "every reference in the supplementary resolves inside the supplementary",
+        f"{len(dangling_supp)} unresolved -- the supplementary cannot \\cref "
+        f"into the paper and must name it instead: {', '.join(dangling_supp)}",
+    )
+
+    both = sorted(main_labels & supp_labels)
+    result.check(
+        not both,
+        "no label is defined in both documents",
+        f"{len(both)} defined twice -- a migration that copied rather than "
+        f"moved: {', '.join(both)}",
+    )
+
+    orphan_supp = sorted(supp_labels - supp_refs - main_refs)
+    if orphan_supp:
+        result.note(
+            f"{len(orphan_supp)} supplementary label(s) referenced by nothing; "
+            "the main text points at the supplementary by name, so this is "
+            f"expected rather than broken: {', '.join(orphan_supp)}"
+        )
+
+
 def check_per_cell_has_regime(result: Result, analysis: Path) -> None:
     path = analysis / "per-cell-metrics.csv"
     if not path.is_file():
@@ -702,6 +788,7 @@ def main() -> int:
         arguments.ws5_keying,
         arguments.fsync_always_45,
     )
+    check_cross_document_references(result, arguments.paper)
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
     check_state_machine(result, arguments.paper)

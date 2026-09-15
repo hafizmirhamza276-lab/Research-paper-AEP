@@ -357,6 +357,16 @@ Mark each item `[x]` only after verifying the phase report and, where possible, 
 
 **Evidence**
 - [ ] Measurements exist from a native Linux host; cross-host replication of ≥ 1 frozen cell reported (WS-0)
+      **Converted from blocker to declared limitation, phase 28.** Left
+      unticked deliberately: the box describes work that has not been done,
+      and ticking it would say otherwise. What changed is that it no longer
+      blocks submission. WS-3, WS-4 and WS-5 are all complete on the WSL2
+      host and moving now means re-collecting every one of them;
+      `08-threats.tex` discloses the platform, the port forwarding and the
+      development/measurement split, and now names the concrete future-work
+      item: re-collect **one** frozen cell on bare metal --- the crash-free
+      `everysec` AEP-full/B3 cell, thirty runs, about an hour --- rather
+      than leaving "future work" open-ended beside absolute medians.
 - [ ] Prevention result collected under a controlled Redis fault on all 3 capability classes, ≥ 3 sessions each (WS-3)
 - [ ] Protocol outcomes measured under block-level write loss (WS-4)
 - [x] Every timing interval rests on ≥ 15 runs; no CI containing zero is presented as a positive cost (WS-5)
@@ -381,7 +391,10 @@ Mark each item `[x]` only after verifying the phase report and, where possible, 
 - [ ] `09-artifact.tex` availability statements are true
 
 **Manuscript**
-- [ ] Framing decision executed (title, abstract, §I, §II consistent with evaluation) (WS-1)
+- [x] Framing decision executed (title, abstract, §I, §II consistent with evaluation) (WS-1)
+      Verified phase 27: the title carries no "Autonomous Agents", §VI uses
+      "agent" zero times, §I:7 scopes it as the motivating example, and §II:9
+      states outright "It is a scripted caller, not an agent".
 - [ ] ≤ 16 pages main text; supplementary PDF exists (WS-9)
 - [ ] Abstract ≤ 250 words
 - [ ] ≥ 65 references, all verified, `verify_refs --offline` in CI (WS-8)

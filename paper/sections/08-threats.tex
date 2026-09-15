@@ -260,6 +260,16 @@ Absolute latency and throughput are platform-bound; only comparisons
 \emph{between} systems sharing this platform are meaningful, which is why
 \cref{tab:latency} is presented as increments over a common floor.
 
+We treat this as a limitation rather than a defect to be fixed before
+publication, and the specific thing it costs is worth naming. Every absolute
+median here carries an unmeasured platform term, and the way to measure it is
+not to re-collect the evaluation on bare metal but to re-collect **one frozen
+cell** there and compare: the crash-free \texttt{everysec} cell of AEP-full and
+B3 is thirty runs and about an hour, it is the cell both barrier figures come
+from, and its archive manifest makes the comparison exact rather than
+approximate. Until that exists, a reader should treat the increments as this
+platform's and the ordering as the claim.
+
 \paragraph{The motivating traces come from our own harness} \Cref{sec:motivating}
 reproduces failures in baselines we implemented, not in deployed systems. It
 establishes that the failure modes are reachable under the stated fault model;
