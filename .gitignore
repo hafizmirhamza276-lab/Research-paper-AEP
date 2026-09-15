@@ -658,3 +658,10 @@ experiments/results/fsync-always-2026-09-14/analysis/*
 !experiments/results/b2-s1-2026-08-21/COLLECTION-NOTE.md
 !experiments/results/b2-s2-2026-08-21/COLLECTION-NOTE.md
 !experiments/results/b2-s3-2026-08-21/COLLECTION-NOTE.md
+
+# Session transcripts the assistant writes at the repository root, named
+# <date>-<time>-<first-words-of-the-prompt>.txt. They are a tool artefact, not
+# authored work and not evidence: the record of what was decided lives in
+# reports/ and prompts/, which are tracked. Ignored rather than deleted --
+# phase 34 classifies, it does not remove (docs/36 section 2.5).
+[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-*.txt
