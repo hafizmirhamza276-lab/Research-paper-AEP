@@ -126,6 +126,18 @@ Every path below is referenced from tracked text. Existence checked 2026-09-15.
 | `/root/aep-raw-archive` | 524M | 4 | the archive itself |
 | `/mnt/d/personal/AEP/aep-raw-archive` | 145M | 2 911 | second copy, `.tar.gz` only |
 
+
+> **RESOLVED 2026-09-15, phase 35.** Three of the five trees are now
+> archived: `aep-raw-archive-ext`, 11 roots, 1 332 run directories, 18 494
+> files, manifest `54d1ab0f…`, verified 18 494/18 494 with 0 failed and 0
+> missing. The two remaining are declared by name in `docs/29` §0b:
+> `/root/aep-5b` holds only transient smoke output the first archive had
+> **already excluded by name**, and `/root/aep-stage3` has **zero run
+> directories** — it is a source checkout, not a collection.
+>
+> So the 852 MB figure above was right about what was outside the archive
+> and wrong to imply all of it was evidence: **408 MB was, and is now
+> archived; 444 MB never was.**
 **The deposit-critical finding.** The Phase-11 archive was built on 2026-09-03
 and covers 20 roots from three trees. **Five referenced trees totalling 852 MB
 are not in it**, and two of them back claims the paper makes:

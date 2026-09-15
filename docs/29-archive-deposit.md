@@ -10,6 +10,41 @@ re-checked with the commands in §6.
 
 ---
 
+## 0b. The deposit is TWO archives, and two trees are excluded by name
+
+**Added 2026-09-15, phase 35.** Phase 34's inventory found five referenced
+collection trees outside the 2026-09-03 archive, three of which back numbers
+in the manuscript. The deposit therefore carries **two** archives:
+
+| part | roots | run dirs | files | `MANIFEST.sha256` |
+|---|---|---|---|---|
+| `aep-raw-archive` (2026-09-03) | 20 | 1 458 | 26 300 | `87fa2d53…` |
+| `aep-raw-archive-ext` (2026-09-15) | 11 | 1 332 | 18 494 | `54d1ab0f…` |
+
+Both must be uploaded. The manifests share no path; the first archive was
+not reopened and its digest still verifies over exactly the bytes it always
+covered. **Verify each against its own manifest, not against a combined
+one** — there is no combined manifest and inventing one at upload time would
+be a new artefact nobody has verified.
+
+### What the deposit does NOT contain, named
+
+Silence is not a disposition. Two referenced trees are excluded:
+
+* **`/root/aep-5b`** (220 MB). Its only run directories are
+  `/root/aep-5b/repo/.scratch/reproduce/smoke` — seven runs of
+  `make reproduce-smoke`, which that target regenerates on every invocation.
+  **The 2026-09-03 archive already excluded this path by name**, with the
+  same reason, and phase 35 does not disturb that ruling. Nothing in the
+  manuscript derives from it.
+* **`/root/aep-stage3`** (224 MB). **Zero run directories.** It is a source
+  checkout — `ARTIFACT.md`, `CHANGELOG.md`, `LICENSE`, briefs and prompts —
+  not a collection. The code it holds is in git history; no number derives
+  from it.
+
+A reader can recompute every number in the manuscript without either.
+
+---
 ## 0a. Precondition added 2026-09-14: this deposit is not a formality
 
 Every copy of the raw evidence is on **one machine**. Two of them

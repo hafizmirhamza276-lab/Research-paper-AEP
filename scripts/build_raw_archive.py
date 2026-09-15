@@ -275,6 +275,113 @@ ROOTS: tuple[Root, ...] = (
 )
 
 
+
+#: The 2026-09-03 archive covered twenty roots from three trees. Phase 34's
+#: inventory found five referenced trees outside it, and three of those back
+#: claims the manuscript makes. This is that gap, built as a SEPARATE
+#: archive with its own manifest so the original is never reopened and its
+#: digest still verifies over exactly the bytes it always covered.
+#:
+#: Voided collections are included, on the precedent the original set: a
+#: voided collection is evidence about the instrument.
+EXTENSION_ROOTS: tuple[Root, ...] = (
+    Root(
+        label="ws4-writeloss-s1-2026-09-07-a5",
+        source="/root/aep-phase14/writeloss-s1-2026-09-07-a5",
+        tracked_analysis="reports/raw/ws4-writeloss-s1-2026-09-07",
+        note=(
+            "WS-4's host-level write-loss protocol cell. Section VI-C's "
+            "numbers come from this root's analysis products, and the "
+            "manuscript's write-loss macros name it by path. "
+        ),
+    ),
+    Root(
+        label="ws4-writeloss-s1-2026-09-07-a5-voided-1",
+        source="/root/aep-phase14/writeloss-s1-2026-09-07-a5-voided-1",
+        tracked_analysis=None,
+        note=(
+            "The voided first attempt of the same cell, retained because a "
+            "voided collection is evidence about the instrument. "
+        ),
+    ),
+    Root(
+        label="ws6-b5-s1-2026-09-08-attempt3",
+        source="/root/aep-ws6/b5-s1-2026-09-08-attempt3",
+        tracked_analysis="reports/raw/ws6-b5-s1-2026-09-08-attempt3",
+        note=(
+            "WS-6's real-Temporal baseline. Section VI-A's B5 comparison and "
+            "every B5 macro come from this root. "
+        ),
+    ),
+    Root(
+        label="ws6-b5-s1-2026-09-08-attempt2",
+        source="/root/aep-ws6/b5-s1-2026-09-08-attempt2",
+        tracked_analysis=None,
+        note=(
+            "The second attempt, superseded by attempt 3 and retained as "
+            "evidence about the instrument. "
+        ),
+    ),
+    Root(
+        label="ws6-b5-s1-2026-09-08-VOIDED-attempt1",
+        source="/root/aep-ws6/VOIDED-b5-s1-2026-09-08-attempt1",
+        tracked_analysis=None,
+        note=(
+            "The voided first attempt; its own phase report explains why. "
+        ),
+    ),
+    Root(
+        label="phase13-armA-s1-2026-09-03",
+        source="/root/aep-phase13/armA-s1-2026-09-03",
+        tracked_analysis="experiments/results/phase13-armA-s1-2026-09-03/analysis",
+        note=(
+            "Controlled-fault prevention replication, session 1. The "
+            "replication interval quoted in the threats section is computed "
+            "across the three armA sessions. "
+        ),
+    ),
+    Root(
+        label="phase13-armA-s2-2026-09-03",
+        source="/root/aep-phase13/armA-s2-2026-09-03",
+        tracked_analysis="experiments/results/phase13-armA-s2-2026-09-03/analysis",
+        note=(
+            "Session 2 of the same replication. "
+        ),
+    ),
+    Root(
+        label="phase13-armA-s3-2026-09-03",
+        source="/root/aep-phase13/armA-s3-2026-09-03",
+        tracked_analysis="experiments/results/phase13-armA-s3-2026-09-03/analysis",
+        note=(
+            "Session 3 of the same replication. "
+        ),
+    ),
+    Root(
+        label="phase13-armA-s3-VOIDED-killed-at-152",
+        source="/root/aep-phase13/VOIDED/armA-s3-2026-09-03-VOID-killed-at-152",
+        tracked_analysis=None,
+        note=(
+            "The voided session 3 attempt, stopped at run 152. "
+        ),
+    ),
+    Root(
+        label="phase13-inflight-s1-2026-09-04",
+        source="/root/aep-phase13/inflight-s1-2026-09-04",
+        tracked_analysis="experiments/results/phase13-inflight-s1-2026-09-04/analysis",
+        note=(
+            "The in-flight kill variant, session 1; docs/31 rests on it. "
+        ),
+    ),
+    Root(
+        label="phase13-inflight-s2-2026-09-04",
+        source="/root/aep-phase13/inflight-s2-2026-09-04",
+        tracked_analysis="experiments/results/phase13-inflight-s2-2026-09-04/analysis",
+        note=(
+            "The in-flight kill variant, session 2. "
+        ),
+    ),
+)
+
 @dataclass(frozen=True)
 class Excluded:
     path: str
@@ -622,6 +729,16 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="re-digest the sources against an existing MANIFEST.sha256 and exit",
     )
+    parser.add_argument(
+        "--extension",
+        action="store_true",
+        help=(
+            "build the phase 35 EXTENSION archive -- the roots the "
+            "2026-09-03 archive did not cover -- instead of the original "
+            "set. The original is never reopened, so its manifest digest "
+            "still verifies over exactly the bytes it always covered."
+        ),
+    )
     parser.add_argument("--json", default=None, help="write the build report here")
     arguments = parser.parse_args(argv)
 
@@ -632,7 +749,7 @@ def main(argv: list[str] | None = None) -> int:
 
     started = time.monotonic()
     print(f"archiving {len(ROOTS)} collection roots into {output}")
-    result = build(output, ROOTS, compress=not arguments.no_compress)
+    result = build(output, (EXTENSION_ROOTS if arguments.extension else ROOTS), compress=not arguments.no_compress)
     result["build_seconds"] = round(time.monotonic() - started, 1)
 
     print()

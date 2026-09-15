@@ -4,10 +4,21 @@ The research artifact for *Declared Ambiguity: Fail-Closed Execution for
 Non-Idempotent Legacy APIs Without Idempotency Keys* — a protocol,
 five baseline designs it is measured against, a fault-injection harness,
 tracked derived results from a 432-run evaluation, and the manuscript generated
-from them. The raw run archive — 1 458 run directories, 26 300 files, manifest
-digest `87fa2d53…` — is **built and verified but not yet deposited**, so no DOI
-exists yet; `ARTIFACT.md` §5 records exactly what is pending and
-`docs/29-archive-deposit.md` is the checklist that closes it.
+from them. The raw run archive is **two parts, built and verified but not
+yet deposited**, so no DOI exists yet:
+
+| part | run dirs | files | manifest digest |
+|---|---|---|---|
+| 2026-09-03 | 1 458 | 26 300 | `87fa2d53…` |
+| extension, 2026-09-15 | 1 332 | 18 494 | `54d1ab0f…` |
+| **total** | **2 790** | **44 794** | |
+
+The extension covers the three collection trees the first archive did not
+reach — WS-4's write-loss cell, WS-6's Temporal baseline and the phase-13
+replication sessions — each of which backs a number in the manuscript. The
+two manifests share no path and the first is unmodified. `ARTIFACT.md`
+§5 records exactly what is pending and `docs/29-archive-deposit.md` is the
+checklist that closes it.
 
 **Where the raw actually is, until that deposit happens.** Until there is a
 DOI, the raw runs exist only on the measurement host, and this repository

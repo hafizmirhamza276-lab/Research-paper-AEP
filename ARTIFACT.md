@@ -248,6 +248,28 @@ These 13 files are exactly the inputs `scripts/check_paper_numbers.py` opens.
 They are re-included by name at the tail of `.gitignore`; everything else under
 `experiments/results/` stays ignored.
 
+**The archive is in two parts since 2026-09-15.** The table below is the
+2026-09-03 build. The **extension** adds the three trees it did not cover:
+
+| | |
+|---|---|
+| collection roots | **11** |
+| run directories | **1 332** |
+| files | **18 494** |
+| payload | **355 492 262 bytes** (`.tar` 375 429 120; `.tar.gz` **17 563 367**) |
+| **`MANIFEST.sha256`** | **`54d1ab0fc1e55283dc0aa1dabf121b047c432063d077074c3c45728735d63cd5`** |
+| `aep-raw-evidence.tar` | `61ecd2a41cb38708ccb1b6bbc507b4248b95c76cb3bef8ed8f3468dae13813e3` |
+| `aep-raw-evidence.tar.gz` | `6ef11d7c88eef5927f478941f7df71ae25685fdb153afd636fe0250dd37eebf1` |
+
+It holds WS-4's write-loss cell (§VI-C), WS-6's real-Temporal baseline
+(§VI-A), the three phase-13 controlled-fault replication sessions behind the
+replication interval in §VIII, the two in-flight-kill sessions behind
+`docs/31`, and four voided collections retained as evidence about the
+instrument. **Verified: 18 494 of 18 494 files against its manifest, 0
+failed, 0 missing. The two manifests share no path, and the 2026-09-03
+archive was not reopened — `87fa2d53…` still verifies over exactly the bytes
+it always covered.**
+
 **Not yet published externally** — the raw run directories, each holding its run
 config, ground-truth ledger, merged log and per-run summary, are the inputs to
 `experiments/analyze.py`. They are not committed. **As of 2026-09-03 they are
