@@ -25,12 +25,11 @@ mechanisms and AEP against these columns; of the fourteen, only AEP answers
 \subsection{What the endpoint must supply}
 
 \paragraph{Leases and fencing} Leases provide time-bounded mutual exclusion
-under crash faults~\cite{gray1989leases}; Chubby made the pattern an
-infrastructural service~\cite{burrows2006chubby}, ZooKeeper supplies the same
-class of primitive as a coordination kernel on which client-side locking is
-built~\cite{hunt2010zookeeper}, and the Redis lock pattern~\cite{redis-locks} is
-a commodity form. A lease holder may stall past expiry and write afterwards, so
-a monotonic fencing token is also required.
+under crash faults~\cite{gray1989leases}, as an infrastructural
+service~\cite{burrows2006chubby}, as a coordination kernel for client-side
+locking~\cite{hunt2010zookeeper}, and in commodity form~\cite{redis-locks}. A
+lease holder may stall past expiry and write afterwards, so a monotonic fencing
+token is also required.
 
 Chubby states both the hazard and the remedy in primary form, which matters
 because AEP's guard depends on the remedy and because the requirement it imposes
@@ -63,23 +62,18 @@ consumer~\cite{richardson-transactional-outbox}. B3 is structurally outbox-like,
 with a no-re-entry rule in the measured runner; it does not make the remote
 mutation transactional.
 
-Compensation is the standard answer once atomicity is unavailable, and it rests
-on a premise worth stating. Gray observes that a committed transaction cannot be
-abrogated: its effects can only be altered by running a further transaction,
-which is why the remedy after commit is compensation rather than
-rollback~\cite{gray1981transaction}. Korth et al.\ formalise this, defining
-compensating transactions that undo committed work without cascading aborts,
-with conflict expressed as failure of operations to
-commute~\cite{korth1990compensating}. Sagas apply the idea to long-running
-activities by pairing each step with a compensating
-step~\cite{garciamolina1987sagas}. All three presuppose two facts about the
-effect: that it \emph{happened}, since a compensating step is chosen because a
-committed effect is known to exist, and that a semantically inverse operation
-exists and may itself be applied. AEP's endpoint reliably supplies neither. In
-the \textsc{no-readback} class the first is unobtainable by construction, and
+Compensation is the standard answer once atomicity is unavailable: a
+committed effect cannot be abrogated, only altered by a further
+transaction~\cite{gray1981transaction}, formalised as compensating transactions
+that undo committed work without cascading aborts~\cite{korth1990compensating}
+and applied to long-running activities by pairing each step with a compensating
+one~\cite{garciamolina1987sagas}. All three presuppose two facts about the
+effect: that it \emph{happened}, and that a semantically inverse operation
+exists and may be applied. AEP's endpoint reliably supplies neither. In the
+\textsc{no-readback} class the first is unobtainable by construction, and
 compensating for an effect that may not have occurred is itself a mutation with
-the same problem --- which is why declared ambiguity is terminal here rather than
-a prelude to compensation. Helland describes the broader consequences of
+the same problem --- which is why declared ambiguity is terminal here rather
+than a prelude to compensation. Helland describes the broader consequences of
 operating without distributed transactions and the centrality of
 idempotence~\cite{helland2007apostate,helland2012idempotence}.
 
@@ -237,20 +231,19 @@ idempotency, it characterizes the remaining race as best-effort. AEP evaluates
 the authoritative, positive-only, and absent-readback cases separately and
 uses terminal ambiguity for the last case.
 
-LogAct durably exposes intentions in a shared log before execution and supports
-recovery and policy voting for open-ended agent control flow
-~\cite{balakrishnan2026logact}. It is broader in agent-state-machine structure
-and isolation; AEP is narrower in studying what can be concluded about one
-non-idempotent external mutation after an interruption. The Sovereign Execution
-Broker (SEB) reserves certificate nonces before mutation, disallows retry after
-possible invocation unless durable or target-side evidence proves otherwise,
-and provides a mandatory broker boundary with cryptographic certificates
-~\cite{he2026seb}. That boundary is stronger than AEP's trusted-process guard.
-AEP's distinct evidence is the three endpoint-capability classes, terminal
-declared ambiguity, real \texttt{SIGKILL} and Redis durability faults, and the
-B3/AEP ablation. ACRFence addresses semantic rollback during agent
-checkpoint-restore~\cite{zheng2026acrfence}; it is adjacent rather than a basis
-for ranking which work is ``nearest.''
+Three contemporaneous systems bound the comparison. LogAct durably exposes
+intentions in a shared log before execution~\cite{balakrishnan2026logact},
+broader in agent-state-machine structure where AEP is narrower: what can be
+concluded about one non-idempotent external mutation after an interruption. The
+Sovereign Execution Broker reserves certificate nonces before mutation and
+refuses retry after possible invocation absent durable or target-side
+evidence~\cite{he2026seb}; its mandatory broker boundary with cryptographic
+certificates is stronger than AEP's trusted-process guard. ACRFence addresses
+semantic rollback during agent checkpoint-restore~\cite{zheng2026acrfence},
+adjacent rather than a basis for ranking which work is ``nearest.'' AEP's
+distinct evidence is the three endpoint-capability classes, terminal declared
+ambiguity, real \texttt{SIGKILL} and Redis durability faults, and the B3/AEP
+ablation.
 
 \subsection{The residual when the assumption fails}
 
@@ -314,39 +307,27 @@ uncomfortable form: the check that would settle whether the effect happened
 belongs at the endpoints, and the endpoint that would have to perform it is
 precisely the one that cannot.
 
-\paragraph{Fault-injection lineage} AEP's named crash boundaries and independent
-oracle follow a mature crash-consistency methodology, and what the harness
-borrows from it is clearest when each method is read by \emph{what it injects and
-at which layer}. ALICE constructs possible post-crash storage states and checks
-application invariants~\cite{pillai2014alice}; Torturing Databases combines
-controlled power-fault injection with record/replay and cross-layer diagnosis
-~\cite{zheng2014torturing}; CrashMonkey/Ace exhaustively test bounded workloads
-at persistence boundaries~\cite{mohan2018crashmonkey}; and Ferrite specifies
-crash-consistency models for a file system as litmus tests and an operational
-semantics at the POSIX interface, validated against real implementations, which
-exposed unintuitive ext4 behaviour~\cite{bornholt2016ferrite}. That last method
-is unavailable to us in the direction that matters: a legacy endpoint publishes
-no crash-consistency model to write litmus tests against, which is the problem
-rather than an oversight.
+\paragraph{Fault-injection lineage} AEP's named crash boundaries and
+independent oracle follow a mature crash-consistency
+methodology~\cite{pillai2014alice,zheng2014torturing,mohan2018crashmonkey,bornholt2016ferrite},
+which constructs post-crash states, injects power faults, or specifies a
+system's crash model as litmus tests. The last is unavailable here in the
+direction that matters: a legacy endpoint publishes no crash-consistency model
+to write litmus tests against, which is the problem rather than an oversight.
 
-Three methods from distributed systems bound the comparison further. FATE injects
-failures into cloud systems and systematically explores \emph{sequences} of
-several, pairing them with declarative specifications of correct
-recovery~\cite{gunawi2011fate}; our cells inject one fault at one named boundary,
-trading FATE's coverage of failure combinations for an exact statement of where
-the single fault landed. Lineage-driven fault injection inverts the search,
-reasoning backwards from a correct outcome to the fault combinations that could
-have prevented it, with the fault model bounded explicitly to dropped messages,
-failed nodes and partitions~\cite{alvaro2015ldfi} --- a model that excludes crash
-recovery, the class this paper is about. Elle checks a database's client-observed
-history for isolation anomalies while faults are injected, inferring a dependency
-graph from what clients saw~\cite{kingsbury2020elle}; the contrast with our
-setting is the oracle, because Elle must infer from the client's view whereas our
-provider ledger is written independently of the system under test and is never
-consulted by it. AEP applies this lineage to a caller-to-endpoint protocol: real
-process kills at named instruction boundaries, a separately written provider
-ledger, and a \texttt{dm-flakey} write-loss probe. The harness is an evaluation
-instrument, not a claimed fault-injection contribution.
+Three distributed-systems methods bound the comparison. FATE explores
+\emph{sequences} of failures against declarative recovery
+specifications~\cite{gunawi2011fate}; our cells inject one fault at one named
+boundary, trading coverage of combinations for an exact statement of where the
+single fault landed. Lineage-driven injection reasons backwards from a correct
+outcome to the faults that could have prevented it, over a model of dropped
+messages, failed nodes and partitions~\cite{alvaro2015ldfi} --- a model that
+excludes crash recovery, the class this paper is about. Elle infers a dependency
+graph from what clients saw~\cite{kingsbury2020elle}; the contrast is the
+oracle, since our provider ledger is written independently of the system under
+test and is never consulted by it. AEP applies this lineage to a
+caller-to-endpoint protocol, and the harness is an evaluation instrument rather
+than a claimed contribution.
 
 
 Read down the three columns, the position is this. AEP's claim is not the
