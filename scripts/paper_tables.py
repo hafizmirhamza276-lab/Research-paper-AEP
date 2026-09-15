@@ -58,6 +58,12 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+# Amendment 3 pinned the lower-mode boundary before the `always` arm
+# was collected, in the pre-registered instrument. Importing it is how
+# the manuscript and the analysis stay on one definition.
+sys.path.insert(0, str(ROOT / "scripts"))
+from power_analysis import lower_mode_difference  # noqa: E402
+
 from experiments.statistics import (  # noqa: E402
     fisher_exact_two_tailed,
     wilson_upper_bound,
@@ -1051,6 +1057,9 @@ def emit_numbers(
     # Same defaulted shape, same reason: an absent session emits no
     # write-loss macros rather than emitting zeros.
     writeloss_cell: Path | None = None,
+    # WS-5's four analysis roots, keyed "everysec" / "p30" / "keying" /
+    # "always45". Absent keys emit nothing.
+    ws5: dict[str, Path] | None = None,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
     lines: list[str] = []
@@ -2935,6 +2944,191 @@ def emit_numbers(
                 f"per-cell-metrics.csv | executions behind \\{key}",
             )
 
+
+    # ------------------------------------------------------------------ WS-5
+    #
+    # Everything above this point is computed from cells of THREE runs. WS-5
+    # collected fifteen per arm under everysec and fifteen per arm under
+    # always, and ruled on five pre-registered hypotheses; none of it could
+    # reach the manuscript, because rule 1 forbids typing a number and no
+    # generator path existed. This block is that path.
+    #
+    # Naming: every macro from a WS-5 cell carries its run count in its name --
+    # `Fifteen`, `FortyFive` -- so that \BarrierCost (3 runs) and
+    # \BarrierCostFifteen cannot be confused at the point of use. The
+    # three-run macros are NOT removed: section VIII quotes them to make an
+    # argument about what three runs can support.
+    if ws5:
+        ws5_everysec = ws5.get("everysec")
+        if ws5_everysec:
+            executions = ws5_everysec / "per-execution.csv"
+            aep15 = crash_free_latencies(executions, "AEP_FULL")
+            b3_15 = crash_free_latencies(executions, "B3_INTENT_NO_BARRIER")
+            b0_15 = crash_free_latencies(executions, "B0_NAIVE_RETRY")
+
+            if aep15 and b3_15:
+                point, low, high = cluster_bootstrap_median_difference(
+                    aep15, b3_15
+                )
+                for name, value, what in (
+                    ("BarrierCostFifteen", point, "point estimate"),
+                    ("BarrierCostFifteenLow", low, "2.5th percentile"),
+                    ("BarrierCostFifteenHigh", high, "97.5th percentile"),
+                ):
+                    macro(
+                        name, tex_number(value),
+                        "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                        "per-execution.csv | cluster bootstrap over runs, "
+                        "10000 resamples, seed 20260806, appendfsync=everysec",
+                        f"{what} of (median AEP-full - median B3), "
+                        f"{len(aep15)} and {len(b3_15)} runs",
+                    )
+
+            # Protocol minus barrier, BOTH readings. Amendment 2 rules that
+            # both are reported and neither is chosen silently, because they
+            # disagree and it would be trivial to quote whichever flatters the
+            # claim. The pooled one is the pre-registered default; the
+            # lower-mode one exists because B3's arm is a mixture.
+            if b3_15 and b0_15:
+                point, low, high = cluster_bootstrap_median_difference(
+                    b3_15, b0_15
+                )
+                for name, value, what in (
+                    ("ProtocolMinusBarrierFifteen", point, "point estimate"),
+                    ("ProtocolMinusBarrierFifteenLow", low, "2.5th percentile"),
+                    ("ProtocolMinusBarrierFifteenHigh", high, "97.5th percentile"),
+                ):
+                    macro(
+                        name, tex_number(value),
+                        "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                        "per-execution.csv | cluster bootstrap over runs, "
+                        "10000 resamples, seed 20260806, pooled over both "
+                        "modes of the B3 arm",
+                        f"{what} of (median B3 - median B0), "
+                        f"{len(b3_15)} and {len(b0_15)} runs; "
+                        "the POOLED reading, which amendment 2 makes the "
+                        "default and which spans zero",
+                    )
+
+                lower = lower_mode_difference(b3_15, b0_15)
+                if lower:
+                    for name, key, what in (
+                        ("ProtocolMinusBarrierLowerMode", "point", "point estimate"),
+                        ("ProtocolMinusBarrierLowerModeLow", "ci_low", "2.5th percentile"),
+                        ("ProtocolMinusBarrierLowerModeHigh", "ci_high", "97.5th percentile"),
+                    ):
+                        macro(
+                            name, tex_number(lower[key]),
+                            "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                            "per-execution.csv | same bootstrap, restricted to "
+                            "each arm's lower mode",
+                            f"{what}; the boundary is the splitter's own "
+                            "lower_max, pinned by amendment 3 before this arm "
+                            "was collected. Reported BESIDE the pooled figure, "
+                            "never instead of it",
+                        )
+
+        # The 45-run always arm. \BarrierCostAlways above is the THREE-run
+        # August cell and stays; this is the one with fifteen runs per arm.
+        always45 = ws5.get("always45")
+        if always45:
+            rows45 = read_rows(always45 / "latency-and-throughput.csv")
+            medians45 = {
+                row["system"]: float(row["step_latency_ms_median"])
+                for row in rows45
+                if int(row["overhead_runs_crash_free"] or 0)
+            }
+            aep45 = medians45.get("AEP_FULL")
+            b345 = medians45.get("B3_INTENT_NO_BARRIER")
+            if aep45 is not None and b345 is not None:
+                macro(
+                    "BarrierCostAlwaysFortyFive",
+                    tex_number(aep45 - b345),
+                    "fsync-always-2026-09-14/analysis/"
+                    "latency-and-throughput.csv | AEP-full median - B3 "
+                    "median, both under appendfsync=always, 15 runs per arm",
+                    f"= {aep45:.1f} - {b345:.1f}. NEGATIVE, and that is the "
+                    "pre-registered expectation for this arm, not a defect: "
+                    "under `always` there is no fsync boundary to wait for",
+                )
+                macro(
+                    "AepAlwaysFortyFiveMedian", tex_number(aep45),
+                    "fsync-always-2026-09-14/analysis/"
+                    "latency-and-throughput.csv | system=AEP_FULL",
+                )
+                macro(
+                    "BthreeAlwaysFortyFiveMedian", tex_number(b345),
+                    "fsync-always-2026-09-14/analysis/"
+                    "latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER",
+                )
+            exec45 = always45 / "per-execution.csv"
+            if exec45.is_file():
+                a = crash_free_latencies(exec45, "AEP_FULL")
+                b = crash_free_latencies(exec45, "B3_INTENT_NO_BARRIER")
+                if a and b:
+                    point, low, high = cluster_bootstrap_median_difference(a, b)
+                    for name, value, what in (
+                        ("BarrierCostAlwaysFortyFiveLow", low, "2.5th percentile"),
+                        ("BarrierCostAlwaysFortyFiveHigh", high, "97.5th percentile"),
+                    ):
+                        macro(
+                            name, tex_number(value),
+                            "fsync-always-2026-09-14/analysis/"
+                            "per-execution.csv | cluster bootstrap over runs, "
+                            "10000 resamples, seed 20260806, "
+                            "appendfsync=always",
+                            f"{what} of (median AEP-full - median B3), "
+                            f"{len(a)} and {len(b)} runs; point {point:.1f} ms",
+                        )
+
+        # H4. The read-back keying variant was pre-registered as a sensitivity
+        # check PREDICTED NULL. It is not null, and this is the macro that says
+        # so. Both rates are pooled over the six crash points within the
+        # capability class -- sum(successes)/sum(total) -- which is how the
+        # class rate is defined everywhere else in this file.
+        keying = ws5.get("keying")
+        if keying:
+            def _pooled(rows_in, response_class):
+                s = n = 0
+                for row in rows_in:
+                    if (row.get("metric") == "known_ambiguity_rate"
+                            and row.get("system") == "AEP_FULL"
+                            and row.get("response_class") == response_class):
+                        s += int(row["successes"])
+                        n += int(row["total"])
+                return s, n
+
+            oracle_rows = read_rows(keying / "per-cell-metrics.csv")
+            os_, on_ = _pooled(oracle_rows, "POSITIVE_ONLY_READBACK")
+            cs_, cn_ = _pooled(per_cell, "POSITIVE_ONLY_READBACK")
+            if on_ and cn_:
+                oracle_rate = os_ / on_
+                caller_rate = cs_ / cn_
+                macro(
+                    "KeyingAmbiguityOracle", f"{oracle_rate * 100:.2f}",
+                    "ws5-2026-09-10/t2-keying/analysis/per-cell-metrics.csv | "
+                    "metric=known_ambiguity_rate system=AEP_FULL "
+                    "response_class=POSITIVE_ONLY_READBACK "
+                    "keying=ORACLE_FINGERPRINT",
+                    f"pooled over crash points: {os_}/{on_}",
+                )
+                macro(
+                    "KeyingAmbiguityCaller", f"{caller_rate * 100:.2f}",
+                    "analysis/per-cell-metrics.csv | same metric, cell and "
+                    "class, keying=CALLER_REFERENCE",
+                    f"pooled over crash points: {cs_}/{cn_}",
+                )
+                macro(
+                    "KeyingAmbiguityDelta",
+                    f"{(oracle_rate - caller_rate) * 100:.2f}",
+                    "the two macros above, in percentage points",
+                    "H4 was pre-registered as a sensitivity check predicted "
+                    "NULL within a 5 pp margin. It is not null: this is "
+                    "nearly twice the margin, on a rate the paper quotes. "
+                    "The two silent columns (undetected duplicate, lost "
+                    "effect) stay at zero under both keyings",
+                )
+
     (out / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -2967,6 +3161,44 @@ def main() -> int:
         default=None,
         help="WS-6 B5 session root holding b5-runs.jsonl; enables the real "
         "Temporal baseline macros",
+    )
+    # --- WS-5, phase 25 -------------------------------------------------
+    #
+    # Four inputs, and NONE of them has a default (docs/25 R16): a default
+    # pointing at a results root is what wrote into the frozen matrix twice.
+    # Absent input means the macro is not emitted at all -- never emitted as a
+    # zero, which a reader could not tell from a measurement.
+    #
+    # They exist because every RQ3 macro before this was computed from THREE
+    # runs. The 15- and 45-run cells were collected, analysed and ruled on, and
+    # had no path into the manuscript at all.
+    parser.add_argument(
+        "--ws5-everysec",
+        type=Path,
+        default=None,
+        help="WS-5 t1-p0-everysec analysis dir: 15 crash-free runs per arm, "
+        "appendfsync=everysec. Enables the Fifteen-suffixed timing macros.",
+    )
+    parser.add_argument(
+        "--ws5-p30",
+        type=Path,
+        default=None,
+        help="WS-5 t2-p30 analysis dir: the 30%% crash regime.",
+    )
+    parser.add_argument(
+        "--ws5-keying",
+        type=Path,
+        default=None,
+        help="WS-5 t2-keying analysis dir: ORACLE_FINGERPRINT read-back "
+        "keying. Enables H4's declared-ambiguity delta.",
+    )
+    parser.add_argument(
+        "--fsync-always-45",
+        type=Path,
+        default=None,
+        help="the 45-run appendfsync=always arm's analysis dir. Distinct from "
+        "--fsync-analysis, which is the three-run August cell; both are "
+        "quoted and the macro names say which is which.",
     )
     parser.add_argument("--out", type=Path, required=True)
     arguments = parser.parse_args()
@@ -3028,9 +3260,17 @@ def main() -> int:
             if line.strip():
                 b5_runs.append(json.loads(line))
 
+    ws5 = {
+        "everysec": arguments.ws5_everysec,
+        "p30": arguments.ws5_p30,
+        "keying": arguments.ws5_keying,
+        "always45": arguments.fsync_always_45,
+    }
+    ws5 = {k: v for k, v in ws5.items() if v and v.is_dir()}
+
     emit_numbers(
         per_cell, latency, kill, comparisons, flakey, always, coverage,
-        execution_paths, arguments.out, b5_runs=b5_runs,
+        execution_paths, arguments.out, b5_runs=b5_runs, ws5=ws5,
         writeloss_cell=(
             arguments.writeloss_cell
             if arguments.writeloss_cell and arguments.writeloss_cell.is_dir()

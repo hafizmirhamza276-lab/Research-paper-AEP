@@ -737,3 +737,69 @@
 % per-cell-metrics.csv | executions behind \BfourbAtBarrier
 \newcommand{\BfourbAtBarrierExec}{60}
 
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% point estimate of (median AEP-full - median B3), 15 and 15 runs
+\newcommand{\BarrierCostFifteen}{1\,939.7}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% 2.5th percentile of (median AEP-full - median B3), 15 and 15 runs
+\newcommand{\BarrierCostFifteenLow}{1\,855.8}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
+% 97.5th percentile of (median AEP-full - median B3), 15 and 15 runs
+\newcommand{\BarrierCostFifteenHigh}{1\,962.4}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, pooled over both modes of the B3 arm
+% point estimate of (median B3 - median B0), 15 and 15 runs; the POOLED reading, which amendment 2 makes the default and which spans zero
+\newcommand{\ProtocolMinusBarrierFifteen}{33.9}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, pooled over both modes of the B3 arm
+% 2.5th percentile of (median B3 - median B0), 15 and 15 runs; the POOLED reading, which amendment 2 makes the default and which spans zero
+\newcommand{\ProtocolMinusBarrierFifteenLow}{-122.6}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, pooled over both modes of the B3 arm
+% 97.5th percentile of (median B3 - median B0), 15 and 15 runs; the POOLED reading, which amendment 2 makes the default and which spans zero
+\newcommand{\ProtocolMinusBarrierFifteenHigh}{120.1}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | same bootstrap, restricted to each arm's lower mode
+% point estimate; the boundary is the splitter's own lower_max, pinned by amendment 3 before this arm was collected. Reported BESIDE the pooled figure, never instead of it
+\newcommand{\ProtocolMinusBarrierLowerMode}{16.3}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | same bootstrap, restricted to each arm's lower mode
+% 2.5th percentile; the boundary is the splitter's own lower_max, pinned by amendment 3 before this arm was collected. Reported BESIDE the pooled figure, never instead of it
+\newcommand{\ProtocolMinusBarrierLowerModeLow}{-54.1}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | same bootstrap, restricted to each arm's lower mode
+% 97.5th percentile; the boundary is the splitter's own lower_max, pinned by amendment 3 before this arm was collected. Reported BESIDE the pooled figure, never instead of it
+\newcommand{\ProtocolMinusBarrierLowerModeHigh}{47.5}
+
+% fsync-always-2026-09-14/analysis/latency-and-throughput.csv | AEP-full median - B3 median, both under appendfsync=always, 15 runs per arm
+% = 2079.8 - 2089.0. NEGATIVE, and that is the pre-registered expectation for this arm, not a defect: under `always` there is no fsync boundary to wait for
+\newcommand{\BarrierCostAlwaysFortyFive}{-9.2}
+
+% fsync-always-2026-09-14/analysis/latency-and-throughput.csv | system=AEP_FULL
+\newcommand{\AepAlwaysFortyFiveMedian}{2\,079.8}
+
+% fsync-always-2026-09-14/analysis/latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER
+\newcommand{\BthreeAlwaysFortyFiveMedian}{2\,089.0}
+
+% fsync-always-2026-09-14/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=always
+% 2.5th percentile of (median AEP-full - median B3), 15 and 15 runs; point -8.8 ms
+\newcommand{\BarrierCostAlwaysFortyFiveLow}{-27.2}
+
+% fsync-always-2026-09-14/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=always
+% 97.5th percentile of (median AEP-full - median B3), 15 and 15 runs; point -8.8 ms
+\newcommand{\BarrierCostAlwaysFortyFiveHigh}{44.6}
+
+% ws5-2026-09-10/t2-keying/analysis/per-cell-metrics.csv | metric=known_ambiguity_rate system=AEP_FULL response_class=POSITIVE_ONLY_READBACK keying=ORACLE_FINGERPRINT
+% pooled over crash points: 399/900
+\newcommand{\KeyingAmbiguityOracle}{44.33}
+
+% analysis/per-cell-metrics.csv | same metric, cell and class, keying=CALLER_REFERENCE
+% pooled over crash points: 63/180
+\newcommand{\KeyingAmbiguityCaller}{35.00}
+
+% the two macros above, in percentage points
+% H4 was pre-registered as a sensitivity check predicted NULL within a 5 pp margin. It is not null: this is nearly twice the margin, on a rate the paper quotes. The two silent columns (undetected duplicate, lost effect) stay at zero under both keyings
+\newcommand{\KeyingAmbiguityDelta}{9.33}
+

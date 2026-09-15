@@ -58,6 +58,19 @@ class Result:
             self.failures.append(f"{name}: {detail}")
             print(f"  FAIL  {name}\n        {detail}")
 
+    def note(self, detail: str) -> None:
+        """Visible, and neither a pass nor a failure.
+
+        Used where something is deliberately true-for-now and a reader
+        should meet it on every run rather than find it in a report.
+        """
+        print(f"  NOTE  {detail}")
+
+
+#: WS-5's collection root. Its four steps are separate analyses, not one
+#: directory, because each was frozen when it finished.
+WS5_ROOT = ROOT / "experiments" / "results" / "ws5-2026-09-10"
+
 
 def check_generated_tables(
     result: Result,
@@ -67,6 +80,10 @@ def check_generated_tables(
     flakey: Path,
     b5_session: Path,
     writeloss_cell: Path,
+    ws5_everysec: Path,
+    ws5_p30: Path,
+    ws5_keying: Path,
+    fsync_always_45: Path,
 ) -> None:
     """Regenerate into a temp dir and diff against what is committed.
 
@@ -84,6 +101,10 @@ def check_generated_tables(
         ("G2 write-loss results", flakey),
         ("WS-6 B5 session", b5_session),
         ("WS-4 write-loss protocol cell", writeloss_cell),
+        ("WS-5 everysec 15-run cell", ws5_everysec),
+        ("WS-5 30%-crash regime", ws5_p30),
+        ("WS-5 read-back keying variant", ws5_keying),
+        ("appendfsync=always 45-run arm", fsync_always_45),
     ):
         result.check(path.is_dir(), f"{label} is present", f"missing {path}")
     with tempfile.TemporaryDirectory() as scratch:
@@ -101,6 +122,14 @@ def check_generated_tables(
                 str(b5_session),
                 "--writeloss-cell",
                 str(writeloss_cell),
+                "--ws5-everysec",
+                str(ws5_everysec),
+                "--ws5-p30",
+                str(ws5_p30),
+                "--ws5-keying",
+                str(ws5_keying),
+                "--fsync-always-45",
+                str(fsync_always_45),
                 "--out",
                 scratch,
             ],
@@ -166,6 +195,36 @@ def check_no_banned_source(result: Result, paper: Path) -> None:
     )
 
 
+#: Macros that exist but are not yet quoted, with the pass that will quote
+#: them. Phase 25 built the generator path from WS-5's CSVs to numbers.tex;
+#: phase 26 writes the prose. Emitting them and using them in one pass was
+#: not possible: the generator change and the prose change are separately
+#: gated, and a macro cannot be used before it exists.
+#:
+#: This is NOT an allowlist that silently subtracts. The check below fails
+#: if a name here has vanished from numbers.tex (a stale entry) and fails
+#: if a name here IS used (an entry nobody deleted). Both directions, so
+#: the list cannot quietly outlive its reason.
+PENDING_MACROS: dict[str, str] = {
+    "BarrierCostFifteen": "phase 26, section VI-RQ3",
+    "BarrierCostFifteenLow": "phase 26, section VI-RQ3",
+    "BarrierCostFifteenHigh": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierFifteen": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierFifteenLow": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierFifteenHigh": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierLowerMode": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierLowerModeLow": "phase 26, section VI-RQ3",
+    "ProtocolMinusBarrierLowerModeHigh": "phase 26, section VI-RQ3",
+    "BarrierCostAlwaysFortyFive": "phase 26, section VI-RQ3",
+    "BarrierCostAlwaysFortyFiveLow": "phase 26, section VI-RQ3",
+    "BarrierCostAlwaysFortyFiveHigh": "phase 26, section VI-RQ3",
+    "AepAlwaysFortyFiveMedian": "phase 26, section VI-RQ3",
+    "BthreeAlwaysFortyFiveMedian": "phase 26, section VI-RQ3",
+    "KeyingAmbiguityOracle": "phase 26, section VI-RQ3",
+    "KeyingAmbiguityCaller": "phase 26, section VI-RQ3",
+    "KeyingAmbiguityDelta": "phase 26, section VI-RQ3",
+}
+
 def check_macros_are_used(result: Result, paper: Path) -> None:
     """Every generated number must appear somewhere in the manuscript.
 
@@ -203,11 +262,35 @@ def check_macros_are_used(result: Result, paper: Path) -> None:
         text = path.read_text(encoding="utf-8")
         used.update(re.findall(r"\\([A-Za-z]+)\{?\}?", text))
     orphans = sorted(defined - used)
+
+    # Both directions, so the pending list cannot become a hole.
+    stale = sorted(n for n in PENDING_MACROS if n not in defined)
     result.check(
-        not orphans,
-        "every generated number is used in the manuscript",
-        f"{len(orphans)} orphaned: {', '.join(orphans)}",
+        not stale,
+        "every pending macro still exists",
+        f"{len(stale)} named in PENDING_MACROS but not in numbers.tex: "
+        f"{', '.join(stale)}",
     )
+    landed = sorted(n for n in PENDING_MACROS if n in used)
+    result.check(
+        not landed,
+        "no pending macro is already in use",
+        f"{len(landed)} now used and still listed as pending -- delete them "
+        f"from PENDING_MACROS: {', '.join(landed)}",
+    )
+
+    unexplained = [n for n in orphans if n not in PENDING_MACROS]
+    result.check(
+        not unexplained,
+        "every generated number is used in the manuscript",
+        f"{len(unexplained)} orphaned: {', '.join(unexplained)}",
+    )
+    staged = [n for n in orphans if n in PENDING_MACROS]
+    if staged:
+        result.note(
+            f"{len(staged)} macro(s) staged for prose that does not exist yet: "
+            + ", ".join(f"{n} ({PENDING_MACROS[n]})" for n in staged)
+        )
 
 
 def check_per_cell_has_regime(result: Result, analysis: Path) -> None:
@@ -578,6 +661,28 @@ def main() -> int:
         type=Path,
         default=ROOT / "reports" / "raw" / "ws6-b5-s1-2026-09-08-attempt3",
     )
+    # WS-5's four roots. These default to the committed collections on
+    # purpose: the gate regenerates with EXACTLY the inputs the generator is
+    # run with, and that identity is the only reason the gate is worth
+    # anything. A default that differed from the documented invocation would
+    # make the gate pass on a numbers.tex nobody can reproduce.
+    parser.add_argument(
+        "--ws5-everysec",
+        type=Path,
+        default=WS5_ROOT / "t1-p0-everysec" / "analysis",
+    )
+    parser.add_argument(
+        "--ws5-p30", type=Path, default=WS5_ROOT / "t2-p30" / "analysis",
+    )
+    parser.add_argument(
+        "--ws5-keying", type=Path, default=WS5_ROOT / "t2-keying" / "analysis",
+    )
+    parser.add_argument(
+        "--fsync-always-45",
+        type=Path,
+        default=(ROOT / "experiments" / "results"
+                 / "fsync-always-2026-09-14" / "analysis"),
+    )
     arguments = parser.parse_args()
     build_dir = arguments.build_dir or arguments.paper
 
@@ -603,6 +708,10 @@ def main() -> int:
         arguments.flakey,
         arguments.b5_session,
         arguments.writeloss_cell,
+        arguments.ws5_everysec,
+        arguments.ws5_p30,
+        arguments.ws5_keying,
+        arguments.fsync_always_45,
     )
     check_no_banned_source(result, arguments.paper)
     check_macros_are_used(result, arguments.paper)
