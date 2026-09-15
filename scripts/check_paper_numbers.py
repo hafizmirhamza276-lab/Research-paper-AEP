@@ -322,19 +322,46 @@ def check_cross_document_references(result: Result, paper: Path) -> None:
     the main text lands on whichever copy went stale. Nothing in this file saw
     that before.
     """
-    main_sources = (
-        [paper / "main.tex"]
-        + sorted((paper / "sections").glob("*.tex"))
-        + sorted((paper / "generated").glob("*.tex"))
-    )
     supplementary = paper / "supplementary.tex"
     if not supplementary.is_file():
         result.check(False, "supplementary.tex exists",
                      f"missing {supplementary}")
         return
 
+    # A generated file belongs to whichever document \input s it. Phase 28
+    # attributed all of them to the main text, which was true then and stopped
+    # being true the moment WS-9 moved a generated table into the
+    # supplementary: the label was defined in a file the supplementary inputs,
+    # so the supplementary's own reference to it read as unresolved.
+    main_sources = [paper / "main.tex"] + sorted(
+        (paper / "sections").glob("*.tex"))
+    supp_sources = [supplementary]
+
+    def inputs(paths: "list[Path]") -> "set[str]":
+        found: set[str] = set()
+        for path in paths:
+            if not path.is_file():
+                continue
+            text = re.sub(r"(?m)^[ \t]*%.*$", "",
+                          path.read_text(encoding="utf-8"))
+            found.update(re.findall(r"\\input\{generated/([A-Za-z0-9_-]+)\}",
+                                    text))
+        return found
+
+    main_inputs = inputs(main_sources)
+    supp_inputs = inputs(supp_sources)
+    for generated in sorted((paper / "generated").glob("*.tex")):
+        stem = generated.stem
+        if stem in supp_inputs and stem not in main_inputs:
+            supp_sources.append(generated)
+        else:
+            # Inputted by main, by both, or by neither. "By neither" stays with
+            # main so an orphaned generated file still has its labels checked
+            # somewhere rather than falling out of the census entirely.
+            main_sources.append(generated)
+
     main_labels, main_refs = _labels_and_refs(main_sources)
-    supp_labels, supp_refs = _labels_and_refs([supplementary])
+    supp_labels, supp_refs = _labels_and_refs(supp_sources)
 
     dangling_main = sorted(main_refs - main_labels)
     result.check(
