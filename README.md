@@ -143,7 +143,7 @@ CPython 3.13.0 (`.python-version`), the dependency set (`uv.lock`), and the
 Redis image by digest (`compose.phase2.yml`).
 
 ```sh
-uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis
+uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis --extra b5
 docker compose -f compose.phase2.yml up -d --wait
 
 export REDIS_URL=redis://127.0.0.1:6381/15

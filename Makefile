@@ -20,6 +20,15 @@
 # Both write under .scratch/, which is disposable and already gitignored
 # (.gitignore:108), so a reproduction run leaves the working tree clean.
 
+# WS-5's collection root. The four inputs below reached paper_tables.py in
+# phase 25 and this target was not updated with them, so `make
+# reproduce-figures` regenerated a numbers.tex missing seventeen macros and
+# reported DIFFERS. It stayed broken for four passes because
+# check_paper_numbers.py builds its own invocation and never consulted this
+# one -- two callers of the same generator, drifting apart. Found by running
+# the target in a clean clone (phase 39).
+WS5 := experiments/results/ws5-2026-09-10
+
 SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
@@ -35,7 +44,16 @@ FIG_ROOT   ?= $(SCRATCH)/figures
 # are tracked (see the tail of .gitignore), so the default works from a clean
 # clone. Point this at an unpacked full archive to also regenerate the two
 # analysis figures, which need the raw run directories.
+# ARCHIVE is where the *analysis CSVs* are read from; RUNS is where the raw
+# run directories are. They are the same tree here, and ARCHIVE was used for
+# both -- so `make reproduce-figures ARCHIVE=<unpacked archive>`, which is
+# what ARTIFACT.md printed, redirected the tables too and died on
+# `comparisons-vs-aep-full.csv has no regime column`: the archived copy is
+# the pre-rebuild one (ARTIFACT.md 5). The tables must stay pinned to the
+# tracked CSVs the paper cites; only the figures need the runs. Found by
+# running the documented command against a real unpacked archive (phase 39).
 ARCHIVE    ?= experiments/results/matrix
+RUNS       ?= $(ARCHIVE)
 
 .PHONY: help reproduce-smoke reproduce-figures
 
@@ -43,7 +61,7 @@ help:
 	@echo "make reproduce-smoke     collect one tier-1 cell per system and analyse it (~5 min, needs Docker)"
 	@echo "make reproduce-figures   regenerate the paper's tables from the frozen results and diff them (~1 min)"
 	@echo ""
-	@echo "Variables: UV=$(UV) REDIS_URL=$(REDIS_URL) ARCHIVE=$(ARCHIVE) SCRATCH=$(SCRATCH)"
+	@echo "Variables: UV=$(UV) REDIS_URL=$(REDIS_URL) ARCHIVE=$(ARCHIVE) RUNS=$(RUNS) SCRATCH=$(SCRATCH)"
 
 # ---------------------------------------------------------------------------
 # reproduce-smoke
@@ -160,7 +178,7 @@ export PDF_COMPARE
 # scripts/check_paper_numbers.py makes; the target exists so a reader can make
 # it without reading the gate, and so the verdict is printed as a verdict.
 #
-# The two analysis figures are regenerated only when ARCHIVE holds the raw run
+# The two analysis figures are regenerated only when RUNS holds the raw run
 # directories, because analyze.py reads runs and the tracked archive is the
 # analysis products alone. When they are skipped, the target says so rather
 # than reporting success over work it did not do.
@@ -178,6 +196,10 @@ reproduce-figures:
 	    --flakey experiments/results \
 	    --b5-session reports/raw/ws6-b5-s1-2026-09-08-attempt3 \
 	    --writeloss-cell reports/raw/ws4-writeloss-s1-2026-09-07 \
+	    --ws5-everysec $(WS5)/t1-p0-everysec/analysis \
+	    --ws5-p30 $(WS5)/t2-p30/analysis \
+	    --ws5-keying $(WS5)/t2-keying/analysis \
+	    --fsync-always-45 experiments/results/fsync-always-2026-09-14/analysis \
 	    --out "$(FIG_ROOT)/generated"
 	@echo
 	@echo "=== byte-comparing against paper/generated/ ==="
@@ -208,26 +230,34 @@ reproduce-figures:
 	# over a quarter of the data, and reports "a plotted value moved" when
 	# the truth is "I had a quarter of the runs". That is a gate that cannot
 	# say "I could not look properly" (docs/25 R14).
-	have=$$(find "$(ARCHIVE)" -maxdepth 1 -type d -name "*-r[0-9]*" 2>/dev/null | wc -l)
-	want=$$(sed -n "s/^- completed runs: \*\*\([0-9]\+\)\*\*.*/\1/p" "$(ARCHIVE)/MANIFEST.md" 2>/dev/null | head -1)
+	have=$$(find "$(RUNS)" -maxdepth 1 -type d -name "*-r[0-9]*" 2>/dev/null | wc -l)
+	# -u and -o pipefail are both on (Makefile:34). Reading the manifest as
+	# `sed ... 2>/dev/null | head` aborted the whole recipe with exit 2 when
+	# the file was absent -- which is exactly the clean-clone case this
+	# branch exists to skip. The guard could not reach its own skip message.
+	# Found by running the target in a clone (phase 39).
+	want=
+	if [[ -f "$(RUNS)/MANIFEST.md" ]]; then
+	  want=$$(sed -n "s/^- completed runs: \*\*\([0-9]\+\)\*\*.*/\1/p" "$(RUNS)/MANIFEST.md" | head -1)
+	fi
 	if [[ -n "$$want" && "$$have" -gt 0 && "$$have" -ne "$$want" ]]; then
-	  echo "  SKIPPED: $(ARCHIVE) holds $$have run directories, but its MANIFEST.md"
+	  echo "  SKIPPED: $(RUNS) holds $$have run directories, but its MANIFEST.md"
 	  echo "           records $$want. Regenerating from a partial tree would compare"
 	  echo "           figures built from $$have runs against figures built from $$want,"
 	  echo "           and report the difference as a moved value. Unpack the full"
-	  echo "           results archive and re-run with ARCHIVE=<path>."
+	  echo "           results archive and re-run with RUNS=<path>."
 	elif [[ "$$have" -gt 0 ]]; then
 	  $(UV) run --frozen python -m experiments.analyze \
-	      --results-root "$(ARCHIVE)" \
+	      --results-root "$(RUNS)" \
 	      --destination "$(FIG_ROOT)/analysis" > "$(FIG_ROOT)/analyze.log" 2>&1
 	  for name in figure-1-undetected-vs-ambiguity.pdf figure-2-duplicates-by-crash-point.pdf; do
 	    $(UV) run --frozen python -c "$$PDF_COMPARE" \
 	        "paper/figures/$$name" "$(FIG_ROOT)/analysis/$$name" || failed=$$((failed + 1))
 	  done
 	else
-	  echo "  SKIPPED: $(ARCHIVE) holds no run directories, so analyze.py cannot run."
+	  echo "  SKIPPED: $(RUNS) holds no run directories, so analyze.py cannot run."
 	  echo "           The tracked archive is the analysis products only. Unpack the full"
-	  echo "           results archive and re-run with ARCHIVE=<path> to include these."
+	  echo "           results archive and re-run with RUNS=<path> to include these."
 	fi
 	@echo
 	if [[ $$failed -ne 0 ]]; then

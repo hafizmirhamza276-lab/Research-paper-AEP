@@ -18,7 +18,7 @@ that is a defect; please open an issue.
 |---|---|---|---|
 | The paper's tables and macros follow from the frozen CSVs | `make reproduce-figures` | Python 3.13, `uv` | ~1 min |
 | The harness still runs, end to end, under real `SIGKILL` | `make reproduce-smoke` | + Docker | ~6 min |
-| The implementation is correct on its own terms | `uv run --frozen pytest` | + Docker | ~2 min |
+| The implementation is correct on its own terms | `uv run --frozen pytest` | nothing more; 34 tests skip without Redis **and** the opt-in in §2a | ~2 min |
 | The manuscript matches its results | `bash scripts/build_paper.sh` | + TeX Live | ~2 min |
 | The full evaluation | see §6 | + ~25 h and a quiet host | ~25 h |
 
@@ -29,7 +29,7 @@ every push (the `Numbers gate` job).
 
 **What it does not cover, stated so nobody infers it does.** The two analysis
 figures (`figure-1-undetected-vs-ambiguity.pdf`,
-`figure-2-duplicates-by-crash-point.pdf`) are regenerated only when `ARCHIVE`
+`figure-2-duplicates-by-crash-point.pdf`) are regenerated only when `RUNS`
 holds the *complete* raw run tree, which is not tracked. From a fresh clone the
 target reports them `SKIPPED`. It also skips — rather than failing — when the
 tree is present but **incomplete**: comparing figures built from part of the
@@ -60,6 +60,81 @@ with Docker Desktop. Section 8 of the paper states what that costs in validity.
 
 ---
 
+## 2a. Before you run anything: prerequisites and what you can expect
+
+**Verified 2026-09-15 by cloning this repository from scratch and following
+this file literally (phase 39). Everything below is what that clone found,
+not what it was assumed to need.**
+
+### Tools
+
+| tool | needed for | without it |
+|---|---|---|
+| `uv` | every Python command here | nothing runs |
+| `--extra b5` (Temporal SDK, in the lockfile) | three tests in `tests/test_b5_collect_contract.py` | they fail with `ModuleNotFoundError: temporalio` rather than skipping |
+| `pdflatex`, `bibtex` | `scripts/build_paper.sh` | no PDFs, and `check_paper_numbers.py` fails on the checks that read `main.log` and `main.bbl` |
+| `pdftotext`, `pdfinfo` (poppler) | the anonymity and staleness checks | those checks **fail closed** rather than skipping |
+| Docker (or any Redis 7.2+ with AOF) | `make reproduce-smoke`, and the 34 Redis integration tests | the smoke target cannot run. The 34 skip **whether or not** Docker is present: they are behind `AEP_PHASE2_REDIS_INTEGRATION=1` and a `REDIS_URL` pointing at a dedicated AOF database, and each names that in its skip reason |
+| Java | the TLA+ CI job | model checking cannot run |
+
+The extras above are the set CI syncs (`.github/workflows/ci.yml`, the
+suite job). Any smaller set leaves tests failing on a missing dependency,
+which reads as a broken artifact.
+
+One test in `experiments/harness/tests/test_injector.py` compares wall-clock
+ratios and wants an otherwise idle machine; it failed once here while a
+`make` target was running beside it and passed three times alone. Run the
+suite on its own.
+
+To run those 34 rather than skip them:
+
+```sh
+docker compose -f compose.phase2.yml up -d --wait
+AEP_PHASE2_REDIS_INTEGRATION=1 REDIS_URL=redis://127.0.0.1:6381/15 uv run --frozen pytest -q
+```
+
+### What runs with no Docker and no TeX
+
+`make reproduce-figures` — regenerates every table and macro from the
+tracked CSVs and byte-compares them against what is committed. About a
+minute. **This is the check that matters most and it needs nothing but
+`uv`.**
+
+### What a clean clone cannot reproduce, and why
+
+* **The two analysis figures.** They need raw run directories, which are
+  published as an archive rather than committed (`.gitignore`: never a run
+  directory, never a ledger, never a log). `make reproduce-figures` reports
+  them `SKIPPED` and says so; it does not pass over them silently. Point
+  `RUNS=` at an unpacked matrix root to include them; `ARCHIVE` stays on the
+  tracked CSVs, which is what the tables are checked against.
+* **Anything needing the raw runs**, until the Zenodo record is published.
+  The DOI is reserved, not resolving: see §5.
+* **Two collection trees are outside the archive by declaration**, not by
+  oversight: `/root/aep-5b`, which holds only transient
+  `make reproduce-smoke` output, and `/root/aep-stage3`, which has zero run
+  directories and is a source checkout. Neither backs any number in the
+  paper. `docs/29` §0b names them; `docs/36` §4 lists every path this
+  repository points at that lives outside it.
+
+### The order that works
+
+`check_paper_numbers.py` reads `paper/main.log` and `paper/main.bbl`, which
+are build products and are not committed. **In a fresh clone, build first:**
+
+```sh
+uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis --extra b5
+bash scripts/build_paper.sh --supplementary
+bash scripts/build_paper.sh --supplementary --anonymous
+bash scripts/build_paper.sh --anonymous
+bash scripts/build_paper.sh
+```
+
+The order is not arbitrary: each build runs the staleness gate, and the main
+build refuses to promote a PDF while any sibling artifact disagrees with the
+sources. Supplementaries first is the order that converges.
+
+---
 ## 3. Claims to evidence
 
 Every quantitative claim in the manuscript is a LaTeX macro defined in
@@ -172,7 +247,7 @@ which are not tracked (§5). The target says `SKIPPED` for them unless you point
 it at an unpacked archive:
 
 ```sh
-make reproduce-figures ARCHIVE=/path/to/unpacked/matrix
+make reproduce-figures RUNS=/path/to/unpacked/matrix
 ```
 
 Those two are PDFs written by matplotlib, which stamps the wall-clock time into
@@ -200,7 +275,7 @@ effect instead.
 ### The test suite
 
 ```sh
-uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis
+uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis --extra b5
 docker compose -f compose.phase2.yml up -d --wait
 export REDIS_URL=redis://127.0.0.1:6381/15 AEP_PHASE2_REDIS_INTEGRATION=1
 uv run --frozen python scripts/verify_redis_semantics.py --url "$REDIS_URL"
@@ -283,7 +358,10 @@ publish step.
 ### The raw evidence archive (Phase 11, 2026-09-03)
 
 Built by `scripts/build_raw_archive.py` and verified by
-`scripts/verify_raw_archive.py`. Full account:
+`scripts/verify_raw_archive.py` — which takes `--archive` and defaults it to
+`/root/aep-raw-archive`, a path on the measurement host. From a clone,
+point it at the unpacked archive. `docs/36` §4 lists every path this
+repository names that lives outside it. Full account:
 `reports/phase-report-11-rescue-2026-09-03.md`.
 
 | | |
@@ -326,7 +404,14 @@ label (`(session-3)` → `crashed`) and two columns added to `per-execution.csv`
 and a row-level check confirms 0 differing keys and every shared column agreeing
 on every row. A further 8 tracked files are written by the collection rather than
 by `analyze.py`; all 8 are in the archive with digests matching the tracked
-copies. `matrix/analysis/comparisons-vs-aep-full.csv` reproduces byte-identically
+copies. **They are also why the script exits 1**: its summary line
+distinguishes `DIFFERS 0` from `NOT REGENERATED 8`, and its exit code
+does not — `container-precondition.json` (3), `fault-injection-census.json`
+(3) and `foreign-load-sample.json` (2) are environment censuses the
+harness writes, so `analyze.py` has nothing to compare them with. Read the
+summary line, not the status. Left as it is deliberately: changing the exit
+code would change what the command checks, and this is recorded rather
+than adjusted (phase 39). `matrix/analysis/comparisons-vs-aep-full.csv` reproduces byte-identically
 through its actual producer, `experiments/rebuild_comparisons.py`, as the
 provenance note below requires.
 
@@ -484,9 +569,13 @@ collected were chosen to answer the research questions rather than to fill the
 grid; §8 of the paper names every gap.
 
 ```sh
-uv run --frozen python -m experiments.run_matrix --plan-only   # inspect first
-uv run --frozen python -m experiments.run_matrix --resume      # collect
-uv run --frozen python -m experiments.analyze --results-root experiments/results/matrix
+# --results-root is REQUIRED and has no default. It used to default to
+# experiments/results/matrix -- the frozen root every outcome rate comes
+# from -- and even --plan-only wrote into it. Name a new dated directory.
+R=experiments/results/my-collection-$(date +%Y-%m-%d)
+uv run --frozen python -m experiments.run_matrix --results-root $R --plan-only
+uv run --frozen python -m experiments.run_matrix --results-root $R --resume
+uv run --frozen python -m experiments.analyze --results-root $R
 ```
 
 Two things worth knowing before starting. The harness **refuses to run** if a

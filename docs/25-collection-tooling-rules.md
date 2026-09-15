@@ -777,9 +777,9 @@ believed.
 
 ## R14. Hold the checking code to the standard of the code it checks.
 
-**Ten instances now.** It has stopped being an observation and become the
+**Eleven instances now.** It has stopped being an observation and become the
 most reliable defect generator in this project, so it is a rule. Instance 6
-is in R14a below; 7, 8, 9 and 10 are at the end of this list. Nine is the
+is in R14a below; 7 to 11 are at the end of this list. Nine is the
 first whose faulty instrument was not a script at all. **Ten is the first
 where no instrument was faulty** — every gate was correct and every gate
 was green, and the number they all agreed about was outside the mechanism
@@ -936,6 +936,43 @@ caught it.
     allowlist with its reason — so the domain is stated and enforced
     rather than assumed. Rule 13 discharged against the real pre-fix caption
     text, kept verbatim as a fixture.
+11. **The third outcome that could not be printed, 15 September.**
+    `make reproduce-figures` has exactly the three outcomes this rule asks
+    for: regenerate the two analysis figures, skip because the tree is
+    partial, skip because there are no runs at all. Instance 8's bullet
+    below is where the second one was added, and it was added *because of*
+    this rule.
+
+    The third was unreachable. `.SHELLFLAGS` is `-eu -o pipefail`
+    (`Makefile:34`), and the manifest was read as
+    `want=$(sed ... 2>/dev/null | head -1)`. With no manifest `sed` exits 2,
+    `pipefail` promotes it, `-e` aborts the recipe, and `make` prints
+    `Error 2` — before the skip message, which is three lines further down
+    and explains exactly what to do. The redirect that was there to keep the
+    output clean is what hid the cause.
+
+    **Who meets it: everyone.** A clone carries the analysis products and
+    never the raw runs (`.gitignore`), so *the clean-clone case is the only
+    case an evaluator has*, and the target failed in it. It was green here
+    for the whole of its life because this working tree has an untracked
+    `MANIFEST.md` sitting in the archive root. **The tree where the code is
+    written is not the tree it will be run in, and the difference between
+    them was an untracked file.**
+
+    **The shape.** Instance 10 was a gate blind outside its mechanism. This
+    is narrower and more embarrassing: the instrument had all three outcomes
+    implemented, written down and commented, and one of them was dead code
+    reachable only on a machine where it was not needed. *Having written the
+    "I could not look" branch is not evidence that it can be reached.*
+
+    *Fixed:* the manifest read is guarded by `[[ -f ]]`, so an absent file
+    is a fact about the tree rather than a shell error.
+    `tests/test_reproduce_figures_guard.py` extracts the guard from the
+    Makefile verbatim and runs it against a clone-shaped archive — and runs
+    the pre-fix line beside it, asserting exit 2, so the test is watched
+    failing against the defect and not only passing against the fix.
+    Found by phase 39, which cloned the repository and ran what
+    `ARTIFACT.md` prints.
 ### The rule
 
 A checking instrument must be able to report **three** outcomes, not two:
@@ -964,6 +1001,10 @@ Concretely, and each of these comes from one of the instances above (the list ru
   own manifest and skips with both numbers named.
 * **Check the success shape, not the absence of an error shape.** `< 500` is not
   success; `2xx` is (instance 5).
+* **Exercise the branch that says "I could not look", in the shape of tree
+  where it fires** (instance 11). A third outcome that has never been
+  printed is a fourth outcome — an abort — waiting for the first machine
+  that lacks the file everyone else happened to have.
 * **A readiness check must fail closed and say which** — `paper_provenance`
   already states this for artefacts: *"I could not read it" and "it is unchanged"
   must never render the same*. It applies to every probe.
