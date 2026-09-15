@@ -91,6 +91,27 @@ jobs:
         run: uv run --frozen python scripts/verify_refs.py --offline
 
   # =========================================================================
+  # WS-10 task 10.1. Rule 5 -- a cell's pre-registration is committed before
+  # its data -- across the WHOLE history, not cell by cell in a report.
+  #
+  # fetch-depth: 0 is load-bearing. The audit reads commit dates and tests
+  # ancestry with merge-base; a shallow clone has neither, and the check
+  # would pass by not being able to look. That is the failure mode docs/25
+  # R14 has recorded ten times, so the depth is set here deliberately and
+  # this comment is why.
+  # =========================================================================
+  prereg-order:
+    name: Pre-registration order (rule 5)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prediction and prompt precede their data, by date and ancestry
+        run: python3 scripts/check_prereg_order.py
+
+  # =========================================================================
   # WS-7 task 7.2. Model-check formal/AEP.tla in every configuration.
   #
   # THE POINT OF THIS JOB IS THE NINE CONFIGURATIONS THAT MUST FAIL. Six of

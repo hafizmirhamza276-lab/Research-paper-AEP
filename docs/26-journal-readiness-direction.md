@@ -410,7 +410,15 @@ Mark each item `[x]` only after verifying the phase report and, where possible, 
       the one the paper must make.
 - [ ] Real durable-execution engine run as baseline in both configurations (WS-6) — *or* explicitly deferred with one sentence
 - [ ] TLA+ model of P1/P2 checked in CI (WS-7) — *or* explicitly deferred with one sentence
-- [ ] Every new cell has a pre-registration commit that predates its first data commit (`scripts/check_prereg_order.py`)
+- [x] Every new cell has a pre-registration commit that predates its first data commit (`scripts/check_prereg_order.py`)
+      **Audited across the whole history, phase 37: 31 cells, 27 ok, 4
+      exempt, 0 failing.** Both orderings checked -- commit date and
+      ancestry. The four exempt predate rule 5 (adopted 2026-08-27) or are
+      not collections; they are printed as EXEMPT, not filtered out. In CI
+      as the `prereg-order` job with `fetch-depth: 0`. The check's blind
+      spots are printed on every run and listed in the phase 37 report §6 --
+      the largest is that it reads commit ORDER, never the prediction's
+      CONTENT, so early-committed-then-rewritten would pass.
 
 **Artifact**
 - [ ] Raw run archive + voided runs + SHA-256 manifest on Zenodo with DOI; tag `v1.0.0` (WS-2)
