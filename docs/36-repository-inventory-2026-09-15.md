@@ -163,7 +163,7 @@ mistake phase 20 made privately.
 |---|---|
 | a number in the paper | `paper/generated/numbers.tex`, with its provenance comment |
 | the analysis behind it | the tracked `analysis/*.csv` named in that comment |
-| the raw runs | the Zenodo deposit; until it exists, `/root/aep-raw-archive` on the measurement host |
+| the raw runs | the Zenodo record, DOI `10.5281/zenodo.22766567` — **reserved, not yet resolving**; until it is published, `/root/aep-raw-archive` and `/root/aep-raw-archive-ext` on the measurement host, each mirrored to `/mnt/d/personal/AEP/` |
 | proof a raw tree is unaltered | that root's `RAW-SHA256SUMS`, or `MANIFEST.sha256` in the archive |
 | what a collection did | its `MANIFEST.md` and the phase report named there |
 | why a rule exists | `docs/25` for collection tooling, `docs/26` §3 for the paper |

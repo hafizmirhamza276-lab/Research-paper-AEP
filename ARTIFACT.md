@@ -272,8 +272,13 @@ it always covered.**
 
 **Not yet published externally** — the raw run directories, each holding its run
 config, ground-truth ledger, merged log and per-run summary, are the inputs to
-`experiments/analyze.py`. They are not committed. **As of 2026-09-03 they are
-assembled and verified but not uploaded: no DOI or archive URL exists yet.**
+`experiments/analyze.py`. They are not committed. **As of 2026-09-15 they are assembled and verified across two archives, and
+a Zenodo record is reserved under DOI `10.5281/zenodo.22766567`. The
+identifier is fixed; the record is a draft and the files are not uploaded,
+so the DOI does not resolve yet.** It begins resolving when the record is
+published. Still pending, and tracked in `docs/29`: the upload itself, the
+post-upload checksum verification against the local manifests, and the
+publish step.
 
 ### The raw evidence archive (Phase 11, 2026-09-03)
 

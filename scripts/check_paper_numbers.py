@@ -592,11 +592,50 @@ def check_anonymous_build(result: Result, paper: Path) -> None:
                 byline = lines[index - 1]
                 break
 
+    # 4. The ORCID and the DOI. A Zenodo record names its depositor and an
+    #    ORCID identifies a person as surely as a name does, so both get the
+    #    byline's treatment. Derived from the PUBLIC pdf, never written here:
+    #    this file must contain no identifying string of its own.
+    def full_text(path: Path) -> str:
+        done = subprocess.run(
+            ["pdftotext", str(path), "-"], capture_output=True, text=True,
+        )
+        return done.stdout if done.returncode == 0 else ""
+
+    anon_full = full_text(anon)
+    identifying: list[str] = []
+    if public.is_file():
+        public_full = full_text(public)
+        identifying += re.findall(r"\b\d{4}-\d{4}-\d{4}-\d{3}[0-9X]\b",
+                                  public_full)
+        # Only the ARCHIVE's DOI, not every DOI on the page: a cited
+        # reference's DOI is present in both builds by design and is not an
+        # identifying string. Read from main.tex so this file still contains
+        # no identifier of its own.
+        main_tex = paper / "main.tex"
+        if main_tex.is_file():
+            declared = re.search(
+                r"\\newcommand\{\\archivedoi\}\{([^}]*)\}",
+                main_tex.read_text(encoding="utf-8"),
+            )
+            if declared and declared.group(1) != "PENDING":
+                identifying.append(declared.group(1))
+
     problems = []
     if "Anonymous" not in anon_text:
         problems.append("no 'Anonymous' byline on page 1")
     if byline and byline in anon_text:
         problems.append("public byline appears verbatim in the anonymous build")
+    for token in sorted(set(identifying)):
+        if token in anon_full:
+            problems.append(f"identifier {token!r} survives the anonymous build")
+    if public.is_file() and not identifying:
+        problems.append(
+            "no ORCID or DOI found in the public build, so the anonymous "
+            "check has nothing to prove -- a suppression test that passes "
+            "because the string was never emitted proves nothing"
+        )
+
     if not byline:
         problems.append("could not locate the public byline to compare against")
     result.check(

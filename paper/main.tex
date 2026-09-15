@@ -118,8 +118,14 @@
 % the honest "not yet deposited" sentence. Inserting the real DOI is a
 % one-line edit HERE and nowhere else -- \archiveavail below derives every
 % rendering from it, and no section file contains a DOI string.
-\newcommand{\archivedoi}{PENDING}
+% THREE states, not two. A reserved Zenodo DOI is minted but does not
+% resolve until the record is published, so the deposited-at sentence
+% below would be false today. \archivedoistate selects which sentence
+% \archiveavail becomes; the anonymous branch reads none of them.
+\newcommand{\archivedoi}{10.5281/zenodo.22766567}
+\newcommand{\archivedoistate}{RESERVED}
 \newcommand{\archivedoipendingmarker}{PENDING}
+\newcommand{\archivedoireservedmarker}{RESERVED}
 % ---------------------------------------------------------------------
 
 \ifanonymous
@@ -144,18 +150,29 @@
   \newcommand{\artifactavail}{available at%
     \ \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
   \newcommand{\authorname}{Hamza Khan}
+  % ORCID lives in this branch ONLY. It identifies the author as surely as
+  % the name does, so under double-anonymous review it gets the same
+  % treatment as the name, the e-mail and the GitHub URL.
   \newcommand{\authorcontact}{%
-    \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.}}
+    \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.
+      ORCID: \texttt{0009-0005-9380-2188}.}}
   % Rendered from \archivedoi, never from a literal. While it is PENDING the
   % sentence says so; the moment a DOI replaces it the same sentence becomes a
   % true availability claim, with no other file edited.
-  \ifx\archivedoi\archivedoipendingmarker
+  \ifx\archivedoistate\archivedoipendingmarker
     \newcommand{\archiveavail}{prepared and verified but not yet deposited; no
       DOI exists at the time of writing}
+  \else\ifx\archivedoistate\archivedoireservedmarker
+    % Reserved, not registered. The identifier is fixed and the record is
+    % a draft; the DOI begins resolving only when that record is
+    % published. Saying "deposited at" here would be false.
+    \newcommand{\archiveavail}{prepared and verified, with the Zenodo record
+      reserved under DOI \ \texttt{\archivedoi}; the identifier is fixed and
+      begins resolving when the record is published}
   \else
     \newcommand{\archiveavail}{deposited at%
       \ \texttt{https://doi.org/\archivedoi}}
-  \fi
+  \fi\fi
 \fi
 % =====================================================================
 

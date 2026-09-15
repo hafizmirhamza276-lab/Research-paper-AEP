@@ -10,6 +10,38 @@ re-checked with the commands in §6.
 
 ---
 
+## 0c. The reserved DOI
+
+**Recorded 2026-09-15, phase 36a.**
+
+```
+DOI    10.5281/zenodo.22766567
+state  RESERVED -- identifier fixed, record is a draft, files not uploaded
+```
+
+**It does not resolve yet, and nothing in this repository says it does.**
+A reserved Zenodo DOI is minted at draft time so the identifier can be
+written into the artefact before publication; it begins resolving only when
+the record is published.
+
+What the reservation closes:
+
+- [x] An identifier exists and is recorded in `README.md`, `ARTIFACT.md`
+      §5 and this file.
+- [x] `paper/main.tex` renders it from `\archivedoi` with a three-state
+      switch, so the availability sentence says *reserved* rather than
+      *deposited*. The anonymous branch reads none of the three.
+
+What remains open, and is not ticked:
+
+- [ ] Upload both archives — `aep-raw-archive` and `aep-raw-archive-ext`.
+- [ ] Verify post-upload checksums against the local manifests,
+      **each archive against its own** (§0b).
+- [ ] Publish the record, at which point the DOI begins resolving.
+- [ ] Re-render the paper so its availability sentence becomes the
+      *deposited at* form, and tag `v1.0.0`.
+
+---
 ## 0b. The deposit is TWO archives, and two trees are excluded by name
 
 **Added 2026-09-15, phase 35.** Phase 34's inventory found five referenced

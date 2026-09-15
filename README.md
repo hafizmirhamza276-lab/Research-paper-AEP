@@ -4,8 +4,13 @@ The research artifact for *Declared Ambiguity: Fail-Closed Execution for
 Non-Idempotent Legacy APIs Without Idempotency Keys* — a protocol,
 five baseline designs it is measured against, a fault-injection harness,
 tracked derived results from a 432-run evaluation, and the manuscript generated
-from them. The raw run archive is **two parts, built and verified but not
-yet deposited**, so no DOI exists yet:
+from them. The raw run archive is **two parts, built and verified, with a
+Zenodo record reserved under DOI `10.5281/zenodo.22766567`**.
+
+> **The DOI does not resolve yet.** It is *reserved*, not registered: the
+> identifier is fixed, the record is still a draft, and the files are not
+> uploaded. Clicking it today will not work. It begins resolving when the
+> record is published, which `docs/29` is the checklist for.
 
 | part | run dirs | files | manifest digest |
 |---|---|---|---|
@@ -20,9 +25,10 @@ two manifests share no path and the first is unmodified. `ARTIFACT.md`
 §5 records exactly what is pending and `docs/29-archive-deposit.md` is the
 checklist that closes it.
 
-**Where the raw actually is, until that deposit happens.** Until there is a
-DOI, the raw runs exist only on the measurement host, and this repository
-cannot hand you a path to them. It can at least name them:
+**Where the raw actually is, until the record is published.** Until then the
+raw runs exist only on the measurement host — **two copies of each
+archive, on two filesystems, both on one machine** — and this repository
+cannot hand you a resolvable link. It can at least name them:
 
 | copy | path | holds |
 |---|---|---|
@@ -188,6 +194,15 @@ Each gate is itself tested (`tests/test_ci_gates.py`,
 `tests/test_citation_validator.py`, `tests/test_paper_tables.py`,
 `tests/test_artifact_reproducibility.py`), because a gate that cannot fail is
 decoration.
+
+## Author
+
+Hamza Khan — ORCID [`0009-0005-9380-2188`](https://orcid.org/0009-0005-9380-2188).
+
+The anonymous build (`bash scripts/build_paper.sh --anonymous`) suppresses the
+name, the e-mail, the ORCID, the repository URL and the DOI, because a Zenodo
+record names its depositor and an ORCID identifies a person as surely as a name
+does. That suppression is asserted by a test, not assumed.
 
 ## License
 
