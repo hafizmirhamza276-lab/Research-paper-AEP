@@ -17,19 +17,16 @@ not a real power cut} \Cref{sec:eval-durability} injects the fault class
 \texttt{dm-flakey} target in \texttt{drop\_writes} mode, and the result is
 unambiguous ($\FlakeyAckSurvived{}$ acknowledged records survive,
 $\FlakeyUnackLost{}$ unacknowledged ones do not). What remains is that
-\texttt{drop\_writes} is an \emph{emulation}. It is faithful in the dimension
-that matters --- writes issued after a chosen instant never reach the platter,
-while everything \texttt{fsync}-ed before it does --- and unfaithful in others:
-a real power loss can tear a sector mid-write, can lose writes the device
-claimed to have committed to its own volatile cache, and does not stop at a
-boundary we chose. Those differences make real hardware \emph{worse} than the
-emulation, so the direction of the result is safe and its precision is not: we
-cannot claim the acknowledged record would survive a real power cut on a device
-with a lying write cache, because \texttt{fsync} there does not mean what the
-barrier assumes. That is a property of the storage, which AEP inherits from
-every system that trusts \texttt{fsync}. The probe also maximises the exposure
-window by phase-aligning to a just-completed fsync, so $\FlakeyUnackLost{}$ is
-the loss rate for a worst-placed cut rather than a uniformly-timed one.
+\texttt{drop\_writes} is an \emph{emulation}: faithful where it matters ---
+writes after a chosen instant never reach the platter, everything
+\texttt{fsync}-ed before it does --- and unfaithful in that real power loss can
+tear a sector, can lose writes a device claimed to have committed to its own
+cache, and does not stop at a chosen boundary. Those differences make real
+hardware worse, so the direction holds and the precision does not: on a device
+with a lying write cache \texttt{fsync} does not mean what the barrier assumes,
+a property AEP inherits from every system that trusts it. The probe also
+phase-aligns to a just-completed fsync, so $\FlakeyUnackLost{}$ is the rate for
+a worst-placed cut rather than a uniform one.
 
 \paragraph{The write-loss result is a refutation, and it is reported as one}
 \Cref{sec:eval-writeloss-cell} runs both arms under the write-loss fault and
@@ -70,18 +67,16 @@ from a crashed Redis process is wrong.
 measurement here delivers an F3 crash-stop of the state store, a class in which
 the arms are separated by a \emph{timing} difference and nothing else: AEP-full
 has one extra Redis-dependent step, and the fault must land in a window B3 has
-already left. That window can be narrowed and measured (\cref{sec:eval-prevention})
-but not closed, because a fault that guarantees \texttt{WAITAOF} cannot return
-also blocks the two Redis calls B3 makes after the same checkpoint. One
-mechanism would avoid this --- disabling the fsync at the checkpoint while
-leaving every other Redis call working, which separates the arms by construction
---- and \textbf{we designed that arm and did not run it}. It is a configuration
-change that makes a guarantee unavailable rather than a fault, it would
-instantiate a failure class our model does not contain, and the controlled fault
-had already reduced the between-session spread to \ArmASpreadMax{} count per
-class. The scope this fixes is explicit: the prevention guarantee is evaluated
-where durability is \emph{raced for} and lost to a crash, not where it is simply
-\emph{unavailable}. A reader who needs the latter should treat it as untested.
+already left. That window can be narrowed and measured
+(\cref{sec:eval-prevention}) but not closed: a fault that guarantees
+\texttt{WAITAOF} cannot return also blocks the two Redis calls B3 makes after
+the same checkpoint. The arm that would separate them by construction ---
+disabling the fsync at the checkpoint alone --- was designed and not run: it is
+a configuration change rather than a fault, it instantiates a failure class the
+model does not contain, and the controlled fault had already reduced the
+between-session spread to \ArmASpreadMax{} count per class. So the prevention
+guarantee is evaluated where durability is \emph{raced for} and lost, not where
+it is \emph{unavailable}; the latter is untested.
 
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
 with a configurable delay, timeout and error distribution, and a
@@ -142,18 +137,17 @@ The evidence for the latter is the fault-injection matrix.
 \paragraph{The decomposition narrows our own novelty claim}
 \Cref{sec:eval-detection} attributes the detection guarantee to the pre-dispatch
 record and the transition table's missing re-entry edge, not to the barrier
-machinery of contribution C2. The reading follows: our most novel mechanism
-serves the claim with the \emph{narrowest} evidence --- one crash point, one
-host, an effect size whose host-dependence we have measured rather than
-suspected --- while the claim with the strongest evidence rests on write-ahead
-logging plus a state-machine property that is a few lines of Lua. Narrowest is
-not weakest: within that scope the effect replicated across
-\ReplicationSessions{} further sessions at
+machinery of contribution C2. The two claims therefore rest on different
+evidence. Detection rests on write-ahead logging plus a state-machine property
+that is a few lines of Lua, measured across the whole matrix. Prevention rests
+on the barrier, and is evaluated at one crash point on one host --- a narrower
+scope, and within it the effect replicated across \ReplicationSessions{}
+further sessions at
 [\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented,
 the only session-clustered interval in this paper that excludes zero. The
 composition being novel was never the argument (\cref{sec:related}); what is new
-is the semantics it delivers, and the ablation says which half delivers which
---- including that the expensive half is optional.
+is the semantics, and the ablation says which half delivers which --- including
+that the expensive half is optional.
 
 The cell is no longer one collection under one injector.
 \Cref{sec:eval-prevention} leads with a \emph{controlled} fault --- the
@@ -202,20 +196,18 @@ structural cost of the instrument, and it applies to the paper's most
 load-bearing empirical claim.
 
 \paragraph{The matrix found defects in our own measurement, including one that
-would have inflated counts} Three are on the record. A resume defect let a
-re-attempted run merge stale event shards into its own log, double-counting
-executions. A re-executing supervisor abandoned the lease instead of waiting for
-it, and execution-state seeding was not idempotent --- both making a
-\emph{baseline} look better than it is, and so biasing against our own
-hypothesis. And running the project's own destructive integration suite beside a
-live collection replaced the matrix's Redis underneath it, so every B4/B4b run
-from that window was discarded and re-collected. All three are fixed, the
-affected runs were re-collected, and none of the discarded runs contributes a
-number here; the runner now refuses to start beside a host-level fault injector
-and records the server's \texttt{run\_id} with every run. The supplementary
-material gives each incident in full. We record them because the general point
---- that a fault-injection harness is a stronger verification tool than a unit
-suite --- cuts both ways, and there may be defects it has not found.
+would have inflated counts} Three are on the record: a resume defect that
+merged stale event shards into a re-attempted run's log, double-counting
+executions; a supervisor that abandoned its lease instead of waiting, alongside
+non-idempotent execution-state seeding, both flattering a \emph{baseline} and
+so biasing against our own hypothesis; and a destructive integration suite run
+beside a live collection, which replaced the matrix's Redis underneath it. All
+three are fixed and the affected runs re-collected; none of the discarded runs
+contributes a number here. The runner now refuses to start beside a host-level
+fault injector and records the server's \texttt{run\_id} with every run, and
+the supplementary material gives each incident in full. A fault-injection
+harness is a stronger verification tool than a unit suite, which cuts both
+ways: there may be defects it has not found.
 
 \paragraph{Ambiguity is counted from the oracle, not from self-report} A system
 that declared ambiguity liberally could otherwise score well by saying ``I do
