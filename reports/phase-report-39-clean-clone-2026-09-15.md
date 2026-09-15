@@ -271,6 +271,31 @@ deletions                                    0
 
 ---
 
+## 9. The check that closes the pass: a second clone, of the pushed fix
+
+The first clone was repaired by copying files into it, which proves the fix
+works but not that the fix *shipped*. So the commit was pushed and a **second
+clean clone** taken of it — `28a1936`, 3 232 tracked files, 3 232 on disk,
+nothing copied in — and `ARTIFACT.md` followed as it now reads:
+
+```
+uv sync --frozen ... --extra b5                 exit 0
+build_paper.sh x4, supplementaries first        exit 0, exit 0, exit 0, exit 0
+make reproduce-figures                          exit 0   6 IDENTICAL, 2 SKIPPED with the reason
+make reproduce-figures RUNS=<unpacked archive>  exit 0   8 IDENTICAL (6 tables + both figures)
+check_paper_numbers.py                          exit 0   43 passed, 0 failed
+validate_citations.py                           exit 0   371 citations, 0 invalid
+verify_refs.py --offline                        exit 0
+check_prereg_order.py                           exit 0   31 cells, 27 ok, 4 exempt, 0 failing
+the suite, as ARTIFACT.md prints it             exit 0   2 081 passed, 34 skipped
+run_matrix --results-root R --plan-only         exit 0   (it exited 2 as printed before)
+```
+
+Every command `ARTIFACT.md` prints now runs, from a clone, on a machine that
+was given nothing but the repository.
+
+---
+
 **Pointer.** A clean clone of `0baec98` could not run the artifact's headline
 command: `make reproduce-figures` exited 2 for two independent reasons — four
 generator inputs the Makefile lost at phase 25, and a manifest read that aborted
