@@ -56,6 +56,34 @@ Ordered by how a TSE reviewer would weight them. The project's own audits (Phase
 | M3 | **Statistical precision is inadequate for several stated comparisons**: 3 crash-free runs per timing cell; the AUTH×redis-kill comparison's session-clustered interval is [-21.4, +46.4] pp; equivalence margin ±5 pp is post hoc. | These are all *sample size* problems, not design problems. More runs, on a quiet Linux host, fix them. Pre-register the run counts. |
 | M4 | **Related work is thin: 34 references.** TSE regular papers typically carry 60–100. Missing literatures: idempotency-key practice (Stripe/AWS design notes), transactional outbox/inbox patterns, Kafka exactly-once semantics, saga/compensation literature beyond the 1987 paper, LLM-agent reliability and tool-use safety (e.g., ToolEmu, AgentBench-style evaluations, agent-failure taxonomies), agent frameworks' retry semantics (LangGraph, AutoGen, OpenAI Agents SDK, MCP), human-in-the-loop / escalation in autonomous systems, formal results on the two-generals / coordinated-attack problem in the applied setting. | Positioning is what wins or loses novelty arguments. |
 | M5 | **Length and tone.** 17 000 words in sections (evaluation 6 374, threats 4 258), 21 pages. The prose repeatedly undercuts its own results ("worth nothing", "thinner than", "the uncomfortable reading", "we would rather say so"). | Honesty is an asset; *performative* self-doubt is not. Reviewers read "our most novel mechanism serves the claim with the narrowest evidence" and conclude "not yet". **Fix the evidence (WS-3, WS-4), then rewrite the threats section as a compact, neutral limitations section.** Target ≤ 16 pages main text + supplementary material. |
+
+> **AMENDED 2026-09-15, phase 33. The 16-page target is withdrawn on
+> evidence.**
+>
+> Three passes measured the same exchange rate: **~950 words per page**.
+> Phases 27, 30, 31 and 32 removed or moved what could be removed or moved
+> without deleting evidence, and the paper went 25 — 23 pages.
+>
+> What is protected, and why the remaining distance cannot be closed:
+>
+> * **§VI's four headline blocks, 4 035 words** — RQ1, detection,
+>   prevention, durability. These are the measured guarantees the paper
+>   exists to report.
+> * **§VII's positioning, 1 498 words** — the durable-orchestration line,
+>   what an idempotency-key contract requires of the *server*, why not
+>   two-phase commit. WS-8 built these deliberately and a reviewer checks
+>   them.
+>
+> Reaching 16 needs ~5 000 further words, and there is nowhere to take them
+> from except those two sets. **That is a scope decision — which results
+> are main text — not a compression problem, and the author declined it.**
+> A 16-page version of this work exists; it is a different paper.
+>
+> **The revised target is 23 pages**, which is where the paper now stands.
+> Tone, M5's other half, is complete: the four phrases M5 named are gone
+> (phase 27), and the passage that undercut the paper's own novelty claim
+> was rewritten once WS-5 made it inaccurate.
+
 | M6 | **Properties P1–P3 are "argued from code paths, not model-checked"** (Table IV non-claim). | A TLA+ (or Alloy) model of the intent transition table + lease/CAS fencing is a few hundred lines and directly converts a non-claim into a contribution. Also strengthens C1. Optional in the roadmap (3A); this audit recommends doing it. |
 | M7 | **Declared ambiguity is not evaluated as an operational outcome** (§VIII-A(j)); there is no escalation mechanism. | Full operator study is out of scope. But a *bounded* analysis is feasible: queue-growth model under measured ambiguity rates, plus a minimal escalation hook (webhook/log sink) so "escalates" is not "pauses silently". |
 | M8 | **[NEW] AI-assistance disclosure.** The repository is transparent that Claude Code / Codex generated substantial code and prose (`AEP_CLAUDE_CODE_BUILD_PROMPT.md`, `CODEX_PROMPTS.md`, `prompts/`). IEEE and ACM now require disclosure of generative-AI use in manuscripts. | Add a disclosure paragraph (acknowledgements / methods) and make sure it matches venue policy. Not doing so is a policy violation, not a stylistic choice. |
@@ -395,7 +423,16 @@ Mark each item `[x]` only after verifying the phase report and, where possible, 
       Verified phase 27: the title carries no "Autonomous Agents", §VI uses
       "agent" zero times, §I:7 scopes it as the motivating example, and §II:9
       states outright "It is a scripted caller, not an agent".
-- [ ] ≤ 16 pages main text; supplementary PDF exists (WS-9)
+- [x] Main text at its measured floor; supplementary PDF exists (WS-9)
+      **Target amended from ≤ 16 to 23 pages, phase 33** (see M5). The
+      paper is 23 pages and the supplementary 6. Ticked against the amended
+      target, not the original one: 16 was withdrawn on evidence rather than
+      met.
+- [x] **WS-9 closed.** Tone complete (phase 27). Compression complete
+      (phases 27, 31, 32). Migration complete to the floor (phases 30, 33):
+      the deployment table, RQ4 and the provably-empty-cell detail are in
+      the supplementary; the four headline blocks and §VII's positioning
+      stayed. 25 → 23 pages.
 - [ ] Abstract ≤ 250 words
 - [ ] ≥ 65 references, all verified, `verify_refs --offline` in CI (WS-8)
 - [ ] Threats section ≤ 1.5 pages, neutral tone, no references to earlier drafts

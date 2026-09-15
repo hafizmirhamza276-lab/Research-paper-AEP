@@ -48,7 +48,8 @@ storage path before that point stops accepting writes, and everything below the
 target is on the far side of it in both arms equally. What the layering
 \emph{would} threaten is a claim about absolute fsync latency on real hardware,
 which we do not make from this probe --- the barrier's cost comes from
-\cref{tab:deployment} --- or a claim that a real power cut cannot do worse,
+the deployment table in the supplementary material --- or a claim that a
+real power cut cannot do worse,
 which we explicitly do not make above.
 
 \paragraph{No process-level fault can exercise the barrier's durability at all}
@@ -314,7 +315,8 @@ statement about resolution and not about the effect: a residual of a few tens of
 milliseconds on a two-second call is below what fifteen runs of this workload
 can separate from nothing, and more runs would narrow it rather than move it. A
 deployment that needs a latency budget should measure its own. The four medians
-in \cref{tab:deployment} are the earlier three-run cells and are shown as the
+in the supplementary's deployment table are the earlier three-run cells and
+are shown as the
 deployment points they were collected to compare, not as the source of the
 costs quoted above.
 
@@ -364,7 +366,8 @@ wall-clock durations. We now require both a pre-run declaration that the host
 cannot suspend and a per-run wall-versus-monotonic check. The gate is strict
 enough that \emph{no} run collected before it existed contributes a timing
 number, and it costs us coverage: recovery-latency distributions are not
-reported (\cref{sec:eval-rq4}) because the gated crashed runs are too few, and
+reported (the supplementary material, \emph{RQ4: recovery}) because the
+gated crashed runs are too few, and
 we prefer the gap to ungated numbers.
 
 \subsection{Where the protocol should not be used}

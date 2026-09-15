@@ -9,21 +9,21 @@
     "generated/numbers.tex": "01473a96ecf1255e92d22f1e7b53a9b64e8e2dc790303bb646820a963aece960",
     "generated/table-ablation.tex": "2338e6f83cd84e8af72b0d70181b498cae47d5c396a1be682248dbb5d7b08cb4",
     "generated/table-ambiguity-by-crashpoint.tex": "1e8e92a28a9b29b126e31d5e418a2717a30f2f16103c74bfc5b8f4e1bec363e6",
-    "generated/table-deployment-choice.tex": "1ab969a8d5128b50223f2936d1b6124103b778b122388852369c15dd11dc2e6f",
+    "generated/table-deployment-choice.tex": "1340ab0ddd0f4e37d89fc92ac4f456d322c6ee1969029d539ec018381ecf829f",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
     "generated/table-outcomes.tex": "57b6a4bf989e5cf75f85756dc0b2b91df8a4925b9cd12c813cc67eefa92e6f44",
     "main.tex": "b87891631596960076329aeeab312da358fa5e4da4bd677794735fa5789e097d",
     "refs.bib": "2cbceda664596e9ab240193c819022e6757ab982320f45b9c4c688b3215487d4",
-    "sections/01-introduction.tex": "3606d151c422f7dc3338778906bb4af1b4d486fd9e651721877ed375ef3a4f9c",
+    "sections/01-introduction.tex": "8f932778c3d166ff28baf71ec07260c02c07914cd0bcca80b7e09bad0a61bd73",
     "sections/02-motivating.tex": "f759ff9f8b7efd05b1d13ce4ce6ea9b8d80c355abb95c5e7882af31c5170b313",
     "sections/03-model.tex": "7c5e8c2c9aad89d4329bc5d595dc3e6aa7ae2ac8c2e2e570241ff39402dde3c8",
     "sections/04-protocol.tex": "ed95c4dabdaa1ac5f427f41df23d7e9bfa0048f142cf78ba92154cec07265a6b",
     "sections/05-implementation.tex": "b2517f5ddb176bc0a1ae7246b4ca3dfccf19eac03270204b4fde3e54bef635df",
-    "sections/06-evaluation.tex": "c55d94e15d5e8a3904012e811cf777513e9439d4288b6d2bd70b0ebc1b05a878",
+    "sections/06-evaluation.tex": "79472fd5d3f3a1c4351cfb64bdc49af2b0135e7e38655ac29d7c48b66e897fad",
     "sections/07-related.tex": "42c2378b9a6b479a3df9ed21f88aea3d08c3896fa0aea1d36a4eea7dcfadf405",
-    "sections/08-threats.tex": "b434fbbffa8f9256d6534e01219d278ae06738792f0f1512d9da774190f73c87",
+    "sections/08-threats.tex": "4251dd9d4dc2e581426c8cd8a2e0625996b27dcc21cc4c6c7c1dc74067b684aa",
     "sections/09-artifact.tex": "5be04a5c247b8795afda8153ff65b5dd26f35142200b42f98c02eac1cc7d9882",
-    "supplementary.tex": "ef284006230940d49a51a62a3df66b07270ff5a2364584a860a3931c3ef87647"
+    "supplementary.tex": "23d5358ee36db1bef99c6a96458ff6baf3ecd26a796fdaccf4b9d13305f35d31"
   },
   "version": 1
 }

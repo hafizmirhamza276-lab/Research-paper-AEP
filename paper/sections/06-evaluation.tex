@@ -239,23 +239,16 @@ confirms the effect and the intent resolves.
 \subsubsection{Why the provably-empty cell is not resolved}
 \label{sec:eval-provable}
 
-The \texttt{after\_barrier\_before\_dispatch} row invites an obvious question:
-if the worker died before sending anything, \emph{the system could know that}.
-Why is the outcome ambiguous rather than a confirmed non-event?
-
-Because nothing durable records it. A recovery process reading the store
-afterwards sees an authorized, unresolved intent --- exactly what it would see
-had the worker died \emph{during} transmission, with the request already on the
-wire. The two histories are identical in everything durable, so recovery fails
-closed, which is the correct behaviour given what it can observe. \textbf{That
-is the negative result, and it is the protocol's, not the implementation's:} the
-cell is empty in the world and unresolvable from the store. Closing it is
-possible and we did not do it. The supplementary material gives the probe detail
-and prices the third barrier that would split the two cases --- a trade that
-narrows rather than closes the window, and whose value depends entirely on a
-deployment's ratio of crash points, which our uniform matrix deliberately does
-not model.
-
+The \texttt{after\_barrier\_before\_dispatch} row invites an obvious
+question: if the worker died before sending anything, \emph{the system
+could know that}. It cannot, and the reason is the protocol's rather than
+the implementation's: nothing durable distinguishes that history from one
+where the worker died \emph{during} transmission with the request already
+on the wire. Recovery sees an authorized, unresolved intent in both, so it
+fails closed. \textbf{The cell is empty in the world and unresolvable from
+the store.} The supplementary material, under \emph{Why the provably-empty
+cell is not resolved}, gives the probe detail and prices the third barrier
+that would split the two cases.
 % Single column rather than full width. A float's cost is its area, and for a
 % graphic -- unlike a table -- narrowing genuinely shrinks the area rather than
 % re-wrapping the same rows taller: measured at 0.29 pages saved, against 0.02
@@ -375,7 +368,7 @@ B0, B1 and B2 --- and the property the paper is named for --- is produced by
 the pre-dispatch record and by the transition table that refuses to
 re-enter \textsc{about-to-fire}. It is not produced by waiting for
 \texttt{fsync}. A reader who wants the detection guarantee and not the
-barrier's cost can have it, and \cref{sec:eval-deployment} prices that
+barrier's cost can have it, and the supplementary material prices that
 configuration explicitly.
 
 This also sharpens what B4 shows. B4 has a durable record, acknowledged by the
@@ -738,158 +731,24 @@ scheduled fsync, and those are one second apart, so a barrier costs up to a
 second and the protocol pays that twice. The measured total sits near the top
 of that range rather than in the middle of it; the reason is unmeasured.
 
-\subsubsection{The barrier is a deployment choice, with three measured points}
-\label{sec:eval-deployment}
-
-The $\approx 2$-second figure above is the one a reader would carry away as
-``AEP's overhead''. It is not: it is the price of one of the protocol's two
-guarantees, under one of the durability settings that guarantee can be bought
-at. \Cref{tab:deployment} is the decision as a deployment actually faces it.
-
-\input{generated/table-deployment-choice}
-
-Three points, and the third is the one the earlier framing of this paper
-concealed.
-
-\paragraph{\texttt{everysec} with the barrier} The default, and the expensive
-one. An acknowledgement must wait for the next scheduled fsync, up to a second
-away, and the protocol waits twice.
-
-\paragraph{\texttt{always} with the barrier} The identical crash-free cells ---
-same systems, endpoint, regime, seeds, host and provider --- against a Redis
-whose only changed line is \texttt{appendfsync always}.
-% source: reports/raw/f0iii-appendfsync-always.txt and the G2 re-run that
-% added the B3 arm; both refuse to proceed unless CONFIG GET appendfsync
-% reads back 'always' on the live server.
-The barrier's cost is \BarrierCostAlwaysFortyFive{}\,ms
-[\BarrierCostAlwaysFortyFiveLow{}, \BarrierCostAlwaysFortyFiveHigh{}]\,ms over
-fifteen runs per arm: negative, and not distinguishable from zero. Under
-\texttt{always} the fsync has already happened by the time the write returns,
-so \texttt{WAITAOF} has nothing left to wait for.
-% generated/numbers.tex | fsync-always-2026-09-14/analysis/
-% latency-and-throughput.csv and per-execution.csv, same bootstrap as above.
-
-\textbf{That is the measurement this section turns on.} The barrier does not
-become cheap under \texttt{always}; it costs nothing, and the
-\BarrierCostFifteen{}\,ms it costs under \texttt{everysec} is therefore the
-price of the fsync boundary rather than of the barrier. A protocol step under
-\texttt{everysec} waits for the next scheduled flush, and there are two of
-them. Nothing in the mechanism is expensive.
-
-The sign is not a puzzle to explain away. The two medians it separates are
-\AepAlwaysFortyFiveMedian{}\,ms with the barrier and
-\BthreeAlwaysFortyFiveMedian{}\,ms without it, on a two-second call; the gap
-between them is noise around a mechanism that is doing no waiting. This arm was
-pre-registered with the interval's exclusion of zero explicitly ruled out as an
-acceptance criterion, because a mechanism with nothing to wait for should cost
-nothing and a measurement of nothing lands on either side of it.
-% generated/numbers.tex | fsync-always-2026-09-14/analysis/
-% latency-and-throughput.csv, step_latency_ms_median per system.
-
-Both figures are ablation differences \emph{within} one policy, which required
-collecting the barrier-less arm twice. It would have been easier to subtract
-the \texttt{everysec} B3 median from the \texttt{always} AEP-full median, and
-that would have assumed the ablated protocol's own writes cost the same under
-both policies. They nearly do --- B3 is \BthreeStepMedian{}\,ms under
-\texttt{everysec} and \BthreeAlwaysFortyFiveMedian{}\,ms under
-\texttt{always} --- but
-``nearly'' is a measurement, and an order-of-magnitude claim resting on an
-unmeasured premise is the kind of number this paper is trying not to publish.
-
-\paragraph{How precise these two figures are} Each is a difference of two
-medians over fifteen runs per arm, bootstrapped over runs rather than
-executions. Under \texttt{everysec} the barrier costs
-\BarrierCostFifteen{}\,ms, [\BarrierCostFifteenLow{}, \BarrierCostFifteenHigh{}];
-under \texttt{always} it is \BarrierCostAlwaysFortyFive{}\,ms,
-[\BarrierCostAlwaysFortyFiveLow{}, \BarrierCostAlwaysFortyFiveHigh{}]. The first
-excludes zero by a wide margin and the second contains it, which is the whole
-of the claim: the policy decides whether the barrier is expensive, and the
-barrier itself is not.
-
-\paragraph{B3-mode: the barrier removed entirely} Not a baseline we are beating
-but a supported configuration of the same implementation, licensed by
-\cref{sec:eval-detection}. What it pays over a system with no protocol at all
-is not resolvable from zero at fifteen runs per arm
-(\ProtocolMinusBarrierFifteen{}\,ms,
-[\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]). On the detection metrics, pooled across capability
-classes, we observe no difference between it and AEP-full, supported by a bound
-rather than a test: both the undetected-duplicate and lost-effect rates lie in
-$[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least 90\%, and the
-declared-ambiguity difference lies inside the $\pm\BthreeVsAepAmbMargin{}$
-percentage-point margin \cref{sec:eval-detection} states as a post hoc
-stipulation. \emph{We do not make that claim per capability class, and the
-reason is a number rather than an oversight}: six simultaneous bounds instead of
-two, over a third as many run clusters, puts the Bonferroni width at
-\AblationZeroUpperPerClass{} percentage points, and a band that wide is not a
-detection guarantee. What B3-mode forfeits is \cref{sec:eval-prevention}: under
-a hard Redis kill it will put an effect on the wire that AEP-full withholds, at
-\BthreeUnwantedRate{} against \AepUnwantedRate{}, and its intent record will not
-survive a host-level write loss (\cref{sec:eval-durability}). That second
-clause is about the \emph{record}, and it does not license the protocol-level
-inference a reader may draw from it: when we ran both arms under exactly that
-fault, neither withheld, because the storage discarded the writes while
-reporting success and the barrier was handed an acknowledgement that looked
-good (\cref{sec:eval-writeloss-cell}).
-
-\textbf{So the question a deployment answers is not ``can we afford AEP'' but
-``do we need prevention, and at which fsync policy''.} If losing Redis is the
-fault to worry about --- an instance on the same host as the workers, an
-unreplicated instance, a VM that can vanish --- the barrier is the point of the
-protocol and \texttt{always} makes it nearly free at this workload's shape. If
-Redis is well protected and worker crashes are the concern, B3-mode gives the
-paper's headline result for a cost this evaluation cannot distinguish from zero.
-
-\textbf{One measurement this table does not support} is what \texttt{always}
-costs under load. The Redis
-documentation calls it ``very very slow, very safe''~\cite{redis-persistence}, a
-judgement about write throughput that our workload cannot exercise: two workers,
-a two-second provider delay and a handful of writes per step leave the system
-latency-bound and nowhere near an fsync-rate limit. Our throughput figure is in
-fact \emph{higher} under \texttt{always} ($\AepThroughputAlways{}$ versus
-$\AepThroughputEverysec{}$ executions/s), which is a statement about this
-workload's shape and not about Redis.
-
+\paragraph{The barrier is a deployment choice, and the supplementary
+prices it} The $\approx 2$-second figure above is the one a reader would
+carry away as ``AEP's overhead''. It is not: it is the price of one of the
+protocol's two guarantees, under one of the durability settings that
+guarantee can be bought at. The supplementary material, under \emph{The
+barrier is a deployment choice}, gives the three measured points as a
+deployment faces them --- \texttt{everysec} with the barrier,
+\texttt{always} with the barrier, and the barrier removed --- with the
+table they are read from. The claim this section rests on does not depend
+on it: the barrier costs \BarrierCostFifteen{}\,ms under \texttt{everysec}
+and \BarrierCostAlwaysFortyFive{}\,ms under \texttt{always}, and both
+figures are stated above with their intervals.
 \subsection{RQ4 --- recovery}
 \label{sec:eval-rq4}
 
-Recovery behaviour is reported through the outcome distribution rather than a
-success rate, for a reason worth stating: ``recovery success'' means two
-different things either side of whether a recovery service was running. Where
-one ran, a crashed execution reaching a terminal classification was
-\emph{recovered}. Where none ran --- B0, B1, B2, B4, B4b declare none --- the
-same execution reached its classification because a supervisor ran the step
-again, which is not recovery but the thing recovery exists to avoid. Our
-analysis excludes runs without a recovery service from that metric rather than
-scoring them zero or one, because both would be statements about a component
-that was not present.
-
-Within that scope: every AEP-full and B3 execution in the crashed regime
-reached a terminal classification, and across \RunsCollected{} runs exactly
-one recorded a reconciliation disagreement --- every other completed run's
-event log agreed with its independently written oracle ledger. The harness
-performs this reconciliation after each completed run; it checks definitive
-applied/non-applied assertions, effect-count bounds, attribution, and duplicate
-predictions rather than trusting a line count.
-% source: analysis/coverage.json and the per-run reconcile step.
-
-That one is worth stating precisely, because the check exists to be believed.
-It was a B4b cell in which the system classified all ten executions
-\textsc{confirmed-applied} while the provider's ledger recorded two, eight
-disagreements of the form ``the system asserted the effect was applied and the
-ledger records none''. Both sibling runs of the same cell recorded ten, the
-provider logged no error, and its run-log held three lines against eleven for
-each sibling --- so the provider recorded almost nothing while answering the
-workers successfully. We could not determine the cause. A re-run of the
-identical cell, same seed and same configuration, agreed.
-
-We treat it as a \emph{void} run on the rule the durability probe uses: a
-trial whose measurement precondition failed says nothing about the system in
-either direction. Counting it would let a broken ground truth set a baseline's
-rate; discarding it quietly and keeping the re-run would be re-running until
-the number looks right. So the re-run is what \cref{tab:outcomes} contains,
-the voided attempt must ship in the external raw archive under
-\texttt{results/voided/} with this explanation beside it; it is not present in
-the current Git repository. The count above is one rather than zero.
-Recovery latency is not reported as an absolute figure: the E5 gate leaves too
-few gated crashed runs to support a distribution, and \cref{sec:threats}
-records this as a gap rather than filling it with ungated numbers.
+Recovery behaviour --- how many interrupted executions the recovery
+service resolves, how it resolves them, and why absolute recovery
+latencies are not reported --- is in the supplementary material under
+\emph{RQ4: recovery}. The outcome classes it produces are the ones
+\cref{tab:outcomes} already counts, so no claim in this section depends
+on it.

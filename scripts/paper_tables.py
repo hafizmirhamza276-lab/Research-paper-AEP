@@ -1015,18 +1015,23 @@ def emit_deployment_choice(
     fragment += [
         r"\midrule",
         r"\multicolumn{6}{@{}p{0.96\textwidth}@{}}{\footnotesize "
-        r"The detection claim of \cref{tab:outcomes} shows no observed "
-        r"difference in any cell, bounded by pooling the capability classes "
-        r"rather than per class (\cref{sec:eval-detection}): it is produced "
-        r"by the pre-dispatch record plus no re-entry, "
-        r"which all three rows have, and \cref{tab:ablation} is the "
-        r"ablation that shows it. What the barrier buys is the last "
+        # By NAME, not by \cref. A \cref cannot cross documents, and this
+        # table has to be placeable in either the paper or the supplementary;
+        # four \crefs into the main text are what blocked WS-9's migration in
+        # phase 30. The supplementary's header states the convention and
+        # check_cross_document_references enforces it.
+        r"The detection claim of the paper's outcome table shows no "
+        r"observed difference in any cell, bounded by pooling the capability "
+        r"classes rather than per class, as its detection subsection sets out: "
+        r"it is produced by the pre-dispatch record plus no re-entry, "
+        r"which all three rows have, and the ablation table shows it. "
+        r"What the barrier buys is the last "
         # WS-9 move 3 moved tab:killablation -- the uncontrolled cell's
         # per-session table -- into paper/supplementary.tex, which is a
         # separate document whose labels this \cref cannot reach. Point at the
         # subsection that still carries the claim in the main paper rather than
         # at the table that no longer does.
-        r"column's second word, and \cref{sec:eval-prevention} is what it is "
+        r"column's second word, and the prevention subsection is what it is "
         # The caption used to print `tex(b3 - b0)` -- 28.0 ms, computed
         # inline from the three-run medians. It was not a macro, so rule 3
         # never saw it: phase 26 retired that figure from every .tex and
