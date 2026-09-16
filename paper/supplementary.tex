@@ -290,7 +290,7 @@ chosen to answer the research questions rather than to fill the grid. The run
 count for every cell is in \texttt{experiments/results/matrix/MANIFEST.md} and
 in \texttt{analysis/coverage.json} in the artifact.
 
-What that leaves uncovered, precisely --- six named gaps, of which three have
+What that leaves uncovered, precisely --- six named gaps, of which five have
 since been closed and are recorded here with what closing them changed:
 
 \begin{itemize}
@@ -372,12 +372,42 @@ since been closed and are recorded here with what closing them changed:
       exactly the floor below which we would have read the result as a mis-timed
       injector rather than as a tie; it is the boundary, not headroom.
 
-\item \textbf{The $30\%$ crash-probability regime} is implemented and not
-      collected, so every rate in the paper comes from either an all-crash or a
-      no-crash regime and nothing in between.
+\item \textbf{The $30\%$ crash-probability regime is now collected, and the
+      paper's tables still do not report it.} It was implemented but
+      uncollected in an earlier draft. The deployment sweep collected it at
+      \texttt{mid\_dispatch} for every system in the matrix, under real
+      \texttt{SIGKILL}, and the collection is in the artifact. What has not
+      changed is the reporting: every rate quoted in this paper still comes
+      from either an all-crash or a no-crash regime, so the intermediate
+      regime is evidence a reader can inspect rather than a column in a
+      table here.
+      % experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json:
+      % regimes [p30], crash_points [mid_dispatch], seven systems,
+      % all_runs_used_real_sigkill true. Hypothesis H3 and its two
+      % one-event violations: reports/phase-report-17-ws5-analysis-
+      % 2026-09-14.md, section H3. No rate from this collection is quoted
+      % anywhere in the manuscript, so no macro exists for one.
 
-\item \textbf{The alternative read-back keying} is a sensitivity variant that
-      has not been run; all results use one keying.
+\item \textbf{The alternative read-back keying is now collected, and it
+      refuted its own prediction.} It was pre-registered as a sensitivity
+      check predicted \emph{null} within a $\pm\BthreeVsAepAmbMargin{}$
+      percentage-point margin. It is not null. Keyed by an oracle
+      fingerprint of the request, declared ambiguity on \textsc{pos-only} is
+      \KeyingAmbiguityOracle{}\% against \KeyingAmbiguityCaller{}\% under the
+      caller's own reference --- \KeyingAmbiguityDelta{} percentage points,
+      nearly twice the margin. The two columns that carry the safety claim,
+      undetected duplicates and lost effects, are zero under both keyings, so
+      what moves is the residual and not the guarantee. The main paper's RQ1
+      subsection states this; it is recorded here as a closed gap because the
+      prediction that closed it was wrong.
+      % generated/numbers.tex | ws5-2026-09-10/t2-keying/analysis/
+      % per-cell-metrics.csv (keying=ORACLE_FINGERPRINT, 399/900) against
+      % analysis/per-cell-metrics.csv (keying=CALLER_REFERENCE, 63/180);
+      % metric=known_ambiguity_rate, system=AEP_FULL,
+      % response_class=POSITIVE_ONLY_READBACK, pooled over the six crash
+      % points. Pre-registered as H4 in reports/phase-report-ws5-prediction-
+      % 2026-09-10.md section 2.2; refuted in reports/phase-report-17-ws5-
+      % analysis-2026-09-14.md section H4.
 
 \item \textbf{One run did not complete} and is listed as such in the manifest
       rather than dropped silently.

@@ -221,9 +221,19 @@ protocol state.
 written outside the systems under test, and every completed run is reconciled
 against it, but the provider and ledger share one implementation and one host.
 One voided run demonstrates that this oracle can fail: its event log and ledger
-disagreed while sibling and repeated runs agreed. The current repository retains
-the aggregate record of that exclusion, and the voided raw directory must be
-included in the external archive before submission. A second provider
+disagreed while sibling and repeated runs agreed. The repository retains the
+aggregate record of that exclusion, and the voided run's raw directory --- its
+event log, its ledger and a \texttt{README} giving the reason --- is in the
+published archive under \texttt{voided/}, so the disagreement can be read
+rather than taken on trust. A second provider
+% The run is archive root 'voided' of the 2026-09-03 archive (manifest
+% 87fa2d53...): 1 run directory, 24 files, at
+% voided/b4b_durable_workflow_at_most_once-before_intent_write-
+% notifications-6451e4c7-r1.attempt-1/ alongside voided/README.md.
+% Verified 2026-09-16 against ARCHIVE-METADATA.json and MANIFEST.sha256;
+% docs/29 3 lists it in the record's description. The previous wording
+% -- 'must be included in the external archive before submission' -- was a
+% note to the authors that had been true when written and was published.
 implementation or an external observer would reduce this common-mode doubt;
 neither is present.
 
@@ -284,10 +294,15 @@ plan is 1\,068 runs; we collected \RunsCollected{}, comprising
 the research questions rather than to fill the grid.
 % source: experiments/results/matrix/MANIFEST.md, which lists the run count
 % for every cell, and analysis/coverage.json.
-The supplementary material enumerates six named gaps --- three since closed and
-recorded there with what closing them changed, three still open: the $30\%$
-crash-probability regime, the alternative read-back keying, and one run that did
-not complete. Two qualifications from that enumeration bear on the main results
+The supplementary material enumerates six named gaps --- five since closed and
+recorded there with what closing them changed, one still open: one run that did
+not complete.
+% closures verified 2026-09-16 against the tracked collections:
+% experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json (regime p30)
+% and .../t2-keying/analysis/coverage.json (readback_keyings
+% [ORACLE_FINGERPRINT]). The one still open is the interrupted directory
+% counted in experiments/results/matrix/MANIFEST.md.
+Two qualifications from that enumeration bear on the main results
 and are stated here rather than only there: every collection in this paper comes
 from \emph{one host}, so the prevention effect's dependence on host timing is
 measured \emph{on} that host rather than established \emph{across} hosts; and

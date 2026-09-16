@@ -201,7 +201,7 @@ implementations.
 
 That distinction is no longer only a caveat. We subsequently ran the production
 engine itself against the same endpoint, in both configurations, at the one crash
-point the engine and our controls can both be cut at (\cref{sec:threats}).
+point the engine and our controls can both be cut at (\cref{sec:eval-b5}).
 \emph{The direction transferred and the magnitudes did not}: unlimited attempts
 duplicated and lost nothing, one attempt lost and duplicated nothing --- each
 landing in the corner the supplementary comparison assigns it --- while the rates were
@@ -209,7 +209,7 @@ several times below B4's and B4b's at the same crash point, and neither
 configuration declared ambiguity in any run. The comparison covers one crash
 point of five, is conditional on a fixed activity timeout the controls have no
 analogue for, and rests on frozen control cells an order of magnitude thinner
-than the engine's; it is reported with those bounds in \cref{sec:threats}, our
+than the engine's; it is reported with those bounds in \cref{sec:eval-b5}, our
 measured comparison is with one engine and does not transfer to the others, and
 no rate in this paper should be read as a product's.
 
@@ -264,7 +264,8 @@ recovery ignoring protocol-level knowledge loses data in replicated logs, and
 repair it for Raft-style~\cite{ongaro2014raft} systems~\cite{alagappan2018par}.
 
 We place our own durability result in that line rather than beside it:
-\cref{sec:threats} reports a barrier that dispatched on an acknowledgement which
+\cref{sec:eval-writeloss-cell} reports a barrier that dispatched on an
+acknowledgement which
 was already impossible to honour, because the underlying device discarded the
 write and reported success. The protocol behaved exactly as specified on an input
 that was false. What this literature supplies is the reason that is a property of
