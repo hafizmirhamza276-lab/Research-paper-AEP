@@ -215,7 +215,9 @@ only way out of that corner.
 \input{figures/state-machine}
 \caption{The intent state machine, generated from the transition table in
 \texttt{aep\_core/core/intents.py}. Solid edges are automated; the dashed edges
-from \textsc{ambiguous} are the operator-only transitions. There is no edge
+from \textsc{permanently-ambiguous} are the operator-only transitions. Every
+state with a thick border is terminal for automated reconciliation. There is no
+edge
 back into \textsc{about-to-fire} --- that absence is what ``never silently
 re-dispatched'' means, and it is enforced inside the atomic script rather than
 by the caller.}

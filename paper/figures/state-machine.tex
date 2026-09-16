@@ -2,29 +2,29 @@
 % Edge set imported from aep_core.core.intents
 % .LEGAL_INTENT_TRANSITIONS, so this figure cannot drift from
 % the transition table the Lua script enforces.
-% 10 edges, 6 states.
+% 10 edges, 6 states, 3 terminal for automated reconciliation.
 \begin{tikzpicture}[
-    node distance=6mm,
-    every node/.style={font=\footnotesize},
-    state/.style={draw,rounded corners=2pt,inner sep=3pt,align=center,fill=black!3},
+    every node/.style={font=\scriptsize},
+    state/.style={draw,rounded corners=2pt,inner xsep=4pt,inner ysep=3pt,align=center,fill=black!3},
     terminal/.style={state,fill=black!8,very thick},
-    to/.style={-{Stealth[length=4pt]},shorten >=1pt},
+    elabel/.style={font=\scriptsize,inner sep=1pt,align=center},
+    to/.style={-{Stealth[length=4pt]},shorten >=1pt,shorten <=1pt},
   ]
   \node[state] (none) at (0.0,0.0) {\textsc{none}};
   \node[state] (atf) at (0.0,-1.5) {\textsc{about-to-fire}};
-  \node[state] (fu) at (0.0,-3.2) {\textsc{fired-unconfirmed}};
-  \node[terminal] (fc) at (-2.5,-4.9) {\textsc{fired-confirmed}};
-  \node[terminal] (flc) at (2.5,-4.9) {\textsc{failed-confirmed}};
-  \node[state] (pa) at (0.0,-4.9) {\textsc{ambiguous}};
+  \node[state] (fu) at (0.0,-3.3) {\textsc{fired-}\\\textsc{unconfirmed}};
+  \node[terminal] (fc) at (-3.08,-5.6) {\textsc{fired-}\\\textsc{confirmed}};
+  \node[terminal] (flc) at (3.08,-5.6) {\textsc{failed-}\\\textsc{confirmed}};
+  \node[terminal] (pa) at (0.0,-5.6) {\textsc{permanently-}\\\textsc{ambiguous}};
 
-  \draw[to] (none) edge node[midway,sloped,above] {\scriptsize CAS $+$ barrier} (atf);
-  \draw[to,bend right=52] (atf) edge node[midway,sloped,above] {\scriptsize declared success} (fc);
-  \draw[to,bend left=52] (atf) edge node[midway,sloped,above] {\scriptsize declared failure} (flc);
-  \draw[to] (atf) edge node[midway,sloped,above] {\scriptsize anything else} (fu);
-  \draw[to,loop right] (fu) edge node[midway,sloped,above] {\scriptsize unknown; budget left} (fu);
-  \draw[to] (fu) edge node[midway,sloped,above] {\scriptsize read-back applied} (fc);
-  \draw[to] (fu) edge node[midway,sloped,above] {\scriptsize authoritative absence} (flc);
-  \draw[to] (fu) edge node[midway,sloped,above] {\scriptsize budget spent} (pa);
-  \draw[to,dashed,bend left=18] (pa) edge (fc);
-  \draw[to,dashed,bend right=18] (pa) edge (flc);
+  \draw[to] (none) edge node[elabel,midway,right=2pt] {CAS $+$ barrier} (atf);
+  \draw[to,out=180,in=90,out looseness=1.5,in looseness=0.45] (atf) edge node[elabel,pos=0.46,sloped,above=1pt] {declared success} (fc);
+  \draw[to,out=0,in=90,out looseness=1.5,in looseness=0.45] (atf) edge node[elabel,pos=0.46,sloped,above=1pt] {declared failure} (flc);
+  \draw[to] (atf) edge node[elabel,midway,right=2pt] {anything else} (fu);
+  \draw[to,out=200,in=160,looseness=2.8] (fu) edge node[elabel,midway,left=2pt,align=right] {unknown;\\budget left} (fu);
+  \draw[to,out=225,in=45] (fu) edge node[elabel,pos=0.63,sloped,above=2pt] {read-back applied} (fc);
+  \draw[to,out=315,in=135] (fu) edge node[elabel,pos=0.58,sloped,above=2pt] {authoritative absence} (flc);
+  \draw[to] (fu) edge node[elabel,pos=0.72,right=2pt] {budget spent} (pa);
+  \draw[to,dashed,out=170,in=10] (pa) edge (fc);
+  \draw[to,dashed,out=10,in=170] (pa) edge (flc);
 \end{tikzpicture}
