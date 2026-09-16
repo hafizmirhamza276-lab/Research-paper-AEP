@@ -289,7 +289,13 @@ def verify_one(
             name = Path(member.name)
             if name.is_absolute() or ".." in name.parts:
                 raise SystemExit(f"unsafe archive member: {member.name}")
-            tar.extract(member, path=extract, set_attrs=False)
+            # filter="data" is the 3.12+ default-to-be and refuses
+            # absolute paths, parent escapes, devices and setuid bits.
+            # The explicit check above stays: this script extracts a
+            # tarball fetched over the network, and two independent
+            # refusals is the right number for that.
+            tar.extract(member, path=extract, set_attrs=False,
+                        filter="data")
             members += 1
     print(f"  extracted {members:,} files (expected {archive.files:,})")
     out.report["extracted_files"] = members
