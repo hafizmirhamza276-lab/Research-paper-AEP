@@ -200,6 +200,16 @@ executable probes in the artifact, not asserted.
 
 \subsection{The state machine}
 
+\Cref{fig:statemachine} is the transition set exported from the implementation,
+not a drawing of it, so the presence or absence of an edge is a fact about the
+code. Three states are terminal for automated reconciliation:
+\textsc{fired-confirmed}, \textsc{failed-confirmed} and
+\textsc{permanently-ambiguous}, which is the declared-ambiguity corner. Nothing
+returns to \textsc{about-to-fire}: once an intent leaves the dispatch window it
+cannot re-enter it, and that absence is P2's ``never silently re-dispatched''.
+The dashed edges are the operator transitions of \cref{sec:p3}, and they are the
+only way out of that corner.
+
 \begin{figure}[t]
 \centering
 \input{figures/state-machine}
