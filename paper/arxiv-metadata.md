@@ -29,15 +29,20 @@ Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy APIs Without
 ```
 3 figures, 12 tables. Code, manuscript source, and tracked derived analysis:
 https://github.com/hafizmirhamza276-lab/Research-paper-AEP
-Raw evidence archive is assembled and verified (26,300 files, manifest sha256
-87fa2d53...) but not yet deposited; insert its DOI here and do not submit this
-metadata until the DOI resolves.
+Raw evidence archive is assembled and verified in two parts (26,300 + 18,494
+files; manifests 87fa2d53... and 54d1ab0f...), deposited under one Zenodo
+record. Insert the DOI here and do not submit this metadata until it
+resolves.
 ```
 
 > **Where the DOI comes from.** It is defined once, in `paper/main.tex` at the
-> `\newcommand{\archivedoi}` line, and currently reads `PENDING`. Take the value
-> from there rather than re-typing it, so this file and the manuscript cannot
-> disagree. `docs/29-archive-deposit.md` §5 is the checklist.
+> `\newcommand{\archivedoi}` line (currently line 125), and it already holds
+> the real value, `10.5281/zenodo.22766567`. It is **reserved, not
+> resolving** — the record is still a draft. Take the value from there rather
+> than re-typing it, so this file and the manuscript cannot disagree, and do
+> not submit this metadata until it resolves. What changes at publication is
+> the line below it, `\archivedoistate`, not `\archivedoi`.
+> `docs/29-archive-deposit.md` §5 is the checklist.
 >
 > **In the anonymous build the DOI is withheld**, exactly as the GitHub URL is:
 > a Zenodo record names its depositor, so citing it under double-anonymous
@@ -195,9 +200,11 @@ in this file were both stale, by 29 and 17 characters respectively.
 - [ ] Re-render the abstract from `paper/main.tex` if any number has been
       regenerated since 2026-08-10.
 - [ ] `wc -m` the short abstract against arXiv's 1 920-character limit.
-- [ ] Create and verify the new immutable release/tag, upload the complete raw
-      archive (including `results/voided/` and its SHA-256 manifest), mint a
-      DOI, and update the comments field only after the DOI resolves.
+- [ ] Create and verify the new immutable release/tag, upload **both** raw
+      archives (including `results/voided/` and each archive's own SHA-256
+      manifest) into the existing reserved record, publish it, and update the
+      comments field only after the DOI resolves. `docs/29` is the checklist;
+      do not create a new Zenodo record, which would mint a different DOI.
 - [ ] Upload the PDF built by `scripts/build_paper.sh`, or the source tree —
       arXiv prefers LaTeX source; if source is used, confirm `IEEEtran.cls`
       resolves on arXiv's TeX Live and that `paper/generated/*.tex` and

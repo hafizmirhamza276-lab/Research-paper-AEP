@@ -16,16 +16,31 @@ abstract: >-
   real SIGKILL -- with a separate hard-Redis-kill ablation on one capability
   class, and a block-level write-loss probe on durable records rather than on
   protocol outcomes -- and the manuscript generated from them. The raw run
-  archive -- 1458 run directories, 26300 files, manifest SHA-256
-  87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7 -- is
-  assembled and verified but not yet deposited, so no DOI exists for it yet.
-  docs/29-archive-deposit.md is the checklist that closes that; the DOI belongs
-  in an `identifiers:` block here once it is minted.
+  archive is two parts, assembled and verified: the 2026-09-03 build (20
+  collection roots, 1458 run directories, 26300 files, manifest SHA-256
+  87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7) and a
+  2026-09-15 extension (11 roots, 1332 run directories, 18494 files, manifest
+  SHA-256 54d1ab0fc1e55283dc0aa1dabf121b047c432063d077074c3c45728735d63cd5).
+  A Zenodo record is RESERVED under DOI 10.5281/zenodo.22766567: the
+  identifier is fixed, the record is still a draft and the files are not
+  uploaded, so it does not resolve yet. docs/29-archive-deposit.md is the
+  checklist that publishes it, and lists this file among the sites to
+  update when it does.
   ARTIFACT.md maps every quantitative claim in the paper to its
   currently available evidence and reproduction command.
 type: software
 license: MIT
 repository-code: "https://github.com/hafizmirhamza276-lab/Research-paper-AEP"
+# The raw-evidence archive's identifier. RESERVED, not resolving: it is
+# recorded here so this file and paper/main.tex cannot disagree about which
+# identifier the artifact will carry. Promote it to a top-level `doi:` when
+# the record is published -- docs/29 5 has it on the checklist.
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22766567"
+    description: >-
+      Raw run archive, both parts. RESERVED at the time of writing: the
+      identifier is fixed but the record is a draft and does not resolve.
 authors:
   - family-names: Khan
     given-names: Hamza

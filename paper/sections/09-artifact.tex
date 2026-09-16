@@ -7,17 +7,48 @@ and the tracked derived analysis products used by the number generator. It does
 \emph{not} contain the raw run directories, which are bulk data: those are
 carried by a separate archive, \archiveavail{}.
 
-\paragraph{The raw evidence archive} 1\,458 run directories across 20
-collection roots, 26\,300 files, 493\,MB uncompressed and 24\,MB compressed,
-covering the 432-run evaluation, the \texttt{appendfsync=always} arm, the
-voided oracle-disagreement run, every prevention replication, and two
-collections voided for having run against the wrong container runtime. Every
-file carries a SHA-256 in \texttt{MANIFEST.sha256}, whose own digest
-\texttt{87fa2d53\ldots} attests the whole archive. Before deposit the archive
-was extracted, checked file-by-file against that manifest, and re-analysed:
-against every tracked analysis product the result was 114 byte-identical, 8
-identical after two declared normalisations recorded with the deposit, and none
-differing.
+\paragraph{The raw evidence archive} Two archives under one DOI: the
+2026-09-03 build (20 collection roots, 1\,458 run directories, 26\,300
+files) and a 2026-09-15 extension covering the trees it did not reach (11
+roots, 1\,332 run directories, 18\,494 files) --- 2\,790 run directories and
+44\,794 files in all, 848\,MB uncompressed and 42\,MB compressed. Between
+them they carry the 432-run evaluation, the \texttt{appendfsync=always} arm,
+the deployment sweep of \cref{sec:eval-rq3}, the real-Temporal baseline, the
+write-loss cell, the voided oracle-disagreement run, every prevention
+replication, and the arms voided for having run against the wrong container
+runtime. Every file carries a SHA-256 in its own archive's
+\texttt{MANIFEST.sha256}, and that manifest's own digest ---
+\texttt{87fa2d53\ldots} and \texttt{54d1ab0f\ldots} --- attests that archive;
+the two share no path and each is verified only against its own. Both were
+extracted and checked file-by-file before deposit, 26\,300 and 18\,494
+entries, none failing or missing. The 2026-09-03 archive was additionally
+re-analysed --- 114 tracked analysis products byte-identical, 8 identical
+after two declared normalisations recorded with the deposit, none differing
+--- and \emph{that re-analysis has not been repeated for the extension}.
+% Numbers discipline (main.tex header). These are properties of the deposit,
+% not of a tracked CSV, so they are not macros: their sources
+% (ARCHIVE-METADATA.json and MANIFEST.sha256 inside each archive) live
+% outside the repository, and a generated macro reading them would fail in
+% the clean clone an evaluator uses. Each figure below names its source.
+%   20 roots / 1 458 run dirs / 26 300 files / 87fa2d53... / 3aa90b21... :
+%     aep-raw-archive/{ARCHIVE-METADATA.json,MANIFEST.sha256},
+%     docs/29 1, ARTIFACT.md 5, reports/phase-report-11-rescue-2026-09-03.md
+%   11 roots / 1 332 run dirs / 18 494 files / 54d1ab0f... :
+%     aep-raw-archive-ext/{ARCHIVE-METADATA.json,MANIFEST.sha256},
+%     docs/29 0b, ARTIFACT.md 5,
+%     reports/phase-report-35-archive-extend-2026-09-15.md
+%   848 MB = 492 905 568 + 355 492 262 payload bytes; 42 MB = 24 257 505 +
+%     17 563 367 compressed. 2 790 = 1 458 + 1 332; 44 794 = 26 300 + 18 494.
+%   A run directory is one holding a single run's artifacts. The extension's
+%     ARCHIVE-METADATA.json reports 992, not 1 332, because its counter
+%     counts run-config.json files and 340 directories in four roots -- the
+%     three B5/Temporal session attempts and one voided write-loss arm --
+%     carry run artifacts without one, B5 running through session.py rather
+%     than run_matrix. docs/29 3 discloses this to a reader who opens the
+%     metadata. Counted by scripts/verify_published_archive.py.
+%   114 / 8 / 0: scripts/verify_raw_archive.py over the 2026-09-03 archive
+%     only, most recently in the phase-39 clean clone. The extension has no
+%     equivalent run, which is why the sentence says so.
 
 \paragraph{What is pinned} The Python environment is locked
 (\texttt{uv.lock}); the Redis image is pinned by digest in the compose file;
