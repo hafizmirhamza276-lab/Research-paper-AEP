@@ -158,6 +158,19 @@
   \newcommand{\archiveavail}{available via the submission system}
   \newcommand{\authorname}{Anonymous Author(s)}
   \newcommand{\authorcontact}{}
+  % IEEE requires the AI disclosure in the acknowledgment of the article
+  % SUBMITTED. TSE is double-anonymous, so the submitted article is this
+  % build, and the requirement attaches here too. What is stripped is only
+  % what identifies: no repository, no host, no script paths, no phase
+  % record. What survives is the disclosure itself -- which tools, over
+  % what scope, under whose direction, and who is responsible.
+  \newcommand{\aidisclosure}{%
+    The author used generative AI coding and drafting assistants
+    throughout this work --- implementation, harness, analysis pipeline,
+    documentation and manuscript prose --- under the author's direction
+    and review. No AI system is an author; the author is solely
+    responsible for the content of this article, including all claims,
+    analysis and conclusions.}
   % The identifying string must not survive in the document properties either,
   % which is where an anonymised PDF usually leaks. Set empty explicitly rather
   % than relying on them happening to be unset.
@@ -184,6 +197,33 @@
       Emerging Sciences (FAST-NUCES), Islamabad, Pakistan.
       E-mail: \texttt{hafizmirhamza276@gmail.com}.
       ORCID: \texttt{0009-0005-9380-2188}.}}
+  % The full disclosure. Third person and singular: IEEE's Editorial Style
+  % Manual requires the acknowledgment be written in the third person, and
+  % this is a single-author paper.
+  \newcommand{\aidisclosure}{%
+    The author used Anthropic's Claude (Claude Code, Opus and Sonnet
+    models) and OpenAI's Codex as coding and drafting assistants
+    throughout this work. Their use was not confined to one part of it:
+    the protocol implementation, the fault-injection harness, the
+    analysis pipeline, the verification gates, the supporting
+    documentation and the prose of this manuscript were all produced
+    with that assistance, under the author's direction and subject to
+    the author's review. The exact model identifiers are not listed here
+    because such a list goes stale; they are recorded in the artifact
+    repository's commit trailers and in its \texttt{.claude/agents/}
+    definitions, which are the authoritative record. The phase prompts
+    issued from Phase~8 onward are committed in \texttt{prompts/} in
+    that repository, each before the data of the phase it governs;
+    Phases~1A--7 carry no such record, and the project's own audit
+    records that gap rather than reconstructing it.
+
+    No AI system is an author. Every measurement reported here was
+    collected by the harness on the author's host and is reproducible
+    from the archived raw runs; every number in the manuscript is
+    generated from those results by \texttt{scripts/paper\_tables.py}
+    and re-derived by \texttt{scripts/check\_paper\_numbers.py}. The
+    author is solely responsible for the content of this article,
+    including all claims, analysis and conclusions.}
   % Rendered from \archivedoi, never from a literal. While it is PENDING the
   % sentence says so; the moment a DOI replaces it the same sentence becomes a
   % true availability claim, with no other file edited.
@@ -266,6 +306,13 @@ agents.
 \input{sections/07-related}
 \input{sections/08-threats}
 \input{sections/09-artifact}
+
+% IEEE Editorial Style Manual for Authors: the acknowledgment goes after
+% the final text and any appendixes and BEFORE the references; its heading
+% is never enumerated; and the spelling is always the singular
+% "Acknowledgment", with no "e". Hence \section*, here, spelled this way.
+\section*{Acknowledgment}
+\aidisclosure
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
