@@ -19,6 +19,24 @@
 
 experiments/results/** -text
 
+# The same rule, for the frozen evidence that does not live under
+# experiments/results/. reports/raw/ holds twelve analysis CSVs from the
+# WS-4 write-loss cell -- a cited source, --writeloss-cell, whose numbers
+# reach the manuscript -- and three raw captures with deliberately mixed
+# endings, which are what the tool emitted and are evidence about the run.
+# The rule above was scoped to one directory and stopped there; these
+# files were exposed to exactly the conversion it exists to prevent.
+#
+# This changes no stored byte. -text disables conversion in both
+# directions; it does not normalise what is already committed.
+
+reports/raw/** -text
+
+# A wholesale flip is still possible by a tool that writes the file
+# directly, which is how docs/33 was rewritten LF in b379809. Attributes
+# cannot stop that -- git never saw a choice to make. scripts/
+# check_line_endings.py is the gate that catches it, and CI runs it.
+
 # Shell scripts must reach a POSIX shell as LF, whatever the clone's config.
 #
 # The rule above was scoped to the frozen results and stopped there, so under

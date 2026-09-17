@@ -100,6 +100,47 @@ jobs:
   # R14 has recorded ten times, so the depth is set here deliberately and
   # this comment is why.
   # =========================================================================
+  # =========================================================================
+  # A commit must not flip a file's line endings wholesale.
+  #
+  # b379809 rewrote docs/33-agent-workload.md from CRLF to LF while changing
+  # two status lines. The real diff is 44 insertions and 7 deletions; it
+  # reads as 885/833, so `git log` on that file shows a whole-document
+  # rewrite at the commit that corrected two lines. Two earlier instances
+  # were caught by hand before committing; this one was not.
+  #
+  # fetch-depth: 0 is load-bearing for the same reason it is on
+  # prereg-order -- the check compares each pushed commit against its
+  # parent, and a shallow clone has no parent to compare against. It would
+  # pass by not being able to look, which is docs/25 R14.
+  # =========================================================================
+  line-endings:
+    name: Line endings (no wholesale flips)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: No commit in this push flipped a file's endings
+        run: |
+          set -o pipefail
+          # Every commit new in this push, oldest first. On a first push to
+          # a branch, before is all zeroes and there is no range to walk.
+          BEFORE='${{ github.event.before }}'
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            RANGE='HEAD~1..HEAD'
+          else
+            RANGE="$BEFORE..HEAD"
+          fi
+          echo "range: $RANGE"
+          failed=0
+          for c in $(git rev-list --reverse "$RANGE"); do
+            echo "--- $c $(git log -1 --format=%s $c)"
+            python3 scripts/check_line_endings.py --commit "$c" || failed=1
+          done
+          exit $failed
+
   prereg-order:
     name: Pre-registration order (rule 5)
     runs-on: ubuntu-24.04
