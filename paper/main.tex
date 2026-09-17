@@ -172,8 +172,17 @@
   % ORCID lives in this branch ONLY. It identifies the author as surely as
   % the name does, so under double-anonymous review it gets the same
   % treatment as the name, the e-mail and the GitHub URL.
+  % IEEEtran compsoc's convention for a single-author journal paper: the
+  % affiliation is a first-page \thanks footnote, not a line beside the
+  % name, and it reads "A. Author is with the <unit>, <city>, <country>".
+  % It sits in this branch with the name, the e-mail and the ORCID because
+  % an institution identifies an author under double-anonymous review as
+  % surely as the name does. The anonymous branch defines \authorcontact
+  % empty, so there is no string here for that build to leak.
   \newcommand{\authorcontact}{%
-    \thanks{Correspondence: \texttt{hafizmirhamza276@gmail.com}.
+    \thanks{H. Khan is with the National University of Computer and
+      Emerging Sciences (FAST-NUCES), Islamabad, Pakistan.
+      E-mail: \texttt{hafizmirhamza276@gmail.com}.
       ORCID: \texttt{0009-0005-9380-2188}.}}
   % Rendered from \archivedoi, never from a literal. While it is PENDING the
   % sentence says so; the moment a DOI replaces it the same sentence becomes a
