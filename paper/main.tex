@@ -73,7 +73,12 @@
 
 % \todo markers: amendment F4 permits them only where a cell still running at
 % the time of writing could change the value.
-\newcommand{\todoitem}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+% \todoitem was defined here and never used. It is removed rather than left:
+% a macro that typesets a red [TODO: ...] is one careless edit from shipping
+% in a submission, and with no definition the same edit is an Undefined
+% control sequence -- a build failure instead of a published note to self.
+% check_paper_numbers.py's check_todos still scans for the literal string,
+% now across main.tex and supplementary.tex as well as sections/.
 
 % Semantic macros for the three outcome classes, so the trilemma reads the
 % same way everywhere it appears.

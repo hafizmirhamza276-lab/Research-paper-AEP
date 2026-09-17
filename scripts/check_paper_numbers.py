@@ -824,14 +824,47 @@ def check_undefined_references(result: Result, build_dir: Path) -> None:
     )
 
 
+def _strip_tex_comment(line: str) -> str:
+    """Everything before the first unescaped ``%``."""
+    out = []
+    escaped = False
+    for char in line:
+        if escaped:
+            out.append(char)
+            escaped = False
+            continue
+        if char == "\\":
+            out.append(char)
+            escaped = True
+            continue
+        if char == "%":
+            break
+        out.append(char)
+    return "".join(out)
+
+
 def check_todos(result: Result, paper: Path) -> None:
-    """\\todoitem is permitted, but it must be counted and reported."""
+    """Any \\todoitem is counted and reported.
+
+    The macro itself was removed from main.tex on 2026-09-16, so an
+    occurrence is now also an Undefined control sequence and the build
+    fails. This stays as the belt to that brace, and it now scans
+    ``main.tex`` and ``supplementary.tex`` too: it used to look only in
+    ``sections/``, which is every file except the one the macro was
+    defined in.
+    """
     found: list[str] = []
-    for path in sorted((paper / "sections").glob("*.tex")):
+    targets = sorted((paper / "sections").glob("*.tex"))
+    targets += [p for p in (paper / "main.tex", paper / "supplementary.tex")
+                if p.is_file()]
+    for path in sorted(targets):
         for number, line in enumerate(
             path.read_text(encoding="utf-8").splitlines(), 1
         ):
-            if r"\todoitem" in line:
+            # A commented-out mention does not typeset, so it is not a
+            # marker. Widening the scan to main.tex surfaced this at once:
+            # the comment recording the macro's removal was itself counted.
+            if r"\todoitem" in _strip_tex_comment(line):
                 found.append(f"{path.name}:{number}")
     print(f"  NOTE  {len(found)} \\todoitem marker(s): {', '.join(found)}")
 
