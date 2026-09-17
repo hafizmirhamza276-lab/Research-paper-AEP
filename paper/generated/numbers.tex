@@ -745,3 +745,53 @@
 % H4 was pre-registered as a sensitivity check predicted NULL within a 5 pp margin. It is not null: this is nearly twice the margin, on a rate the paper quotes. The two silent columns (undetected duplicate, lost effect) stay at zero under both keyings
 \newcommand{\KeyingAmbiguityDelta}{9.33}
 
+% ws5-2026-09-10/t2-p30/analysis/per-cell-metrics.csv against analysis/per-cell-metrics.csv | system x metric over 7 systems and 3 metrics (undetected duplicate, lost effect, declared ambiguity)
+% cells with a nonzero denominator in all three regimes
+\newcommand{\PthirtyComparisons}{21}
+
+% the same comparisons | count whose p30 rate lies within [min(p0, crashed), max(p0, crashed)] inclusive
+% H3 was pre-registered predicting all of them
+\newcommand{\PthirtyBetween}{19}
+
+% the same comparisons | count outside that interval
+% both are lost_effect_rate; the generator refuses if the exception set changes
+\newcommand{\PthirtyExceptions}{2}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B0_NAIVE_RETRY regime=p0, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBzeroPzero}{0.0333}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B0_NAIVE_RETRY regime=p30, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBzeroPthirty}{0.0044}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B0_NAIVE_RETRY regime=crashed, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBzeroCrashed}{0.0111}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B4_DURABLE_WORKFLOW regime=p0, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBfourPzero}{0.0333}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B4_DURABLE_WORKFLOW regime=p30, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBfourPthirty}{0.0044}
+
+% per-cell-metrics.csv | metric=lost_effect_rate system=B4_DURABLE_WORKFLOW regime=crashed, pooled over crash points and capability classes
+% H3 exception: the p30 rate is outside the crash-free/all-crash interval
+\newcommand{\PthirtyBfourCrashed}{0.0074}
+
+% per-cell-metrics.csv | successes behind the p0 rate of both exceptions
+% the violation is this many events
+\newcommand{\PthirtyPzeroEvents}{1}
+
+% per-cell-metrics.csv | total behind the p0 rate of both exceptions
+% in this many executions -- a thin arm, not a regime interaction
+\newcommand{\PthirtyPzeroExecs}{30}
+
+% ws5-2026-09-10/t2-p30/analysis/coverage.json | runs
+\newcommand{\PthirtyRuns}{315}
+
+% ws5-2026-09-10/t2-p30/analysis/coverage.json | executions
+\newcommand{\PthirtyExecutions}{3\,150}
+

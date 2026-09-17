@@ -3188,6 +3188,158 @@ def emit_numbers(
                     "effect) stay at zero under both keyings",
                 )
 
+        # H3. The 30%-crash-probability regime was pre-registered as lying
+        # between the crash-free and all-crash rates for every system and
+        # metric. It does not, and these are the macros that say so.
+        #
+        # The comparison needs three regimes from two roots: p30 from the WS-5
+        # sweep, p0 and crashed from the frozen matrix. Within each regime a
+        # rate is pooled over crash points and capability classes as
+        # sum(successes)/sum(total) -- the same definition used everywhere else
+        # in this file. Pooling is WITHIN a regime and never across regimes,
+        # which is the rule main.tex's header states and analysis/table-1.csv
+        # was banned for breaking.
+        #
+        # The crashed side pools all six crash points rather than restricting
+        # to p30's mid_dispatch. Both choices give 19 of 21; only the pooled
+        # one reproduces the rates recorded in
+        # reports/phase-report-17-ws5-analysis-2026-09-14.md section H3, so it
+        # is the one that pre-registration was evaluated under.
+        #
+        # read_rows() relabels the frozen "(session-3)" to CRASHED_REGIME in
+        # memory, so the filter uses the constant. Filtering on the literal
+        # matched nothing and the block emitted no comparison macros at all --
+        # caught because the gate then failed on two macros defined and unused.
+        p30 = ws5.get("p30")
+        if p30:
+            p30_rows = read_rows(p30 / "per-cell-metrics.csv")
+
+            def _regime_pooled(rows_in, regime, metric, system):
+                s = n = 0
+                for row in rows_in:
+                    if (row.get("metric") == metric
+                            and row.get("system") == system
+                            and row.get("regime") == regime):
+                        s += int(row["successes"])
+                        n += int(row["total"])
+                return s, n
+
+            h3_metrics = (
+                "undetected_duplicate_rate",
+                "lost_effect_rate",
+                "known_ambiguity_rate",
+            )
+            h3_systems = sorted({r["system"] for r in p30_rows})
+            compared = 0
+            inside = 0
+            outside = []
+            for system in h3_systems:
+                for metric in h3_metrics:
+                    zs, zn = _regime_pooled(per_cell, "p0", metric, system)
+                    ts, tn = _regime_pooled(p30_rows, "p30", metric, system)
+                    cs, cn = _regime_pooled(per_cell, CRASHED_REGIME, metric, system)
+                    if not (zn and tn and cn):
+                        continue
+                    zero, thirty, crashed = zs / zn, ts / tn, cs / cn
+                    compared += 1
+                    if min(zero, crashed) <= thirty <= max(zero, crashed):
+                        inside += 1
+                    else:
+                        outside.append(
+                            (system, metric, zero, thirty, crashed, zs, zn)
+                        )
+
+            # The supplementary names B0 and B4 and calls both exceptions
+            # lost-effect rates. If the exception set ever moves, that prose is
+            # wrong and no macro would catch it, so the generator refuses here
+            # rather than emitting numbers under a sentence that no longer
+            # describes them.
+            expected_outside = {
+                ("B0_NAIVE_RETRY", "lost_effect_rate"),
+                ("B4_DURABLE_WORKFLOW", "lost_effect_rate"),
+            }
+            if compared and {(s, m) for s, m, *_ in outside} != expected_outside:
+                raise SystemExit(
+                    "H3's exceptions are no longer "
+                    f"{sorted(expected_outside)} but "
+                    f"{sorted((s, m) for s, m, *_ in outside)}. The "
+                    "supplementary's gap item names the systems in prose; "
+                    "update it and this check together."
+                )
+
+            if compared:
+                by_system = {s: rest for s, m, *rest in
+                             ((o[0], o[1], o[2], o[3], o[4], o[5], o[6])
+                              for o in outside)}
+                macro(
+                    "PthirtyComparisons", str(compared),
+                    "ws5-2026-09-10/t2-p30/analysis/per-cell-metrics.csv "
+                    "against analysis/per-cell-metrics.csv | "
+                    "system x metric over "
+                    f"{len(h3_systems)} systems and {len(h3_metrics)} metrics "
+                    "(undetected duplicate, lost effect, declared ambiguity)",
+                    "cells with a nonzero denominator in all three regimes",
+                )
+                macro(
+                    "PthirtyBetween", str(inside),
+                    "the same comparisons | count whose p30 rate lies within "
+                    "[min(p0, crashed), max(p0, crashed)] inclusive",
+                    "H3 was pre-registered predicting all of them",
+                )
+                macro(
+                    "PthirtyExceptions", str(compared - inside),
+                    "the same comparisons | count outside that interval",
+                    "both are lost_effect_rate; the generator refuses if the "
+                    "exception set changes",
+                )
+                labels = {
+                    "B0_NAIVE_RETRY": "Bzero",
+                    "B4_DURABLE_WORKFLOW": "Bfour",
+                }
+                for system, short in sorted(labels.items()):
+                    zero, thirty, crashed, zs, zn = by_system[system]
+                    for suffix, value, regime in (
+                        ("Pzero", zero, "p0"),
+                        ("Pthirty", thirty, "p30"),
+                        ("Crashed", crashed, CRASHED_REGIME),
+                    ):
+                        macro(
+                            f"Pthirty{short}{suffix}", f"{value:.4f}",
+                            "per-cell-metrics.csv | metric=lost_effect_rate "
+                            f"system={system} regime={regime}, pooled over "
+                            "crash points and capability classes",
+                            "H3 exception: the p30 rate is outside the "
+                            "crash-free/all-crash interval",
+                        )
+                zero_events = {zs for *_, zs, zn in outside}
+                zero_execs = {zn for *_, zs, zn in outside}
+                if len(zero_events) == 1 and len(zero_execs) == 1:
+                    macro(
+                        "PthirtyPzeroEvents", str(zero_events.pop()),
+                        "per-cell-metrics.csv | successes behind the p0 rate "
+                        "of both exceptions",
+                        "the violation is this many events",
+                    )
+                    macro(
+                        "PthirtyPzeroExecs", str(zero_execs.pop()),
+                        "per-cell-metrics.csv | total behind the p0 rate of "
+                        "both exceptions",
+                        "in this many executions -- a thin arm, not a regime "
+                        "interaction",
+                    )
+
+            p30_coverage = p30 / "coverage.json"
+            if p30_coverage.is_file():
+                cov = json.loads(p30_coverage.read_text(encoding="utf-8"))
+                for name, key in (("PthirtyRuns", "runs"),
+                                  ("PthirtyExecutions", "executions")):
+                    macro(
+                        name,
+                        f"{int(cov[key]):,}".replace(",", r"\,"),
+                        "ws5-2026-09-10/t2-p30/analysis/coverage.json | "
+                        f"{key}",
+                    )
+
     (out / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

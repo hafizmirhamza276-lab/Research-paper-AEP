@@ -376,16 +376,33 @@ since been closed and are recorded here with what closing them changed:
       paper's tables still do not report it.} It was implemented but
       uncollected in an earlier draft. The deployment sweep collected it at
       \texttt{mid\_dispatch} for every system in the matrix, under real
-      \texttt{SIGKILL}, and the collection is in the artifact. What has not
+      \texttt{SIGKILL} --- \PthirtyRuns{} runs over \PthirtyExecutions{}
+      executions --- and the collection is in the artifact. What has not
       changed is the reporting: every rate quoted in this paper still comes
       from either an all-crash or a no-crash regime, so the intermediate
       regime is evidence a reader can inspect rather than a column in a
-      table here. \textbf{The prediction registered for it was refuted,
-      and is recorded as refuted rather than reinterpreted}: rates in the
-      intermediate regime do not all lie between the crash-free and
-      all-crash rates. The exceptions are lost-effect cells in the frozen
-      crash-free arm, thin enough that the violation is a single
-      observation rather than a regime interaction.
+      table here.
+
+      \textbf{The prediction registered for it was refuted, and is recorded
+      as refuted rather than reinterpreted.} Of \PthirtyComparisons{}
+      system-by-metric comparisons, \PthirtyBetween{} lie between the
+      crash-free and all-crash rates and \PthirtyExceptions{} do not. Both
+      exceptions are lost-effect rates: B0 at \PthirtyBzeroPzero{} crash-free,
+      \PthirtyBzeroPthirty{} at $30\%$ and \PthirtyBzeroCrashed{}
+      all-crash; B4 at \PthirtyBfourPzero{}, \PthirtyBfourPthirty{} and
+      \PthirtyBfourCrashed{}. Both violations sit in the frozen crash-free
+      arm, where that rate is \PthirtyPzeroEvents{} event in
+      \PthirtyPzeroExecs{} executions --- a single observation, not a regime
+      interaction.
+      % The tally and both exception rows are generated:
+      % scripts/paper_tables.py pools each regime over crash points and
+      % capability classes, within a regime and never across them, from
+      % ws5-2026-09-10/t2-p30/analysis/per-cell-metrics.csv (p30) and
+      % analysis/per-cell-metrics.csv (p0 and crashed). It refuses to emit
+      % if the exception set stops being exactly B0 and B4 on
+      % lost_effect_rate, so the two systems named above cannot go stale
+      % silently. Reproduces the table in reports/phase-report-17-ws5-
+      % analysis-2026-09-14.md section H3 exactly.
       % experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json:
       % regimes [p30], crash_points [mid_dispatch], seven systems,
       % all_runs_used_real_sigkill true. Hypothesis H3 and its two

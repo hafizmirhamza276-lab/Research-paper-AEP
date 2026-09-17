@@ -5,7 +5,7 @@
     "figures/figure-1-undetected-vs-ambiguity.pdf": "7c22bb28c634d46894199de471891f6de2e524940efdac46613e768440fe29ad",
     "figures/figure-2-duplicates-by-crash-point.pdf": "b823694a46f2a78a1871bb843f64cf48bda7be68317ee4c5eaf063013c005d9f",
     "figures/state-machine.tex": "e3726853a630001a1a5aed4cfd3c1fcaff047f1930eec7edbd8492445061e48d",
-    "generated/numbers.tex": "01473a96ecf1255e92d22f1e7b53a9b64e8e2dc790303bb646820a963aece960",
+    "generated/numbers.tex": "f7be6b7c46d1bfbaedada651f68443940f0c3e32ce564eb894de1d7fc51c453d",
     "generated/table-ablation.tex": "2338e6f83cd84e8af72b0d70181b498cae47d5c396a1be682248dbb5d7b08cb4",
     "generated/table-ambiguity-by-crashpoint.tex": "1e8e92a28a9b29b126e31d5e418a2717a30f2f16103c74bfc5b8f4e1bec363e6",
     "generated/table-deployment-choice.tex": "1340ab0ddd0f4e37d89fc92ac4f456d322c6ee1969029d539ec018381ecf829f",
@@ -22,7 +22,7 @@
     "sections/07-related.tex": "0ffdf7114e42ae5dddaa588138409f48f354d551b21cdad5bccd9ce4de40827b",
     "sections/08-threats.tex": "15de3cda5823a594cf926c73abdab870559de9a288a0da5235acc1ebe2922726",
     "sections/09-artifact.tex": "0bf622f85280891f0e0e837328ea75cbcf87f0b39d2531e0683e4c92d171e5d8",
-    "supplementary.tex": "ad5e52ba941aa81766c490ae5fa21803855e364d151a368bf8d6d4d6b0760da5"
+    "supplementary.tex": "b852c1a1059b0b9f8a7e46b1709259037cd648c41715009a94dfa57f8be874fb"
   },
   "version": 1
 }
