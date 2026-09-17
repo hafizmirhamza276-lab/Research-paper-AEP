@@ -62,14 +62,20 @@
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
-% IEEEtran numbers \paragraph (6.2.0.4), but cleveref ships no name for
-% that counter: a \cref to one renders "?? 6.2.0.4". These two lines are
-% what let a paragraph be referenced in the same form as every other
-% cross-reference in the document. Added when three references in
-% sections/07-related.tex turned out to point at Section 8 for results
-% that are in Section 6.
-\crefname{paragraph}{Section}{Sections}
-\Crefname{paragraph}{Section}{Sections}
+% The \crefname{paragraph} pair that used to sit here is gone with the
+% numbering it existed for: with paragraphs unnumbered a \label on one
+% resolves through the enclosing subsection's counter, which cleveref
+% already names "Section". Verified by building with and without it --
+% both render "Section 6.2". Restore it if secnumdepth ever goes to 4.
+% Numbering stops at subsubsection. IEEEtran compsoc numbers \paragraph
+% too, which printed run-in headings as "6.3.2.1" and "8.1.0.11" -- a
+% depth journal papers do not normally number, and one that reads as a
+% defect. 3 and not 2: at 2 the subsubsections go unnumbered as well, and
+% sec:eval-detection, sec:eval-prevention and sec:eval-writeloss-cell then
+% all resolve to "6.3" -- sixteen references rendering one number for
+% three different targets. Measured, not assumed: both depths were built
+% and their .aux compared.
+\setcounter{secnumdepth}{3}
 
 % \todo markers: amendment F4 permits them only where a cell still running at
 % the time of writing could change the value.
