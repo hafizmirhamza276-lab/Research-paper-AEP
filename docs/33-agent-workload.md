@@ -2,9 +2,14 @@
 
 **WS-1 Option B, task 1B.1.**
 
-**Status.** §2 (WS-1a, attribution) is **built and verified** — see its own
-status line and `reports/phase-report-ws1a-2026-09-04.md`. §§1 and 3–5
-(WS-1b, the agent workload) are **design only; none of it is implemented.**
+**Status, corrected 2026-09-17.** §2 (WS-1a, attribution) was built and
+verified, and then **reverted the same day** by `74ea31f`. None of its code
+is in the tree: `LEDGER_SCHEMA_VERSION` is `"…ledger/1"` and
+`applied_mutations` has no `execution_id` column. §§1 and 3–5 (WS-1b, the
+agent workload) are **design only; none of it is implemented.** This line
+and §2's said WS-1a was complete for thirteen days after the revert, which
+is the state §0's SUPERSEDED banner already described two sections below.
+`docs/34` §1 and `docs/35` recorded the revert correctly throughout.
 
 `docs/26-journal-readiness-direction.md` §4 names this file `27-agent-workload.md`;
 that number was taken by `27-measurement-host.md` before this was written, so it
@@ -201,11 +206,43 @@ replayability.
 
 ## 2. Prerequisite workstream: the duplicate-metric repair
 
-**Status: WS-1a is complete.** It was its own workstream item and it landed
-before any agent code, as required — it touches
+**Status, corrected 2026-09-17: WS-1a was built and then reverted, and none
+of its code is in the tree.**
+
+It landed before any agent code, as required — it touches
 `undetected_duplicate_applications`, a headline metric in `\cref{tab:outcomes}`
-and in the B4 duplicate claim. The four proofs in §2.8 hold. Closing report:
-`reports/phase-report-ws1a-2026-09-04.md`. WS-1b is unblocked.
+and in the B4 duplicate claim. Closing report:
+`reports/phase-report-ws1a-2026-09-04.md`. Then, at 17:50 the same day,
+`74ea31f` reverted it, because the framing decision had moved to Option A
+and the machinery existed only to make plan drift measurable under a
+workload nothing would collect. Keeping it would have left the paper
+conceding a construct-validity threat — baselines transmitting a
+measurement identifier they would not send in deployment — in exchange for
+a benefit nothing collects.
+
+**What the revert removed.** `Transmitter.transmit()`'s `execution_id`
+across five implementations and six call sites; `EXECUTION_ID_HEADER` and
+the provider plumbing in `mock_api/service.py`; the
+`applied_mutations.execution_id` column and the `LEDGER_SCHEMA_VERSION`
+bump, back to `ledger/1`, verified safe first against 1 364 collected
+ledgers of which zero carried the column; the attribution machinery in
+`analyze.py`; `tests/test_ws1a_attribution_proofs.py`; four attribution
+tests in `test_plan_invariant.py`; and the §VIII concession.
+
+**What survived, and is still in the tree.** `plan_invariant.py` and its
+eight invariant tests — the invariant is a statement about a plan and does
+not need a planner to exist. The three refuted designs below and the
+two-identifiers-two-owners framing, which are the reasoning record and are
+deliberately left as written. §2.7's conclusion — that the oracle must
+decide identity taking nothing from the caller — is a correctness statement
+about the oracle and holds under any workload. The `duplicate_groups()`
+docstring carrying that reasoning.
+
+**WS-1b is therefore not unblocked by this section.** Whether it needs
+WS-1a restored depends on the design: the repair exists to make plan drift
+measurable, and a design that does not measure drift and leaves the target
+harness-assigned does not need it. `prompts/phase-40-agent-reachability.md`
+takes that route and says so.
 
 ### The design, in short
 

@@ -145,7 +145,22 @@ Each workstream: goal → why → tasks → acceptance criteria → effort → d
 
 ### WS-1 · Framing decision (T6) — the author decides, the LLM helps cost it
 
-**DECIDED 2026-09-04: Option B.** The agent workload goes ahead; design in
+**DECIDED 2026-09-04: Option B, and REVERSED the same day to Option A.**
+Corrected 2026-09-17: this line recorded only the first half for thirteen
+days. Option B was designed in full, WS-1a was built and verified, and then
+`74ea31f` reverted WS-1a at 17:50 on 2026-09-04 because the framing
+decision had moved to Option A — the paper is retitled around the API
+problem and agents become the motivating context rather than the subject.
+The design below is kept as the record of what Option B would have
+involved, which is what makes the choice between the two defensible.
+`docs/33` §0 carries the same banner; `docs/34` and `docs/35` assess what
+restoring Option B would now cost.
+
+**Superseded again 2026-09-17:** Option B is being reopened in a reduced
+form that makes no manuscript rate claim — see
+`prompts/phase-40-agent-reachability.md`.
+
+The original text follows. The agent workload goes ahead; design in
 `docs/33-agent-workload.md` (numbered 33, not the 27 named below — 27 was taken
 by `27-measurement-host.md`).
 
