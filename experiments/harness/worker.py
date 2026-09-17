@@ -58,6 +58,10 @@ from experiments.harness.injector import (
     compose_injectors,
 )
 from experiments.harness.redis_kill import RedisKillInjector, canary_payload
+from experiments.harness.agent_loop import (
+    agent_items_for_worker,
+    is_agent_mode,
+)
 from experiments.harness.workload import (
     index_by_execution_id,
     plan_workload,
@@ -102,11 +106,23 @@ async def run_worker(
         emit=log.emit, resolver=resolver, deferred_points=deferred
     )
 
-    items = [
-        item
-        for item in worker_items(plan_workload(config), worker_index)
-        if item.execution_index >= from_index
-    ]
+    # Phase 40. The scripted branch below is character-for-character what it
+    # was before the agent path existed, and it is taken whenever
+    # AEP_PLANNER_MODE is absent or "scripted" -- every frozen run, every
+    # existing config, every invocation that does not deliberately opt in.
+    # The agent branch is separate rather than a generalisation of this one,
+    # because a plan fixed before the run and a sequence of decisions are not
+    # the same object, and making them one expression is how a regression
+    # would reach the numbers. tests/test_scripted_plan_is_frozen.py
+    # recomputes 51 already-collected runs against what they recorded.
+    if not is_agent_mode():
+        items = [
+            item
+            for item in worker_items(plan_workload(config), worker_index)
+            if item.execution_index >= from_index
+        ]
+    else:  # pragma: no cover - exercised by the stub-mode integration test
+        items = agent_items_for_worker(config, worker_index, from_index)
 
     redis_client = Redis.from_url(
         config.effective_worker_redis_url, decode_responses=True
