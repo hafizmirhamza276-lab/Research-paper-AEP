@@ -87,11 +87,26 @@ the accounts.
       same Python process.
 \item[\textbf{C3}] \textbf{An evaluation under real process kills} across six
       named crash points, three endpoint reconciliation capabilities and
-      three collected fault regimes --- every execution crashed, none
-      crashed, and Redis hard-killed --- against five baseline
+      five reported fault regimes --- every execution crashed, none
+      crashed, Redis hard-killed before the acknowledgement, Redis killed
+      after dispatch, and storage discarding writes while reporting
+      success --- against five baseline
       designs, one of them in two configurations.
-      (Two further regimes are implemented and were not collected; they are
-      named in \cref{sec:threats} rather than counted here.) AEP records no
+      (A sixth regime, a $30\%$ crash probability, was collected; its rates
+      are not in these tables and the collection is in the artifact.)
+      % Regimes counted from each collection root's analysis/coverage.json.
+      % The five reported: crashed and p0 from experiments/results/matrix,
+      % redis-kill-preack from matrix and the b2/phase13-armA sessions,
+      % redis-kill-inflight from phase13-inflight-s1,s2 (6.3.2.5), and
+      % write-loss-preack from reports/raw/ws4-writeloss-s1-2026-09-07
+      % (6.3.4). The sixth is p30, ws5-2026-09-10/t2-p30, which no table
+      % quotes. (session-3) and crashed are one regime under the two labels
+      % docs/29 3 declares as a normalisation, so they are counted once.
+      % This said 'three collected fault regimes' until 2026-09-17, which
+      % was the matrix root's three and excluded the two regimes 6.3.2.5
+      % and 6.3.4 report -- one of them the fault the abstract's prevention
+      % sentence turns on.
+      AEP records no
       undetected duplicate and no lost effect in any cell measured; the
       baselines without a pre-dispatch record duplicate in most crashed
       executions. AEP's residual is declared ambiguity whose rate is a
