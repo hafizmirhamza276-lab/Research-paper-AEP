@@ -34,6 +34,8 @@ import pytest
 
 from experiments.harness import azure_client
 from experiments.harness.azure_client import (
+    ROUTE_DEPLOYMENT,
+    ROUTE_FLAT,
     AzureCall,
     AzureConfig,
     MissingConfiguration,
@@ -404,3 +406,76 @@ def test_a_throttled_attempt_raises_rather_than_returning_none(tmp_path,
     entries = wrapper.transcript.entries()
     assert len(entries) == 1
     assert entries[0]["outcome"] == PlannerOutcome.RETRY.value
+
+
+# ---------------------------------------------------------------------------
+# 7. The route. Established by two 404s against the real resource, 2026-09-18.
+# ---------------------------------------------------------------------------
+
+def test_the_flat_route_is_the_one_that_resolves_on_foundry():
+    """What the probes found, kept so nobody has to spend to find it again.
+
+    ``https://kps-rnd-foundry.cognitiveservices.azure.com``:
+
+      /openai/deployments/gpt-5.6-luna/responses?api-version=2025-01-01-preview
+          404 Resource not found
+      /openai/deployments/gpt-5.6-luna/responses?api-version=2025-04-01-preview
+          404 Resource not found   <- so it is the route, not the version
+      /openai/responses?api-version=2025-04-01-preview
+          200, model=gpt-5.6-luna, 93 in / 123 out / 71 reasoning
+
+    An AI Foundry resource serves the flat route with the deployment in the
+    body; the per-deployment path is an Azure OpenAI resource shape and is not
+    present here at any api-version tried.
+    """
+    flat = AzureConfig(endpoint="https://x.cognitiveservices.azure.com",
+                       deployment="dep", api_version="2025-04-01-preview",
+                       snapshot="s", route=ROUTE_FLAT)
+    assert flat.url() == (
+        "https://x.cognitiveservices.azure.com/openai/responses"
+        "?api-version=2025-04-01-preview"
+    )
+    assert "/deployments/" not in flat.url()
+
+
+def test_the_deployment_travels_in_the_body_on_both_routes(tmp_path, recorder):
+    """Which is why switching routes needs no other change."""
+    for route in (ROUTE_DEPLOYMENT, ROUTE_FLAT):
+        counter = CumulativeCounter(tmp_path / f"c-{route}.json")
+        key = reservation_key("r0", 0, 0, 1)
+        counter.add(1, 0.0, key=key, run_id="r0")
+        config = AzureConfig(endpoint=CONFIG.endpoint,
+                             deployment=CONFIG.deployment,
+                             api_version=CONFIG.api_version,
+                             snapshot=CONFIG.snapshot, route=route)
+        call = AzureCall(config, "p", counter=counter)
+        call.reservation_key = key
+        call(max_output_tokens=1024)
+        body = json.loads(recorder.requests[-1]["content"])
+        assert body["model"] == CONFIG.deployment
+
+
+def test_the_default_route_is_the_per_deployment_one():
+    """Unchanged for an ordinary Azure OpenAI resource."""
+    assert AzureConfig("https://e", "d", "v", "s").route == ROUTE_DEPLOYMENT
+    assert "/deployments/d/responses" in AzureConfig("https://e", "d", "v",
+                                                     "s").url()
+
+
+def test_an_unknown_route_refuses_rather_than_guessing():
+    config = AzureConfig("https://e", "d", "v", "s", route="sideways")
+    with pytest.raises(MissingConfiguration, match="sideways"):
+        config.url()
+
+
+def test_the_route_can_be_set_from_the_environment(monkeypatch):
+    for name, value in ((azure_client.ENDPOINT_ENV, "https://e"),
+                        (azure_client.KEY_ENV, "k"),
+                        (azure_client.DEPLOYMENT_ENV, "d"),
+                        (azure_client.API_VERSION_ENV, "v"),
+                        (azure_client.SNAPSHOT_ENV, "s")):
+        monkeypatch.setenv(name, value)
+    monkeypatch.delenv(azure_client.ROUTE_ENV, raising=False)
+    assert AzureConfig.from_environment().route == ROUTE_DEPLOYMENT
+    monkeypatch.setenv(azure_client.ROUTE_ENV, ROUTE_FLAT)
+    assert AzureConfig.from_environment().route == ROUTE_FLAT

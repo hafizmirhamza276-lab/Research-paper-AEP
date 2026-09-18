@@ -51,6 +51,7 @@ KEY_ENV = "AZURE_OPENAI_API_KEY"
 DEPLOYMENT_ENV = "AZURE_OPENAI_DEPLOYMENT"
 API_VERSION_ENV = "AZURE_OPENAI_API_VERSION"
 SNAPSHOT_ENV = "AEP_PLANNER_SNAPSHOT"
+ROUTE_ENV = "AZURE_OPENAI_ROUTE"
 
 #: Pinned, not an alias. The author's fixed decision, recorded in the
 #: pre-registration's preamble. Checked against what the response reports.
@@ -94,6 +95,16 @@ class SnapshotMismatch(RuntimeError):
     """
 
 
+#: The two shapes the Responses API is served under. Azure OpenAI resources
+#: use the per-deployment path; AI Foundry resources
+#: (``*.cognitiveservices.azure.com``) also expose a flat one that takes the
+#: deployment in the body as ``model``. Both are sent the deployment in the
+#: body regardless, so only the URL differs.
+ROUTE_DEPLOYMENT = "deployment"
+ROUTE_FLAT = "flat"
+ROUTES = (ROUTE_DEPLOYMENT, ROUTE_FLAT)
+
+
 @dataclass(frozen=True)
 class AzureConfig:
     endpoint: str
@@ -101,6 +112,7 @@ class AzureConfig:
     api_version: str
     snapshot: str
     reasoning_effort: str = REASONING_EFFORT
+    route: str = ROUTE_DEPLOYMENT
 
     @classmethod
     def from_environment(cls) -> "AzureConfig":
@@ -121,9 +133,19 @@ class AzureConfig:
             deployment=os.environ[DEPLOYMENT_ENV].strip(),
             api_version=os.environ[API_VERSION_ENV].strip(),
             snapshot=os.environ[SNAPSHOT_ENV].strip(),
+            route=(os.environ.get(ROUTE_ENV) or ROUTE_DEPLOYMENT).strip(),
         )
 
     def url(self) -> str:
+        if self.route not in ROUTES:
+            raise MissingConfiguration(
+                f"route {self.route!r} is not one of {ROUTES}"
+            )
+        if self.route == ROUTE_FLAT:
+            return (
+                f"{self.endpoint}/openai/responses"
+                f"?api-version={self.api_version}"
+            )
         return (
             f"{self.endpoint}/openai/deployments/{self.deployment}/responses"
             f"?api-version={self.api_version}"
