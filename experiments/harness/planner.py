@@ -120,49 +120,143 @@ class Caps:
     per_run_calls: int = 36
     per_collection_calls: int = 1000
     max_output_tokens: int = 1024
+    #: The input bound section 3's ceiling is already calculated from
+    #: ("1 000 attempts x (<=2 000 input + <=1 024 output)"). Named here
+    #: because the reservation below has to price a call it has not made yet,
+    #: and the only safe price is the largest one the pre-registration allows.
+    max_prompt_tokens: int = 2000
     #: Not a cap on spend directly -- the call caps bound that -- but a
     #: belt-and-braces ceiling an operator can lower without touching code.
     per_collection_usd: float = 20.0
 
 
 class CumulativeCounter:
-    """The collection-wide call and cost counter, persisted to disk.
+    """The collection-wide call and cost counter. **This is the budget control.**
 
-    Written with a temp file and ``os.replace`` so a crash between writes
-    leaves either the old state or the new one, never a truncated file. A
-    counter that could be read back as zero after a crash would let a
-    restart loop spend without bound.
+    The per-collection call cap and the USD ceiling
+    (``prompts/phase-40-agent-reachability.md`` §3) are both enforced from this
+    number, so an undercount is not a reporting error -- it is a ceiling that
+    does not exist.
+
+    **What the first implementation got wrong.** It kept one JSON file and did
+    ``read`` then ``write``. ``os.replace`` made each *write* atomic, so the
+    file was always well-formed; nothing made the *read-modify-write* atomic,
+    and nothing anywhere took a lock. Measured on this host, the loss is not a
+    narrow race that a bigger machine would hide: concurrent writers advance
+    the counter by roughly one per round, so the loss is systematically
+    ``(writers - 1) / writers``. At the two workers the harness actually runs,
+    two writers x 60 increments counted 69 of 120.
+
+    **What this one does instead.** One append-only journal line per increment.
+    A single ``os.write`` to a file opened ``O_APPEND`` is atomic on both
+    filesystems the harness can land on -- verified on this host at 800
+    concurrent 201-byte appends, all intact, on DrvFs and on ext4 -- so two
+    writers cannot interleave within a line and neither can overwrite the
+    other's. The total is the sum of the journal.
+
+    Why not a lock. ``fcntl.flock`` does work here, across processes, on both
+    filesystems. It was not chosen because it only moves the problem: a writer
+    holding the lock and then killed between its read and its write still loses
+    its increment, and the harness injects ``SIGKILL`` by design. An append has
+    no window to be killed in. It is also the idiom the rest of this repository
+    already uses for exactly this reason -- every event log here is a jsonl
+    append.
+
+    **Idempotency.** Each line carries a ``key``. The total counts a key once
+    however many times it is appended, which is what makes "none
+    double-counted" mechanical rather than a promise about call sites.
+
+    **A partial line is refused, not dropped.** It can only come from a process
+    killed mid-append. Dropping it would undercount and counting it would
+    invent a number, so ``read`` raises -- the same stance the first
+    implementation already took for an unreadable file, and for the same
+    reason.
+
+    ``planner-cumulative.json`` is still written, and is now **derived**: a
+    snapshot for a human watching a collection. It is re-derived in full on
+    every append, so a clobbered one self-heals and none of the caps ever read
+    it.
     """
+
+    #: An append is atomic up to a limit; past it the guarantee lapses. Refuse
+    #: rather than trust that a key can never grow. PIPE_BUF is 4096 on Linux;
+    #: this leaves an order of magnitude of headroom.
+    MAX_LINE = 512
 
     def __init__(self, path: Path):
         self.path = Path(path)
+        self.journal = self.path.with_suffix(".jsonl")
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def read(self) -> dict[str, Any]:
-        if not self.path.is_file():
-            return {"calls": 0, "usd": 0.0, "runs": 0, "voided": 0}
+    # -- reading -----------------------------------------------------------
+    def _lines(self) -> list[dict[str, Any]]:
+        if not self.journal.is_file():
+            return []
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            # Unreadable is not zero. Refusing here is the safe direction: the
-            # alternative is a corrupt file reading as "nothing spent yet".
+            raw = self.journal.read_text(encoding="utf-8")
+        except OSError as exc:
             raise CapExceeded(
                 VoidReason.COLLECTION_CALL_CAP,
-                f"cumulative counter at {self.path} is unreadable; refusing to "
-                "treat that as zero spend",
-            )
-        for key, default in (("calls", 0), ("usd", 0.0), ("runs", 0),
-                             ("voided", 0)):
-            data.setdefault(key, default)
-        return data
+                f"cumulative journal at {self.journal} is unreadable "
+                f"({exc}); refusing to treat that as zero spend",
+            ) from exc
+        entries: list[dict[str, Any]] = []
+        for number, line in enumerate(raw.splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise CapExceeded(
+                    VoidReason.COLLECTION_CALL_CAP,
+                    f"cumulative journal at {self.journal} line {number} is "
+                    f"malformed ({exc}); a partial line means a writer was "
+                    f"killed mid-append. Refusing: dropping it would "
+                    f"undercount and counting it would invent a number. "
+                    f"Reconcile against the run transcripts.",
+                ) from exc
+            if not isinstance(entry, dict) or "key" not in entry:
+                raise CapExceeded(
+                    VoidReason.COLLECTION_CALL_CAP,
+                    f"cumulative journal at {self.journal} line {number} is "
+                    f"not a keyed entry; refusing to guess what it counted",
+                )
+            entries.append(entry)
+        return entries
 
+    def read(self) -> dict[str, Any]:
+        """Aggregate the journal. Absent is the only thing that reads as zero."""
+        seen: dict[str, dict[str, Any]] = {}
+        for entry in self._lines():
+            # First write wins. A later line with the same key is the same
+            # call reported again, not a second call.
+            seen.setdefault(entry["key"], entry)
+        calls = sum(int(e.get("calls", 0)) for e in seen.values())
+        usd = sum(float(e.get("usd", 0.0)) for e in seen.values())
+        runs = {e["run_id"] for e in seen.values() if e.get("run_id")}
+        voided = {e["run_id"] for e in seen.values()
+                  if e.get("run_id") and e.get("voided")}
+        return {
+            "calls": calls,
+            "usd": usd,
+            # Derived, so it cannot drift: runs that made at least one call,
+            # and of those the ones that stopped being results.
+            "runs": len(runs),
+            "voided": len(voided),
+        }
+
+    # -- writing -----------------------------------------------------------
     def write(self, state: dict[str, Any]) -> None:
+        """Write the derived snapshot. Never the authority; never read back."""
+        payload = dict(state)
+        payload["_derived_from"] = self.journal.name
+        payload["_authoritative"] = False
         handle, tmp = tempfile.mkstemp(
             dir=str(self.path.parent), prefix=".counter-", suffix=".json"
         )
         try:
             with os.fdopen(handle, "w", encoding="utf-8") as fh:
-                json.dump(state, fh, indent=2, sort_keys=True)
+                json.dump(payload, fh, indent=2, sort_keys=True)
                 fh.write("\n")
                 fh.flush()
                 os.fsync(fh.fileno())
@@ -171,11 +265,59 @@ class CumulativeCounter:
             Path(tmp).unlink(missing_ok=True)
             raise
 
-    def add(self, calls: int, usd: float) -> dict[str, Any]:
+    def add(
+        self,
+        calls: int,
+        usd: float,
+        *,
+        key: str,
+        run_id: str | None = None,
+        voided: bool = False,
+    ) -> dict[str, Any]:
+        """Append one increment, durably, before returning.
+
+        ``fsync`` before returning is the whole contract: a caller that reserves
+        a call and is then killed must find that reservation on disk. The
+        reservation is made *before* the call is dispatched, so the direction of
+        any error is over-counting -- stopping a collection early -- and never
+        the direction that spends money nobody counted.
+        """
+        entry = {
+            "key": key,
+            "calls": int(calls),
+            "usd": float(usd),
+        }
+        if run_id is not None:
+            entry["run_id"] = run_id
+        if voided:
+            entry["voided"] = True
+        line = json.dumps(entry, sort_keys=True) + "\n"
+        encoded = line.encode("utf-8")
+        if len(encoded) > self.MAX_LINE:
+            raise ValueError(
+                f"journal line is {len(encoded)} bytes, too long to append "
+                f"atomically (limit {self.MAX_LINE}); shorten the key"
+            )
+        descriptor = os.open(
+            self.journal, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644
+        )
+        try:
+            written = os.write(descriptor, encoded)
+            if written != len(encoded):
+                raise OSError(
+                    f"short append: {written} of {len(encoded)} bytes"
+                )
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
         state = self.read()
-        state["calls"] += calls
-        state["usd"] += usd
-        self.write(state)
+        try:
+            self.write(state)
+        except OSError:
+            # The snapshot is a convenience. Failing to refresh it must not
+            # fail a call that is already durably counted.
+            pass
         return state
 
 
@@ -380,6 +522,39 @@ class RunBudget:
     output_tokens: int = 0
     voided: VoidReason | None = None
 
+    @classmethod
+    def from_transcript(
+        cls, run_id: str, transcript: "Transcript", price: "Price"
+    ) -> "RunBudget":
+        """Rebuild from what was actually recorded, not from zero.
+
+        A respawned worker used to construct a fresh ``RunBudget(calls=0)``,
+        and ``CallWrapper.__init__`` wrote it straight over the file the first
+        attempt had filled in. Last writer wins and the last writer -- which
+        replays and therefore calls nothing -- always had nothing to report, so
+        every run's ``planner-budget.json`` read ``calls: 0`` beside a
+        transcript holding four entries.
+
+        Worse than the wrong number in a file: the per-run cap was checked
+        against that same counter, so a run that respawned got a fresh 36 calls
+        per attempt. The transcript is the durable record of what was spent, so
+        the budget is derived from it rather than kept in parallel with it.
+        """
+        budget = cls(run_id=run_id)
+        for entry in transcript.entries():
+            usage = entry.get("usage") or {}
+            prompt_tokens = int(usage.get("prompt_tokens", 0))
+            output_tokens = int(
+                usage.get("completion_tokens", 0)
+            ) + int(usage.get("reasoning_tokens", 0))
+            if not output_tokens:
+                output_tokens = int(usage.get("output_tokens", 0))
+            budget.calls += 1
+            budget.prompt_tokens += prompt_tokens
+            budget.output_tokens += output_tokens
+            budget.usd += price.usd(prompt_tokens, output_tokens)
+        return budget
+
     def echo(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
@@ -414,8 +589,12 @@ class CallWrapper:
         self.cumulative = cumulative
         self.caps = caps or Caps()
         self.price = price or Price()
-        self.budget = RunBudget(run_id=run_id)
         self.transcript = Transcript(self.run_dir / "planner-transcript.jsonl")
+        # Derived from the transcript, so a respawn resumes the run's budget
+        # instead of zeroing it. See RunBudget.from_transcript.
+        self.budget = RunBudget.from_transcript(
+            run_id, self.transcript, self.price
+        )
         self._budget_path = self.run_dir / "planner-budget.json"
         self.write_budget()
 
@@ -429,6 +608,15 @@ class CallWrapper:
     def void(self, reason: VoidReason, detail: str) -> None:
         self.budget.voided = reason
         self.write_budget()
+        # Recorded in the journal too, so the collection-level `voided` count
+        # is derived from what happened rather than initialised and forgotten.
+        try:
+            self.cumulative.add(
+                0, 0.0, key=f"{self.run_id}:void", run_id=self.run_id,
+                voided=True,
+            )
+        except (OSError, ValueError):
+            pass
         (self.run_dir / "VOID_REASON.md").write_text(
             f"# {reason.value}\n\n{detail}\n\n"
             "This run is not a result. It is recorded and not analysed.\n",
@@ -483,6 +671,30 @@ class CallWrapper:
                 f"{state['usd']:.4f} >= {self.caps.per_collection_usd}",
             )
 
+        # Reserve BEFORE dispatching. The docstring above always said "Count,
+        # cap, invoke"; the code counted in the `finally`, after the call had
+        # returned, so a worker SIGKILLed between the call and the count had
+        # made a paid call that nothing recorded. The harness injects SIGKILL
+        # by design, so that was not a corner case -- it was the crashed
+        # regime, which is the entire experiment.
+        #
+        # The reservation is priced at the most section 3 allows a single call
+        # to cost, because the real cost is not known until the call returns.
+        # It is settled below with the difference. Dying in between over-counts
+        # the collection, which stops it early; the other order spends money
+        # nobody counted.
+        reservation = (
+            f"{self.run_id}:{worker_index}:{step_index}:{attempt}"
+        )
+        self.cumulative.add(
+            1,
+            self.price.usd(
+                self.caps.max_prompt_tokens, self.caps.max_output_tokens
+            ),
+            key=reservation,
+            run_id=self.run_id,
+        )
+
         outcome = PlannerOutcome.OK
         completion = ""
         result: Any = None
@@ -500,7 +712,18 @@ class CallWrapper:
             self.budget.prompt_tokens += usage.prompt_tokens
             self.budget.output_tokens += usage.output
             self.write_budget()
-            self.cumulative.add(1, usd)
+            # Settle the reservation: the difference between what was set aside
+            # and what the call actually cost. A separate key, so the
+            # reservation itself stays idempotent and a replayed settle cannot
+            # double-count.
+            self.cumulative.add(
+                0,
+                usd - self.price.usd(
+                    self.caps.max_prompt_tokens, self.caps.max_output_tokens
+                ),
+                key=f"{reservation}:settle",
+                run_id=self.run_id,
+            )
             self.transcript.append(
                 TranscriptEntry(
                     run_id=self.run_id,

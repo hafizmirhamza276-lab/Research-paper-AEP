@@ -133,7 +133,9 @@ def test_max_output_tokens_is_applied_to_every_call(wrapper):
 
 def test_the_usd_ceiling_refuses_once_reached(tmp_path):
     counter = CumulativeCounter(tmp_path / "counter.json")
-    counter.write({"calls": 1, "usd": 20.0, "runs": 0, "voided": 0})
+    # Seeded through the journal, which is the authority. `write` now only
+    # refreshes the human-readable snapshot and nothing reads it back.
+    counter.add(1, 20.0, key="already-spent")
     w = CallWrapper("r0", tmp_path / "run", counter,
                     Caps(per_run_calls=100, per_collection_calls=100,
                          per_collection_usd=20.0))
@@ -168,18 +170,34 @@ def test_the_cumulative_counter_survives_a_simulated_crash_restart(tmp_path):
 
 def test_an_unreadable_counter_is_not_treated_as_zero(tmp_path):
     """The safe direction: refuse rather than read corruption as no spend."""
-    path = tmp_path / "counter.json"
-    path.write_text("{not json", encoding="utf-8")
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    counter.add(1, 0.5, key="real")
+    counter.journal.write_text("{not json", encoding="utf-8")
     with pytest.raises(CapExceeded):
-        CumulativeCounter(path).read()
+        counter.read()
+
+
+def test_a_corrupt_snapshot_is_harmless_because_nothing_reads_it(tmp_path):
+    """The counterpart, and a real change in what is protected.
+
+    ``planner-cumulative.json`` used to be the authority, so corrupting it had
+    to be refused. It is now derived from the journal and is not an input to
+    any decision, so corrupting it can be ignored -- there is nothing left to
+    protect. Asserted rather than left implied, because "we stopped checking
+    that file" and "that file stopped mattering" look identical in a diff.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    counter.add(1, 0.5, key="real")
+    counter.path.write_text("{ not json at all", encoding="utf-8")
+    assert counter.read()["calls"] == 1
 
 
 def test_the_counter_write_is_atomic(tmp_path):
     """os.replace, so a crash mid-write leaves old or new, never truncated."""
     path = tmp_path / "counter.json"
     counter = CumulativeCounter(path)
-    counter.add(1, 0.5)
-    counter.add(1, 0.5)
+    counter.add(1, 0.5, key="a")
+    counter.add(1, 0.5, key="b")
     assert counter.read() == {"calls": 2, "usd": 1.0, "runs": 0, "voided": 0}
     assert not list(path.parent.glob(".counter-*")), "temp file left behind"
 
@@ -326,3 +344,153 @@ def test_nothing_in_this_module_reads_the_environment():
     text = source.read_text(encoding="utf-8")
     assert "os.environ" not in text
     assert "getenv" not in text
+
+
+# --------------------------------------------------------------------------
+# The three defects the stub stage found, each pinned separately.
+# reports/phase-report-40-stub-stage-2026-09-17.md §5 and §7.
+# --------------------------------------------------------------------------
+
+
+def test_a_respawn_resumes_the_run_budget_instead_of_zeroing_it(tmp_path):
+    """Defect A. The per-run counter was clobbered by the worker that replayed.
+
+    ``CallWrapper.__init__`` wrote ``RunBudget(calls=0)`` over the file the
+    first attempt had filled in, so every run's ``planner-budget.json`` read
+    ``calls: 0`` beside a transcript holding four entries. Last writer wins,
+    and the last writer always had nothing to report.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    first = CallWrapper("r0", tmp_path / "run", counter)
+    for step in range(3):
+        fire(first, FakeCall(), step=step)
+    assert first.budget.calls == 3
+
+    respawn = CallWrapper("r0", tmp_path / "run", counter)
+    assert respawn.budget.calls == 3, (
+        "the respawned worker reset the run's budget to zero"
+    )
+    assert respawn.budget.usd == pytest.approx(first.budget.usd)
+    assert respawn.budget.prompt_tokens == first.budget.prompt_tokens
+
+    recorded = json.loads(
+        (tmp_path / "run" / "planner-budget.json").read_text(encoding="utf-8")
+    )
+    assert recorded["calls"] == 3
+
+
+def test_the_per_run_cap_is_not_reset_by_a_respawn(tmp_path):
+    """Defect A's consequence, which is worse than the wrong number in a file.
+
+    The per-run cap is checked against the same counter. A run that respawned
+    got a fresh 36 calls per attempt, so at ``p(crash)=1.0`` -- the regime the
+    whole experiment runs in -- the per-run cap bounded nothing.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    caps = Caps(per_run_calls=4, per_collection_calls=10_000)
+    first = CallWrapper("r0", tmp_path / "run", counter, caps)
+    for step in range(4):
+        fire(first, FakeCall(), step=step)
+
+    respawn = CallWrapper("r0", tmp_path / "run", counter, caps)
+    with pytest.raises(CapExceeded) as raised:
+        fire(respawn, FakeCall(), step=99)
+    assert raised.value.reason is VoidReason.PER_RUN_CALL_CAP
+
+
+def test_the_collection_counts_runs_and_voids_rather_than_reporting_zero(
+    tmp_path,
+):
+    """Defect C. ``runs`` was initialised, written, read, and never incremented.
+
+    It read 0 after six runs. Both fields are now derived from the journal --
+    distinct run ids that made at least one call, and of those the ones that
+    voided -- so neither can drift from what happened.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    for index in range(3):
+        wrapper = CallWrapper(
+            f"run-{index}", tmp_path / f"run-{index}", counter
+        )
+        fire(wrapper, FakeCall())
+
+    state = counter.read()
+    assert state["runs"] == 3, f"three runs made calls, counted {state['runs']}"
+    assert state["voided"] == 0
+
+    doomed = CallWrapper("run-3", tmp_path / "run-3", counter)
+    fire(doomed, FakeCall())
+    doomed.void(VoidReason.PLANNER_FILTERED, "content filter")
+
+    after = counter.read()
+    assert after["runs"] == 4
+    assert after["voided"] == 1
+
+
+def test_the_call_is_counted_before_it_is_dispatched(tmp_path):
+    """The ordering defect, which is why SIGKILL could hide a paid call.
+
+    ``attempt``'s docstring always said "Count, cap, invoke". The code counted
+    in the ``finally``, *after* the call returned, so a worker killed between
+    the request and the increment had spent money nothing recorded. The harness
+    injects SIGKILL by design, so this was not a corner case.
+
+    The call itself observes the counter to prove the ordering.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    wrapper = CallWrapper("r0", tmp_path / "run", counter)
+    seen = {}
+
+    def observing_call(*, max_output_tokens):
+        seen["calls_during_the_call"] = counter.read()["calls"]
+        return Stop("done")
+
+    observing_call.usage = Usage(1000, 50, 0)
+    wrapper.attempt(worker_index=0, step_index=0, attempt=1,
+                    prompt="p", call=observing_call)
+
+    assert seen["calls_during_the_call"] == 1, (
+        "the call was already in flight and the collection counter still read "
+        "zero; a SIGKILL here would have lost a paid call"
+    )
+
+
+def test_the_reservation_is_priced_at_the_ceiling_then_settled(tmp_path):
+    """Dying mid-call over-counts, which stops a collection early.
+
+    The real cost is not known until the call returns, so the reservation is
+    priced at the most §3 permits one call to cost. The difference is settled
+    afterwards. The error direction is deliberate: over-counting ends a
+    collection sooner than needed, under-counting spends money nobody counted.
+    """
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    caps = Caps()
+    price = Price()
+    wrapper = CallWrapper("r0", tmp_path / "run", counter, caps)
+
+    during = {}
+
+    def observing_call(*, max_output_tokens):
+        during["usd"] = counter.read()["usd"]
+        return Stop("done")
+
+    observing_call.usage = Usage(10, 1, 0)
+    wrapper.attempt(worker_index=0, step_index=0, attempt=1,
+                    prompt="p", call=observing_call)
+
+    reserved = price.usd(caps.max_prompt_tokens, caps.max_output_tokens)
+    assert during["usd"] == pytest.approx(reserved)
+    assert counter.read()["usd"] == pytest.approx(price.usd(10, 1))
+    assert counter.read()["usd"] < during["usd"]
+
+
+def test_a_settled_reservation_is_not_double_counted_on_replay(tmp_path):
+    """The same attempt appended twice must still count once."""
+    counter = CumulativeCounter(tmp_path / "counter.json")
+    wrapper = CallWrapper("r0", tmp_path / "run", counter)
+    fire(wrapper, FakeCall(), step=0)
+    once = counter.read()
+
+    twin = CallWrapper("r0", tmp_path / "run", counter)
+    fire(twin, FakeCall(), step=0)
+    assert counter.read()["calls"] == once["calls"]

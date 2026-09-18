@@ -257,7 +257,10 @@ def test_the_per_run_cap_voids_the_run(tmp_path):
 def test_the_collection_cap_voids_the_run(tmp_path):
     config = _Config(executions_per_worker=10)
     counter = CumulativeCounter(tmp_path / "cumulative.json")
-    counter.write({"calls": 999, "usd": 0.0, "runs": 1, "voided": 0})
+    # Seeded through the journal: that is the authority now, and appending is
+    # also how an operator meets this ceiling in a real collection.
+    for index in range(999):
+        counter.add(1, 0.0, key=f"seed-{index}")
     wrapper = CallWrapper(
         run_id="agent-loop-test",
         run_dir=tmp_path / "run",
@@ -323,16 +326,29 @@ def test_a_respawn_replays_the_transcript_instead_of_calling_again(tmp_path):
     first = agent_worker_items(config, 0, 0, planner, wrapper)
     calls_after_first = wrapper.budget.calls
 
-    # A fresh wrapper over the same directory sees the same transcript; a
-    # planner with an empty script would raise if it were consulted.
+    # A fresh wrapper over the same directory sees the same transcript. The
+    # planner below raises if it is consulted at all, which is the property --
+    # `budget.calls` cannot be the probe any more, because the budget is now
+    # rebuilt from the transcript and correctly reports what the first attempt
+    # spent (tests/test_planner_budget.py, defect A).
+    class _Exploding:
+        def next_action(self, observation):
+            raise AssertionError(
+                "the planner was consulted during replay; every crashed run "
+                "would bill twice"
+            )
+
     second_wrapper = _wrapper(tmp_path)
-    empty = StubPlanner(script=[])
-    second = agent_worker_items(config, 0, 0, empty, second_wrapper)
+    before = len(second_wrapper.transcript.entries())
+    second = agent_worker_items(config, 0, 0, _Exploding(), second_wrapper)
 
     assert [i.amount_minor for i in second] == [i.amount_minor for i in first]
     assert calls_after_first == 2
-    assert second_wrapper.budget.calls == 0, (
-        "replay consulted the planner; every crashed run would bill twice"
+    assert len(second_wrapper.transcript.entries()) == before == 2, (
+        "replay wrote a new transcript entry, so it made a new call"
+    )
+    assert second_wrapper.budget.calls == 2, (
+        "the respawn should resume the run's budget, not reset it"
     )
 
 
