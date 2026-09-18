@@ -78,6 +78,29 @@ def _ok(*actions):
     return [(PlannerOutcome.OK, a) for a in actions]
 
 
+def _scaffold(config, worker_index: int = 0):
+    return list(worker_items(plan_workload(config), worker_index))
+
+
+def _assigned(config, worker_index: int = 0, action: str = "capture",
+              count: int | None = None):
+    """A script that returns each execution's OWN assigned amount.
+
+    Amendment 3: an amount the harness did not assign is
+    ``VOID_PLANNER_AMOUNT_MISMATCH``, because ``fingerprint.py`` computes
+    identity from it. These tests are about the loop, not about the guard, so
+    they keep the amounts and vary only what they are testing.
+    """
+    items = _scaffold(config, worker_index)
+    if count is not None:
+        items = items[:count]
+    return _ok(*[
+        ToolCall(tool="send_notification", action=action,
+                 amount_minor=item.amount_minor)
+        for item in items
+    ])
+
+
 # ---------------------------------------------------------------------------
 # The default, from both ends
 # ---------------------------------------------------------------------------
@@ -151,13 +174,8 @@ def test_the_planner_cannot_express_a_target():
 def test_identity_fields_survive_the_planner(tmp_path):
     """Execution id, target, step id and crash selection stay harness-assigned."""
     config = _Config()
-    scaffold = [
-        i for i in worker_items(plan_workload(config), 0)
-    ]
-    planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=777)
-        for _ in scaffold
-    ]))
+    scaffold = _scaffold(config)
+    planner = StubPlanner(script=_assigned(config))
     decided = agent_worker_items(config, 0, 0, planner, _wrapper(tmp_path))
 
     assert len(decided) == len(scaffold)
@@ -170,26 +188,43 @@ def test_identity_fields_survive_the_planner(tmp_path):
         assert got.execution_index == base.execution_index
 
 
-def test_the_action_and_amount_do_come_from_the_planner(tmp_path):
-    """The counter-check to the test above -- otherwise both pass vacuously."""
+def test_the_action_comes_from_the_planner_and_the_amount_does_not(tmp_path):
+    """The counter-check to the test above, narrowed by amendment 3.
+
+    It used to assert that the amount came from the planner too. That was the
+    contract until the first corrected live stage, where the planner invented
+    an amount by subtracting an earlier capture from the one it was offered.
+    ``fingerprint.py`` computes identity from ``amount_minor``, so an invented
+    amount is the system under test choosing a term of its own measurement:
+    it is now ``VOID_PLANNER_AMOUNT_MISMATCH``
+    (``tests/test_amount_mismatch_voids.py``).
+
+    The action is still entirely the planner's -- refunding where the harness
+    expected a capture is a decision the experiment exists to observe.
+    """
     config = _Config(executions_per_worker=2)
-    scaffold = list(worker_items(plan_workload(config), 0))
-    planner = StubPlanner(script=_ok(
-        ToolCall(tool="send_notification", action="refund", amount_minor=11),
-        ToolCall(tool="send_notification", action="refund", amount_minor=22),
-    ))
+    scaffold = _scaffold(config)
+    planner = StubPlanner(script=_assigned(config, action="refund"))
     decided = agent_worker_items(config, 0, 0, planner, _wrapper(tmp_path))
-    assert [i.amount_minor for i in decided] == [11, 22]
+
     assert {i.action for i in decided} == {"refund"}
-    assert [i.amount_minor for i in scaffold] != [11, 22]
+    assert {i.action for i in scaffold} != {"refund"}, (
+        "the scaffold's own action must differ, or this passes vacuously"
+    )
+    assert [i.amount_minor for i in decided] == [
+        i.amount_minor for i in scaffold
+    ]
 
 
 def test_stop_truncates_the_run(tmp_path):
     config = _Config(executions_per_worker=4)
+    first, _, third = _scaffold(config)[:3]
     planner = StubPlanner(script=_ok(
-        ToolCall(tool="send_notification", action="capture", amount_minor=1),
+        ToolCall(tool="send_notification", action="capture",
+                 amount_minor=first.amount_minor),
         Stop("done"),
-        ToolCall(tool="send_notification", action="capture", amount_minor=2),
+        ToolCall(tool="send_notification", action="capture",
+                 amount_minor=third.amount_minor),
     ))
     decided = agent_worker_items(config, 0, 0, planner, _wrapper(tmp_path))
     assert len(decided) == 1
@@ -197,10 +232,7 @@ def test_stop_truncates_the_run(tmp_path):
 
 def test_max_turns_bounds_the_loop(tmp_path):
     config = _Config(executions_per_worker=6)
-    planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=n)
-        for n in range(6)
-    ]))
+    planner = StubPlanner(script=_assigned(config))
     decided = agent_worker_items(
         config, 0, 0, planner, _wrapper(tmp_path), max_turns=3
     )
@@ -210,8 +242,9 @@ def test_max_turns_bounds_the_loop(tmp_path):
 def test_from_index_skips_what_a_respawn_already_did(tmp_path):
     config = _Config(executions_per_worker=4)
     planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=9)
-        for _ in range(4)
+        ToolCall(tool="send_notification", action="capture",
+                 amount_minor=item.amount_minor)
+        for item in _scaffold(config)[2:]
     ]))
     decided = agent_worker_items(config, 0, 2, planner, _wrapper(tmp_path))
     assert [i.execution_index for i in decided] == [2, 3]
@@ -219,15 +252,15 @@ def test_from_index_skips_what_a_respawn_already_did(tmp_path):
 
 def test_each_worker_gets_only_its_own_items(tmp_path):
     config = _Config(workers=3, executions_per_worker=2)
-    script = _ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=5)
-        for _ in range(2)
-    ])
+    # A script per worker: the amounts are per execution, and worker 1's are
+    # not worker 0's -- which is itself the point of the test.
     first = agent_worker_items(
-        config, 0, 0, StubPlanner(script=script), _wrapper(tmp_path / "a")
+        config, 0, 0, StubPlanner(script=_assigned(config, 0)),
+        _wrapper(tmp_path / "a")
     )
     second = agent_worker_items(
-        config, 1, 0, StubPlanner(script=script), _wrapper(tmp_path / "b")
+        config, 1, 0, StubPlanner(script=_assigned(config, 1)),
+        _wrapper(tmp_path / "b")
     )
     assert {i.worker_index for i in first} == {0}
     assert {i.worker_index for i in second} == {1}
@@ -243,10 +276,7 @@ def test_each_worker_gets_only_its_own_items(tmp_path):
 def test_the_per_run_cap_voids_the_run(tmp_path):
     """Not "stop early with partial data" -- the run stops being a result."""
     config = _Config(executions_per_worker=10)
-    planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=1)
-        for _ in range(10)
-    ]))
+    planner = StubPlanner(script=_assigned(config))
     wrapper = _wrapper(tmp_path, caps=Caps(per_run_calls=3))
     with pytest.raises(AgentRunVoided) as raised:
         agent_worker_items(config, 0, 0, planner, wrapper)
@@ -267,10 +297,7 @@ def test_the_collection_cap_voids_the_run(tmp_path):
         cumulative=counter,
         caps=Caps(per_collection_calls=1000),
     )
-    planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=1)
-        for _ in range(10)
-    ]))
+    planner = StubPlanner(script=_assigned(config))
     with pytest.raises(AgentRunVoided) as raised:
         agent_worker_items(config, 0, 0, planner, wrapper)
     assert raised.value.reason is VoidReason.COLLECTION_CALL_CAP
@@ -290,13 +317,15 @@ def test_a_filtered_response_voids_rather_than_retries(tmp_path):
 
 def test_one_malformed_reply_is_retried(tmp_path):
     config = _Config(executions_per_worker=1)
+    assigned = _scaffold(config)[0].amount_minor
     planner = StubPlanner(script=[
         (PlannerOutcome.MALFORMED, "not json"),
         (PlannerOutcome.OK,
-         ToolCall(tool="send_notification", action="capture", amount_minor=4)),
+         ToolCall(tool="send_notification", action="capture",
+                  amount_minor=assigned)),
     ])
     decided = agent_worker_items(config, 0, 0, planner, _wrapper(tmp_path))
-    assert [i.amount_minor for i in decided] == [4]
+    assert [i.amount_minor for i in decided] == [assigned]
 
 
 def test_two_malformed_replies_stop_the_run(tmp_path):
@@ -319,10 +348,7 @@ def test_a_respawn_replays_the_transcript_instead_of_calling_again(tmp_path):
     """Correctness and cost. A respawn that re-called would double the bill."""
     config = _Config(executions_per_worker=2)
     wrapper = _wrapper(tmp_path)
-    planner = StubPlanner(script=_ok(
-        ToolCall(tool="send_notification", action="capture", amount_minor=31),
-        ToolCall(tool="send_notification", action="capture", amount_minor=32),
-    ))
+    planner = StubPlanner(script=_assigned(config))
     first = agent_worker_items(config, 0, 0, planner, wrapper)
     calls_after_first = wrapper.budget.calls
 
@@ -372,12 +398,15 @@ def test_an_unparseable_transcript_entry_voids(tmp_path):
 def test_the_transcript_records_every_attempt(tmp_path):
     config = _Config(executions_per_worker=2)
     wrapper = _wrapper(tmp_path)
+    one, two = _scaffold(config)[:2]
     planner = StubPlanner(script=[
         (PlannerOutcome.MALFORMED, "bad"),
         (PlannerOutcome.OK,
-         ToolCall(tool="send_notification", action="capture", amount_minor=1)),
+         ToolCall(tool="send_notification", action="capture",
+                  amount_minor=one.amount_minor)),
         (PlannerOutcome.OK,
-         ToolCall(tool="send_notification", action="capture", amount_minor=2)),
+         ToolCall(tool="send_notification", action="capture",
+                  amount_minor=two.amount_minor)),
     ])
     agent_worker_items(config, 0, 0, planner, wrapper)
     entries = wrapper.transcript.entries()
@@ -389,10 +418,7 @@ def test_the_prompt_does_not_contain_the_oracle(tmp_path):
     """The planner is not told what the ledger thinks happened."""
     config = _Config(executions_per_worker=2)
     wrapper = _wrapper(tmp_path)
-    planner = StubPlanner(script=_ok(*[
-        ToolCall(tool="send_notification", action="capture", amount_minor=1)
-        for _ in range(2)
-    ]))
+    planner = StubPlanner(script=_assigned(config))
     agent_worker_items(config, 0, 0, planner, wrapper)
     for entry in wrapper.transcript.entries():
         lowered = entry["prompt"].lower()

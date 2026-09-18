@@ -38,6 +38,7 @@ from typing import Sequence
 from experiments.harness.planner import (
     CallWrapper,
     CapExceeded,
+    VoidReason,
     Observation,
     Planner,
     PlannerAttemptFailed,
@@ -85,6 +86,7 @@ def agent_worker_items(
     wrapper: CallWrapper,
     *,
     max_turns: int | None = None,
+    emit=None,
 ) -> tuple[WorkloadItem, ...]:
     """Ask the planner for each step; keep the harness's identity fields.
 
@@ -127,14 +129,56 @@ def agent_worker_items(
         if isinstance(action, Stop):
             break
 
+        _refuse_amount_drift(action, base, wrapper, emit)
         decided.append(
             replace(base, action=action.action, amount_minor=action.amount_minor)
         )
-        # What this planner decided, not what happened to it: the loop
-        # plans before it executes. Amendment 2 §5.
+        # Retained only so the count of prior turns is known. It is NOT
+        # shown to the planner as a capture history any more -- amendment 3 --
+        # and it is not an outcome either, because the loop plans every turn
+        # before executing any of them (amendment 2 §5).
         outcomes.append(f"{action.action} {action.amount_minor}")
 
     return tuple(decided)
+
+
+def _refuse_amount_drift(action, base, wrapper, emit) -> None:
+    """The planner chooses the action. It does not choose what is measured.
+
+    ``fingerprint.py``'s identity function includes ``amount_minor``, so an
+    amount the harness did not assign is a term of the oracle's own identity
+    function chosen by the system under test. Two executions meant to be
+    distinct could be collapsed into one fingerprint, or a genuine duplicate
+    pair split into two apparently separate effects -- in either direction the
+    duplicate metric stops meaning what its name says.
+
+    Found by the first corrected live stage: offered 896603 on turn 2, the
+    planner answered 728995, which is 896603 minus the 167608 it had captured
+    on turn 1. It was doing arithmetic the prompt invited, and the executed
+    mutation would have carried an amount no plan contained.
+
+    Treated exactly as a content filter is: a distinct void class, the run
+    stops being a result, and it is never counted as a normal mutation.
+    """
+    if action.amount_minor == base.amount_minor:
+        return
+    detail = (
+        f"planner returned amount_minor={action.amount_minor} for execution "
+        f"{base.execution_id}, which the harness assigned "
+        f"{base.amount_minor}. The oracle's identity function includes the "
+        f"amount, so this is the system under test choosing a term of its own "
+        f"measurement."
+    )
+    if emit is not None:
+        emit(
+            "planner_amount_mismatch",
+            execution_id=base.execution_id,
+            assigned_amount_minor=base.amount_minor,
+            planner_amount_minor=action.amount_minor,
+            void_reason=VoidReason.PLANNER_AMOUNT_MISMATCH.value,
+        )
+    wrapper.void(VoidReason.PLANNER_AMOUNT_MISMATCH, detail)
+    raise AgentRunVoided(VoidReason.PLANNER_AMOUNT_MISMATCH, detail)
 
 
 def _ask(
@@ -188,8 +232,10 @@ def _prompt_for(observation: Observation, base: WorkloadItem) -> str:
     if planner_mode() == LIVE:
         from experiments.harness.live_planner import build_prompt
 
-        # The amount is the work the harness assigned; the planner still
-        # chooses the action and whether to act at all.
+        # The amount is the work the harness assigned for THIS execution;
+        # the planner still chooses the action and whether to act at all.
+        # No capture history is passed: amendment 3 makes each turn its own
+        # payment, and the history is what invited the arithmetic.
         return build_prompt(observation, base.target, base.amount_minor)
     return (
         f"run={observation.run_id} worker={observation.worker_index} "
@@ -300,7 +346,8 @@ def stage_caps():
     return replace(ceiling, **values)
 
 
-def agent_items_for_worker(config, worker_index: int, from_index: int):
+def agent_items_for_worker(config, worker_index: int, from_index: int,
+                           emit=None):
     """The agent branch, assembled from the environment.
 
     Only reached when AEP_PLANNER_MODE selects it. Stub mode builds a
@@ -340,5 +387,5 @@ def agent_items_for_worker(config, worker_index: int, from_index: int):
     else:
         planner = StubPlanner(script=_stub_script(scaffold))
     return agent_worker_items(
-        config, worker_index, from_index, planner, wrapper
+        config, worker_index, from_index, planner, wrapper, emit=emit
     )

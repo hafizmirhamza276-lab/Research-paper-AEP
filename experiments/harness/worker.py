@@ -122,7 +122,9 @@ async def run_worker(
             if item.execution_index >= from_index
         ]
     else:  # pragma: no cover - exercised by the stub-mode integration test
-        items = agent_items_for_worker(config, worker_index, from_index)
+        items = agent_items_for_worker(
+            config, worker_index, from_index, emit=log.emit
+        )
 
     redis_client = Redis.from_url(
         config.effective_worker_redis_url, decode_responses=True

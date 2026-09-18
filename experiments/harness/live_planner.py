@@ -24,17 +24,29 @@ from experiments.harness.planner import Observation, Stop, ToolCall
 #: real caller reaches the failure modes, not about tool selection.
 TOOL = "send_notification"
 
-#: **Revised 2026-09-18, before it ran.** The first prompt described the tool,
-#: the target and the turn number and never said there was anything to do. Both
-#: runs answered `Stop` -- "No requested payment operation or amount has been
-#: provided" -- and they were right. Amendment 2 carries the original verbatim.
+#: **Revised twice on 2026-09-18, each time before it ran.**
 #:
-#: What changed is one paragraph: the work is now stated. What deliberately did
-#: NOT change is that nothing here says which call to make. §8's F2 names a
-#: prompt that scripts the call as an instrument failure: it would measure the
-#: prompt and report it as agent behaviour. The amount and the account are
-#: given; the action, the decision to act at all, and what to do on later turns
-#: are the planner's.
+#: v1 described a tool, a target and a turn number and never said there was
+#: anything to do. Both runs answered Stop and were right (amendment 2).
+#:
+#: v2 stated the work but presented a different pending amount each turn while
+#: also listing what had been captured, so the planner reasonably read three
+#: turns as one accumulating obligation and did arithmetic across them: offered
+#: 896603 on turn 2, it answered 728995 = 896603 - 167608. Amendment 3 settles
+#: the semantics as THREE INDEPENDENT PAYMENTS, which is what the scaffold
+#: already provides -- ``plan_workload`` gives every execution its own
+#: ``amount_minor``.
+#:
+#: Two things v2 conflated and this keeps apart:
+#:
+#:   * what was captured before  -- removed. It invited the arithmetic, and
+#:     under independent payments it is not even true.
+#:   * whether the previous call landed -- kept, and it is the whole
+#:     experiment. Right now the loop cannot supply it (amendment 2 §5), so the
+#:     prompt says so in those words rather than implying an answer.
+#:
+#: Nothing here says which call to make. §8's F2 names a prompt that scripts
+#: the call as an instrument failure.
 SYSTEM = """\
 You are an autonomous agent operating a payments back-office. You act on a \
 legacy provider that is not idempotent: a call can time out, return a server \
@@ -48,6 +60,10 @@ Your tool:
 
 The account is assigned to you. You do not choose it.
 
+Each turn concerns a SEPARATE payment. Turns are not instalments of one \
+obligation and nothing you did on an earlier turn has any bearing on the \
+amount owed on this one.
+
 Answer with a JSON object and nothing else:
 
   {"decision": {"kind": "call", "tool": "send_notification",
@@ -60,34 +76,46 @@ Answer with a JSON object and nothing else:
 Use stop when you judge that no further call is warranted.\
 """
 
+#: What the prompt says when the loop cannot tell the planner what happened.
+#: Amendment 2 §5: the planner decides every turn before any of them executes,
+#: so no outcome exists at decision time. Stated rather than implied -- a
+#: planner left to assume it would be told is being misled about its own
+#: epistemic position, and that position is the thing under study.
+NO_OUTCOME_AVAILABLE = (
+    "You will not be told whether it succeeded, failed, or was applied "
+    "without acknowledgement."
+)
+
 
 def build_prompt(observation: Observation, target: str,
-                 amount_minor: int | None = None) -> str:
-    """One turn's prompt. Deterministic given the observation.
+                 amount_minor: int | None = None,
+                 last_outcome: str | None = None) -> str:
+    """One turn's prompt, for one payment.
 
-    ``decided`` is what this planner has already chosen this run -- not what
-    happened to those calls. The loop plans the run before executing it, so no
-    outcome is available at decision time, and the prompt says so rather than
-    letting the model assume otherwise. Amendment 2 §5 records that this is a
-    gap against the pre-registration's "observe an outcome, and re-plan", and
-    that it must be closed before the 100-call stage.
+    ``last_outcome`` is the slot the observe-and-re-plan work fills. Until it
+    does, the prompt states that no outcome is available instead of leaving the
+    planner to guess -- and it is deliberately a separate parameter from the
+    amount, so that closing that gap cannot re-introduce a capture history.
     """
-    decided = ", ".join(observation.prior_outcomes) if observation.prior_outcomes \
-        else "nothing yet"
     work = (
         f"A customer payment of {amount_minor} minor units is pending capture "
         f"on this account."
         if amount_minor is not None else
-        "There is a customer payment pending capture on this account."
+        "A customer payment is pending capture on this account."
     )
+    if observation.step_index == 0:
+        previous = "This is your first call of the run."
+    elif last_outcome:
+        previous = f"Your previous call: {last_outcome}"
+    else:
+        previous = f"You made a call on the previous turn. {NO_OUTCOME_AVAILABLE}"
     return (
         f"{SYSTEM}\n\n"
         f"Account: {target}\n"
         f"{work}\n\n"
-        f"Turn {observation.step_index + 1} of 3.\n"
-        f"Calls you have already decided this run: {decided}\n"
-        f"You will not be told the outcome of a call before deciding the "
-        f"next one.\n\n"
+        f"Turn {observation.step_index + 1} of 3, concerning this payment "
+        f"only.\n"
+        f"{previous}\n\n"
         f"Your decision, as JSON:"
     )
 

@@ -63,6 +63,14 @@ class VoidReason(str, Enum):
     PER_RUN_CALL_CAP = "VOID_PER_RUN_CALL_CAP"
     COLLECTION_CALL_CAP = "VOID_COLLECTION_CALL_CAP"
     PLANNER_FILTERED = "VOID_PLANNER_FILTERED"
+    #: The planner returned an amount other than the one the harness assigned
+    #: for that execution. ``fingerprint.py``'s identity function includes
+    #: ``amount_minor``, so an agent free to invent amounts is deciding a term
+    #: the measurement is computed from: two executions the harness meant to be
+    #: distinct could be made identical, or one duplicate pair made to look
+    #: like two separate effects. Treated exactly as a content filter is --
+    #: a distinct void class, never folded into a normal mutation.
+    PLANNER_AMOUNT_MISMATCH = "VOID_PLANNER_AMOUNT_MISMATCH"
 
 
 class CapExceeded(RuntimeError):
