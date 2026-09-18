@@ -39,7 +39,6 @@ from experiments.harness.azure_client import (
     AzureCall,
     AzureConfig,
     MissingConfiguration,
-    SnapshotMismatch,
 )
 from experiments.harness.planner import (
     CallWrapper,
@@ -256,17 +255,78 @@ def test_the_repr_carries_no_prompt_and_no_key(tmp_path, recorder):
 # 3. The pinned snapshot
 # ---------------------------------------------------------------------------
 
-def test_a_different_served_model_is_a_finding_not_a_retry(tmp_path, recorder):
-    recorder.payload = _payload(model="gpt-5.6-luna-2026-11-30")
+def test_the_served_model_is_recorded_and_no_longer_checked(tmp_path, recorder):
+    """Amendment 1 §5. The deployment reports an alias; there is nothing to check.
+
+    What used to raise SnapshotMismatch now records. The value the response
+    reported reaches the transcript, so the archive shows on its face what the
+    API said, beside the version read from the control plane.
+    """
+    recorder.payload = _payload(model="gpt-5.6-luna")   # the real alias
     call, _ = _counted(tmp_path)
-    with pytest.raises(SnapshotMismatch, match="2026-11-30"):
-        call(max_output_tokens=1024)
+    result = call(max_output_tokens=1024)
+    assert isinstance(result, ToolCall), "a differing model must not raise"
+    assert call.served_model == "gpt-5.6-luna"
 
 
-def test_the_pinned_snapshot_passes(tmp_path, recorder):
+def test_nothing_raises_snapshot_mismatch_any_more(tmp_path, recorder):
+    """The check is gone, not merely satisfied.
+
+    Asserted against the source rather than by exercising one payload, because
+    "no input we tried raised it" and "nothing can raise it" are different
+    claims and only the second is what the amendment says.
+    """
+    source = (HARNESS / "azure_client.py").read_text(encoding="utf-8")
+    assert "raise SnapshotMismatch" not in source
+    # And a served model wildly unlike the pin sails through.
+    recorder.payload = _payload(model="something-else-entirely")
+    call, _ = _counted(tmp_path)
+    assert isinstance(call(max_output_tokens=1024), ToolCall)
+    assert call.served_model == "something-else-entirely"
+
+
+def test_the_transcript_carries_both_the_pin_and_what_was_served(tmp_path,
+                                                                 recorder):
+    """The point of the replacement: a reviewer can see the gap.
+
+    ``snapshot`` is the control-plane-read version, recorded and not verified.
+    ``served_model`` is what the response said. On this deployment they differ,
+    and that difference is the finding amendment 1 records.
+    """
+    counter = CumulativeCounter(tmp_path / "planner-cumulative.json")
+    wrapper = CallWrapper("r0", tmp_path / "run", counter)
+    recorder.payload = _payload(model="gpt-5.6-luna")
+    config = AzureConfig(endpoint=CONFIG.endpoint, deployment="gpt-5.6-luna",
+                         api_version=CONFIG.api_version,
+                         snapshot="2026-07-09", route=ROUTE_FLAT)
+    call = AzureCall(config, "p", counter=counter)
+    wrapper.attempt(worker_index=0, step_index=0, attempt=1, prompt="p",
+                    call=call)
+
+    entry = wrapper.transcript.entries()[0]
+    assert entry["snapshot"] == "2026-07-09"      # read from ARM, not checked
+    assert entry["served_model"] == "gpt-5.6-luna"  # what the API reported
+    assert entry["model"] == "gpt-5.6-luna"
+    assert entry["snapshot"] != entry["served_model"], (
+        "on this deployment these must differ; if they ever match, the "
+        "recording has collapsed back into a check that cannot fail"
+    )
+
+
+def test_served_model_is_a_declared_transcript_field():
+    """Amendment 1 added it, so the schema names it rather than smuggling it."""
+    from experiments.harness.planner import TRANSCRIPT_FIELDS
+    assert "served_model" in TRANSCRIPT_FIELDS
+
+
+def test_a_response_with_no_model_field_records_none(tmp_path, recorder):
+    """Absent is recorded as absent, not as agreement."""
+    payload = _payload()
+    payload.pop("model")
+    recorder.payload = payload
     call, _ = _counted(tmp_path)
     call(max_output_tokens=1024)
-    assert call.served_model == CONFIG.snapshot
+    assert call.served_model is None
 
 
 # ---------------------------------------------------------------------------

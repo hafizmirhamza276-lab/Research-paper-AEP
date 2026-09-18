@@ -1,0 +1,72 @@
+{
+  "etag": "<redacted>",
+  "id": "/subscriptions/<subscription-or-tenant-id-redacted>/resourceGroups/Azure-RnD_ResourceGroup/providers/Microsoft.CognitiveServices/accounts/kps-rnd-foundry/deployments/gpt-5.6-luna",
+  "name": "gpt-5.6-luna",
+  "properties": {
+    "callRateLimit": null,
+    "capabilities": {
+      "agentsV2": "true",
+      "area": "US",
+      "assistants": "true",
+      "chatCompletion": "true",
+      "responses": "true"
+    },
+    "capacitySettings": null,
+    "currentCapacity": 5000,
+    "deploymentState": "Running",
+    "dynamicThrottlingEnabled": null,
+    "model": {
+      "callRateLimit": null,
+      "format": "OpenAI",
+      "name": "gpt-5.6-luna",
+      "publisher": null,
+      "source": null,
+      "sourceAccount": null,
+      "version": "2026-07-09"
+    },
+    "parentDeploymentName": null,
+    "provisioningState": "Succeeded",
+    "raiPolicyName": "Microsoft.DefaultV2",
+    "rateLimits": [
+      {
+        "count": 5000.0,
+        "dynamicThrottlingEnabled": null,
+        "key": "request",
+        "matchPatterns": null,
+        "minCount": null,
+        "renewalPeriod": 60.0
+      },
+      {
+        "count": 5000000.0,
+        "dynamicThrottlingEnabled": null,
+        "key": "token",
+        "matchPatterns": null,
+        "minCount": null,
+        "renewalPeriod": 60.0
+      }
+    ],
+    "routing": null,
+    "scaleSettings": null,
+    "serviceTier": null,
+    "spilloverDeploymentName": null,
+    "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
+  },
+  "resourceGroup": "Azure-RnD_ResourceGroup",
+  "sku": {
+    "capacity": 5000,
+    "family": null,
+    "name": "GlobalStandard",
+    "size": null,
+    "tier": null
+  },
+  "systemData": {
+    "createdAt": "2026-08-17T13:15:02.747066+00:00",
+    "createdBy": "umer_qureshi@global.komatsu",
+    "createdByType": "User",
+    "lastModifiedAt": "2026-08-17T13:15:02.747066+00:00",
+    "lastModifiedBy": "umer_qureshi@global.komatsu",
+    "lastModifiedByType": "User"
+  },
+  "tags": null,
+  "type": "Microsoft.CognitiveServices/accounts/deployments"
+}

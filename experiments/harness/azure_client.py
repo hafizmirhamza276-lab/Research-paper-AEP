@@ -86,12 +86,21 @@ class MissingConfiguration(RuntimeError):
 
 
 class SnapshotMismatch(RuntimeError):
-    """Azure served a model other than the pinned snapshot.
+    """Retained for its name only; nothing raises it any more.
 
-    Not retried and not tolerated. The pre-registration pins a snapshot rather
-    than an alias precisely so that a silent server-side model change is a
-    finding instead of a confound, and ``docs/33`` §3.2 is about exactly this:
-    a hosted API is "a remote, versioned, silently-updated dependency".
+    **Amendment 1 (2026-09-18) removed the response-side snapshot check.** The
+    deployment reports ``"model": "gpt-5.6-luna"`` -- the deployment alias, with
+    no version -- so there is nothing in the payload to check a pinned snapshot
+    against. Setting the pin to the alias would have made this unraisable: it
+    would have passed on every call and could never have failed, and a check
+    that cannot fail is worse than no check, because in the record it reads as
+    verification that happened.
+
+    What replaces it is recording rather than checking. ``served_model`` carries
+    what the response actually said into the transcript, beside the
+    control-plane-read version, so a reviewer sees the gap instead of having to
+    know about it. See
+    ``prompts/phase-40-amendment-1-snapshot-2026-09-18.md`` §5.
     """
 
 
@@ -292,14 +301,11 @@ class AzureCall:
         payload = response.json()
         self._record_usage(payload)
 
-        served = payload.get("model")
-        self.served_model = served
-        if served and served != self.config.snapshot:
-            raise SnapshotMismatch(
-                f"pinned snapshot is {self.config.snapshot!r} and Azure served "
-                f"{served!r}. The pre-registration pins a snapshot rather than "
-                f"an alias so that this is a finding, not a confound."
-            )
+        # Recorded, not checked. Amendment 1 §5: the deployment reports an
+        # alias, so there is nothing here a pin could be verified against. The
+        # value goes into the transcript so the archive shows on its face what
+        # the API reported.
+        self.served_model = payload.get("model")
 
         if payload.get("status") == "incomplete":
             reason = (payload.get("incomplete_details") or {}).get("reason")

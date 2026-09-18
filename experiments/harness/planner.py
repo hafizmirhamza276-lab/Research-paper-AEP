@@ -34,7 +34,7 @@ from typing import Any, Iterable, Protocol, Sequence
 
 #: Written into every transcript entry. Bumping it says previously recorded
 #: transcripts are not comparable to new ones.
-TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/1"
+TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/2"
 
 
 class PlannerOutcome(str, Enum):
@@ -353,6 +353,7 @@ TRANSCRIPT_FIELDS = (
     "sampling",
     "usage",
     "outcome",
+    "served_model",
 )
 
 
@@ -372,6 +373,10 @@ class TranscriptEntry:
     sampling: dict[str, Any]
     usage: Usage
     outcome: PlannerOutcome
+    #: What the response reported as its model, which on an AI
+    #: Foundry deployment is the alias rather than a version.
+    #: Recorded because it cannot be checked -- amendment 1 §5.
+    served_model: str | None = None
 
     def echo(self) -> dict[str, Any]:
         return {
@@ -393,6 +398,7 @@ class TranscriptEntry:
                 "completion_tokens": self.usage.completion_tokens,
                 "reasoning_tokens": self.usage.reasoning_tokens,
             },
+            "served_model": self.served_model,
             "outcome": self.outcome.value,
         }
 
@@ -765,6 +771,7 @@ class CallWrapper:
                     sampling=getattr(call, "sampling", {}),
                     usage=usage,
                     outcome=outcome,
+                    served_model=getattr(call, "served_model", None),
                 )
             )
 

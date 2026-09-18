@@ -280,12 +280,15 @@ def test_price_counts_reasoning_tokens_as_output():
 # --------------------------------------------------------------------------
 
 
-def test_the_transcript_records_all_fourteen_fields(wrapper):
+def test_the_transcript_records_every_declared_field(wrapper):
     fire(wrapper, FakeCall())
     entry = wrapper.transcript.entries()[0]
     for field in TRANSCRIPT_FIELDS:
         assert field in entry, f"transcript is missing {field}"
-    assert entry["schema_version"] == "aep.agent.transcript/1"
+    # Amendment 1 added served_model and bumped the version with it. No
+    # live data predates the bump, so there is nothing to migrate.
+    assert entry["schema_version"] == "aep.agent.transcript/2"
+    assert "served_model" in TRANSCRIPT_FIELDS
     assert entry["usage"]["reasoning_tokens"] == 740
 
 
