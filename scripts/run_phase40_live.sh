@@ -21,7 +21,13 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT="${1:-}"
-ENV_FILE="$REPO/.env"
+
+# Where the credentials live. Defaults to the parent of the repository rather
+# than the repository itself: that directory is not inside any git work tree,
+# so the key cannot be committed from there even by accident, which is a
+# stronger guarantee than .gitignore. Override with AEP_ENV_FILE.
+ENV_FILE="${AEP_ENV_FILE:-$(dirname "$REPO")/.env}"
+[ -f "$ENV_FILE" ] || ENV_FILE="$REPO/.env"
 
 die () { echo "REFUSING: $*" >&2; exit 2; }
 
@@ -44,10 +50,42 @@ set -a
 set +a
 
 for name in AZURE_OPENAI_ENDPOINT AZURE_OPENAI_API_KEY \
-            AZURE_OPENAI_DEPLOYMENT AZURE_OPENAI_API_VERSION \
-            AEP_PLANNER_SNAPSHOT; do
+            AZURE_OPENAI_DEPLOYMENT AZURE_OPENAI_API_VERSION; do
     [ -n "${!name:-}" ] || die "$name is not set in $ENV_FILE"
 done
+
+# The Responses API does not exist below 2025-03-01-preview. Four calls on
+# 2026-09-18 went out against 2025-01-01-preview and came back
+# HTTP 400 "Azure OpenAI Responses API is enabled only for api-version
+# 2025-03-01-preview and later". Checked here so it costs nothing next time.
+uv run --frozen --extra dev --extra experiments --extra analysis python -c "
+import sys
+sys.path.insert(0, '$REPO')
+from experiments.harness.azure_client import check_api_version
+check_api_version(sys.argv[1])
+" "$AZURE_OPENAI_API_VERSION" || die "api-version $AZURE_OPENAI_API_VERSION \
+cannot serve the Responses API"
+
+# The route. This resource is AI Foundry and does not serve the per-deployment
+# Responses path at any api-version tried; commit 511603a records both 404s.
+export AZURE_OPENAI_ROUTE="${AZURE_OPENAI_ROUTE:-flat}"
+
+# The model version, taken from the ARCHIVED control-plane reading rather than
+# typed here, so the value used and the value in the record are the same
+# artefact. Amendment 1 §2 and §5: this is RECORDED, NOT VERIFIED -- the
+# response reports the deployment alias and cannot confirm it. It is never set
+# to the alias, because a check that cannot fail is worse than no check.
+ARM_JSON="$REPO/reports/raw/phase40-deployment-2026-09-18/deployment-show.json"
+[ -f "$ARM_JSON" ] || die "no archived deployment reading at $ARM_JSON"
+AEP_PLANNER_SNAPSHOT="$(python3 -c "
+import json,sys
+print(json.load(open(sys.argv[1]))['properties']['model']['version'])
+" "$ARM_JSON")"
+[ -n "$AEP_PLANNER_SNAPSHOT" ] || die "could not read model.version from $ARM_JSON"
+[ "$AEP_PLANNER_SNAPSHOT" != "$AZURE_OPENAI_DEPLOYMENT" ] || \
+    die "the recorded version equals the deployment name; that is the alias, \
+and amendment 1 forbids pinning to it"
+export AEP_PLANNER_SNAPSHOT
 
 # The stage's caps. Lower than section 3's collection-wide numbers on purpose:
 # section 6 stages at 10, 30, 100 then 300 calls, and 1 000 is the ceiling for
@@ -62,11 +100,13 @@ echo "=== configuration (no secrets) ==="
 echo "  endpoint     ${AZURE_OPENAI_ENDPOINT}"
 echo "  deployment   ${AZURE_OPENAI_DEPLOYMENT}"
 echo "  api-version  ${AZURE_OPENAI_API_VERSION}"
-echo "  snapshot     ${AEP_PLANNER_SNAPSHOT}"
+echo "  version      ${AEP_PLANNER_SNAPSHOT}   (from ARM, recorded not verified)"
+echo "  route        ${AZURE_OPENAI_ROUTE}"
 echo "  key          ${#AZURE_OPENAI_API_KEY} characters, not shown"
 echo "  caps         calls/collection=${AEP_PLANNER_PER_COLLECTION_CALLS}" \
      "calls/run=${AEP_PLANNER_PER_RUN_CALLS}" \
      "usd=${AEP_PLANNER_PER_COLLECTION_USD}"
+echo "  env file     $ENV_FILE"
 echo "  results      $ROOT"
 
 cd "$REPO" || die "cannot enter $REPO"

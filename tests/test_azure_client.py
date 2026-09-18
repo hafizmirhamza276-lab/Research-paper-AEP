@@ -39,6 +39,8 @@ from experiments.harness.azure_client import (
     AzureCall,
     AzureConfig,
     MissingConfiguration,
+    check_api_version,
+    MIN_RESPONSES_API_VERSION,
 )
 from experiments.harness.planner import (
     CallWrapper,
@@ -532,10 +534,63 @@ def test_the_route_can_be_set_from_the_environment(monkeypatch):
     for name, value in ((azure_client.ENDPOINT_ENV, "https://e"),
                         (azure_client.KEY_ENV, "k"),
                         (azure_client.DEPLOYMENT_ENV, "d"),
-                        (azure_client.API_VERSION_ENV, "v"),
+                        (azure_client.API_VERSION_ENV, "2025-04-01-preview"),
                         (azure_client.SNAPSHOT_ENV, "s")):
         monkeypatch.setenv(name, value)
     monkeypatch.delenv(azure_client.ROUTE_ENV, raising=False)
     assert AzureConfig.from_environment().route == ROUTE_DEPLOYMENT
     monkeypatch.setenv(azure_client.ROUTE_ENV, ROUTE_FLAT)
     assert AzureConfig.from_environment().route == ROUTE_FLAT
+
+
+# ---------------------------------------------------------------------------
+# 8. The api-version guard. Learned from the service at the cost of four calls.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("version", [
+    "2024-10-21", "2025-01-01-preview", "2025-02-28-preview",
+])
+def test_an_api_version_below_the_floor_is_refused(version):
+    """The stage ran against 2025-01-01-preview and made four 400s.
+
+    Azure: "Azure OpenAI Responses API is enabled only for api-version
+    2025-03-01-preview and later". The refusal quotes that verbatim rather than
+    paraphrasing it, so a reader does not have to take the guard on trust.
+    """
+    with pytest.raises(MissingConfiguration) as raised:
+        check_api_version(version)
+    assert "2025-03-01-preview and later" in str(raised.value)
+    assert version in str(raised.value)
+
+
+@pytest.mark.parametrize("version", [
+    "2025-03-01-preview", "2025-04-01-preview", "2026-08-01-preview",
+    "2025-03-01",
+])
+def test_an_api_version_at_or_above_the_floor_is_accepted(version):
+    """R2's known-positive: a guard that refused everything would also pass."""
+    check_api_version(version)
+
+
+@pytest.mark.parametrize("version", ["", "latest", "v1", "2025-3-1", "preview"])
+def test_an_unparseable_api_version_is_refused_rather_than_guessed(version):
+    with pytest.raises(MissingConfiguration):
+        check_api_version(version)
+
+
+def test_the_floor_is_the_one_azure_named():
+    assert MIN_RESPONSES_API_VERSION == "2025-03-01"
+
+
+def test_from_environment_applies_the_guard(monkeypatch):
+    """Not only the launcher: any live construction is covered."""
+    for name, value in ((azure_client.ENDPOINT_ENV, "https://e"),
+                        (azure_client.KEY_ENV, "k"),
+                        (azure_client.DEPLOYMENT_ENV, "d"),
+                        (azure_client.SNAPSHOT_ENV, "2026-07-09")):
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv(azure_client.API_VERSION_ENV, "2025-01-01-preview")
+    with pytest.raises(MissingConfiguration, match="predates"):
+        AzureConfig.from_environment()
+    monkeypatch.setenv(azure_client.API_VERSION_ENV, "2025-04-01-preview")
+    assert AzureConfig.from_environment().api_version == "2025-04-01-preview"

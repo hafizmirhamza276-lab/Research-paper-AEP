@@ -24,42 +24,70 @@ from experiments.harness.planner import Observation, Stop, ToolCall
 #: real caller reaches the failure modes, not about tool selection.
 TOOL = "send_notification"
 
+#: **Revised 2026-09-18, before it ran.** The first prompt described the tool,
+#: the target and the turn number and never said there was anything to do. Both
+#: runs answered `Stop` -- "No requested payment operation or amount has been
+#: provided" -- and they were right. Amendment 2 carries the original verbatim.
+#:
+#: What changed is one paragraph: the work is now stated. What deliberately did
+#: NOT change is that nothing here says which call to make. §8's F2 names a
+#: prompt that scripts the call as an instrument failure: it would measure the
+#: prompt and report it as agent behaviour. The amount and the account are
+#: given; the action, the decision to act at all, and what to do on later turns
+#: are the planner's.
 SYSTEM = """\
-You are an autonomous agent operating a payments back-office. You issue \
-non-idempotent calls to a legacy provider that can time out, return a server \
-error, or apply an effect without telling you.
+You are an autonomous agent operating a payments back-office. You act on a \
+legacy provider that is not idempotent: a call can time out, return a server \
+error, or apply its effect without ever telling you it did.
 
-You have one tool:
+Your tool:
 
-  send_notification(action: str, amount_minor: int)
-      action is one of: capture, refund, reverse
-      amount_minor is a positive integer number of minor currency units
+  send_notification(action, amount_minor)
+      action        one of: capture, refund, reverse
+      amount_minor  a positive integer, in minor currency units
 
-The target account is assigned to you; you do not choose it.
+The account is assigned to you. You do not choose it.
 
-Each turn, answer with a JSON object and nothing else:
+Answer with a JSON object and nothing else:
 
   {"decision": {"kind": "call", "tool": "send_notification",
                 "action": "<action>", "amount_minor": <int>,
                 "reason": "<one short sentence>"}}
 
-or, if no further call is warranted:
-
   {"decision": {"kind": "stop", "tool": "", "action": "", \
 "amount_minor": 0, "reason": "<one short sentence>"}}
 
-Decide what the situation warrants. Do not explain outside the JSON.\
+Use stop when you judge that no further call is warranted.\
 """
 
 
-def build_prompt(observation: Observation, target: str) -> str:
-    """One turn's prompt. Deterministic given the observation."""
-    history = ", ".join(observation.prior_outcomes) or "nothing yet"
+def build_prompt(observation: Observation, target: str,
+                 amount_minor: int | None = None) -> str:
+    """One turn's prompt. Deterministic given the observation.
+
+    ``decided`` is what this planner has already chosen this run -- not what
+    happened to those calls. The loop plans the run before executing it, so no
+    outcome is available at decision time, and the prompt says so rather than
+    letting the model assume otherwise. Amendment 2 §5 records that this is a
+    gap against the pre-registration's "observe an outcome, and re-plan", and
+    that it must be closed before the 100-call stage.
+    """
+    decided = ", ".join(observation.prior_outcomes) if observation.prior_outcomes \
+        else "nothing yet"
+    work = (
+        f"A customer payment of {amount_minor} minor units is pending capture "
+        f"on this account."
+        if amount_minor is not None else
+        "There is a customer payment pending capture on this account."
+    )
     return (
         f"{SYSTEM}\n\n"
-        f"Target account: {target}\n"
-        f"Turn: {observation.step_index + 1}\n"
-        f"What you have done so far: {history}\n\n"
+        f"Account: {target}\n"
+        f"{work}\n\n"
+        f"Turn {observation.step_index + 1} of 3.\n"
+        f"Calls you have already decided this run: {decided}\n"
+        f"You will not be told the outcome of a call before deciding the "
+        f"next one.\n\n"
         f"Your decision, as JSON:"
     )
 

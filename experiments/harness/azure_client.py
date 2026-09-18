@@ -81,6 +81,50 @@ RESPONSE_SCHEMA = {
 }
 
 
+#: The Responses API does not exist below this. Learned from the service, at
+#: the cost of four calls on 2026-09-18 that returned:
+#:
+#:   HTTP 400 BadRequest -- "Azure OpenAI Responses API is enabled only for
+#:   api-version 2025-03-01-preview and later"
+#:
+#: The stage had been configured from a .env still holding a chat-completions
+#: vintage. Checked here rather than discovered again, because the failure is
+#: silent until a call is made and costs a round trip each time.
+MIN_RESPONSES_API_VERSION = "2025-03-01"
+
+#: Quoted verbatim in the refusal. A guard that paraphrases the service is a
+#: guard a reader has to take on trust.
+AZURE_VERSION_ERROR = (
+    "Azure OpenAI Responses API is enabled only for api-version "
+    "2025-03-01-preview and later"
+)
+
+
+def check_api_version(api_version: str) -> None:
+    """Refuse a version the Responses API is not served at.
+
+    Azure api-versions are ``YYYY-MM-DD`` with an optional ``-preview`` suffix,
+    so the date prefix orders lexicographically and no parsing is needed beyond
+    taking the first ten characters.
+    """
+    value = (api_version or "").strip()
+    if not value:
+        raise MissingConfiguration("no api-version given")
+    date = value[:10]
+    if len(date) != 10 or date.count("-") != 2:
+        raise MissingConfiguration(
+            f"api-version {value!r} is not YYYY-MM-DD[-preview]; refusing to "
+            f"guess whether it supports the Responses API"
+        )
+    if date < MIN_RESPONSES_API_VERSION:
+        raise MissingConfiguration(
+            f"api-version {value!r} predates the Responses API. Azure: "
+            f"\"{AZURE_VERSION_ERROR}\". Set AZURE_OPENAI_API_VERSION to "
+            f"{MIN_RESPONSES_API_VERSION}-preview or later; the collection was "
+            f"run at 2025-04-01-preview."
+        )
+
+
 class MissingConfiguration(RuntimeError):
     """A live run was asked for and the environment does not describe one."""
 
@@ -137,6 +181,7 @@ class AzureConfig:
                 "silently picked a deployment would spend money against a "
                 "model the record does not name."
             )
+        check_api_version(os.environ[API_VERSION_ENV])
         return cls(
             endpoint=os.environ[ENDPOINT_ENV].strip().rstrip("/"),
             deployment=os.environ[DEPLOYMENT_ENV].strip(),

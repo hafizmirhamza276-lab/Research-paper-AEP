@@ -130,7 +130,9 @@ def agent_worker_items(
         decided.append(
             replace(base, action=action.action, amount_minor=action.amount_minor)
         )
-        outcomes.append("PENDING")
+        # What this planner decided, not what happened to it: the loop
+        # plans before it executes. Amendment 2 §5.
+        outcomes.append(f"{action.action} {action.amount_minor}")
 
     return tuple(decided)
 
@@ -186,7 +188,9 @@ def _prompt_for(observation: Observation, base: WorkloadItem) -> str:
     if planner_mode() == LIVE:
         from experiments.harness.live_planner import build_prompt
 
-        return build_prompt(observation, base.target)
+        # The amount is the work the harness assigned; the planner still
+        # chooses the action and whether to act at all.
+        return build_prompt(observation, base.target, base.amount_minor)
     return (
         f"run={observation.run_id} worker={observation.worker_index} "
         f"step={observation.step_index} "

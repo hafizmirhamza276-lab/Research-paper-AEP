@@ -424,6 +424,45 @@ def discard_stale_shards(config: RunConfig) -> list[str]:
     return discarded
 
 
+def assert_run_is_not_empty(records, planned: int) -> None:
+    """Refuse a run in which no execution ever started.
+
+    **Found by the first live collection, which passed every check and
+    measured nothing.** Two runs completed with ``rc=0``, ``agrees=true`` and
+    ``settled=true``, and ``execution_started=0``: the planner stopped on its
+    first turn, so the workload was empty, so nothing was dispatched, crashed,
+    applied or reconciled. An empty run is *internally consistent* -- there are
+    no events to disagree with each other -- and every consistency check in the
+    harness therefore passed it.
+
+    That is the dangerous shape. ``agrees=true`` on an empty run does not mean
+    the oracle and the log agree about what happened; it means neither of them
+    has anything to say. A collection of such runs would report a clean sweep
+    and contain no evidence, and at 300 runs the cost of finding that out is
+    three hundred times what it was here.
+
+    So emptiness is checked separately from consistency, and it is checked
+    against the *plan*: a run that planned executions and started none has
+    failed, whatever else is true of it. Raised before ``summary.json`` is
+    written, so the run is not recorded as complete and ``--resume`` will
+    retry it rather than skip it on the strength of a result that is not one.
+    The merged ``events.jsonl`` is left on disk for diagnosis.
+    """
+    started = sum(
+        1 for record in records
+        if record.get("event") == "execution_started"
+    )
+    if planned and not started:
+        raise RunAborted(
+            f"no execution started: the run planned {planned} and started 0. "
+            f"An empty run is not a result. It is internally consistent -- "
+            f"there are no events to disagree -- so `agrees` and `settled` "
+            f"say nothing about it. Check the planner's transcript: on the "
+            f"2026-09-18 live collection the planner stopped on turn 1 "
+            f"because its prompt never stated there was work to do."
+        )
+
+
 async def execute_run(config: RunConfig) -> dict[str, Any]:
     config.results_dir.mkdir(parents=True, exist_ok=True)
     discarded = discard_stale_shards(config)
@@ -654,6 +693,9 @@ async def execute_run(config: RunConfig) -> dict[str, Any]:
     merged = config.results_dir / "events.jsonl"
     merge_event_shards(config.results_dir, output=merged)
     records = read_events(merged)
+    # Before anything is reconciled: did this run do anything at all? A run
+    # that started nothing reconciles perfectly and means nothing.
+    assert_run_is_not_empty(records, len(plan))
     report = reconcile(merged, mock_api_config.ledger_path)
     summary_path = write_summary(
         config.results_dir,

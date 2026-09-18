@@ -93,6 +93,12 @@ project that is not this paper's, and that is the author's decision to make,
 not this amendment's. If it is done before the collection, this amendment
 should be superseded by one recording the change and its date.
 
+**Decided 2026-09-18: auto-upgrade was found ON and is left ON.** The exposure
+stands exactly as recorded above — the collection is covered by a pin that is
+true as observed and carries no guarantee for any later call, and §6's sentence
+about the paper is written on that basis rather than in anticipation of a
+stronger one.
+
 ## 4. The endpoint the collection uses
 
 The portal shows a project endpoint at
