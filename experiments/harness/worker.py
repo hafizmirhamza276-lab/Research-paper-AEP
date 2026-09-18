@@ -60,7 +60,9 @@ from experiments.harness.injector import (
 from experiments.harness.redis_kill import RedisKillInjector, canary_payload
 from experiments.harness.agent_loop import (
     agent_items_for_worker,
+    interactive_driver,
     is_agent_mode,
+    is_interactive,
 )
 from experiments.harness.workload import (
     index_by_execution_id,
@@ -115,12 +117,25 @@ async def run_worker(
     # the same object, and making them one expression is how a regression
     # would reach the numbers. tests/test_scripted_plan_is_frozen.py
     # recomputes 51 already-collected runs against what they recorded.
+    #
+    # Amendment 4 added the third branch. `driver` is None on the first two,
+    # and the execution loop below is identical for all three.
+    driver = None
     if not is_agent_mode():
         items = [
             item
             for item in worker_items(plan_workload(config), worker_index)
             if item.execution_index >= from_index
         ]
+    elif is_interactive():  # pragma: no cover - stub-interactive integration
+        # Ask, execute, observe, ask again. The driver is iterated by the same
+        # `for item in items` below; it yields one item at a time and reads the
+        # observation the loop body hands back. Section 1's "observe an
+        # outcome, and re-plan", which the planned branch could not do.
+        driver = interactive_driver(
+            config, worker_index, from_index, emit=log.emit
+        )
+        items = driver
     else:  # pragma: no cover - exercised by the stub-mode integration test
         items = agent_items_for_worker(
             config, worker_index, from_index, emit=log.emit
@@ -275,6 +290,8 @@ async def run_worker(
                 )
                 if isinstance(error, (KeyboardInterrupt, SystemExit)):
                     raise
+                if driver is not None:
+                    driver.observe(error=error)
                 exit_status = UNEXPECTED_FAILURE_EXIT
                 continue
 
@@ -289,6 +306,13 @@ async def run_worker(
                 request_fingerprint=resolved.request_fingerprint,
                 duration_ns=time.monotonic_ns() - started,
             )
+            if driver is not None:
+                # What a caller would have seen, and nothing else. `resolved`
+                # carries outcome_class, status, dispatch_attempts, intent_id
+                # and request_fingerprint; classify_outcome reads none of them
+                # -- the first two are the oracle's verdict, the last three
+                # label which arm the agent is in (amendment 4 section 2.3).
+                driver.observe(resolved=resolved)
     finally:
         if redis_killer is not None:
             # The kill is issued on a thread. Leaving the process before it has

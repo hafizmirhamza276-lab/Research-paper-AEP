@@ -59,6 +59,13 @@ SCRIPTED = "scripted"
 STUB = "stub"
 LIVE = "live"
 
+#: Which loop shape. Orthogonal to the mode, so the interactive
+#: loop can be exercised in stub mode at zero cost before it is
+#: ever run live. Amendment 4 §5.
+PLANNER_LOOP_ENV = "AEP_PLANNER_LOOP"
+PLANNED = "planned"
+INTERACTIVE = "interactive"
+
 
 def planner_mode() -> str:
     """Which branch the worker takes. Defaults to the path that has data."""
@@ -67,6 +74,79 @@ def planner_mode() -> str:
 
 def is_agent_mode() -> bool:
     return planner_mode() not in ("", SCRIPTED)
+
+
+def loop_mode() -> str:
+    """Which loop shape. Defaults to the one the stub stage validated."""
+    return (os.environ.get(PLANNER_LOOP_ENV) or PLANNED).strip().lower()
+
+
+def is_interactive() -> bool:
+    return loop_mode() == INTERACTIVE
+
+
+#: Everything ``last_outcome`` may carry, and nothing else. Amendment 4 §2.
+#:
+#: Derived from the transport alone, so the vocabulary is identical on both
+#: arms. `rejected` (4xx) was approved and then withdrawn: there is no injected
+#: 4xx fault -- the injected refusal is a 503, which in this harness already
+#: means "refused before applying" -- and the only 4xx reachable in normal
+#: operation are on the read-back routes, which B0_NAIVE_RETRY never calls.
+#:
+#: **The standing constraint on this set: an agent that can tell which arm it is
+#: in is a second uncontrolled variable, and the comparison stops meaning
+#: anything.** Anything added here must be visible to a real caller AND
+#: identical in range across both systems.
+#: tests/test_last_outcome_is_arm_neutral.py holds the second half.
+TIMED_OUT = "timed_out"
+SERVER_ERROR = "server_error"
+ACKNOWLEDGED = "acknowledged"
+UNKNOWN_PROCESS_DIED = "unknown_process_died"
+
+OUTCOME_VALUES = (TIMED_OUT, SERVER_ERROR, ACKNOWLEDGED, UNKNOWN_PROCESS_DIED)
+
+#: What the planner is shown for each. Deliberately in a caller's words, with
+#: no reference to intents, dispatch counts, or anything the oracle computes.
+OUTCOME_WORDING = {
+    TIMED_OUT: (
+        "it timed out. You received no response, and you do not know whether "
+        "it was applied."
+    ),
+    SERVER_ERROR: (
+        "the provider returned a server error before applying it."
+    ),
+    ACKNOWLEDGED: (
+        "it was acknowledged."
+    ),
+    UNKNOWN_PROCESS_DIED: (
+        "your process then stopped. You do not know whether it was sent, "
+        "whether it arrived, or whether it was applied."
+    ),
+}
+
+
+def classify_outcome(resolved, error) -> str:
+    """The caller-visible result of one execution.
+
+    Reads only what a caller could see. ``outcome_class``, ``status``,
+    ``dispatch_attempts``, ``intent_id`` and ``request_fingerprint`` are all
+    deliberately untouched -- the first two leak the oracle's verdict, the last
+    three leak which arm the agent is in (amendment 4 §2.3).
+    """
+    if error is not None:
+        name = type(error).__name__.lower()
+        if "timeout" in name:
+            return TIMED_OUT
+        return SERVER_ERROR
+    text = " ".join(
+        str(getattr(resolved, field, "") or "")
+        for field in ("transport_result", "provider_status")
+    ).lower()
+    if "timeout" in text or "timed out" in text:
+        return TIMED_OUT
+    if "503" in text or "server_error" in text or "5xx" in text:
+        return SERVER_ERROR
+    return ACKNOWLEDGED
 
 
 class AgentRunVoided(RuntimeError):
@@ -142,6 +222,125 @@ def agent_worker_items(
     return tuple(decided)
 
 
+class InteractiveDriver:
+    """Ask, execute, observe, ask again -- one turn at a time.
+
+    Amendment 4. The planned loop asked for every turn before any of them ran,
+    so no outcome existed at decision time and §1's "observe an outcome, and
+    re-plan" was not what the code did.
+
+    Iterating this object yields one item at a time. ``worker.py`` executes the
+    item and calls :meth:`observe` with what happened; the next iteration uses
+    it. The execution body in ``worker.py`` is otherwise unchanged, which is
+    deliberate -- that body produces every number in the paper.
+    """
+
+    def __init__(self, config, worker_index, from_index, planner, wrapper,
+                 *, emit=None, max_turns=None):
+        self.config = config
+        self.worker_index = worker_index
+        self.planner = planner
+        self.wrapper = wrapper
+        self.emit = emit
+        self.scaffold = [
+            item
+            for item in worker_items(plan_workload(config), worker_index)
+            if item.execution_index >= from_index
+        ]
+        if max_turns is not None:
+            self.scaffold = self.scaffold[:max_turns]
+        self.observations: list[str] = []
+        self._replay = wrapper.transcript.replay_index()
+        # A respawned worker resumes at from_index > 0, which means an earlier
+        # turn was issued by a process that then died. Its outcome is exactly
+        # what amendment 4 §3 describes: not "no calls yet", but "a call was
+        # made and you cannot know what became of it". Starting at None would
+        # tell the replacement agent it had a clean slate, which is false and
+        # is the more misleading of the two.
+        self._pending = UNKNOWN_PROCESS_DIED if from_index > 0 else None
+
+    def __len__(self) -> int:
+        """How many turns are AVAILABLE, not how many will be taken.
+
+        ``worker.py`` emits this as ``assigned`` on ``worker_started``.
+        Under the interactive loop the number taken is not known until the
+        run ends -- the planner may stop early -- so what is reported is
+        the scaffold's length, which is the same quantity the planned
+        branch reports.
+        """
+        return len(self.scaffold)
+
+    # -- what worker.py calls ------------------------------------------
+    def observe(self, resolved=None, error=None) -> None:
+        """Record the caller-visible result of the item just executed."""
+        self._pending = classify_outcome(resolved, error)
+
+    def __iter__(self):
+        for base in self.scaffold:
+            observation = Observation(
+                run_id=self.config.run_id,
+                worker_index=self.worker_index,
+                step_index=base.execution_index,
+                prior_outcomes=tuple(self.observations),
+            )
+            recorded = self._replay.get((self.worker_index, base.execution_index))
+            if recorded is not None:
+                action = _action_from_completion(recorded["completion"], base)
+            else:
+                try:
+                    action = _ask(self.planner, observation, self.wrapper, base,
+                                  last_outcome=self._pending)
+                except CapExceeded as capped:
+                    raise AgentRunVoided(capped.reason, capped.detail) from capped
+            if isinstance(action, Stop):
+                return
+            _refuse_amount_drift(action, base, self.wrapper, self.emit)
+
+            # The observation for THIS turn is not known until worker.py has
+            # run it. Cleared here so that a crash between yielding and
+            # observing leaves `unknown_process_died` rather than the previous
+            # turn's result.
+            self._pending = UNKNOWN_PROCESS_DIED
+            yield replace(base, action=action.action,
+                          amount_minor=action.amount_minor)
+            # worker.py has called observe() by now, unless it died -- in which
+            # case this generator never resumes and nothing is recorded.
+            self.observations.append(self._pending or UNKNOWN_PROCESS_DIED)
+
+
+def interactive_driver(config, worker_index: int, from_index: int, *,
+                       emit=None):
+    """Build the driver from the environment, like agent_items_for_worker."""
+    from experiments.harness.planner import Caps, CumulativeCounter, StubPlanner
+
+    mode = planner_mode()
+    if mode not in (STUB, LIVE):
+        raise RuntimeError(
+            f"{PLANNER_MODE_ENV}={mode!r} selects a planner that does not exist."
+        )
+    run_dir = Path(config.results_root) / config.run_id
+    counter = CumulativeCounter(
+        Path(config.results_root) / "planner-cumulative.json"
+    )
+    wrapper = CallWrapper(
+        run_id=config.run_id, run_dir=run_dir, cumulative=counter,
+        caps=stage_caps(),
+    )
+    scaffold = [
+        item
+        for item in worker_items(plan_workload(config), worker_index)
+        if item.execution_index >= from_index
+    ]
+    if mode == LIVE:
+        from experiments.harness.live_planner import LivePlanner
+
+        planner = LivePlanner(counter=counter)
+    else:
+        planner = _ScaffoldStub(scaffold)
+    return InteractiveDriver(config, worker_index, from_index, planner,
+                             wrapper, emit=emit)
+
+
 def _refuse_amount_drift(action, base, wrapper, emit) -> None:
     """The planner chooses the action. It does not choose what is measured.
 
@@ -186,9 +385,10 @@ def _ask(
     observation: Observation,
     wrapper: CallWrapper,
     base: WorkloadItem,
+    last_outcome: str | None = None,
 ) -> ToolCall | Stop:
     """One decision, through the wrapper, with one retry on a malformed reply."""
-    prompt = _prompt_for(observation, base)
+    prompt = _prompt_for(observation, base, last_outcome)
     for attempt in (1, 2):
         # A fresh call object per attempt: the wrapper reads usage and identity
         # back off it afterwards, and a reused one would report the previous
@@ -227,7 +427,8 @@ def _call_object(planner: Planner, observation: Observation, prompt: str):
     return make_call
 
 
-def _prompt_for(observation: Observation, base: WorkloadItem) -> str:
+def _prompt_for(observation: Observation, base: WorkloadItem,
+                last_outcome: str | None = None) -> str:
     """What the planner is shown. The oracle is not in it, by construction."""
     if planner_mode() == LIVE:
         from experiments.harness.live_planner import build_prompt
@@ -236,11 +437,19 @@ def _prompt_for(observation: Observation, base: WorkloadItem) -> str:
         # the planner still chooses the action and whether to act at all.
         # No capture history is passed: amendment 3 makes each turn its own
         # payment, and the history is what invited the arithmetic.
-        return build_prompt(observation, base.target, base.amount_minor)
+        wording = OUTCOME_WORDING.get(last_outcome) if last_outcome else None
+        return build_prompt(observation, base.target, base.amount_minor,
+                            wording)
+    # The stub prompt carries the outcome too. Without it, stub mode would
+    # exercise a different prompt from live mode and the interactive loop's
+    # only zero-cost test would not be testing the thing that runs.
+    previous = OUTCOME_WORDING.get(last_outcome, "none") if last_outcome \
+        else "none"
     return (
         f"run={observation.run_id} worker={observation.worker_index} "
         f"step={observation.step_index} "
         f"prior={','.join(observation.prior_outcomes) or 'none'} "
+        f"previous-call={previous} "
         f"target={base.target}"
     )
 
@@ -285,6 +494,37 @@ class _ReplayFailure:
 #: distinguishable from the scripted plan, so the data shows the planner chose
 #: rather than that the scaffold passed through unchanged.
 STUB_ACTION = "capture"
+
+
+class _ScaffoldStub:
+    """A stub planner keyed by step, not by position.
+
+    ``StubPlanner`` walks its script with a cursor, and replay consumes no
+    script entry -- so after a respawn replayed turn 0 from the transcript, the
+    cursor was one behind and the stub answered turn 0's amount for turn 1. The
+    amount guard voided the run, correctly; the stub was what was wrong.
+
+    Keying on ``step_index`` makes it right by construction, whatever order the
+    turns are asked for and however many lifetimes it takes.
+    """
+
+    model = "stub"
+    snapshot = "stub-0"
+    deployment = "stub"
+    api_version = "stub"
+    reasoning_effort = "low"
+
+    def __init__(self, scaffold: Sequence[WorkloadItem]):
+        self._by_step = {
+            item.execution_index: item.amount_minor for item in scaffold
+        }
+
+    def next_action(self, observation: Observation):
+        amount = self._by_step.get(observation.step_index)
+        if amount is None:
+            return Stop("no assignment for this step")
+        return ToolCall(tool="send_notification", action=STUB_ACTION,
+                        amount_minor=amount)
 
 
 def _stub_script(scaffold: Sequence[WorkloadItem]):
