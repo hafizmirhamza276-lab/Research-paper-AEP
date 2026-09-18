@@ -1,5 +1,14 @@
 # Phase 40 — the stub stage, measured against its pre-registered criteria
 
+> **Superseded, not corrected.** The three counter defects §5 records
+> were fixed on 2026-09-18 and the stage was re-run:
+> `phase-report-40-stub-stage-2026-09-18.md`, with the counter work in
+> `phase-report-40-counter-2026-09-18.md` — what was wrong with it turned
+> out to be worth its own document. **Nothing below is edited.** It is
+> what the stage found on the day it ran, including the false failure in
+> §1 that was my probe's error and not the harness's, and that record is
+> worth more intact than tidied.
+
 **Six criteria were fixed in `prompts/phase-40-agent-reachability.md` §6 before
 any of this code existed.** This report gives each one a verdict and its
 evidence. Five pass. One fails, and it fails on three separate defects in the
