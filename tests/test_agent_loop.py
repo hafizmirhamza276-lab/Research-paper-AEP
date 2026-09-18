@@ -103,7 +103,7 @@ def test_stub_is_recognised_as_the_agent_branch(monkeypatch):
 
 def test_an_unknown_mode_refuses_rather_than_falling_back(monkeypatch, tmp_path):
     """A typo must not silently collect a scripted run labelled as agentic."""
-    monkeypatch.setenv(PLANNER_MODE_ENV, "live")
+    monkeypatch.setenv(PLANNER_MODE_ENV, "liv")  # a typo, not a mode
     with pytest.raises(RuntimeError, match="does not exist"):
         agent_loop.agent_items_for_worker(
             _Config(results_root=str(tmp_path)), 0, 0

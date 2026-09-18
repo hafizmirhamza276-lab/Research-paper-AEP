@@ -224,6 +224,16 @@ class CumulativeCounter:
             entries.append(entry)
         return entries
 
+    def has_key(self, key: str) -> bool:
+        """Is this reservation already durably on disk?
+
+        Read from the file, not from memory. The live client calls this
+        immediately before dispatching, so that "counted before it is made" is
+        a property the request cannot get around rather than an ordering a
+        later edit could quietly invert.
+        """
+        return any(entry["key"] == key for entry in self._lines())
+
     def read(self) -> dict[str, Any]:
         """Aggregate the journal. Absent is the only thing that reads as zero."""
         seen: dict[str, dict[str, Any]] = {}
@@ -566,6 +576,18 @@ class RunBudget:
         }
 
 
+def reservation_key(
+    run_id: str, worker_index: int, step_index: int, attempt: int
+) -> str:
+    """The identity of one counted attempt.
+
+    Named in one place because ``CallWrapper.attempt`` writes it and the live
+    client checks for it; two spellings of the same thing would turn the
+    dispatch guard into a guard that always refuses, or never does.
+    """
+    return f"{run_id}:{worker_index}:{step_index}:{attempt}"
+
+
 class CallWrapper:
     """The single seam every model call passes through.
 
@@ -683,9 +705,12 @@ class CallWrapper:
         # It is settled below with the difference. Dying in between over-counts
         # the collection, which stops it early; the other order spends money
         # nobody counted.
-        reservation = (
-            f"{self.run_id}:{worker_index}:{step_index}:{attempt}"
+        reservation = reservation_key(
+            self.run_id, worker_index, step_index, attempt
         )
+        # The live client re-reads this key from disk and refuses to dispatch
+        # without it, so the two sides must agree on the spelling. Named once.
+        setattr(call, "reservation_key", reservation)
         self.cumulative.add(
             1,
             self.price.usd(
@@ -751,6 +776,11 @@ class CallWrapper:
                 "and is never folded into declared ambiguity.",
             )
             raise CapExceeded(VoidReason.PLANNER_FILTERED, completion)
-        if outcome is PlannerOutcome.MALFORMED:
+        if outcome in (PlannerOutcome.MALFORMED, PlannerOutcome.RETRY):
+            # RETRY has to raise for the same reason MALFORMED does: the call
+            # produced no decision, and `return result` would hand the loop a
+            # None to treat as one. _ask retries on PlannerAttemptFailed, so a
+            # throttled attempt gets its one retry and then stops the run --
+            # both attempts counted, neither uncapped.
             raise PlannerAttemptFailed(outcome, completion)
         return result

@@ -56,6 +56,7 @@ PLANNER_MODE_ENV = "AEP_PLANNER_MODE"
 
 SCRIPTED = "scripted"
 STUB = "stub"
+LIVE = "live"
 
 
 def planner_mode() -> str:
@@ -141,19 +142,19 @@ def _ask(
     base: WorkloadItem,
 ) -> ToolCall | Stop:
     """One decision, through the wrapper, with one retry on a malformed reply."""
-
-    def make_call(*, max_output_tokens: int):
-        make_call.max_output_tokens = max_output_tokens  # type: ignore[attr-defined]
-        return planner.next_action(observation)
-
+    prompt = _prompt_for(observation, base)
     for attempt in (1, 2):
+        # A fresh call object per attempt: the wrapper reads usage and identity
+        # back off it afterwards, and a reused one would report the previous
+        # attempt's tokens.
+        call = _call_object(planner, observation, prompt)
         try:
             return wrapper.attempt(
                 worker_index=observation.worker_index,
                 step_index=observation.step_index,
                 attempt=attempt,
-                prompt=_prompt_for(observation, base),
-                call=make_call,
+                prompt=prompt,
+                call=call,
             )
         except PlannerAttemptFailed:
             if attempt == 2:
@@ -161,8 +162,31 @@ def _ask(
     raise AssertionError("unreachable")
 
 
+def _call_object(planner: Planner, observation: Observation, prompt: str):
+    """What the wrapper invokes.
+
+    A planner that can build its own call object -- the live one -- supplies it,
+    because the wrapper has to hold that object to read its token counts and
+    model identity back. A planner that cannot is wrapped in a closure, which
+    is what the stub has always been and costs nothing to keep.
+    """
+    maker = getattr(planner, "call_for", None)
+    if maker is not None:
+        return maker(observation, prompt)
+
+    def make_call(*, max_output_tokens: int):
+        make_call.max_output_tokens = max_output_tokens  # type: ignore[attr-defined]
+        return planner.next_action(observation)
+
+    return make_call
+
+
 def _prompt_for(observation: Observation, base: WorkloadItem) -> str:
     """What the planner is shown. The oracle is not in it, by construction."""
+    if planner_mode() == LIVE:
+        from experiments.harness.live_planner import build_prompt
+
+        return build_prompt(observation, base.target)
     return (
         f"run={observation.run_id} worker={observation.worker_index} "
         f"step={observation.step_index} "
@@ -227,6 +251,51 @@ def _stub_script(scaffold: Sequence[WorkloadItem]):
     return script
 
 
+#: Stage caps, read from the environment. Each may only be LOWERED.
+#:
+#: The staging table in prompts/phase-40-agent-reachability.md §6 runs 10, 30,
+#: 100 then 300 calls, and says the author raises each cap by hand -- so the
+#: collection-wide numbers in §3 are the *maximum*, not the setting for any
+#: given stage. A stage that could raise them by exporting a variable would
+#: make the ceiling advisory, so this refuses upward and says so.
+CAP_ENV = {
+    "per_run_calls": "AEP_PLANNER_PER_RUN_CALLS",
+    "per_collection_calls": "AEP_PLANNER_PER_COLLECTION_CALLS",
+    "per_collection_usd": "AEP_PLANNER_PER_COLLECTION_USD",
+}
+
+
+def stage_caps():
+    """The pre-registered ceilings, optionally tightened for this stage."""
+    from experiments.harness.planner import Caps
+
+    ceiling = Caps()
+    values = {}
+    for field, name in CAP_ENV.items():
+        raw = (os.environ.get(name) or "").strip()
+        if not raw:
+            continue
+        limit = getattr(ceiling, field)
+        try:
+            value = type(limit)(raw)
+        except ValueError:
+            raise RuntimeError(f"{name}={raw!r} is not a {type(limit).__name__}")
+        if value > limit:
+            raise RuntimeError(
+                f"{name}={value} is above the pre-registered ceiling {limit} "
+                f"(prompts/phase-40-agent-reachability.md §3). These may be "
+                f"lowered for a stage and never raised; raising one is an "
+                f"amendment to the pre-registration, not an environment "
+                f"variable."
+            )
+        if value <= 0:
+            raise RuntimeError(f"{name}={value} must be positive")
+        values[field] = value
+    # max_output_tokens is deliberately absent: §3 calls it "what makes the
+    # ceiling finite", so it is not a knob.
+    return replace(ceiling, **values)
+
+
 def agent_items_for_worker(config, worker_index: int, from_index: int):
     """The agent branch, assembled from the environment.
 
@@ -246,12 +315,10 @@ def agent_items_for_worker(config, worker_index: int, from_index: int):
         for item in worker_items(plan_workload(config), worker_index)
         if item.execution_index >= from_index
     ]
-    if mode != STUB:
+    if mode not in (STUB, LIVE):
         raise RuntimeError(
             f"{PLANNER_MODE_ENV}={mode!r} selects a planner that does not "
-            "exist. Stub mode is the only agent branch implemented; the live "
-            "path is deliberately absent until stub mode's stage criteria pass "
-            "(prompts/phase-40-agent-reachability.md)."
+            f"exist. The implemented branches are {STUB!r} and {LIVE!r}."
         )
 
     run_dir = Path(config.results_root) / config.run_id
@@ -259,9 +326,15 @@ def agent_items_for_worker(config, worker_index: int, from_index: int):
         Path(config.results_root) / "planner-cumulative.json"
     )
     wrapper = CallWrapper(
-        run_id=config.run_id, run_dir=run_dir, cumulative=counter, caps=Caps()
+        run_id=config.run_id, run_dir=run_dir, cumulative=counter,
+        caps=stage_caps(),
     )
-    planner = StubPlanner(script=_stub_script(scaffold))
+    if mode == LIVE:
+        from experiments.harness.live_planner import LivePlanner
+
+        planner = LivePlanner(counter=counter)
+    else:
+        planner = StubPlanner(script=_stub_script(scaffold))
     return agent_worker_items(
         config, worker_index, from_index, planner, wrapper
     )
