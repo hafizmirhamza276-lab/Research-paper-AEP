@@ -1,0 +1,8 @@
+{
+  "calls": 3,
+  "output_tokens": 312,
+  "prompt_tokens": 1217,
+  "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0",
+  "usd": 0.0006178,
+  "voided": null
+}
