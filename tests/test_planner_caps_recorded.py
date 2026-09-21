@@ -15,6 +15,7 @@ digest does not move.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -193,6 +194,58 @@ def test_a_mismatch_does_not_abort_the_run(tmp_path):
     build(tmp_path, Caps(per_collection_calls=10), run_id="r0")
     wrapper = build(tmp_path, Caps(per_collection_calls=5), run_id="r1")
     assert wrapper.budget.voided is None
+
+
+# -- which branch produced the collection -----------------------------------
+
+def test_the_record_says_which_branch_ran(tmp_path, monkeypatch):
+    """Amendment 4 added a third branch; a collection must say which it used.
+
+    The whole justification for re-running stage 10 is that the loop changed.
+    A collection that cannot say which loop it ran under cannot be compared
+    against one that ran the other, which makes the re-run unauditable for
+    exactly the reason it was commissioned.
+    """
+    monkeypatch.setenv("AEP_PLANNER_MODE", "live")
+    monkeypatch.setenv("AEP_PLANNER_LOOP", "interactive")
+    build(tmp_path, Caps())
+    planner = read(tmp_path / "r0" / CAPS_FILENAME)["planner"]
+    assert planner == {"mode": "live", "loop": "interactive"}
+
+
+def test_an_unset_loop_records_the_branch_that_actually_runs(tmp_path,
+                                                             monkeypatch):
+    """Absent means planned -- agent_loop's own default, not "unknown"."""
+    monkeypatch.delenv("AEP_PLANNER_LOOP", raising=False)
+    monkeypatch.setenv("AEP_PLANNER_MODE", "stub")
+    build(tmp_path, Caps())
+    assert read(tmp_path / "r0" / CAPS_FILENAME)["planner"] == {
+        "mode": "stub", "loop": "planned"
+    }
+
+
+def test_the_recorded_default_matches_agent_loops_actual_default():
+    """A record that disagrees with the code is worse than no record."""
+    from experiments.harness.agent_loop import PLANNED, loop_mode
+
+    assert PLANNED == "planned"
+    assert loop_mode() == PLANNED
+
+
+def test_the_live_launcher_refuses_an_unset_loop():
+    """The launcher set AEP_PLANNER_MODE=live and never set the loop.
+
+    Run as it stood, the stage-10 re-run would have collected the PLANNED
+    branch at real cost -- the exact shape amendment 5 §5 commissioned the
+    re-run to replace. Checked as source because the script cannot be run
+    here without a key.
+    """
+    script = (Path(__file__).resolve().parents[1]
+              / "scripts" / "run_phase40_live.sh").read_text(encoding="utf-8")
+    assert "AEP_PLANNER_LOOP" in script
+    # ":?" is the refusal. A plain default would reintroduce the defect.
+    assert 'AEP_PLANNER_LOOP:?' in script.replace("${", "").replace("\\\n", "")
+    assert "interactive|planned" in script
 
 
 # -- caps_echo on its own ---------------------------------------------------

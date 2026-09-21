@@ -227,6 +227,18 @@ def caps_echo(caps: "Caps", price: "Price") -> dict[str, Any]:
             "experiments.harness.agent_loop.stage_caps, which refuses any "
             "value above the pre-registered ceiling"
         ),
+        # Which branch produced this collection. Read here rather than passed
+        # in because it is the same class of fact as the caps -- environment
+        # only, outside RunConfig, and so recorded nowhere until now.
+        #
+        # It matters for the same reason the re-run exists: amendment 4 added a
+        # third branch, and a collection that cannot say which one it ran under
+        # cannot be compared with one that ran the other. Absent means the
+        # scripted branch, which reaches none of this code.
+        "planner": {
+            "mode": os.environ.get("AEP_PLANNER_MODE") or None,
+            "loop": os.environ.get("AEP_PLANNER_LOOP") or "planned",
+        },
         "price": {
             "input_per_million": price.input_per_million,
             "output_per_million": price.output_per_million,

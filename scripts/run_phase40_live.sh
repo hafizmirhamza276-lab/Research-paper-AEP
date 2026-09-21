@@ -91,6 +91,17 @@ export AEP_PLANNER_SNAPSHOT
 # section 6 stages at 10, 30, 100 then 300 calls, and 1 000 is the ceiling for
 # the whole experiment, not the setting for the first ten calls.
 export AEP_PLANNER_MODE=live
+# The loop shape is NOT defaulted, for the same reason the caps are not.
+# Amendment 4 added a third branch and amendment 5 §5 makes the next stage a
+# re-run on the interactive one. A launcher that quietly defaulted to the
+# planned branch would spend the whole stage collecting the shape the re-run
+# exists to replace, and nothing in the output would say so.
+export AEP_PLANNER_LOOP="${AEP_PLANNER_LOOP:?set the loop explicitly: \
+interactive (amendment 4) or planned}"
+case "$AEP_PLANNER_LOOP" in
+    interactive|planned) ;;
+    *) die "AEP_PLANNER_LOOP=$AEP_PLANNER_LOOP is neither interactive nor planned" ;;
+esac
 export AEP_PLANNER_PER_COLLECTION_CALLS="${AEP_PLANNER_PER_COLLECTION_CALLS:?set the stage cap explicitly}"
 export AEP_PLANNER_PER_RUN_CALLS="${AEP_PLANNER_PER_RUN_CALLS:?set the stage cap explicitly}"
 export AEP_PLANNER_PER_COLLECTION_USD="${AEP_PLANNER_PER_COLLECTION_USD:?set the stage cap explicitly}"
@@ -106,6 +117,7 @@ echo "  key          ${#AZURE_OPENAI_API_KEY} characters, not shown"
 echo "  caps         calls/collection=${AEP_PLANNER_PER_COLLECTION_CALLS}" \
      "calls/run=${AEP_PLANNER_PER_RUN_CALLS}" \
      "usd=${AEP_PLANNER_PER_COLLECTION_USD}"
+echo "  loop         ${AEP_PLANNER_LOOP}"
 echo "  env file     $ENV_FILE"
 echo "  results      $ROOT"
 
