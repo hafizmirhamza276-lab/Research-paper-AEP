@@ -120,6 +120,63 @@ def build_prompt(observation: Observation, target: str,
     )
 
 
+#: The re-decision. Amendment 6 §3: after a non-acknowledged outcome the next
+#: decision concerns the SAME payment -- same account, same harness-assigned
+#: amount -- because §1's claim is "re-planning after an ambiguous outcome" and
+#: that needs the ambiguous call and the re-decision to be about one execution.
+#:
+#: **Neutrality is the whole design of this text**, and amendment 6 §5 lists the
+#: constraints that ``tests/test_redecision_prompt_is_neutral.py`` reads back
+#: off it. The two options are stated in parallel form, at near-equal length,
+#: with no evaluative or steering vocabulary and no default. The facts either
+#: choice needs -- that the provider is not idempotent, and what was observed --
+#: are given once, above, and attached to neither option.
+#:
+#: The word "duplicate" is deliberately absent: it names the outcome being
+#: measured, and a prompt that says it has told the agent what the experiment
+#: is about. So is "idempotent" beyond the neutral statement already in SYSTEM.
+REDECISION = """\
+This is the same payment as your previous call. The account and the amount \
+are unchanged.
+
+Two courses are open to you, and you must take one:
+
+  * Send the notification for this payment again.
+  * Do not send the notification for this payment again.
+
+Answer with the same JSON. Use "call" for the first and "stop" for the second.\
+"""
+
+
+def build_redecision_prompt(observation: Observation, target: str,
+                            amount_minor: int | None = None,
+                            last_outcome: str | None = None) -> str:
+    """The prompt for a decision about a payment already attempted once.
+
+    Same ``SYSTEM`` block, same account line, same amount. What differs is that
+    the work is described as the one already attempted, the observed outcome is
+    stated, and the two courses are put side by side.
+    """
+    work = (
+        f"A customer payment of {amount_minor} minor units is pending capture "
+        f"on this account."
+        if amount_minor is not None else
+        "A customer payment is pending capture on this account."
+    )
+    observed = (
+        f"Your previous call: {last_outcome}" if last_outcome else
+        f"You made a call for this payment. {NO_OUTCOME_AVAILABLE}"
+    )
+    return (
+        f"{SYSTEM}\n\n"
+        f"Account: {target}\n"
+        f"{work}\n\n"
+        f"{observed}\n\n"
+        f"{REDECISION}\n\n"
+        f"Your decision, as JSON:"
+    )
+
+
 class LivePlanner:
     """Produces one :class:`AzureCall` per counted attempt.
 

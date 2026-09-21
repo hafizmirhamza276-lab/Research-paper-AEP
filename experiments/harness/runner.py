@@ -96,6 +96,52 @@ PENDING_STATUSES = frozenset(
 #: A crash costs one lifetime per selected execution, plus a margin.
 MAX_ATTEMPTS_PER_WORKER = 64
 
+
+def _agent_owns_redispatch() -> bool:
+    """Is this the branch where the AGENT decides whether to send again?
+
+    Amendment 6 §4. Established from this file and the live run directory at
+    stage 10: under ``REEXECUTE_CRASHED`` the supervisor sets ``from_index``
+    back and the driver replays the old decision, so the planner is never
+    asked -- and under ``NEXT_EXECUTION`` the crashed payment is never
+    re-dispatched at all. The two arms therefore differ in *who decides*, and
+    on neither is it the agent. While that holds, what the comparison measures
+    is two supervisors rather than two protocols.
+
+    On the agent-interactive branch, and only there, both arms re-enter at the
+    crashed execution and the agent is asked. Read from the environment, like
+    every other planner setting (``docs/31`` §4), so ``RunConfig`` and every
+    ``config_digest`` are untouched.
+    """
+    from experiments.harness.agent_loop import is_agent_mode, is_interactive
+
+    return is_agent_mode() and is_interactive()
+
+
+def resume_from_index(config, last_started: int) -> tuple[int, str | None]:
+    """Where the replacement worker starts, and what to record about it.
+
+    Three cases, in this order:
+
+    * **the agent owns the re-dispatch** -- re-enter at the crashed execution
+      on BOTH arms, so the driver can put the question to the planner. This
+      re-dispatches nothing by itself: the driver refuses to replay a decision
+      whose outcome was never observed (amendment 6 §3.2), so re-entering here
+      produces a question, not a call;
+    * ``REEXECUTE_CRASHED`` -- the supervisor runs it again, which is the
+      branch that turns a crash into a duplicated external effect;
+    * otherwise -- the dead execution is a recovery service's problem.
+
+    Extracted from ``run_worker_slot`` so the first case can be asserted
+    directly for both systems, which is the property amendment 6 §4.3 turns on
+    and which a subprocess-level test would only reach obliquely.
+    """
+    if _agent_owns_redispatch():
+        return last_started, "resume_for_agent_redecision"
+    if config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED:
+        return last_started, "resume_reexecuting_crashed"
+    return last_started + 1, None
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -210,7 +256,10 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
             if item.crash_selected and item.execution_index >= from_index
         ]
         if (
-            config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED
+            (
+                config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED
+                or _agent_owns_redispatch()
+            )
             and attempt > 1
         ):
             # The re-executed execution must not be crashed a second time, or
@@ -290,20 +339,14 @@ def run_worker_slot(config: RunConfig, worker_index: int, log: EventLog) -> None
                 f"any execution (exit {process.returncode}):\n"
                 f"{stderr.decode(errors='replace')[-4000:]}"
             )
-        if config.effective_resume_policy is ResumePolicy.REEXECUTE_CRASHED:
-            # The supervisor runs the crashed execution again. With no durable
-            # pre-dispatch record there is no third option (see
-            # experiments/baselines/contract.py), and this is the branch that
-            # turns a crash into a duplicated external effect.
-            from_index = last_started
+        from_index, resume_event = resume_from_index(config, last_started)
+        if resume_event is not None:
             log.emit(
-                "resume_reexecuting_crashed",
+                resume_event,
                 worker_index=worker_index,
                 execution_index=last_started,
                 policy=config.effective_resume_policy.value,
             )
-        else:
-            from_index = last_started + 1
         if from_index >= config.executions_per_worker:
             # Killed during its last execution: nothing left to resume.
             return

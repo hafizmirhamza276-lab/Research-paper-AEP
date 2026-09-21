@@ -30,6 +30,7 @@ the duplicate metric sound and removes the WS-1a prerequisite
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import replace
 from pathlib import Path
@@ -104,6 +105,23 @@ ACKNOWLEDGED = "acknowledged"
 UNKNOWN_PROCESS_DIED = "unknown_process_died"
 
 OUTCOME_VALUES = (TIMED_OUT, SERVER_ERROR, ACKNOWLEDGED, UNKNOWN_PROCESS_DIED)
+
+#: Everything that is not an acknowledgement. Amendment 6 §3: after one of
+#: these the NEXT decision concerns the SAME payment -- same account, same
+#: harness-assigned amount -- because §1's claim is "re-planning after an
+#: ambiguous outcome" and that requires the ambiguous call and the re-decision
+#: to be about the same execution.
+NON_ACKNOWLEDGED = (TIMED_OUT, SERVER_ERROR, UNKNOWN_PROCESS_DIED)
+
+#: One initial decision and at most one re-decision, per execution.
+#:
+#: Not a cost limit. The harness crashes each execution at most once --
+#: ``runner.py`` drops the resumed execution from ``remaining_crashes`` so a
+#: crashed system can make progress -- so one re-decision is enough to reach an
+#: acknowledged outcome in the regime this runs in. And "how many times does an
+#: agent retry" is a distribution, which §2 forbids this collection from
+#: reporting; whether it retries at all is the binary claim §2 allows.
+MAX_DECISIONS_PER_EXECUTION = 2
 
 #: What the planner is shown for each. Deliberately in a caller's words, with
 #: no reference to intents, dispatch counts, or anything the oracle computes.
@@ -194,7 +212,10 @@ def agent_worker_items(
             prior_outcomes=tuple(outcomes),
         )
 
-        recorded = replay.get((worker_index, base.execution_index))
+        # The planned branch has exactly one decision per execution, so it
+        # always reads decision 0. Amendment 6's re-decision is the
+        # interactive branch's, and this one is unchanged by it.
+        recorded = replay.get((worker_index, base.execution_index, 0))
         if recorded is not None:
             # Replay: a respawned worker reads the transcript rather than
             # calling the model. Correctness and cost both -- a respawn that
@@ -222,12 +243,70 @@ def agent_worker_items(
     return tuple(decided)
 
 
-class InteractiveDriver:
-    """Ask, execute, observe, ask again -- one turn at a time.
+class ObservationLog:
+    """What the agent was told happened, append-only, in the run directory.
 
-    Amendment 4. The planned loop asked for every turn before any of them ran,
-    so no outcome existed at decision time and §1's "observe an outcome, and
-    re-plan" was not what the code did.
+    **Why this file exists at all.** Amendment 6 §3.2 needs to distinguish a
+    decision that was made and *observed* -- replayable, no model call -- from
+    one that was made and never observed, which is the decision the crash
+    landed inside and which earns a re-decision. The transcript records
+    decisions; nothing recorded outcomes.
+
+    **Why not the event log.** Amendment 4 §3, without exception: the replayed
+    observation is derived from the agent's own record, never from
+    ``events.jsonl``. The event log holds the oracle's ``execution_resolved``
+    entry for the very turn the death was supposed to leave unknown, and
+    reading it would hand the replacement agent the answer.
+
+    What is written is only ``classify_outcome``'s output -- one of
+    ``OUTCOME_VALUES`` -- which is caller-visible and arm-neutral by
+    construction. Nothing else goes in here.
+    """
+
+    FILENAME = "planner-observations.jsonl"
+
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def record(self, worker_index: int, execution_index: int,
+               decision_index: int, result: str) -> None:
+        # One O_APPEND write per line, the same discipline the cumulative
+        # journal uses and for the same reason: several worker lifetimes write
+        # here and a read-modify-write would lose entries under a SIGKILL.
+        line = json.dumps(
+            {
+                "worker_index": worker_index,
+                "step_index": execution_index,
+                "decision_index": decision_index,
+                "result": result,
+            },
+            sort_keys=True,
+        )
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
+
+    def index(self) -> dict[tuple[int, int, int], str]:
+        """Last write wins per key: a re-executed decision observed twice."""
+        out: dict[tuple[int, int, int], str] = {}
+        if not self.path.is_file():
+            return out
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            entry = json.loads(line)
+            out[(entry["worker_index"], entry["step_index"],
+                 int(entry.get("decision_index", 0)))] = entry["result"]
+        return out
+
+
+class InteractiveDriver:
+    """Ask, execute, observe, ask again -- one decision at a time.
+
+    Amendment 4 built the loop. Amendment 6 fixed what a turn means: after a
+    non-acknowledged outcome the next decision concerns the SAME payment, so
+    that the ambiguous call and the re-decision are about the same execution,
+    which is what §1's claim requires.
 
     Iterating this object yields one item at a time. ``worker.py`` executes the
     item and calls :meth:`observe` with what happened; the next iteration uses
@@ -236,7 +315,7 @@ class InteractiveDriver:
     """
 
     def __init__(self, config, worker_index, from_index, planner, wrapper,
-                 *, emit=None, max_turns=None):
+                 *, emit=None, max_turns=None, observations=None):
         self.config = config
         self.worker_index = worker_index
         self.planner = planner
@@ -251,22 +330,26 @@ class InteractiveDriver:
             self.scaffold = self.scaffold[:max_turns]
         self.observations: list[str] = []
         self._replay = wrapper.transcript.replay_index()
-        # A respawned worker resumes at from_index > 0, which means an earlier
-        # turn was issued by a process that then died. Its outcome is exactly
-        # what amendment 4 §3 describes: not "no calls yet", but "a call was
-        # made and you cannot know what became of it". Starting at None would
-        # tell the replacement agent it had a clean slate, which is false and
-        # is the more misleading of the two.
-        self._pending = UNKNOWN_PROCESS_DIED if from_index > 0 else None
+        self._log = observations or ObservationLog(
+            Path(wrapper.run_dir) / ObservationLog.FILENAME
+        )
+        self._observed = self._log.index()
+        # No `from_index > 0` heuristic any more. Amendment 6 §4.3 makes BOTH
+        # arms re-enter at the crashed execution, so from_index is 0 on a
+        # respawn as often as not, and the old test would have read a respawn
+        # as a clean start. What identifies the crashed decision is that it was
+        # recorded and never observed -- which is a fact in the run directory
+        # rather than an inference from an index, and is the same on both arms.
+        self._pending = None
 
     def __len__(self) -> int:
         """How many turns are AVAILABLE, not how many will be taken.
 
         ``worker.py`` emits this as ``assigned`` on ``worker_started``.
         Under the interactive loop the number taken is not known until the
-        run ends -- the planner may stop early -- so what is reported is
-        the scaffold's length, which is the same quantity the planned
-        branch reports.
+        run ends -- the planner may stop early, or may spend two decisions on
+        one payment -- so what is reported is the scaffold's length, which is
+        the same quantity the planned branch reports.
         """
         return len(self.scaffold)
 
@@ -275,37 +358,99 @@ class InteractiveDriver:
         """Record the caller-visible result of the item just executed."""
         self._pending = classify_outcome(resolved, error)
 
+    # -- the loop ------------------------------------------------------
     def __iter__(self):
         for base in self.scaffold:
-            observation = Observation(
-                run_id=self.config.run_id,
-                worker_index=self.worker_index,
-                step_index=base.execution_index,
-                prior_outcomes=tuple(self.observations),
-            )
-            recorded = self._replay.get((self.worker_index, base.execution_index))
-            if recorded is not None:
-                action = _action_from_completion(recorded["completion"], base)
-            else:
+            for decision_index in range(MAX_DECISIONS_PER_EXECUTION):
+                key = (self.worker_index, base.execution_index, decision_index)
+                decided = self._replay.get(key)
+                observed = self._observed.get(key)
+
+                if decided is not None and observed is not None:
+                    # Made in an earlier lifetime AND its outcome recorded. It
+                    # has already happened: replaying costs no model call and
+                    # must not dispatch again. §5 of the pre-registration.
+                    self._pending = observed
+                    self.observations.append(observed)
+                    if observed in NON_ACKNOWLEDGED:
+                        continue
+                    break
+
+                if decided is not None and observed is None:
+                    # Recorded and never observed: this is where the kill
+                    # landed. NOT replayed -- amendment 6 §3.2. Re-dispatching
+                    # on the strength of a decision the agent made before it
+                    # knew anything had gone wrong is the harness deciding
+                    # while appearing not to.
+                    self._pending = UNKNOWN_PROCESS_DIED
+                    continue
+
                 try:
-                    action = _ask(self.planner, observation, self.wrapper, base,
-                                  last_outcome=self._pending)
+                    action = _ask(
+                        self.planner,
+                        Observation(
+                            run_id=self.config.run_id,
+                            worker_index=self.worker_index,
+                            step_index=base.execution_index,
+                            prior_outcomes=tuple(self.observations),
+                            decision_index=decision_index,
+                        ),
+                        self.wrapper,
+                        base,
+                        last_outcome=self._pending,
+                    )
                 except CapExceeded as capped:
                     raise AgentRunVoided(capped.reason, capped.detail) from capped
-            if isinstance(action, Stop):
-                return
-            _refuse_amount_drift(action, base, self.wrapper, self.emit)
 
-            # The observation for THIS turn is not known until worker.py has
-            # run it. Cleared here so that a crash between yielding and
-            # observing leaves `unknown_process_died` rather than the previous
-            # turn's result.
-            self._pending = UNKNOWN_PROCESS_DIED
-            yield replace(base, action=action.action,
-                          amount_minor=action.amount_minor)
-            # worker.py has called observe() by now, unless it died -- in which
-            # case this generator never resumes and nothing is recorded.
-            self.observations.append(self._pending or UNKNOWN_PROCESS_DIED)
+                if isinstance(action, Stop):
+                    if decision_index == 0:
+                        # "No further call is warranted" about a payment not
+                        # yet attempted ends the run, as it always has.
+                        return
+                    # A re-decision declined. Amendment 6 §3: a new payment is
+                    # presented after an acknowledgement OR after the agent
+                    # explicitly chooses not to dispatch this one again.
+                    # Emitted so the archive shows the choice was offered and
+                    # which way it went -- "the agent declined" and "the agent
+                    # was never asked" must not look alike in the record.
+                    self._emit("planner_declined_redispatch", base,
+                               decision_index)
+                    break
+
+                _refuse_amount_drift(action, base, self.wrapper, self.emit)
+
+                if decision_index > 0:
+                    self._emit("planner_redispatched", base, decision_index)
+
+                # The observation for THIS decision is not known until
+                # worker.py has run it. Cleared so a crash between yielding
+                # and observing records nothing -- which is exactly how the
+                # next lifetime recognises the crashed decision.
+                self._pending = None
+                yield replace(base, action=action.action,
+                              amount_minor=action.amount_minor)
+                # worker.py has called observe() by now, unless it died -- in
+                # which case this generator never resumes and nothing is
+                # written, leaving the decision recorded and unobserved.
+                result = self._pending or UNKNOWN_PROCESS_DIED
+                self._log.record(self.worker_index, base.execution_index,
+                                 decision_index, result)
+                self._observed[key] = result
+                self.observations.append(result)
+                if result in NON_ACKNOWLEDGED:
+                    continue
+                break
+
+    def _emit(self, event: str, base, decision_index: int) -> None:
+        if self.emit is None:
+            return
+        self.emit(
+            event,
+            execution_id=base.execution_id,
+            execution_index=base.execution_index,
+            decision_index=decision_index,
+            last_outcome=self._pending,
+        )
 
 
 def interactive_driver(config, worker_index: int, from_index: int, *,
@@ -398,6 +543,7 @@ def _ask(
             return wrapper.attempt(
                 worker_index=observation.worker_index,
                 step_index=observation.step_index,
+                decision_index=observation.decision_index,
                 attempt=attempt,
                 prompt=prompt,
                 call=call,
@@ -438,6 +584,16 @@ def _prompt_for(observation: Observation, base: WorkloadItem,
         # No capture history is passed: amendment 3 makes each turn its own
         # payment, and the history is what invited the arithmetic.
         wording = OUTCOME_WORDING.get(last_outcome) if last_outcome else None
+        if observation.decision_index > 0:
+            from experiments.harness.live_planner import build_redecision_prompt
+
+            # Amendment 6: the SAME payment, and both choices put
+            # symmetrically. This is the one place a prompt could decide the
+            # result, so tests/test_redecision_prompt_is_neutral.py reads the
+            # text rather than trusting this comment.
+            return build_redecision_prompt(
+                observation, base.target, base.amount_minor, wording
+            )
         return build_prompt(observation, base.target, base.amount_minor,
                             wording)
     # The stub prompt carries the outcome too. Without it, stub mode would
@@ -448,6 +604,7 @@ def _prompt_for(observation: Observation, base: WorkloadItem,
     return (
         f"run={observation.run_id} worker={observation.worker_index} "
         f"step={observation.step_index} "
+        f"decision={observation.decision_index} "
         f"prior={','.join(observation.prior_outcomes) or 'none'} "
         f"previous-call={previous} "
         f"target={base.target}"
@@ -523,8 +680,28 @@ class _ScaffoldStub:
         amount = self._by_step.get(observation.step_index)
         if amount is None:
             return Stop("no assignment for this step")
+        if observation.decision_index > 0 and not self.redispatches(
+            observation.step_index
+        ):
+            return Stop("stub declines to send this payment again")
         return ToolCall(tool="send_notification", action=STUB_ACTION,
                         amount_minor=amount)
+
+    @staticmethod
+    def redispatches(step_index: int) -> bool:
+        """Which way the stub answers a re-decision, by execution.
+
+        **Both choices must be exercised, on both arms**, or the zero-cost run
+        tests half the branch it exists to test. Alternating on the execution
+        index gives both within a single 3-execution run -- dispatch again on
+        0 and 2, decline on 1 -- and does it deterministically, so a stub run
+        still replays exactly and a respawn reproduces the same answer.
+
+        It is the same rule on both systems: the stub is the fixed caller, and
+        a stub that answered differently per arm would build the arm asymmetry
+        amendment 6 §4 exists to remove straight back into the test.
+        """
+        return step_index % 2 == 0
 
 
 def _stub_script(scaffold: Sequence[WorkloadItem]):
