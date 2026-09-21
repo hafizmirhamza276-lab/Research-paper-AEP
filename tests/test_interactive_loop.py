@@ -81,11 +81,40 @@ def _assigned(config):
     ]
 
 
-def _driver(tmp_path, config, script=None):
-    return InteractiveDriver(
-        config, 0, 0, StubPlanner(script=script or _assigned(config)),
-        _wrapper(tmp_path),
-    )
+class _ByStep:
+    """A planner keyed by (step, decision), not by position.
+
+    Amendment 6 lets one execution carry two decisions, so a positional script
+    hands the re-decision the NEXT payment's amount and amendment 3's guard
+    voids the run -- correctly. The guard is right; a positional fixture is
+    what would be wrong. Keying makes it right by construction.
+    """
+
+    model = snapshot = deployment = api_version = "stub"
+    reasoning_effort = "low"
+
+    def __init__(self, config, stops=()):
+        self._amounts = {
+            item.execution_index: item.amount_minor
+            for item in _scaffold(config)
+        }
+        self._stops = set(stops)
+
+    def next_action(self, observation):
+        key = (observation.step_index, observation.decision_index)
+        if key in self._stops:
+            return Stop("declined")
+        amount = self._amounts.get(observation.step_index)
+        if amount is None:
+            return Stop("no assignment")
+        return ToolCall(tool="send_notification", action="capture",
+                        amount_minor=amount)
+
+
+def _driver(tmp_path, config, script=None, stops=()):
+    planner = (StubPlanner(script=script) if script is not None
+               else _ByStep(config, stops))
+    return InteractiveDriver(config, 0, 0, planner, _wrapper(tmp_path))
 
 
 # ---------------------------------------------------------------------------
@@ -138,20 +167,30 @@ def test_the_planner_is_asked_one_turn_at_a_time(tmp_path):
 
 
 def test_the_observation_reaches_the_next_prompt(tmp_path):
-    """What the loop observed is what the planner is told next turn."""
+    """What the loop observed is what the planner is told next turn.
+
+    The run is longer than three turns since amendment 6: a non-acknowledged
+    outcome earns a re-decision about the same payment, so the first timeout
+    buys a fourth decision rather than advancing. The property under test is
+    unchanged -- each prompt carries the outcome of the call before it.
+    """
     config = _Config()
     driver = _driver(tmp_path, config)
-    results = ["timeout", "503 server_error", "ok"]
+    results = ["timeout", "503 server_error", "ok", "ok", "ok", "ok"]
     for index, item in enumerate(driver):
         driver.observe(resolved=_Resolved(results[index]))
 
-    assert driver.observations == [TIMED_OUT, SERVER_ERROR, ACKNOWLEDGED]
+    assert driver.observations[:3] == [TIMED_OUT, SERVER_ERROR, ACKNOWLEDGED]
     prompts = [e["prompt"] for e in driver.wrapper.transcript.entries()]
     assert "timed out" in prompts[1], prompts[1]
     assert "server error" in prompts[2], prompts[2]
     assert "previous-call=none" in prompts[0], (
         "turn 1 must not be told about a call it has not made"
     )
+    # The timeout was re-decided about the SAME payment, not the next one.
+    entries = driver.wrapper.transcript.entries()
+    assert (entries[0]["step_index"], entries[0]["decision_index"]) == (0, 0)
+    assert (entries[1]["step_index"], entries[1]["decision_index"]) == (0, 1)
 
 
 def test_the_first_turn_has_no_previous_call(tmp_path):
@@ -166,9 +205,7 @@ def test_the_first_turn_has_no_previous_call(tmp_path):
 
 def test_a_stop_ends_the_run_mid_stream(tmp_path):
     config = _Config()
-    script = _assigned(config)
-    script[1] = (PlannerOutcome.OK, Stop("nothing further warranted"))
-    driver = _driver(tmp_path, config, script)
+    driver = _driver(tmp_path, config, stops={(1, 0)})
     executed = []
     for item in driver:
         executed.append(item)
@@ -199,13 +236,25 @@ def test_a_turn_that_was_never_observed_is_unknown(tmp_path):
 
     The generator never resumes, so nothing is appended -- and the next
     lifetime must not invent an outcome for it.
+
+    Amendment 6 moved where that fact lives. It used to be an in-memory
+    sentinel on the dying object, which the next lifetime could not read. It is
+    now the ABSENCE of a line in ``planner-observations.jsonl``, which is a
+    fact on disk the replacement can act on -- and does, by asking a
+    re-decision about the same payment instead of replaying the decision.
     """
+    from experiments.harness.agent_loop import ObservationLog
+
     config = _Config()
     driver = _driver(tmp_path, config)
     iterator = iter(driver)
     next(iterator)          # turn 1 yielded, never observed
     assert driver.observations == []
-    assert driver._pending == UNKNOWN_PROCESS_DIED
+    log = ObservationLog(driver.wrapper.run_dir / ObservationLog.FILENAME)
+    assert log.index() == {}, "an unobserved decision was recorded anyway"
+    # And the decision itself IS recorded, which is what makes the pair
+    # "decided, never observed" recognisable as the crashed one.
+    assert len(driver.wrapper.transcript.entries()) == 1
 
 
 def test_the_pending_outcome_is_cleared_before_each_yield(tmp_path):
@@ -222,9 +271,14 @@ def test_the_pending_outcome_is_cleared_before_each_yield(tmp_path):
     driver.observe(resolved=_Resolved("ok"))
     assert driver._pending == ACKNOWLEDGED
     next(iterator)          # turn 2 yielded
-    assert driver._pending == UNKNOWN_PROCESS_DIED, (
+    assert driver._pending is None, (
         "turn 2 is carrying turn 1's outcome; a crash here would misreport it"
     )
+    # Cleared to None rather than to the sentinel, because amendment 6 records
+    # the unknown on disk instead of holding it in memory. The property is the
+    # same and is asserted here: whatever a crash at this point leaves behind,
+    # it is not turn 1's result.
+    assert driver._pending != ACKNOWLEDGED
 
 
 def test_the_observation_never_comes_from_the_event_log(tmp_path):
@@ -250,26 +304,41 @@ def test_the_observation_never_comes_from_the_event_log(tmp_path):
         )
 
 
-def test_replay_reuses_the_decision_and_makes_no_new_call(tmp_path):
-    """A respawn re-walks decided turns from the transcript, as before."""
+def test_replay_makes_no_new_call_and_does_not_dispatch_again(tmp_path):
+    """A respawn costs no model call for work already done -- and no dispatch.
+
+    **Amendment 6 changed the second half, deliberately.** Under amendment 4 a
+    replayed decision was yielded again, so ``worker.py`` executed it again.
+    That is how B0's duplicate was produced at stage 10: the supervisor set
+    ``from_index`` back, the driver replayed, and the mutation went out a
+    second time with the planner never asked. It was evidence about
+    ``ResumePolicy``, not about an agent.
+
+    A decision that was made AND observed has already happened. Replaying it
+    now re-reads the outcome and moves on. Re-dispatching, if it happens at
+    all, is a fresh decision the agent is asked for (§3.2), and
+    tests/test_same_payment_redecision.py holds that half.
+    """
     config = _Config(executions_per_worker=2)
     first = _driver(tmp_path, config)
+    executed = []
     for item in first:
+        executed.append(item.amount_minor)
         first.observe(resolved=_Resolved("ok"))
-    decided = [e["completion"] for e in first.wrapper.transcript.entries()]
-    assert len(decided) == 2
+    assert executed == [i.amount_minor for i in _scaffold(config)[:2]]
+    assert len(first.wrapper.transcript.entries()) == 2
 
     class _Exploding:
         def next_action(self, observation):
             raise AssertionError("the planner was consulted during replay")
 
     second = InteractiveDriver(config, 0, 0, _Exploding(), _wrapper(tmp_path))
-    replayed = []
-    for item in second:
-        replayed.append(item.amount_minor)
-        second.observe(resolved=_Resolved("ok"))
-    assert replayed == [i.amount_minor for i in _scaffold(config)[:2]]
+    re_executed = [item.amount_minor for item in second]
+
+    assert re_executed == [], "a replayed decision was dispatched again"
     assert len(second.wrapper.transcript.entries()) == 2, "a new call was made"
+    # The outcomes were re-read from the agent's own record, not re-derived.
+    assert second.observations == [ACKNOWLEDGED, ACKNOWLEDGED]
 
 
 # ---------------------------------------------------------------------------

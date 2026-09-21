@@ -206,3 +206,120 @@ def test_a_transport_exception_classifies_the_same_on_both_arms(arm):
 
     assert classify_outcome(None, httpx.ReadTimeout("x")) == TIMED_OUT
     assert classify_outcome(None, RuntimeError("boom")) == SERVER_ERROR
+
+
+# ---------------------------------------------------------------------------
+# Amendment 6 §6: identical VOCABULARY was not enough.
+# ---------------------------------------------------------------------------
+
+def test_every_value_is_reachable_on_both_arms_by_the_same_path():
+    """The gap stage 10 found, and the strengthened constraint.
+
+    These tests proved `classify_outcome`'s vocabulary and mapping neutral, and
+    they were right. What decided reachability was the LOOP around it: under
+    `AEP_FULL` a respawn resumed at `last_started + 1`, so the agent was told
+    `unknown_process_died`; under `B0_NAIVE_RETRY` it resumed at `last_started`,
+    the supervisor re-dispatched from the replayed decision, and the agent was
+    told `acknowledged` -- the fate of a dispatch it did not choose.
+
+    So `unknown_process_died` was reachable on one arm and effectively
+    unreachable on the other: the same leak class §2.3 excludes
+    `dispatch_attempts` for, arrived at through the resume policy instead.
+
+    Amendment 6 §4.3 makes both arms re-enter at the crashed execution, so the
+    value is reached by the same path on both. Asserted on the resume decision
+    itself, because that is where the asymmetry lived.
+    """
+    from experiments.baselines.contract import descriptor_for
+    from experiments.harness import runner as runner_module
+
+    class _Config:
+        def __init__(self, system):
+            self.descriptor = descriptor_for(system)
+            self.resume_policy = None
+
+        @property
+        def effective_resume_policy(self):
+            return self.resume_policy or self.descriptor.resume_policy
+
+    import os
+
+    previous = {k: os.environ.get(k) for k in
+                ("AEP_PLANNER_MODE", "AEP_PLANNER_LOOP")}
+    os.environ["AEP_PLANNER_MODE"] = "stub"
+    os.environ["AEP_PLANNER_LOOP"] = "interactive"
+    try:
+        resumes = {
+            system: runner_module.resume_from_index(_Config(system), 1)
+            for system in ("AEP_FULL", "B0_NAIVE_RETRY")
+        }
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    assert len(set(resumes.values())) == 1, (
+        f"the arms resume differently, so the value an agent is told after a "
+        f"crash depends on which arm it is in: {resumes}"
+    )
+
+
+def test_the_old_asymmetry_would_now_be_caught():
+    """R2 again: prove the check above can fail.
+
+    With the agent branch off, the two arms genuinely do resume differently --
+    which is correct for the scripted branch and is exactly what the check
+    above would have caught before amendment 6.
+    """
+    from experiments.baselines.contract import descriptor_for
+    from experiments.harness import runner as runner_module
+
+    class _Config:
+        def __init__(self, system):
+            self.descriptor = descriptor_for(system)
+            self.resume_policy = None
+
+        @property
+        def effective_resume_policy(self):
+            return self.resume_policy or self.descriptor.resume_policy
+
+    import os
+
+    previous = {k: os.environ.get(k) for k in
+                ("AEP_PLANNER_MODE", "AEP_PLANNER_LOOP")}
+    os.environ.pop("AEP_PLANNER_MODE", None)
+    os.environ.pop("AEP_PLANNER_LOOP", None)
+    try:
+        resumes = {
+            system: runner_module.resume_from_index(_Config(system), 1)
+            for system in ("AEP_FULL", "B0_NAIVE_RETRY")
+        }
+    finally:
+        for key, value in previous.items():
+            if value is not None:
+                os.environ[key] = value
+
+    assert len(set(resumes.values())) == 2, resumes
+
+
+def test_the_redecision_prompt_uses_the_same_wording_table():
+    """Amendment 6 §6: the re-decision prompt passes the same test.
+
+    It is built from OUTCOME_WORDING and carries nothing else about what
+    happened, so every value reaches it identically on both arms.
+    """
+    from experiments.harness.agent_loop import OUTCOME_WORDING
+    from experiments.harness.live_planner import build_redecision_prompt
+    from experiments.harness.planner import Observation
+
+    for value, wording in OUTCOME_WORDING.items():
+        body = build_redecision_prompt(
+            Observation(run_id="r", worker_index=0, step_index=0,
+                        decision_index=1),
+            "account-1", 1000, wording,
+        )
+        assert wording in body, value
+        for forbidden in ARM_LABELLING_FIELDS + ORACLE_FIELDS:
+            assert forbidden not in body.lower(), (value, forbidden)
