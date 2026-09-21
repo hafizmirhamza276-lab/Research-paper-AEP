@@ -363,3 +363,80 @@ The launcher printed `note: /mnt/d/personal/AEP/.env is mode 666`. As
 `reports/phase-report-40-stage-10-interactive-2026-09-21.md` §0 records, that
 is drvfs's synthesis on a mount without `metadata` and says nothing about the
 file; the ACL above is the evidence.
+
+
+---
+
+## Addendum, 2026-09-21 — EXPLORATORY: what became of B0's payment
+
+**This is an exploratory observation. It is not a pre-registered failure mode,
+it is not added to any metric, criterion or pass condition, and it is not
+evidence for or against anything the pre-registration asks.**
+`prompts/phase-40-agent-reachability.md` §10 fixes what is and is not
+pre-registered, and **nothing outside the pre-registration is claimed here.**
+
+### A.1 What the files say
+
+`b0_naive_retry-…-r0/ground_truth.run.jsonl` holds exactly one provider
+interaction for the whole run:
+
+```
+{"event": "mutation_refused", "endpoint": "notifications",
+ "reason": "injected-server-error", "status": 503}
+```
+
+No `mutation_applied`. The mock's 503 is the fault documented in
+`experiments/mock_api/service.py` as *refuse **before** applying*, so the
+effect definitively did not occur.
+
+| | `B0_NAIVE_RETRY` | `AEP_FULL` |
+|---|---|---|
+| ground-truth events | `mutation_refused` (503) | `mutation_applied` |
+| `oracle_applied_rows` | **0** | 1 |
+| executions planned | 3 | 3 |
+| executions dispatched | **1** | 1 |
+| re-decisions offered | 1 | 1 |
+| re-dispatches made | **0** | 0 |
+| `lost_effect_executions` | 0 | 0 |
+
+So for execution 0 (amount 775463): **the mutation was not applied, and it was
+never sent again.** The payment the harness assigned did not happen. Executions
+1 and 2 were never dispatched at all, because the run ended at execution 1's
+initial decision.
+
+### A.2 Why the harness records `lost_effect_executions: 0`
+
+Not a contradiction — the metric means something else.
+`experiments/harness/reconcile.py:331` increments it only when
+`effects > 0`: an effect that **did** happen and which the system then failed to
+assert. Here no effect happened, so by its own definition the count is
+correctly zero.
+
+**The harness has no metric for an intended payment that never occurred**, and
+this addendum does not add one. That is precisely why this is exploratory.
+
+### A.3 The part that is worth recording
+
+The 503 was a refusal *before* applying. The provider had definitively not
+applied it. But the worker was `SIGKILL`ed at `mid_dispatch` before it could
+observe that, so the agent was told `unknown_process_died` and declined on the
+grounds that the capture *"may already have been applied"*.
+
+**The same agent decision was correct on one arm and abandoned a payment on the
+other**, and the agent could not have told the two apart:
+
+* under `AEP_FULL` the effect *had* applied, and declining avoided a second one;
+* under `B0_NAIVE_RETRY` the effect *had not* applied, and declining left it
+  undone.
+
+That is one instance on each arm. It is not a rate, it is not a trend, and §2
+forbids reporting it as either. It is recorded because the files say it and a
+record that kept only the arm where the decision looked good would be a record
+that could not show the other.
+
+### A.4 What follows from it
+
+**Nothing, procedurally.** No criterion changes, no metric is added, stage 100
+is not opened, and no design change is proposed — amendment 6 §8 closed
+structural amendments and this is not one of the three faults it lists as
+grounds for reopening them.
