@@ -44,6 +44,23 @@ from typing import Any, Iterable, Protocol, Sequence
 #: the gap.
 TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/3"
 
+#: Where the prices in :class:`Price` come from, and when they were read.
+#:
+#: Required by amendment 5's C4'(b): a recorded cost whose price has no citable
+#: source is a number the paper cannot stand behind. The retrieval date is part
+#: of the citation because the rate is a vendor's published list price and
+#: changes without notice -- section 3 already prices the stale rate beside the
+#: current one for that reason.
+PRICE_SOURCE = {
+    "url": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/",
+    "retrieved": "2026-09-17",
+    "tier": "Azure OpenAI Global Standard, GPT-5.6 Luna, short context",
+    "note": (
+        "Reasoning tokens bill as output. Quoted per 1M tokens: "
+        "input 0.20 USD, output 1.20 USD."
+    ),
+}
+
 
 def utc_now() -> str:
     """UTC, ISO-8601, millisecond resolution, explicit ``Z``.
@@ -158,6 +175,69 @@ class Caps:
     #: Not a cap on spend directly -- the call caps bound that -- but a
     #: belt-and-braces ceiling an operator can lower without touching code.
     per_collection_usd: float = 20.0
+
+
+#: Bumping this says a previously written caps record is not comparable.
+PLANNER_CAPS_SCHEMA_VERSION = "aep.planner.caps/1"
+
+#: The name of the caps record, written into both the run directory and the
+#: collection root.
+CAPS_FILENAME = "planner-caps.json"
+
+
+def caps_echo(caps: "Caps", price: "Price") -> dict[str, Any]:
+    """The ceilings actually in force, as a record a later reader can audit.
+
+    **Why this file exists.** ``docs/31`` §4 keeps the planner configuration
+    out of ``RunConfig`` on purpose: ``RunConfig._body()`` folds every field
+    into ``config_digest``, so a cap recorded there would change the digest of
+    every run and make collections incomparable across stages. The consequence
+    was never followed through -- the caps were read from the environment,
+    echoed to a terminal, and written nowhere. Auditing the 10-call stage,
+    ``reports/phase-report-40-stage-10-2026-09-21.md`` §5.2 could establish
+    only that the *observed* spend was under the intended ceiling, not what
+    ceiling was in force.
+
+    A separate file keeps both properties: the record exists, and the digest
+    does not move.
+
+    The pre-registered ceilings are written beside the values in force so that
+    ``tightened`` is checkable rather than asserted -- ``stage_caps`` refuses
+    to raise a cap, and this is the evidence that it did not.
+    """
+    ceiling = Caps()
+    fields = (
+        "per_run_calls",
+        "per_collection_calls",
+        "max_output_tokens",
+        "max_prompt_tokens",
+        "per_collection_usd",
+    )
+    in_force = {name: getattr(caps, name) for name in fields}
+    preregistered = {name: getattr(ceiling, name) for name in fields}
+    return {
+        "schema_version": PLANNER_CAPS_SCHEMA_VERSION,
+        "in_force": in_force,
+        "preregistered_ceiling": preregistered,
+        "tightened": sorted(
+            name for name in fields if in_force[name] < preregistered[name]
+        ),
+        "source": (
+            "AEP_PLANNER_* environment at run time; resolved by "
+            "experiments.harness.agent_loop.stage_caps, which refuses any "
+            "value above the pre-registered ceiling"
+        ),
+        "price": {
+            "input_per_million": price.input_per_million,
+            "output_per_million": price.output_per_million,
+        },
+        "price_source": dict(PRICE_SOURCE),
+        # Amendment 5's C4'(a) bound, written here so the criterion does not
+        # have to re-derive it from two other numbers to check a collection.
+        "per_call_ceiling_usd": price.usd(
+            caps.max_prompt_tokens, caps.max_output_tokens
+        ),
+    }
 
 
 class CumulativeCounter:
@@ -671,6 +751,8 @@ class CallWrapper:
         )
         self._budget_path = self.run_dir / "planner-budget.json"
         self.write_budget()
+        self._caps_path = self.run_dir / CAPS_FILENAME
+        self.write_caps()
 
     # -- counters ----------------------------------------------------------
     def write_budget(self) -> None:
@@ -678,6 +760,59 @@ class CallWrapper:
             json.dumps(self.budget.echo(), indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
+
+    # -- the ceilings in force --------------------------------------------
+    def write_caps(self) -> None:
+        """Record the caps in the run directory and in the collection root.
+
+        Both, not one. The run-level copy answers "what bounded this run"; the
+        collection-level copy answers "what bounded this collection", which is
+        the question the per-collection cap and the USD ceiling are actually
+        about and which no single run directory can answer.
+        """
+        body = caps_echo(self.caps, self.price)
+        collection = self.cumulative.path.parent / CAPS_FILENAME
+        body["collection_caps_differ"] = self._record_collection_caps(
+            collection, body
+        )
+        self._caps_path.write_text(
+            json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+    def _record_collection_caps(self, path: Path, body: dict[str, Any]) -> bool:
+        """First writer wins, and a later disagreement is recorded, not hidden.
+
+        Same rule as the cumulative journal, for the same reason: several
+        worker processes reach this concurrently and last-writer-wins is how
+        the counter lost 598 of 800 increments. ``O_EXCL`` makes the create
+        atomic, so exactly one process writes the collection's record.
+
+        A mismatch means the ceiling changed part-way through a collection --
+        the single thing a caps record exists to make visible. It is reported
+        on the run that saw it rather than raised: the run is still a valid
+        run, and aborting it would destroy the evidence that the caps moved.
+        """
+        payload = {k: v for k, v in body.items() if k != "collection_caps_differ"}
+        serialised = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with os.fdopen(
+                os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY), "w",
+                encoding="utf-8",
+            ) as fh:
+                fh.write(serialised)
+            return False
+        except FileExistsError:
+            pass
+        except OSError:
+            # An unwritable collection root is not this run's problem to
+            # solve; the run-level record still lands.
+            return False
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        return existing.get("in_force") != payload["in_force"]
 
     def void(self, reason: VoidReason, detail: str) -> None:
         self.budget.voided = reason
