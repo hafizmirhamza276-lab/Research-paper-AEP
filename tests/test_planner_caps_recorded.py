@@ -198,7 +198,7 @@ def test_a_mismatch_does_not_abort_the_run(tmp_path):
 
 # -- which branch produced the collection -----------------------------------
 
-def test_the_record_says_which_branch_ran(tmp_path, monkeypatch):
+def test_the_record_says_which_branch_ran(tmp_path):
     """Amendment 4 added a third branch; a collection must say which it used.
 
     The whole justification for re-running stage 10 is that the loop changed.
@@ -206,30 +206,48 @@ def test_the_record_says_which_branch_ran(tmp_path, monkeypatch):
     against one that ran the other, which makes the re-run unauditable for
     exactly the reason it was commissioned.
     """
-    monkeypatch.setenv("AEP_PLANNER_MODE", "live")
-    monkeypatch.setenv("AEP_PLANNER_LOOP", "interactive")
-    build(tmp_path, Caps())
-    planner = read(tmp_path / "r0" / CAPS_FILENAME)["planner"]
-    assert planner == {"mode": "live", "loop": "interactive"}
-
-
-def test_an_unset_loop_records_the_branch_that_actually_runs(tmp_path,
-                                                             monkeypatch):
-    """Absent means planned -- agent_loop's own default, not "unknown"."""
-    monkeypatch.delenv("AEP_PLANNER_LOOP", raising=False)
-    monkeypatch.setenv("AEP_PLANNER_MODE", "stub")
-    build(tmp_path, Caps())
+    counter = CumulativeCounter(tmp_path / "planner-cumulative.json")
+    CallWrapper(run_id="r0", run_dir=tmp_path / "r0", cumulative=counter,
+                planner={"mode": "live", "loop": "interactive"})
     assert read(tmp_path / "r0" / CAPS_FILENAME)["planner"] == {
-        "mode": "stub", "loop": "planned"
+        "mode": "live", "loop": "interactive"
     }
 
 
-def test_the_recorded_default_matches_agent_loops_actual_default():
-    """A record that disagrees with the code is worse than no record."""
-    from experiments.harness.agent_loop import PLANNED, loop_mode
+def test_agent_loop_resolves_the_branch_from_the_environment(monkeypatch):
+    """The env read belongs in agent_loop, not in planner.
 
-    assert PLANNED == "planned"
-    assert loop_mode() == PLANNED
+    ``planner.py`` must not read the environment -- pinned separately by
+    ``test_nothing_in_this_module_reads_the_environment``, and the reason is
+    that the next thing it would pick up implicitly is a key. The first version
+    of this feature read AEP_PLANNER_* inside planner.py and broke that.
+    """
+    from experiments.harness.agent_loop import planner_record
+
+    monkeypatch.setenv("AEP_PLANNER_MODE", "live")
+    monkeypatch.setenv("AEP_PLANNER_LOOP", "interactive")
+    assert planner_record() == {"mode": "live", "loop": "interactive"}
+
+    monkeypatch.delenv("AEP_PLANNER_LOOP", raising=False)
+    monkeypatch.setenv("AEP_PLANNER_MODE", "stub")
+    assert planner_record() == {"mode": "stub", "loop": "planned"}
+
+
+def test_planner_does_not_read_the_environment_for_this():
+    """The invariant, asserted against this feature specifically."""
+    from pathlib import Path as _Path
+
+    text = (_Path(__file__).resolve().parents[1] / "experiments" / "harness"
+            / "planner.py").read_text(encoding="utf-8")
+    assert "os.environ" not in text
+    assert "AEP_PLANNER_MODE" not in text
+    assert "AEP_PLANNER_LOOP" not in text
+
+
+def test_an_unstated_branch_records_none_rather_than_guessing(tmp_path):
+    """A direct construction did not state it; "planned" would be a guess."""
+    build(tmp_path, Caps())
+    assert read(tmp_path / "r0" / CAPS_FILENAME)["planner"] is None
 
 
 def test_the_live_launcher_refuses_an_unset_loop():

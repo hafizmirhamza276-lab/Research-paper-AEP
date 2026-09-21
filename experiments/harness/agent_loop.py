@@ -324,7 +324,7 @@ def interactive_driver(config, worker_index: int, from_index: int, *,
     )
     wrapper = CallWrapper(
         run_id=config.run_id, run_dir=run_dir, cumulative=counter,
-        caps=stage_caps(),
+        caps=stage_caps(), planner=planner_record(),
     )
     scaffold = [
         item
@@ -555,6 +555,18 @@ CAP_ENV = {
 }
 
 
+def planner_record() -> dict[str, str]:
+    """Which branch is running, resolved here because this is where env lives.
+
+    ``planner.py`` must not read the environment -- pinned by
+    ``test_nothing_in_this_module_reads_the_environment``, and the reason is
+    that the next thing it would pick up implicitly is a key. So the mode and
+    the loop are resolved here, where they already are, and passed down to be
+    recorded.
+    """
+    return {"mode": planner_mode(), "loop": loop_mode()}
+
+
 def stage_caps():
     """The pre-registered ceilings, optionally tightened for this stage."""
     from experiments.harness.planner import Caps
@@ -618,7 +630,7 @@ def agent_items_for_worker(config, worker_index: int, from_index: int,
     )
     wrapper = CallWrapper(
         run_id=config.run_id, run_dir=run_dir, cumulative=counter,
-        caps=stage_caps(),
+        caps=stage_caps(), planner=planner_record(),
     )
     if mode == LIVE:
         from experiments.harness.live_planner import LivePlanner

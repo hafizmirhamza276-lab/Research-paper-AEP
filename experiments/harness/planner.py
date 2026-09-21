@@ -185,7 +185,8 @@ PLANNER_CAPS_SCHEMA_VERSION = "aep.planner.caps/1"
 CAPS_FILENAME = "planner-caps.json"
 
 
-def caps_echo(caps: "Caps", price: "Price") -> dict[str, Any]:
+def caps_echo(caps: "Caps", price: "Price",
+              planner: dict[str, Any] | None = None) -> dict[str, Any]:
     """The ceilings actually in force, as a record a later reader can audit.
 
     **Why this file exists.** ``docs/31`` §4 keeps the planner configuration
@@ -227,18 +228,22 @@ def caps_echo(caps: "Caps", price: "Price") -> dict[str, Any]:
             "experiments.harness.agent_loop.stage_caps, which refuses any "
             "value above the pre-registered ceiling"
         ),
-        # Which branch produced this collection. Read here rather than passed
-        # in because it is the same class of fact as the caps -- environment
-        # only, outside RunConfig, and so recorded nowhere until now.
+        # Which branch produced this collection. Amendment 4 added a third
+        # branch, and a collection that cannot say which one it ran under
+        # cannot be compared with one that ran the other -- which is the whole
+        # justification for re-running stage 10.
         #
-        # It matters for the same reason the re-run exists: amendment 4 added a
-        # third branch, and a collection that cannot say which one it ran under
-        # cannot be compared with one that ran the other. Absent means the
-        # scripted branch, which reaches none of this code.
-        "planner": {
-            "mode": os.environ.get("AEP_PLANNER_MODE") or None,
-            "loop": os.environ.get("AEP_PLANNER_LOOP") or "planned",
-        },
+        # **Passed in, never read from the environment here.** The first
+        # version of this read AEP_PLANNER_* directly and broke the invariant
+        # `test_nothing_in_this_module_reads_the_environment` exists for: this
+        # module must not be able to pick anything up implicitly, because the
+        # thing it would pick up next is a key. ``agent_loop`` already resolves
+        # the mode and the loop from the environment and is the right place for
+        # it; here they are only recorded.
+        #
+        # ``None`` means the caller did not state it -- which is what a direct
+        # construction does, and is honest rather than guessing "planned".
+        "planner": dict(planner) if planner else None,
         "price": {
             "input_per_million": price.input_per_million,
             "output_per_million": price.output_per_million,
@@ -748,6 +753,7 @@ class CallWrapper:
         cumulative: CumulativeCounter,
         caps: Caps | None = None,
         price: Price | None = None,
+        planner: dict[str, Any] | None = None,
     ):
         self.run_id = run_id
         self.run_dir = Path(run_dir)
@@ -755,6 +761,9 @@ class CallWrapper:
         self.cumulative = cumulative
         self.caps = caps or Caps()
         self.price = price or Price()
+        #: ``{"mode": ..., "loop": ...}`` resolved by the caller, recorded into
+        #: the caps file. Not read from the environment here -- see caps_echo.
+        self.planner = planner
         self.transcript = Transcript(self.run_dir / "planner-transcript.jsonl")
         # Derived from the transcript, so a respawn resumes the run's budget
         # instead of zeroing it. See RunBudget.from_transcript.
@@ -782,7 +791,7 @@ class CallWrapper:
         the question the per-collection cap and the USD ceiling are actually
         about and which no single run directory can answer.
         """
-        body = caps_echo(self.caps, self.price)
+        body = caps_echo(self.caps, self.price, self.planner)
         collection = self.cumulative.path.parent / CAPS_FILENAME
         body["collection_caps_differ"] = self._record_collection_caps(
             collection, body
