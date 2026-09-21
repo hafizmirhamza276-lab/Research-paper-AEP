@@ -28,13 +28,35 @@ import json
 import os
 import tempfile
 from dataclasses import dataclass, field, replace
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, Protocol, Sequence
 
 #: Written into every transcript entry. Bumping it says previously recorded
 #: transcripts are not comparable to new ones.
-TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/2"
+#:
+#: /2 -> /3 adds ``timestamp``. Section 5 of the pre-registration always
+#: required a wall-clock timestamp and no entry carried one, which
+#: ``reports/phase-report-40-stage-10-2026-09-21.md`` §5.1 found. The two
+#: archived live collections are ``/2`` and stay that way; they cannot be
+#: stamped after the fact, and inventing a time for them would be worse than
+#: the gap.
+TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/3"
+
+
+def utc_now() -> str:
+    """UTC, ISO-8601, millisecond resolution, explicit ``Z``.
+
+    Millisecond rather than second resolution because two attempts on the same
+    step can land inside one second on a retry, and a timestamp that cannot
+    order them is not much better than none.
+    """
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 class PlannerOutcome(str, Enum):
@@ -343,14 +365,15 @@ class CumulativeCounter:
 # Transcript
 # ---------------------------------------------------------------------------
 
-#: The fourteen fields the pre-registration requires of every entry, in the
-#: order they are written. Named as a constant so a test can assert the set
-#: rather than a reader trusting the writer.
+#: The fields the pre-registration requires of every entry, in the order they
+#: are written. Named as a constant so a test can assert the set rather than a
+#: reader trusting the writer.
 TRANSCRIPT_FIELDS = (
     "run_id",
     "worker_index",
     "step_index",
     "attempt",
+    "timestamp",
     "prompt",
     "completion",
     "model",
@@ -385,6 +408,20 @@ class TranscriptEntry:
     #: Foundry deployment is the alias rather than a version.
     #: Recorded because it cannot be checked -- amendment 1 §5.
     served_model: str | None = None
+    #: When this attempt was recorded. Section 5 requires it and no entry
+    #: carried one until amendment 5's companion commit.
+    #:
+    #: It is a default_factory rather than a parameter every caller must pass
+    #: because a field that can be forgotten will be: the entry is built in a
+    #: ``finally`` block on four different paths. Stamping at construction is
+    #: also the most accurate moment available -- the call has just returned.
+    #:
+    #: Why it matters beyond bookkeeping: amendment 1 records that
+    #: auto-upgrade is ON and that "the pinned version can change with no
+    #: trace in the data". This is what lets a later reader bound a given call
+    #: against a version change, which is the one question amendment 1 says
+    #: the paper must be honest about.
+    timestamp: str = field(default_factory=utc_now)
 
     def echo(self) -> dict[str, Any]:
         return {
@@ -393,6 +430,7 @@ class TranscriptEntry:
             "worker_index": self.worker_index,
             "step_index": self.step_index,
             "attempt": self.attempt,
+            "timestamp": self.timestamp,
             "prompt": self.prompt,
             "completion": self.completion,
             "model": self.model,

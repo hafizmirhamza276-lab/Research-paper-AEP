@@ -285,10 +285,14 @@ def test_the_transcript_records_every_declared_field(wrapper):
     entry = wrapper.transcript.entries()[0]
     for field in TRANSCRIPT_FIELDS:
         assert field in entry, f"transcript is missing {field}"
-    # Amendment 1 added served_model and bumped the version with it. No
-    # live data predates the bump, so there is nothing to migrate.
-    assert entry["schema_version"] == "aep.agent.transcript/2"
+    # Amendment 1 added served_model and bumped /1 -> /2. Amendment 5's
+    # companion commit added the timestamp section 5 always required and
+    # bumped /2 -> /3. The two archived live collections stay /2: they cannot
+    # be stamped after the fact, and inventing a time for them would be worse
+    # than the gap they record.
+    assert entry["schema_version"] == "aep.agent.transcript/3"
     assert "served_model" in TRANSCRIPT_FIELDS
+    assert "timestamp" in TRANSCRIPT_FIELDS
     assert entry["usage"]["reasoning_tokens"] == 740
 
 
