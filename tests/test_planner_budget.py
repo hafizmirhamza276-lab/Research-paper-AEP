@@ -290,9 +290,13 @@ def test_the_transcript_records_every_declared_field(wrapper):
     # bumped /2 -> /3. The two archived live collections stay /2: they cannot
     # be stamped after the fact, and inventing a time for them would be worse
     # than the gap they record.
-    assert entry["schema_version"] == "aep.agent.transcript/3"
+    assert entry["schema_version"] == "aep.agent.transcript/4"
     assert "served_model" in TRANSCRIPT_FIELDS
     assert "timestamp" in TRANSCRIPT_FIELDS
+    # /4 added decision_index: amendment 6 lets one execution carry an initial
+    # decision and a re-decision, and without the field both would key to the
+    # same reservation and the same replay slot.
+    assert "decision_index" in TRANSCRIPT_FIELDS
     assert entry["usage"]["reasoning_tokens"] == 740
 
 
@@ -304,15 +308,17 @@ def test_replay_returns_the_completion_that_was_acted_on(wrapper):
     fire(wrapper, FakeCall(result=ToolCall("charge_card", "capture", 7)),
          step=0, attempt=2)
     index = wrapper.transcript.replay_index()
-    assert list(index) == [(0, 0)]
-    assert index[(0, 0)]["attempt"] == 2
-    assert "charge_card" in index[(0, 0)]["completion"]
+    assert list(index) == [(0, 0, 0)]
+    assert index[(0, 0, 0)]["attempt"] == 2
+    assert "charge_card" in index[(0, 0, 0)]["completion"]
 
 
 def test_replay_index_holds_one_entry_per_step(wrapper):
     for step in range(3):
         fire(wrapper, FakeCall(), step=step)
-    assert sorted(wrapper.transcript.replay_index()) == [(0, 0), (0, 1), (0, 2)]
+    assert sorted(wrapper.transcript.replay_index()) == [
+        (0, 0, 0), (0, 1, 0), (0, 2, 0)
+    ]
 
 
 # --------------------------------------------------------------------------

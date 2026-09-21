@@ -42,7 +42,14 @@ from typing import Any, Iterable, Protocol, Sequence
 #: archived live collections are ``/2`` and stay that way; they cannot be
 #: stamped after the fact, and inventing a time for them would be worse than
 #: the gap.
-TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/3"
+#:
+#: /3 -> /4 adds ``decision_index``. Amendment 6 lets one execution carry more
+#: than one decision -- the initial one and, after a non-acknowledged outcome,
+#: a re-decision about the same payment. Without the field, both decisions for
+#: an execution would key to the same reservation and the same replay slot, so
+#: the second would be deduplicated into the first: an uncounted paid call and
+#: a replay that returned the wrong decision.
+TRANSCRIPT_SCHEMA_VERSION = "aep.agent.transcript/4"
 
 #: Where the prices in :class:`Price` come from, and when they were read.
 #:
@@ -469,6 +476,7 @@ TRANSCRIPT_FIELDS = (
     "run_id",
     "worker_index",
     "step_index",
+    "decision_index",
     "attempt",
     "timestamp",
     "prompt",
@@ -519,6 +527,11 @@ class TranscriptEntry:
     #: against a version change, which is the one question amendment 1 says
     #: the paper must be honest about.
     timestamp: str = field(default_factory=utc_now)
+    #: Which decision about this execution. 0 is the initial one; 1 is the
+    #: re-decision amendment 6 §3 introduces, about the same payment, after a
+    #: non-acknowledged outcome. Defaulted so the planned branch -- which has
+    #: exactly one decision per execution -- is unchanged.
+    decision_index: int = 0
 
     def echo(self) -> dict[str, Any]:
         return {
@@ -526,6 +539,7 @@ class TranscriptEntry:
             "run_id": self.run_id,
             "worker_index": self.worker_index,
             "step_index": self.step_index,
+            "decision_index": self.decision_index,
             "attempt": self.attempt,
             "timestamp": self.timestamp,
             "prompt": self.prompt,
@@ -572,16 +586,26 @@ class Transcript:
                 out.append(json.loads(line))
         return out
 
-    def replay_index(self) -> dict[tuple[int, int], dict[str, Any]]:
-        """The last OK attempt per (worker, step) -- what a respawn reads.
+    def replay_index(self) -> dict[tuple[int, int, int], dict[str, Any]]:
+        """The last OK attempt per (worker, step, decision) -- what a respawn reads.
 
         Last rather than first: a step whose first attempt was malformed and
         whose second succeeded must replay the completion that was acted on.
+
+        Keyed on the decision as well as the step since amendment 6, because an
+        execution may carry an initial decision and a re-decision and they are
+        different answers to different questions. Entries written before the
+        field existed read as decision 0, which is what they were.
         """
-        index: dict[tuple[int, int], dict[str, Any]] = {}
+        index: dict[tuple[int, int, int], dict[str, Any]] = {}
         for entry in self.entries():
             if entry.get("outcome") == PlannerOutcome.OK.value:
-                index[(entry["worker_index"], entry["step_index"])] = entry
+                key = (
+                    entry["worker_index"],
+                    entry["step_index"],
+                    int(entry.get("decision_index", 0)),
+                )
+                index[key] = entry
         return index
 
 
@@ -601,6 +625,10 @@ class Observation:
     worker_index: int
     step_index: int
     prior_outcomes: tuple[str, ...] = ()
+    #: Which decision about this execution -- 0 initial, 1 the re-decision
+    #: amendment 6 §3 introduces. Defaulted, so the planned branch and every
+    #: existing caller are unchanged.
+    decision_index: int = 0
 
 
 @dataclass(frozen=True)
@@ -726,7 +754,8 @@ class RunBudget:
 
 
 def reservation_key(
-    run_id: str, worker_index: int, step_index: int, attempt: int
+    run_id: str, worker_index: int, step_index: int, attempt: int,
+    decision_index: int = 0,
 ) -> str:
     """The identity of one counted attempt.
 
@@ -734,6 +763,14 @@ def reservation_key(
     client checks for it; two spellings of the same thing would turn the
     dispatch guard into a guard that always refuses, or never does.
     """
+    # ``decision_index`` is in the key because amendment 6 lets one execution
+    # carry two decisions. Without it both would reserve under the same key,
+    # the journal's first-write-wins would drop the second, and a paid call
+    # would go uncounted -- the exact failure the journal exists to prevent.
+    # Omitted from the string at 0 so every key written before amendment 6
+    # keeps its spelling and the archived journals stay readable.
+    if decision_index:
+        return f"{run_id}:{worker_index}:{step_index}:d{decision_index}:{attempt}"
     return f"{run_id}:{worker_index}:{step_index}:{attempt}"
 
 
@@ -862,6 +899,7 @@ class CallWrapper:
         attempt: int,
         prompt: str,
         call,
+        decision_index: int = 0,
     ) -> Any:
         """Count, cap, invoke, price, record. In that order.
 
@@ -914,7 +952,7 @@ class CallWrapper:
         # the collection, which stops it early; the other order spends money
         # nobody counted.
         reservation = reservation_key(
-            self.run_id, worker_index, step_index, attempt
+            self.run_id, worker_index, step_index, attempt, decision_index
         )
         # The live client re-reads this key from disk and refuses to dispatch
         # without it, so the two sides must agree on the spelling. Named once.
@@ -962,6 +1000,7 @@ class CallWrapper:
                     run_id=self.run_id,
                     worker_index=worker_index,
                     step_index=step_index,
+                    decision_index=decision_index,
                     attempt=attempt,
                     prompt=prompt,
                     completion=completion,

@@ -76,7 +76,12 @@ def test_every_written_entry_carries_a_timestamp(wrapper):
 def test_the_timestamp_is_a_declared_field_and_the_schema_was_bumped():
     """A field added without a version bump makes two shapes one name."""
     assert "timestamp" in TRANSCRIPT_FIELDS
-    assert TRANSCRIPT_SCHEMA_VERSION == "aep.agent.transcript/3"
+    # /4 since amendment 6 added decision_index. The timestamp arrived at /3
+    # and is unchanged by that bump; asserted as "at least /3" so this test
+    # keeps testing the timestamp rather than the version number.
+    major, _, minor = TRANSCRIPT_SCHEMA_VERSION.rpartition("/")
+    assert major == "aep.agent.transcript"
+    assert int(minor) >= 3
 
 
 def test_it_cannot_be_forgotten_on_a_construction_path():
@@ -126,5 +131,5 @@ def test_replay_preserves_the_recorded_timestamp(wrapper, tmp_path):
     counter = CumulativeCounter(tmp_path / "planner-cumulative.json")
     respawned = CallWrapper(run_id="r0", run_dir=tmp_path / "r0",
                             cumulative=counter)
-    replayed = respawned.transcript.replay_index()[(0, 0)]
+    replayed = respawned.transcript.replay_index()[(0, 0, 0)]
     assert replayed["timestamp"] == original
