@@ -86,16 +86,19 @@ at two rather than reset to zero.
 C4 is replaced, for all stages from here, by three limbs. The first two are the
 author's; the third is argued for in §4.4 rather than substituted silently.
 
-### 4.1 C4′(a) — every call's recorded cost is at or under §3's per-call ceiling
+### 4.1 C4′(a) — every call is inside §3's bounds, in cost **and** in tokens
 
-> For every entry in every `planner-transcript.jsonl` in the collection,
-> `prompt_tokens × 0.20/10⁶ + (completion_tokens + reasoning_tokens) × 1.20/10⁶`
-> must be **≤ 0.0016288**, §3's per-call ceiling.
+> For every entry in every `planner-transcript.jsonl` in the collection:
+>
+> 1. `prompt_tokens × 0.20/10⁶ + (completion_tokens + reasoning_tokens) × 1.20/10⁶`
+>    must be **≤ 0.0016288**, §3's per-call ceiling; **and**
+> 2. `prompt_tokens ≤ 2000` and `completion_tokens + reasoning_tokens ≤ 1024`,
+>    the two bounds §3's ceiling is derived from.
 
-This is a bound, not a band, so a healthy stage satisfies it and a stage that
-blows the model fails it.
+These are bounds, not a band, so a healthy stage satisfies them and a stage
+that blows the model fails.
 
-**It can fail, and the path is live.** `max_prompt_tokens = 2000` is
+**They can fail, and the path is live.** `max_prompt_tokens = 2000` is
 **not enforced anywhere.** `CallWrapper.attempt` uses it only to price the
 reservation (`experiments/harness/planner.py:728-735`); the outbound request is
 bounded on output (`max_output_tokens` is passed to the API) and **not on
@@ -105,8 +108,31 @@ nothing today notices.
 That is not hypothetical under the interactive loop. Amendment 4 added
 `last_outcome` to every prompt and the loop re-asks on every turn; live prompts
 on record are 330–356 tokens, but they were produced by the plan-then-execute
-shape that no longer runs. C4′(a) is the check that catches prompt growth
-before it silently invalidates §3's ceiling.
+shape that no longer runs.
+
+#### Why limb 2 exists, which the draft of this amendment got wrong
+
+The first draft of C4′(a) had only the cost bound, and offered as its
+known-positive "a transcript entry with 4 000 prompt tokens". **That example
+does not fail the cost bound, and the test written to prove it would caught
+the error instead.** The arithmetic:
+
+```
+4 000 prompt tokens, small output   4000 × 0.20/10⁶ + 60 × 1.20/10⁶ = 0.000872
+§3's per-call ceiling                                                = 0.0016288
+```
+
+**Output dominates the ceiling** — 0.0012288 of 0.0016288 is the output term —
+so a prompt overrun alone does not breach the cost bound until about **8 144
+tokens**, four times the cap it has already broken. A collection could run
+every prompt at 3 000 tokens, pass a cost-only C4′(a) forever, and §3's model
+would be false the whole time.
+
+So the cost bound protects the wallet and the token bounds protect the model,
+and they are not the same check. Both are required. This correction is recorded
+rather than quietly applied because it is the second time in this workstream
+that a cost criterion was written against the wrong quantity, and because the
+thing that caught it was the known-positive §4.5 requires.
 
 ### 4.2 C4′(b) — the recorded USD is reproducible from the transcript and a cited price
 
@@ -150,17 +176,27 @@ money nobody counted.
 
 That property holds only while the reservation is genuinely an upper bound. It
 is an upper bound only because of `max_prompt_tokens`, and §4.1 has just
-established that `max_prompt_tokens` is not enforced. **A prompt over 2 000
-tokens therefore produces a positive settle, and a positive settle means the
-counter under-counts and the USD ceiling can be crossed without the cap
-firing.** That is the one failure mode that makes every other spending control
-in §3 unsound, and §3 has no check for it.
+established that `max_prompt_tokens` is not enforced. **A call that costs more
+than its reservation makes the counter under-count, and an under-counting
+counter means the USD ceiling can be crossed without the cap ever firing.**
+That is the one failure mode that makes every other spending control in §3
+unsound, and §3 has no check for it.
 
-(a) and (c) catch the same underlying fault from two different records — (a)
-from the transcript, (c) from the ledger — which is the point of having both:
-they also disagree with each other if the transcript and the journal ever
-diverge. In both existing collections every settle is negative, so (c) passes
-today and is not being added to manufacture a failure.
+(a) and (c) read different records — (a) the transcript, (c) the ledger — so
+they also disagree with each other if those two ever diverge, which nothing
+else would notice. In both existing collections every settle is negative, so
+(c) passes today and is not being added to manufacture a failure.
+
+**An honest limitation, stated rather than discovered later.** The reservation
+is priced at exactly `max_prompt_tokens × max_output_tokens`, which is also
+§3's per-call ceiling — the *same number*, 0.0016288. So (c) fires at the same
+cost threshold as (a)'s cost bound and never earlier, and a prompt overrun with
+a small output breaches **neither**. That case is caught only by (a)'s token
+bound, §4.1 limb 2. (c)'s distinct value is therefore not a lower threshold but
+a second, independent record of the same quantity: it fails if the journal and
+the transcripts disagree, and it is where an unenforced token cap shows up once
+outputs are also large. `test_limb_a_and_limb_c_share_a_threshold_and_that_is_recorded`
+pins this so it stays known.
 
 If the author judges (c) redundant, striking it leaves (a) and (b) intact; it
 is proposed here rather than adopted quietly so that choice is available.
@@ -176,14 +212,24 @@ limbs, a case that **must** fail it:
 
 | limb | injected fault | must be caught |
 |---|---|---|
-| (a) | a transcript entry with 4 000 prompt tokens | cost 0.0020 > 0.0016288 |
+| (a) cost | 4 000 prompt tokens **with output at the cap** | 0.0020288 > 0.0016288 |
+| (a) cost | 1 output token over the cap | 0.0016300 > 0.0016288 |
+| (a) tokens | 2 001 prompt tokens, small output | over the input bound at a third of the ceiling's cost |
+| (a) tokens | 4 000 prompt tokens, small output | the case the cost bound alone misses |
 | (b) | a collection whose recorded USD omits reasoning tokens | recomputation disagrees |
-| (b) | `PRICE_SOURCE` blank or without a date | citation missing |
+| (b) | `PRICE_SOURCE` blank, or present without a date | citation missing |
+| (b) | the checker calling `Price.usd` | asserted against the checker's own source |
 | (c) | a journal whose settle is positive | reservation was not an upper bound |
 
 and, beside each, the clean case that must pass — including both archived
 collections, which the checker is run against so that C4′ is shown to be
-satisfiable by real data and not only by fixtures.
+satisfiable by real data and not only by fixtures. **A criterion nothing has
+ever passed is as suspect as one nothing has ever failed**, and both halves are
+covered.
+
+Running it today: both archived collections pass all limbs, and both raise a
+`NOTE` that they carry no caps record — they predate it, and the checker says
+so rather than silently assuming the current constants were in force.
 
 The criterion is implemented as `scripts/check_planner_cost.py` so that it is
 executable rather than prose. A stage is assessed against C4′ by running it.
