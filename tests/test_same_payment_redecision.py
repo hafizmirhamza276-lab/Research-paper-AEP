@@ -245,8 +245,14 @@ def test_the_replacement_is_told_the_outcome_is_unknown(config, tmp_path):
     redecision = [e for e in entries
                   if e["step_index"] == 0 and e["decision_index"] == 1]
     assert redecision, entries
-    assert UNKNOWN_PROCESS_DIED in redecision[0]["prompt"] or \
-        "your process then stopped" in redecision[0]["prompt"]
+    # Against OUTCOME_WORDING rather than a literal, so amendment 9's rewording
+    # -- "your process THEN stopped" named the most recent decision and was
+    # false after an absorbed re-dispatch -- cannot silently drift past this.
+    from experiments.harness.agent_loop import OUTCOME_WORDING
+
+    prompt = redecision[0]["prompt"]
+    assert (UNKNOWN_PROCESS_DIED in prompt
+            or OUTCOME_WORDING[UNKNOWN_PROCESS_DIED] in prompt), prompt
 
 
 def test_the_observation_log_is_the_source_not_the_event_log(config, tmp_path):
