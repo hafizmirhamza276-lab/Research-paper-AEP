@@ -369,6 +369,27 @@ file; the ACL above is the evidence.
 
 ## Addendum, 2026-09-21 — EXPLORATORY: what became of B0's payment
 
+> ### CORRECTION, 2026-09-22 — §A.3 BELOW IS WITHDRAWN
+>
+> §A.3 read the two arms' different outcomes as the same agent decision
+> meeting two different protocols. **That comparison is invalid and is
+> withdrawn.** The two arms did not face the same provider behaviour:
+> `cell_seed` derives the provider's fault seed from a key whose first
+> component is the system name, so `AEP_FULL` and `B0_NAIVE_RETRY` draw their
+> faults from different streams. B0's execution was refused by an injected 503
+> that AEP's provider never issued.
+>
+> **The difference in §A.3 is attributable to the fault stream, not to the
+> protocol and not to the agent's choice.** The facts in §A.1 stand — the
+> payment was not applied and was not re-sent — but the reason it was not
+> applied is an arm-asymmetric injected fault, and §A.3's "the agent could not
+> have told the two apart" compares two situations that were never the same
+> situation.
+>
+> `reports/phase-report-40-fault-symmetry-2026-09-22.md` has the evidence and
+> the derivation. §A.4's conclusion — that nothing follows procedurally — is
+> superseded: something does. Stage 100 is not run.
+
 **This is an exploratory observation. It is not a pre-registered failure mode,
 it is not added to any metric, criterion or pass condition, and it is not
 evidence for or against anything the pre-registration asks.**
@@ -415,7 +436,7 @@ correctly zero.
 **The harness has no metric for an intended payment that never occurred**, and
 this addendum does not add one. That is precisely why this is exploratory.
 
-### A.3 The part that is worth recording
+### A.3 The part that is worth recording — **WITHDRAWN, see the correction above**
 
 The 503 was a refusal *before* applying. The provider had definitively not
 applied it. But the worker was `SIGKILL`ed at `mid_dispatch` before it could
@@ -434,9 +455,17 @@ forbids reporting it as either. It is recorded because the files say it and a
 record that kept only the arm where the decision looked good would be a record
 that could not show the other.
 
-### A.4 What follows from it
+### A.4 What follows from it — **SUPERSEDED**
 
-**Nothing, procedurally.** No criterion changes, no metric is added, stage 100
-is not opened, and no design change is proposed — amendment 6 §8 closed
-structural amendments and this is not one of the three faults it lists as
-grounds for reopening them.
+This subsection said *"nothing, procedurally"*. That was written on the reading
+§A.3 has since withdrawn.
+
+What actually follows is in
+`reports/phase-report-40-fault-symmetry-2026-09-22.md`: the arm-asymmetric
+fault seed **is** one of the three faults amendment 6 §8 lists — a leak of arm
+identity, here into the conditions rather than into the prompt — and stage 100
+was not run because of it.
+
+The original wording is left above rather than deleted, because a record that
+quietly replaced a wrong conclusion with a right one would not show that the
+wrong one had been reached.
