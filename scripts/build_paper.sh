@@ -273,6 +273,18 @@ if [ "$ANON" -eq 0 ] && [ "$DOC" != "supplementary" ]; then
   fi
 fi
 
+# Every variant, not only the main non-anonymous one. A repository path is
+# wrong in all four, and it is an anonymity risk in exactly the two the
+# numbers check above skips. Run on the staged PDF, before promotion, so a
+# build that would ship one never replaces a clean artifact.
+echo
+echo "=== repository paths in the rendered text ==="
+cd "$ROOT"
+if ! "${NUMBER_RUNNER[@]}" scripts/check_no_repo_paths.py \
+  "$BUILD_DIR/${JOB}.pdf"; then
+  failures=$((failures + 1))
+fi
+
 if [ "$failures" -ne 0 ]; then
   echo
   echo "DO NOT SUBMIT: ${failures} check(s) failed. Existing ${JOB}.pdf preserved."
