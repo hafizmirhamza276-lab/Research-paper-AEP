@@ -257,6 +257,29 @@ built around one still parses as a sentence; and each `\item` is treated as its
 own unit, because consecutive items that do not end in terminal punctuation
 otherwise fuse into one implausible sentence.
 
+## 12a. A measurement correction, 2026-09-22
+
+Two defects were found in `prose_metrics.py` while it was being used, and both
+made it report fewer faults than the text contains. Recorded here because §13's
+baseline was taken under them.
+
+**Em dashes inside a tabular grid are content, not prose.** `tab:trilemma` uses
+`---` in four cells as a not-applicable marker, which the invariants forbid
+touching. The `em` column now excludes tabular grids and `emRaw` keeps the
+unfiltered number. Captions still count, because a caption is prose.
+
+**Multi-word patterns used a literal space and missed any phrase the source had
+wrapped.** LaTeX wraps at column 79, so `rather than` splits across a newline
+wherever the line happens to end. §V's *"are declared rather
+than hidden"* was
+invisible, and the section measured 3 correctives where it has 4. Every
+multi-word pattern now uses `\s+`, in `CORRECTIVE` and in the `FLAGGED_WORDS`,
+`SIGNPOSTS` and `HEDGES` tables that `count_phrases` normalises.
+
+The correction moves four sections' corrective counts: `06-evaluation` 43 to 44,
+`07-related` 18 to 21, `supplementary` 40 to 43, and `04-protocol` 16 under both
+readings but with a different split. Treat §13's `corr` column as a lower bound.
+
 ## 13a. Word counts after the path-removal pass, 2026-09-22
 
 `scripts/check_no_repo_paths.py` replaced twenty-three rendered repository

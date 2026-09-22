@@ -142,12 +142,18 @@ def paragraphs(prose: str) -> list[str]:
 
 # -- the patterns docs/37 names ---------------------------------------------
 
+#: Every multi-word pattern uses ``\s+`` and never a literal space. LaTeX
+#: source wraps at column 79, so a phrase splits across a newline wherever the
+#: line happens to end: §V's "are declared rather\nthan hidden" was invisible to
+#: a pattern written with a literal space, and the section measured 3
+#: correctives where it has 4. The same applied to every phrase in
+#: FLAGGED_WORDS, SIGNPOSTS and HEDGES, which count_phrases now normalises.
 CORRECTIVE = {
     "not X but Y": r"\bnot\s+(?:\w+\s+){0,6}?but\b",
     "X, not Y": r",\s+not\s+\w+",
-    "rather than": r"\brather than\b",
-    "instead of": r"\binstead of\b",
-    "is not A, it is B": r"\bis not\b[^.]{0,60}\bit is\b",
+    "rather than": r"\brather\s+than\b",
+    "instead of": r"\binstead\s+of\b",
+    "is not A, it is B": r"\bis\s+not\b[^.]{0,60}\bit\s+is\b",
 }
 
 FLAGGED_WORDS = [
@@ -177,9 +183,12 @@ def count_phrases(prose: str, phrases: list[str]) -> dict[str, int]:
     low = prose.lower()
     found = {}
     for phrase in phrases:
+        # re.escape turns the spaces into literal spaces, which will not match
+        # a phrase the source has wrapped across a line. Put \s+ back.
+        escaped = re.sub(r"\\?\s+", r"\\s+", re.escape(phrase.strip()))
         pattern = (
-            rf"\b{re.escape(phrase.strip())}\b" if phrase == phrase.strip()
-            else re.escape(phrase)
+            rf"\b{escaped}\b" if phrase == phrase.strip()
+            else escaped + r"\s*"
         )
         n = len(re.findall(pattern, low))
         if n:

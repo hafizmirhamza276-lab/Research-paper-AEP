@@ -23,23 +23,23 @@ mismatched one. \textsc{production} and \textsc{evaluation} share one block of
 requirements and differ only in the connector endpoint, which makes ``the
 measurements ran in a production-shaped composition'' a property of the code
 rather than of this sentence. \textsc{production} is nevertheless
-\emph{unsatisfiable} in this repository --- there is no production vault and no
+unsatisfiable in this repository: there is no production vault and no
 production connector, and the gate fails closed for it. Every number in
 \cref{sec:evaluation} was therefore collected in \textsc{evaluation} mode, with
-no test-only flags anywhere in the harness, and the evaluation vault's two
-weaknesses relative to the production design (it shares the Redis trust domain,
-and its keys are operator-supplied rather than KMS-wrapped) are declared rather
-than hidden.
+no test-only flags anywhere in the harness. The evaluation vault has two
+weaknesses relative to the production design, and both are declared rather than
+hidden: it shares the Redis trust domain, and its keys are operator-supplied
+rather than KMS-wrapped.
 
 \paragraph{On test counts} The artifact carries a large automated suite and CI
-that fails if any test is skipped. We deliberately do \emph{not} offer the test
+that fails if any test is skipped. We do not offer the test
 count as evidence of protocol assurance. A prior internal audit of this
 repository established that the suite had grown chiefly in rejection branches,
 gate scripts and artifact metadata, while the number of tests exercising the
 write-ahead path was close to unchanged; a reader who reads a doubled test
 count as a doubled protocol guarantee would be wrong. The evidence for the
-protocol's behaviour under faults is \cref{sec:evaluation}, and the harness
-found three defects the suite had missed --- discussed in \cref{sec:threats}
+protocol's behaviour under faults is \cref{sec:evaluation}. The harness also
+found three defects the suite had missed, discussed in \cref{sec:threats}
 because two of them would have biased results in AEP's favour had they gone
 unnoticed.
 
@@ -47,7 +47,7 @@ unnoticed.
 lockfile, the
 Redis image is pinned by digest, and CI provisions Redis from the same compose
 file the experiments use, so no job can pass against a differently configured
-store. Continuous integration runs four jobs --- the full suite, the
+store. Continuous integration runs four jobs: the full suite, the
 \texttt{WAITAOF} durability suite, a citation-range check over the formal
 model, and a gate that rebuilds the manuscript and re-derives every number in
-it from the frozen results --- and the build fails if any test is skipped.
+it from the frozen results. The build fails if any test is skipped.
