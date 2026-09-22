@@ -16,11 +16,22 @@
 #     into anything but this process
 #
 # Usage:
-#   bash scripts/run_phase40_live.sh <results-root>
+#   bash scripts/run_phase40_live.sh <results-root> [runs-per-cell]
+#
+# runs-per-cell DEFAULTS TO 1, which is what every stage so far ran with, and
+# the default is load-bearing. Stages 10 and 30 were launched without the
+# argument and their reports quote the shape it produced; this may extend what
+# the launcher can do and must not change what an earlier command meant.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT="${1:-}"
+# "${2-1}", not "${2:-1}": only an ABSENT argument defaults. An argument that
+# is present but empty is refused below rather than silently becoming 1, because
+# `run_phase40_live.sh "$ROOT" "$RUNS"` with RUNS unset is the shape an operator
+# actually writes, and a silent 1 there is a collection that is not the one they
+# asked for.
+RUNS_PER_CELL="${2-1}"
 
 # Where the credentials live. Defaults to the parent of the repository rather
 # than the repository itself: that directory is not inside any git work tree,
@@ -31,7 +42,11 @@ ENV_FILE="${AEP_ENV_FILE:-$(dirname "$REPO")/.env}"
 
 die () { echo "REFUSING: $*" >&2; exit 2; }
 
-[ -n "$ROOT" ] || die "give me a results root: run_phase40_live.sh <dir>"
+[ -n "$ROOT" ] || die "give me a results root: run_phase40_live.sh <dir> [runs-per-cell]"
+case "$RUNS_PER_CELL" in
+    ''|*[!0-9]*) die "runs-per-cell must be a whole number, got '$RUNS_PER_CELL'" ;;
+esac
+[ "$RUNS_PER_CELL" -ge 1 ] || die "runs-per-cell must be at least 1"
 [ -e "$ROOT" ] && [ -n "$(ls -A "$ROOT" 2>/dev/null)" ] && \
     die "$ROOT is not empty. A live collection starts on a fresh journal."
 [ -f "$ENV_FILE" ] || die "no $ENV_FILE"
@@ -118,6 +133,7 @@ echo "  caps         calls/collection=${AEP_PLANNER_PER_COLLECTION_CALLS}" \
      "calls/run=${AEP_PLANNER_PER_RUN_CALLS}" \
      "usd=${AEP_PLANNER_PER_COLLECTION_USD}"
 echo "  loop         ${AEP_PLANNER_LOOP}"
+echo "  runs/cell    ${RUNS_PER_CELL}   (2 cells, so $((RUNS_PER_CELL * 2)) run(s))"
 echo "  env file     $ENV_FILE"
 echo "  results      $ROOT"
 
@@ -143,7 +159,7 @@ uv run --frozen --extra dev --extra experiments --extra analysis \
         --system AEP_FULL --system B0_NAIVE_RETRY \
         --crash-point mid_dispatch --endpoint notifications \
         --keying CALLER_REFERENCE --max-tier 1 \
-        --runs-per-cell 1 --executions-per-run 3 --workers 1 \
+        --runs-per-cell "$RUNS_PER_CELL" --executions-per-run 3 --workers 1 \
         >"$ROOT/collection.log" 2>&1
 rc=$?
 echo "=== collection rc=$rc ==="
