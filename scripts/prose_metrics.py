@@ -193,10 +193,30 @@ def measure(path: Path) -> dict:
     source = path.read_text(encoding="utf-8")
     prose = to_prose(source)
 
-    # Em dashes come from the source: to_prose does not touch them, but
-    # counting before stripping keeps the number honest about what is written.
-    em_dashes = len(re.findall(r"(?<!-)---(?!-)", re.sub(r"(?<!\\)%.*", "", source)))
-    en_dashes = len(re.findall(r"(?<!-)--(?!-)", re.sub(r"(?<!\\)%.*", "", source)))
+    # Em dashes are counted on the source with comments and float environments
+    # removed, and section headings left in.
+    #
+    # The tabular GRID is excluded, not the whole float: a table cell can use
+    # `---` as a not-applicable marker, which is content and not a prose
+    # habit -- tab:trilemma has four, and counting them told §II to fix
+    # something it must not touch. A \caption is prose and stays counted,
+    # which stripping the float wrapper would have hidden. Headings stay too:
+    # `Trace 1 --- the duplicate nobody sees` is a real instance of the habit
+    # and a colon does the job.
+    #
+    # `em_dashes_raw` keeps the unfiltered number so a run can be compared
+    # against one taken before this distinction existed.
+    uncommented = re.sub(r"(?<!\\)%.*", "", source)
+    outside_floats = uncommented
+    for environment in ("tabular", "tabularx", "tabu", "verbatim",
+                        "lstlisting"):
+        outside_floats = re.sub(
+            rf"\\begin\{{{environment}\}}.*?\\end\{{{environment}\}}",
+            " ", outside_floats, flags=re.DOTALL,
+        )
+    em_dashes = len(re.findall(r"(?<!-)---(?!-)", outside_floats))
+    em_dashes_raw = len(re.findall(r"(?<!-)---(?!-)", uncommented))
+    en_dashes = len(re.findall(r"(?<!-)--(?!-)", outside_floats))
 
     sents = sentences(prose)
     lengths = [len(s.split()) for s in sents]
@@ -221,6 +241,7 @@ def measure(path: Path) -> dict:
         "sentences": len(sents),
         "page_equivalents": round(words / WORDS_PER_PAGE, 2) if words else 0.0,
         "em_dashes": em_dashes,
+        "em_dashes_raw": em_dashes_raw,
         "em_dashes_per_page": (
             round(em_dashes / (words / WORDS_PER_PAGE), 2) if words else 0.0
         ),
@@ -254,7 +275,7 @@ def print_report(rows: list[dict]) -> None:
     print(f"page-equivalents assume {WORDS_PER_PAGE} words of prose per page.\n")
 
     header = (
-        f"{'file':<26}{'words':>7}{'sent':>6}{'pg':>6}{'em':>5}{'em/pg':>7}"
+        f"{'file':<26}{'words':>7}{'sent':>6}{'pg':>6}{'em':>5}{'emRaw':>7}{'em/pg':>7}"
         f"{'en':>5}{'len':>7}{'sd':>6}{'min':>5}{'max':>5}"
         f"{'corr':>6}{'flag':>6}{'sign':>6}{'hedge':>7}{'we':>5}"
         f"{'emph':>6}{'bold':>6}{'para':>6}{'punch':>7}"
@@ -265,7 +286,8 @@ def print_report(rows: list[dict]) -> None:
         print(
             f"{r['file']:<26}{r['words']:>7}{r['sentences']:>6}"
             f"{r['page_equivalents']:>6}{r['em_dashes']:>5}"
-            f"{r['em_dashes_per_page']:>7}{r['en_dashes']:>5}"
+            f"{r['em_dashes_raw']:>7}{r['em_dashes_per_page']:>7}"
+            f"{r['en_dashes']:>5}"
             f"{r['sentence_len_mean']:>7}{r['sentence_len_sd']:>6}"
             f"{r['sentence_len_min']:>5}{r['sentence_len_max']:>5}"
             f"{r['corrective_total']:>6}{r['flagged_words_total']:>6}"
