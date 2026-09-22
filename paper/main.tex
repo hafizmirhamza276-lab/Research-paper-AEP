@@ -210,18 +210,19 @@
     with that assistance, under the author's direction and subject to
     the author's review. The exact model identifiers are not listed here
     because such a list goes stale; they are recorded in the artifact
-    repository's commit trailers and in its \texttt{.claude/agents/}
-    definitions, which are the authoritative record. The phase prompts
-    issued from Phase~8 onward are committed in \texttt{prompts/} in
-    that repository, each before the data of the phase it governs;
+    repository's commit trailers and in the per-assistant
+    configuration files committed beside them, which are the
+    authoritative record. The phase prompts issued from Phase~8 onward
+    are committed in that repository, each before the data of the phase
+    it governs;
     Phases~1A--7 carry no such record, and the project's own audit
     records that gap rather than reconstructing it.
 
     No AI system is an author. Every measurement reported here was
     collected by the harness on the author's host and is reproducible
     from the archived raw runs; every number in the manuscript is
-    generated from those results by \texttt{scripts/paper\_tables.py}
-    and re-derived by \texttt{scripts/check\_paper\_numbers.py}. The
+    generated from those results by the artifact's table
+    generator and re-derived by its independent number check. The
     author is solely responsible for the content of this article,
     including all claims, analysis and conclusions.}
   % Rendered from \archivedoi, never from a literal. While it is PENDING the

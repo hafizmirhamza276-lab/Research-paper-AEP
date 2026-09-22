@@ -728,9 +728,17 @@ def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
     # The claim.
     assert "five" in caption
     assert "after\\_intent\\_before\\_barrier" in caption
-    assert "per-cell-metrics.csv" in caption
+    # The caption must still attribute its source, but not by filename: a
+    # rendered repository path is what scripts/check_no_repo_paths.py exists
+    # to stop reaching a submitted paper. The source is now named in prose,
+    # and the % census below still carries the exact file for the reader of
+    # the source. The requirement did not weaken; its spelling changed.
+    assert "per-cell metrics" in caption
+    assert "per-cell-metrics.csv" not in caption
     # The data the claim is about, from the generator's own census.
     census = [line for line in text.splitlines() if line.startswith("%   ")]
+    assert any("per-cell-metrics.csv" in line for line in text.splitlines()
+               if line.startswith("%")), "the source left the file entirely"
     assert any(
         "B0_NAIVE_RETRY" in line and "crash_points=5" in line for line in census
     )

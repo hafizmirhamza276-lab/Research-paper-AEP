@@ -1,9 +1,9 @@
 \section{System and Failure Model}
 \label{sec:model}
 
-This section condenses \texttt{docs/22-formal-model.md} in the
-artifact, which states every claim below with a \texttt{file:line} citation to
-the enforcing code and is machine-checked in CI: a script fails the build if a
+This section condenses a formal model held in the
+artifact, which states every claim below with a citation to the enforcing
+code by file and line and is machine-checked in CI: a script fails the build if a
 cited path stops existing or a cited line falls outside its file. That check
 proves the citation ranges are valid, not that the semantics are right. The
 semantic evidence is the per-property regression tests named in

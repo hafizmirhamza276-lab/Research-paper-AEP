@@ -164,7 +164,7 @@ single source rather than asserting availability it does not have. Publishing
 the record and creating the immutable release tag are the remaining
 pre-submission steps, and we will not submit until the DOI resolves.
 
-`ARTIFACT.md` at the repository root is the entry point. It carries a
+A single artifact document at the repository root is the entry point. It carries a
 claims-to-evidence map in which every quantitative claim in the paper resolves,
 in one hop, to the exact command and CSV cell that produces it — the map is
 enumerable because every number in the manuscript is a generated macro whose

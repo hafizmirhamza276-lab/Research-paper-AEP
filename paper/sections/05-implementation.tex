@@ -43,7 +43,8 @@ found three defects the suite had missed --- discussed in \cref{sec:threats}
 because two of them would have biased results in AEP's favour had they gone
 unnoticed.
 
-\paragraph{Reproducibility} The environment is locked (\texttt{uv.lock}), the
+\paragraph{Reproducibility} The environment is locked by a resolved dependency
+lockfile, the
 Redis image is pinned by digest, and CI provisions Redis from the same compose
 file the experiments use, so no job can pass against a differently configured
 store. Continuous integration runs four jobs --- the full suite, the

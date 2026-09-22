@@ -257,6 +257,32 @@ built around one still parses as a sentence; and each `\item` is treated as its
 own unit, because consecutive items that do not end in terminal punctuation
 otherwise fuse into one implausible sentence.
 
+## 13a. Word counts after the path-removal pass, 2026-09-22
+
+`scripts/check_no_repo_paths.py` replaced twenty-three rendered repository
+paths with prose. The wording around each changed, so the word counts in §13
+no longer describe the current text. Recorded here rather than by editing §13,
+which is the pre-rewrite baseline and should stay that way.
+
+| file | words, §13 | words now | em (prose) now |
+|---|---|---|---|
+| `01-introduction` | 1056 | 1065 | 0 |
+| `02-motivating` | 731 | 728 | 0 |
+| `03-model` | 638 | 652 | 0 |
+| `04-protocol` | 2291 | 2291 | 28 |
+| `05-implementation` | 440 | 444 | 4 |
+| `06-evaluation` | 6389 | 6392 | 68 |
+| `07-related` | 3204 | 3204 | 28 |
+| `08-threats` | 3234 | 3234 | 25 |
+| `09-artifact` | 816 | 825 | 8 |
+| `main.tex` | 688 | 693 | 6 |
+| `supplementary` | 4165 | 4175 | 38 |
+
+§I, §II and §III are also rewritten; the others moved only where a path was
+removed. The em-dash column is the prose-only count introduced with the
+tabular-grid exclusion, so §II's four remaining and the supplementary's four
+are table cells and not prose.
+
 ## 13. Baseline, 2026-09-22
 
 Recorded before any rewriting, so that later runs have something to be compared

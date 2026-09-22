@@ -189,7 +189,7 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
         r"all of them --- \texttt{after\_intent\_before\_barrier} cannot occur "
         r"in a system that writes no intent, so for those three there is no "
         r"such cell to pool --- and the per-crash-point rates behind every "
-        r"cell here are in \texttt{per-cell-metrics.csv}. "
+        r"cell here are in the artifact\'s per-cell metrics. "
         r"\textsc{auth}/\textsc{pos-only}/\textsc{none} "
         r"are the reconciliation capabilities of \cref{tab:capabilities}. "
         r"AEP-full and B3 --- the same protocol with and without the "
@@ -206,7 +206,7 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
         r"\AblationZeroUpperPerClass{} percentage points --- so what the "
         r"table shows per class is no observed difference, and "
         r"\cref{sec:eval-detection} is where the claim is quantified. "
-        r"Source: \texttt{per-cell-metrics.csv}, crashed regime only.}"
+        r"Source: the artifact\'s per-cell metrics, crashed regime only.}"
     )
     lines.append(r"\label{tab:outcomes}")
     lines.append(r"\small")
