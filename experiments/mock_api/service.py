@@ -48,6 +48,7 @@ for. A configuration with both probabilities at zero injects nothing.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import random
 import time
@@ -66,6 +67,7 @@ from aep_core.core.connector_contract import (
 )
 
 from experiments.mock_api.config import (
+    DelayDistribution,
     EndpointConfig,
     MockApiConfig,
     ReadbackKeying,
@@ -92,6 +94,32 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
+def _paired_uniforms(
+    pair_seed: int, endpoint_name: str, fingerprint: str, ordinal: int
+) -> tuple[float, float, float, float]:
+    """Four independent uniforms, a pure function of the request's identity.
+
+    Amendment 8 §5. Keyed on (paired seed, endpoint, fingerprint, dispatch
+    ordinal) and on nothing else -- in particular on nothing the protocol
+    mints and nothing about how many requests have gone before. That is what
+    makes the same logical request meet the same fault on both arms.
+
+    Four disjoint 8-byte windows of one SHA-256, so the three fault decisions
+    and the delay are independent of each other and adding a knob that consumes
+    one cannot shift the others -- the same property the sequential path
+    protects by always drawing all three.
+    """
+    material = "|".join(
+        ["aep.mock.paired-fault/1", str(pair_seed), endpoint_name,
+         fingerprint, str(ordinal)]
+    )
+    digest = hashlib.sha256(material.encode("utf-8")).digest()
+    return tuple(  # type: ignore[return-value]
+        int.from_bytes(digest[index:index + 8], "big") / float(1 << 64)
+        for index in (0, 8, 16, 24)
+    )
+
+
 class MockLegacyAPI:
     """Configuration, ledger, seeded generator, and run log for one service."""
 
@@ -100,6 +128,16 @@ class MockLegacyAPI:
         self._ledger: GroundTruthLedger | None = None
         self._owns_ledger = False
         self._random = random.Random(config.seed)
+        # A stream of its own for anything that is NOT a mutation fault.
+        # Nothing draws from it today -- read-backs consume nothing -- and that
+        # is the point: amendment 8 §5 makes the separation structural, so a
+        # read-back that one day needs randomness cannot shift the fault a
+        # mutation will meet merely by existing.
+        self._auxiliary_random = random.Random(config.seed ^ 0x5EC0_11AB)
+        #: How many mutation requests have already been seen per fingerprint.
+        #: The dispatch ordinal of amendment 8 §5, counted per identity rather
+        #: than globally so that what another execution did cannot move it.
+        self._dispatch_ordinals: dict[str, int] = {}
         self.run_log_path = Path(config.ledger_path).with_suffix(".run.jsonl")
 
     @classmethod
@@ -150,16 +188,72 @@ class MockLegacyAPI:
 
     # -- fault decisions ---------------------------------------------------
 
-    def draw_faults(self, endpoint_name: str) -> tuple[bool, bool, bool]:
-        """Draw all three fault decisions, in a fixed order, unconditionally."""
-        faults = self.config.endpoint(endpoint_name).faults
-        server_error = self._random.random() < faults.server_error_probability
-        timeout = self._random.random() < faults.timeout_probability
-        duplicate = self._random.random() < faults.duplicate_response_probability
-        return server_error, timeout, duplicate
+    def dispatch_ordinal(self, fingerprint: str) -> int:
+        """How many times this identity has already been seen. 0 on the first.
 
-    def draw_delay(self, endpoint_name: str) -> float:
-        return self.config.endpoint(endpoint_name).faults.delay.sample(self._random)
+        Per fingerprint, never global. Amendment 8 §5: the first dispatch of a
+        payment is ordinal 0 on both arms however many other requests either
+        arm made in between, and a re-dispatch the agent authorises is ordinal
+        1 on whichever arm authorised it.
+        """
+        seen = self._dispatch_ordinals.get(fingerprint, 0)
+        self._dispatch_ordinals[fingerprint] = seen + 1
+        return seen
+
+    def draw_faults(
+        self, endpoint_name: str, *, fingerprint: str | None = None,
+        ordinal: int | None = None,
+    ) -> tuple[bool, bool, bool]:
+        """Draw all three fault decisions, in a fixed order, unconditionally.
+
+        **Sequential unless paired.** Without ``pair_seed`` this is what it has
+        always been: three draws from one generator per mutation, which is
+        correct for the matrix, where each cell is its own condition.
+
+        **Keyed when paired.** Amendment 8 §5: with ``pair_seed`` set, the
+        outcome is a function of (paired seed, fingerprint, dispatch ordinal)
+        and of nothing else. The sequential form cannot serve a paired
+        comparison, because the two arms send different numbers of mutations --
+        AEP's gate can withhold one that B0 sends -- so after the first
+        difference arm A's nth mutation would meet the fault drawn for arm B's
+        mth.
+        """
+        faults = self.config.endpoint(endpoint_name).faults
+        if self.config.pair_seed is None or fingerprint is None:
+            server_error = self._random.random() < faults.server_error_probability
+            timeout = self._random.random() < faults.timeout_probability
+            duplicate = self._random.random() < faults.duplicate_response_probability
+            return server_error, timeout, duplicate
+
+        first, second, third, _ = _paired_uniforms(
+            self.config.pair_seed, endpoint_name, fingerprint, ordinal or 0
+        )
+        return (
+            first < faults.server_error_probability,
+            second < faults.timeout_probability,
+            third < faults.duplicate_response_probability,
+        )
+
+    def draw_delay(
+        self, endpoint_name: str, *, fingerprint: str | None = None,
+        ordinal: int | None = None,
+    ) -> float:
+        """The response delay. Keyed too when paired, for the same reason.
+
+        Under the pre-registered ``CONSTANT`` distribution nothing is drawn at
+        all, on either path. The keyed branch exists so that a run configured
+        with a drawn distribution stays paired rather than silently falling
+        back to a shared sequential generator.
+        """
+        delay = self.config.endpoint(endpoint_name).faults.delay
+        if self.config.pair_seed is None or fingerprint is None:
+            return delay.sample(self._random)
+        if delay.distribution is DelayDistribution.CONSTANT:
+            return delay.seconds
+        _, _, _, fourth = _paired_uniforms(
+            self.config.pair_seed, endpoint_name, fingerprint, ordinal or 0
+        )
+        return delay.sample(random.Random(int(fourth * (1 << 53))))
 
     # -- applying ----------------------------------------------------------
 
@@ -381,8 +475,17 @@ def create_app(api: MockLegacyAPI) -> FastAPI:
             )
             return JSONResponse({"detail": str(error)}, status_code=422)
 
-        server_error, timeout, duplicate = api.draw_faults(endpoint.name)
-        delay = api.draw_delay(endpoint.name)
+        # The ordinal is taken once, after the request has been identified and
+        # before any fault is drawn, so both arms count the same request at the
+        # same point. A request refused as unidentifiable above never reaches
+        # here and therefore never consumes an ordinal.
+        ordinal = api.dispatch_ordinal(fingerprint)
+        server_error, timeout, duplicate = api.draw_faults(
+            endpoint.name, fingerprint=fingerprint, ordinal=ordinal
+        )
+        delay = api.draw_delay(
+            endpoint.name, fingerprint=fingerprint, ordinal=ordinal
+        )
 
         if server_error:
             api.record_refusal(

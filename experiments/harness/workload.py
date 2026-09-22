@@ -24,6 +24,7 @@ exercised; there is simply nothing secret in the payload.
 from __future__ import annotations
 
 import hashlib
+import os
 import uuid
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
@@ -110,6 +111,51 @@ class WorkloadItem:
         }
 
 
+#: The pair identity, set by ``run_matrix`` on the agent-interactive branch and
+#: by nothing else. Amendment 8 §4.
+#:
+#: Read from the environment rather than taken from ``RunConfig`` for the reason
+#: ``docs/31`` §4 gives for every other phase-40 setting: ``RunConfig._body()``
+#: folds every field into ``config_digest``, so a field here would change the
+#: digest of all 432 collected runs.
+PAIR_ID_ENV = "AEP_PAIR_ID"
+PAIR_SEED_ENV = "AEP_PAIR_SEED"
+
+
+def pairing_identity(config) -> tuple[str, int]:
+    """What the named streams below are keyed on.
+
+    Normally the run's own ``(run_id, seed)``, which is what every collected
+    run used and what the matrix still uses.
+
+    **On the agent branch, a pair identity shared by both arms.** Amendment 8:
+    ``cell_seed`` derives a run's seed from a key beginning with the system
+    name and ``run_id`` carries the system slug, so the two arms have never
+    handled the same payments. With the pair identity they receive identical
+    execution ids, targets, amounts and crash selection for the same
+    repetition, which is what makes a cross-arm comparison mean anything.
+
+    Both variables must be present. One without the other is a half-applied
+    pairing, which would be worse than none because it would look paired.
+    """
+    pair_id = (os.environ.get(PAIR_ID_ENV) or "").strip()
+    pair_seed = (os.environ.get(PAIR_SEED_ENV) or "").strip()
+    if not pair_id and not pair_seed:
+        return config.run_id, config.seed
+    if not (pair_id and pair_seed):
+        raise ValueError(
+            f"{PAIR_ID_ENV} and {PAIR_SEED_ENV} must be set together; got "
+            f"{PAIR_ID_ENV}={pair_id!r} {PAIR_SEED_ENV}={pair_seed!r}. A "
+            f"half-applied pairing looks paired and is not."
+        )
+    try:
+        return pair_id, int(pair_seed)
+    except ValueError:
+        raise ValueError(
+            f"{PAIR_SEED_ENV}={pair_seed!r} is not an integer"
+        ) from None
+
+
 def _stream(run_id: str, seed: int, *parts: Any) -> bytes:
     """One independent 32-byte pseudorandom stream per named purpose.
 
@@ -148,10 +194,14 @@ def _crash_selected(
 
 def plan_workload(config) -> tuple[WorkloadItem, ...]:
     """Every execution the run will attempt, in worker-then-index order."""
+    # Off the agent branch this is (config.run_id, config.seed) and nothing
+    # below changes. On it, both arms of a repetition resolve to one pair
+    # identity and therefore to one workload -- amendment 8 §4.
+    identity, seed = pairing_identity(config)
     items: list[WorkloadItem] = []
     for worker in range(config.workers):
         for index in range(config.executions_per_worker):
-            execution_id = _execution_id(config.run_id, config.seed, worker, index)
+            execution_id = _execution_id(identity, seed, worker, index)
             items.append(
                 WorkloadItem(
                     worker_index=worker,
@@ -162,10 +212,10 @@ def plan_workload(config) -> tuple[WorkloadItem, ...]:
                     # and reconstructible from the id alone.
                     target=f"account-{execution_id}",
                     action="capture",
-                    amount_minor=_amount(config.run_id, config.seed, worker, index),
+                    amount_minor=_amount(identity, seed, worker, index),
                     crash_selected=_crash_selected(
-                        config.run_id,
-                        config.seed,
+                        identity,
+                        seed,
                         worker,
                         index,
                         config.crash_probability,

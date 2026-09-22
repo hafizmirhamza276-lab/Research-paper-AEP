@@ -48,6 +48,7 @@ async def run_once(
     host: str = "127.0.0.1",
     fault_overrides: Mapping[str, Any] | None = None,
     provider_seed: int | None = None,
+    pair_seed: int | None = None,
 ) -> dict[str, Any]:
     """Render a provider configuration, start it, run once, stop it.
 
@@ -73,6 +74,7 @@ async def run_once(
         results_dir / PROVIDER_CONFIG_NAME,
         ledger_path=results_dir / PROVIDER_LEDGER_NAME,
         seed=provider_seed if provider_seed is not None else overrides.get("seed"),
+        pair_seed=pair_seed,
         readback_keying=(
             str(overrides["readback_keying"].value)
             if hasattr(overrides.get("readback_keying"), "value")

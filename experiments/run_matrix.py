@@ -663,6 +663,75 @@ def cell_seed(matrix_seed: int, cell: Cell, repetition: int) -> int:
     return int.from_bytes(digest[:4], "big") & 0x7FFFFFFF
 
 
+def _paired_for(entry: Mapping[str, Any]) -> tuple[str, int] | None:
+    """The pair identity for this run, or None when pairing does not apply.
+
+    Pairing is for the phase-40 agent-interactive branch and nothing else. The
+    matrix runs with neither variable set and is bit-for-bit unaffected.
+
+    The identity is exported into the environment because that is where every
+    other phase-40 setting lives: ``docs/31`` §4 keeps them out of
+    ``RunConfig`` so that ``config_digest`` -- and therefore the
+    attributability of 432 collected runs -- does not move. Worker
+    subprocesses inherit it.
+    """
+    from experiments.harness.agent_loop import is_agent_mode, is_interactive
+    from experiments.harness.workload import PAIR_ID_ENV, PAIR_SEED_ENV
+
+    if not (is_agent_mode() and is_interactive()):
+        os.environ.pop(PAIR_ID_ENV, None)
+        os.environ.pop(PAIR_SEED_ENV, None)
+        return None
+    pair_id = entry.get("pair_id")
+    pair_seed = entry.get("pair_seed")
+    if pair_id is None or pair_seed is None:
+        # A plan written before amendment 8, resumed under the agent branch.
+        # Refused rather than silently unpaired: a collection that looks
+        # paired and is not is the defect this amendment exists for.
+        # SystemExit rather than an Exception on purpose: the run loop catches
+        # Exception so that one bad run does not end the matrix, and this is
+        # not one bad run -- it is a whole collection that would be recorded as
+        # paired without being paired.
+        raise SystemExit(
+            "REFUSING: the agent-interactive branch requires a paired plan, "
+            "and this plan carries no pair_id/pair_seed. It predates "
+            "amendment 8. Re-plan into a fresh results root rather than "
+            "resuming onto it."
+        )
+    os.environ[PAIR_ID_ENV] = str(pair_id)
+    os.environ[PAIR_SEED_ENV] = str(int(pair_seed))
+    return str(pair_id), int(pair_seed)
+
+
+def pair_key(cell: Cell) -> str:
+    """``cell.key`` with the system removed: what both arms share.
+
+    Amendment 8 §4. ``cell.key`` begins with ``self.system.value``, so every
+    seed derived from it is arm-specific -- which is correct for the matrix,
+    where each cell is its own condition, and is the leak
+    ``reports/phase-report-40-fault-symmetry-2026-09-22.md`` named for a
+    paired comparison.
+    """
+    parts = [cell.crash_point, cell.endpoint, cell.readback_keying.value]
+    if cell.regime.name:
+        parts.append(cell.regime.name)
+    return "|".join(parts)
+
+
+def pair_identity(matrix_seed: int, cell: Cell, repetition: int) -> tuple[str, int]:
+    """The ``(id, seed)`` both arms of a repetition are keyed on.
+
+    Derived the same way ``cell_seed`` is, from a key that simply does not
+    contain the arm. Two cells that differ only in their system therefore
+    resolve to one identity and receive one workload.
+    """
+    key = pair_key(cell)
+    material = f"{matrix_seed}|{MATRIX_VERSION}|pair|{key}|{repetition}"
+    digest = hashlib.sha256(material.encode("utf-8")).digest()
+    seed = int.from_bytes(digest[:4], "big") & 0x7FFFFFFF
+    return f"pair-{hashlib.sha256(key.encode()).hexdigest()[:8]}-r{repetition}", seed
+
+
 @dataclass
 class MatrixPlan:
     """Everything the matrix will do, decided before any of it is done."""
@@ -820,6 +889,15 @@ def build_plan(arguments) -> MatrixPlan:
                     "workers": workers,
                     "repetition": repetition,
                     "seed": cell_seed(arguments.matrix_seed, cell, repetition),
+                    # Recorded on every entry so the plan states it before any
+                    # of it is used, exactly as the per-cell seed is. Applied
+                    # only on the agent-interactive branch -- see run_once.
+                    "pair_id": pair_identity(
+                        arguments.matrix_seed, cell, repetition
+                    )[0],
+                    "pair_seed": pair_identity(
+                        arguments.matrix_seed, cell, repetition
+                    )[1],
                     "estimated_seconds": round(
                         estimated_run_seconds(cell, executions_per_run, workers),
                         1,
@@ -1080,6 +1158,10 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
             executions_per_run = int(
                 entry.get("executions_per_run") or plan.executions_per_run
             )
+            # Amendment 8 §4. Applied only on the agent-interactive branch:
+            # the matrix keeps per-cell seeds, which are correct for it, and
+            # no collected run's workload or config_digest moves.
+            paired = _paired_for(entry)
             outcome = await run_once(
                 run_config_overrides={
                     "run_id": entry["run_id"],
@@ -1114,6 +1196,7 @@ async def execute_plan(plan: MatrixPlan, arguments) -> int:
                 port=arguments.port,
                 fault_overrides=FAULTS,
                 provider_seed=entry["seed"],
+                pair_seed=paired[1] if paired else None,
             )
             report = outcome["report"]
             # A run collected against a coordinator that was replaced

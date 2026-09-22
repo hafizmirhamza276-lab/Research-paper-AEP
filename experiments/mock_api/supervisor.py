@@ -58,6 +58,7 @@ def render_config(
     seed: int | None = None,
     readback_keying: str | None = None,
     fault_overrides: Mapping[str, Any] | None = None,
+    pair_seed: int | None = None,
 ) -> Path:
     """Write a run-specific configuration derived from a template.
 
@@ -76,6 +77,11 @@ def render_config(
         document["seed"] = int(seed)
     if readback_keying is not None:
         document["readback_keying"] = str(readback_keying)
+    if pair_seed is not None:
+        # Written only when pairing is in force, so a template rendered
+        # without it is byte-identical to what it was before amendment 8 and
+        # its config_digest does not move.
+        document["pair_seed"] = int(pair_seed)
     if fault_overrides:
         defaults = document.setdefault("defaults", {})
         faults = defaults.setdefault("faults", {})

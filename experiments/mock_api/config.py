@@ -60,6 +60,10 @@ _TOP_LEVEL_KEYS = frozenset(
         "defaults",
         "endpoints",
         "readback_keying",
+        # Phase 40 amendment 8. Optional: absent in every configuration
+        # written before it existed, and absent everywhere but the agent
+        # branch.
+        "pair_seed",
     }
 )
 _ENDPOINT_KEYS = frozenset(
@@ -422,6 +426,17 @@ class MockApiConfig:
     #: Amendment C1. Part of the digest: a result collected under one keying
     #: must not be attributable to a run under the other.
     readback_keying: ReadbackKeying = ReadbackKeying.CALLER_REFERENCE
+    #: Phase 40 amendment 8. When set, each mutation's fault is a function of
+    #: (this seed, the request's fingerprint, that fingerprint's dispatch
+    #: ordinal) instead of the next three draws from a sequential generator, so
+    #: the same logical request meets the same fault on both arms whatever else
+    #: either arm sends.
+    #:
+    #: ``None`` everywhere except the phase-40 agent branch. It is folded into
+    #: the digest **only when set**, so every configuration written before it
+    #: existed produces a byte-identical body and an unchanged digest -- which
+    #: is what keeps 432 collected runs attributable.
+    pair_seed: int | None = None
 
     def echo(self) -> dict[str, Any]:
         """The whole configuration, JSON-ready, with its own digest.
@@ -434,7 +449,7 @@ class MockApiConfig:
         return {**body, "config_digest": self.config_digest}
 
     def _body(self) -> dict[str, Any]:
-        return {
+        body = {
             "config_version": self.config_version,
             "seed": self.seed,
             "ledger_path": self.ledger_path,
@@ -445,6 +460,12 @@ class MockApiConfig:
                 for name, endpoint in sorted(self.endpoints.items())
             },
         }
+        # Present only when pairing is in force. Absent, the body is
+        # byte-identical to what every configuration written before amendment
+        # 8 produced, so their digests do not move.
+        if self.pair_seed is not None:
+            body["pair_seed"] = int(self.pair_seed)
+        return body
 
     @property
     def config_digest(self) -> str:
@@ -537,6 +558,14 @@ def load_config(path: str | Path) -> MockApiConfig:
             f"permitted: {[member.value for member in ReadbackKeying]}"
         ) from None
 
+    raw_pair_seed = document.get("pair_seed")
+    if raw_pair_seed is None:
+        pair_seed = None
+    elif isinstance(raw_pair_seed, bool) or not isinstance(raw_pair_seed, int):
+        raise ConfigError("pair_seed must be an integer when present")
+    else:
+        pair_seed = int(raw_pair_seed)
+
     return MockApiConfig(
         config_version=version,
         seed=seed,
@@ -544,4 +573,5 @@ def load_config(path: str | Path) -> MockApiConfig:
         endpoints=endpoints,
         source_path=str(source),
         readback_keying=keying,
+        pair_seed=pair_seed,
     )
