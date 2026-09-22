@@ -1,0 +1,29 @@
+config_version: aep.mock-legacy-api.config/1
+defaults:
+  faults:
+    delay:
+      distribution: constant
+      seconds: 2.0
+    duplicate_response_probability: 0.0
+    server_error_probability: 0.05
+    timeout_probability: 0.15
+endpoints:
+  ledger_postings:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: NO_READBACK
+  notifications:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: POSITIVE_ONLY_READBACK
+  payments:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: AUTHORITATIVE_READBACK
+ledger_path: /mnt/d/personal/AEP/stub-results/phase40-live-100call-interactive-2026-09-22/aep_full-mid_dispatch-notifications-ea8836a3-r1/ground_truth.sqlite3
+pair_seed: 1555905736
+readback_keying: CALLER_REFERENCE
+seed: 1244684929
