@@ -21,8 +21,8 @@ again. The provider applies the mutation a second time.
 The ground-truth ledger now holds two applied mutations for one logical
 step. The system's own records hold one successful execution. Nothing in the
 system is in a state that a monitor could alert on: there is no error, no
-retry counter above its threshold, and no ambiguous record. By every signal
-the system exposes, the execution is green.
+retry counter above its threshold, and no ambiguous record. The execution is
+green.
 
 This is not a strawman configuration. It is what a retry-on-timeout loop does,
 and it is the behaviour we measure for B0. Across the crashed cells B0 ends
