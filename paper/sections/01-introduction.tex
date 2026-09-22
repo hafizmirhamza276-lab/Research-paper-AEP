@@ -5,9 +5,10 @@ An autonomous agent is asked to post a journal entry, issue a refund, or file a
 regulatory notification. It calls an enterprise API written years before any of
 this. The call times out, and nothing on either side can say whether the money
 moved. Autonomous agents are the setting in which this is now most visible, and
-we use them throughout as the motivating example; the problem belongs to the
-endpoint, and any caller that can fail mid-call inherits it --- a workflow
-engine, a retrying batch job, a human operator with a script.
+we use them throughout as the motivating example. The problem itself belongs to
+the endpoint, and any caller that can fail mid-call inherits it. A workflow
+engine, a retrying batch job and a human operator with a script are all in the
+same position.
 
 This is an old problem in a new setting, and the new setting removes the
 assumption that the old solutions rest on. Durable-execution engines, workflow
@@ -15,13 +16,13 @@ systems and message brokers achieve their guarantees by requiring that the
 operation being retried is idempotent, or that the remote side will accept a
 deduplication key, or that both endpoints can be enrolled in one
 transaction~\cite{helland2007apostate,burckhardt2021durable,zhuang2023exoflow}.
-Temporal's own documentation is explicit about the precondition: ``You should
+Temporal's documentation is explicit about the precondition: ``You should
 always make your business logic Activities idempotent in Temporal. Because
 Activities may be retried, these functions may be executed more than
 once''~\cite{temporal-activity-definition}. The legacy endpoints at issue satisfy
-none of this. They are non-idempotent, they accept
-no idempotency key, and --- the property that does the real damage --- many of
-them cannot be asked afterwards whether a mutation was applied.
+none of these conditions. They are non-idempotent and they accept no idempotency
+key. Many of them also cannot be asked afterwards whether a mutation was
+applied, and that third gap is the one that does the real damage.
 
 \subsection{The trilemma}
 \label{sec:trilemma}
@@ -33,65 +34,61 @@ external world, and a system must choose which one it is willing to produce.
 \begin{itemize}
 \item An \textbf{\undetdup{}}. The recovery process re-sends. If the first
       request had in fact been applied, a second real effect now exists and no
-      component of the system knows it. This is what a naive retry produces,
-      and, as we show in \cref{sec:evaluation}, it is also what a lease, a
-      fenced compare-and-swap, and a durable event-sourced history each fail
-      to prevent, because none of them is a record written \emph{before} the
-      call.
+      component of the system knows it. A naive retry produces this outcome.
+      So do a lease, a fenced compare-and-swap and a durable event-sourced
+      history, as \cref{sec:evaluation} shows, because none of them writes a
+      record before the call.
 \item A \textbf{\lostfx{}}. The recovery process does not re-send and records
-      the attempt as failed. If the first request \emph{was} applied, a real
-      effect now exists that the system's records deny. This is what an
-      at-most-once configuration produces. It is quieter than a duplicate and
-      it is not better; a refund that the ledger says did not happen is a
-      reconciliation problem that surfaces weeks later, in the accounts.
+      the attempt as failed. If the first request was applied, a real effect
+      now exists that the system's records deny. An at-most-once configuration
+      produces this outcome. It is quieter than a duplicate and no less
+      serious: a refund that the ledger says did not happen becomes a
+      reconciliation problem that surfaces in the accounts weeks later.
 \item A \textbf{\declamb{}}. The system declines to decide, records that it
-      cannot decide, and stops. The effect may or may not exist; what is
-      guaranteed is that a durable record says so and that no further
+      cannot decide, and stops. The effect may or may not exist. What the
+      system guarantees is that a durable record says so, and that no further
       automated action is taken on that execution.
 \end{itemize}
 
-The first two are silent. The third is not. Our position is that the third
-corner is the one a protocol should be engineered to reach, and that the
-quantity a system should be judged on is not whether it avoids ambiguity ---
-which, against an endpoint that cannot be queried, is impossible --- but
-whether its residual uncertainty is \emph{declared and bounded} rather than
-\emph{silent and unbounded}.
+The first two outcomes are silent and the third is not. Our position is that
+the third corner is the one a protocol should be engineered to reach. Against
+an endpoint that cannot be queried, avoiding ambiguity altogether is
+impossible, so the quantity a system should be judged on is whether its
+residual uncertainty is declared and bounded rather than silent and unbounded.
 
-The impossibility is not incidental. Deciding whether a remote effect occurred,
+This impossibility is structural. Deciding whether a remote effect occurred,
 when the channel may fail and the remote side may not answer, is the
 coordinated-attack problem; no protocol resolves it with certainty, and the
 classical results on consensus under crash faults and on failure detection say
-why~\cite{fischer1985impossibility,chandra1996failuredetectors}. What is
-available is a choice about where the uncertainty is allowed to
-surface. AEP's answer is: in a durable state, visible to an operator, never in
-the accounts.
+why~\cite{fischer1985impossibility,chandra1996failuredetectors}. What a designer
+can choose is where the uncertainty is allowed to surface. AEP places it in a
+durable state that an operator can see, and keeps it out of the accounts.
 
 \subsection{Contributions}
 
 \begin{itemize}
 \item[\textbf{C1}] \textbf{The declared-ambiguity formulation.} We state the
       problem as the three-way trade of \cref{sec:trilemma} rather than as a
-      pursuit of exactly-once, and we give three properties --- fenced state,
-      detectable ambiguity, and a fail-closed liveness bound --- each mapped to
-      the code path that enforces it and each with its residual window declared
-      rather than assumed away (\cref{sec:model,sec:protocol}).
+      pursuit of exactly-once. The formulation gives three properties: fenced
+      state, detectable ambiguity, and a fail-closed liveness bound. Each is
+      mapped to the code path that enforces it, and each has its residual
+      window declared rather than assumed away (\cref{sec:model,sec:protocol}).
 \item[\textbf{C2}] \textbf{A protocol and an implementation} in which a
-      durably acknowledged write-ahead intent is a \emph{checked precondition}
-      of dispatch authority rather than a matter of call ordering: under a
-      trusted-code assumption, the fsync acknowledgement returns an opaque,
-      non-copyable, single-use, scope-bound in-process dispatch guard; the
-      guard is consumed to write a Redis-visible authorization, and the
-      pre-dispatch script refuses to proceed without it (\cref{sec:protocol}).
-      This is a control-flow invariant of the supported API, not a
-      cryptographic capability or a boundary against arbitrary code in the
-      same Python process.
+      durably acknowledged write-ahead intent is a checked precondition of
+      dispatch authority, not a matter of call ordering. Under a trusted-code
+      assumption, the fsync acknowledgement returns an opaque, non-copyable,
+      single-use, scope-bound in-process dispatch guard. The guard is consumed
+      to write a Redis-visible authorization, and the pre-dispatch script
+      refuses to proceed without it (\cref{sec:protocol}). This is a
+      control-flow invariant of the supported API. It is not a cryptographic
+      capability, and it is not a boundary against arbitrary code in the same
+      Python process.
 \item[\textbf{C3}] \textbf{An evaluation under real process kills} across six
       named crash points, three endpoint reconciliation capabilities and
-      five reported fault regimes --- every execution crashed, none
-      crashed, Redis hard-killed before the acknowledgement, Redis killed
-      after dispatch, and storage discarding writes while reporting
-      success --- against five baseline
-      designs, one of them in two configurations.
+      five reported fault regimes, against five baseline designs, one of them
+      in two configurations. The five regimes are every execution crashed,
+      none crashed, Redis hard-killed before the acknowledgement, Redis killed
+      after dispatch, and storage discarding writes while reporting success.
       (A sixth regime, a $30\%$ crash probability, was collected; its rates
       are not in these tables and the collection is in the artifact.)
       % Regimes counted from each collection root's analysis/coverage.json.
@@ -107,25 +104,25 @@ the accounts.
       % and 6.3.4 report -- one of them the fault the abstract's prevention
       % sentence turns on.
       AEP records no
-      undetected duplicate and no lost effect in any cell measured; the
+      undetected duplicate and no lost effect in any cell measured, and the
       baselines without a pre-dispatch record duplicate in most crashed
-      executions. AEP's residual is declared ambiguity whose rate is a
+      executions. AEP's residual is declared ambiguity, whose rate is a
       function of what the endpoint can be asked (\cref{sec:evaluation}).
 \item[\textbf{C4}] \textbf{A decomposition of the mechanism, by ablation,
       that reassigns our own headline result.} The write-ahead pattern is
-      normally presented as one mechanism delivering one guarantee. It is two.
-      The \emph{pre-dispatch record plus no re-entry} is what makes an outcome
-      detectable, and it does so without the durability barrier: ablating the
-      barrier produces no observed difference in the crashed-regime detection
-      metrics (\cref{sec:eval-detection}). The \emph{barrier} buys
-      something else --- it withholds the external call when durability can no
-      longer be confirmed --- which is invisible to the crash faults that
-      dominate this literature and large under the fault that targets
-      Redis (\cref{sec:eval-prevention}). Separating them changes what a
-      deployment must pay for: detection is nearly free, prevention is where
-      the fsync cost lives, and an operator can buy the first without the
-      second (the supplementary material, \emph{The barrier is a deployment
-      choice}).
+      normally presented as one mechanism delivering one guarantee, and we
+      find that it is two. The pre-dispatch record together with no re-entry
+      is what makes an outcome detectable, and it does so without the
+      durability barrier: ablating the barrier produces no observed difference
+      in the crashed-regime detection metrics (\cref{sec:eval-detection}). The
+      barrier contributes something else, withholding the external call when
+      durability can no longer be confirmed. That contribution is invisible to
+      the crash faults that dominate this literature and large under the fault
+      that targets Redis (\cref{sec:eval-prevention}). Separating the two
+      changes what a deployment must pay for: detection is nearly free,
+      prevention is where the fsync cost lives, and an operator can buy the
+      first without the second (the supplementary material, \emph{The barrier
+      is a deployment choice}).
 \end{itemize}
 
 \subsection{What this paper does not claim}
