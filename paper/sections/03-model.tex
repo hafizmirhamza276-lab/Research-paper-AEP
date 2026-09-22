@@ -1,11 +1,11 @@
 \section{System and Failure Model}
 \label{sec:model}
 
-This section is a condensation of \texttt{docs/22-formal-model.md} in the
+This section condenses \texttt{docs/22-formal-model.md} in the
 artifact, which states every claim below with a \texttt{file:line} citation to
 the enforcing code and is machine-checked in CI: a script fails the build if a
 cited path stops existing or a cited line falls outside its file. That check
-proves citation \emph{ranges} are valid, not that the semantics are right; the
+proves the citation ranges are valid, not that the semantics are right. The
 semantic evidence is the per-property regression tests named in
 \cref{sec:protocol}.
 
@@ -15,8 +15,8 @@ A \emph{runner} performs at most one external mutation per invocation. A
 \emph{recovery service} is read-only with respect to the external system and
 writes only coordination state. A \emph{connector} is the only component that
 touches the external API. The store is a single self-hosted Redis~7.2 instance
-with the append-only file enabled and RDB snapshots disabled --- no replica, no
-Sentinel, no Cluster.
+with the append-only file enabled and RDB snapshots disabled. There is no
+replica, no Sentinel and no Cluster.
 
 Redis executes a Lua script without interleaving, so a script is a single
 serialisation point. This is the only atomicity primitive the protocol has and
@@ -30,7 +30,7 @@ between principals are taken against the Redis server clock; no cross-worker
 clock comparison occurs. Process-local monotonic time is used only for
 heartbeat intervals and watchdogs, never for an authoritative decision. The
 lease budget $T_{\text{client}} \le T_{\text{lock}} - B$ with $B \ge 15$\,s is
-enforced at configuration time, and it is a timing budget rather than a
+enforced at configuration time. It is a timing budget rather than a
 guarantee: a scheduling gap remains between a successful preflight and
 transmission, and we declare it as such.
 
@@ -42,16 +42,16 @@ idempotency key, and its response may be absent, late, or self-contradictory.
 Two things about it are modelled explicitly, and the second is the axis the
 evaluation turns on.
 
-\paragraph{Evidence at mutation time} The runner accepts only policy-declared
-success and failure values, required non-empty and disjoint. Any other value,
-and \emph{any} exception, is coerced to ambiguity. Ambiguity is the default,
-not a special case.
+\paragraph{Evidence at mutation time} Ambiguity is the default here, not a
+special case. The runner accepts only policy-declared
+success and failure values, required non-empty and disjoint; any other value,
+and any exception whatever, is coerced to ambiguity.
 
-\paragraph{Reconciliation capability} What the endpoint can be asked
-\emph{afterwards} is a declared, typed property with three values
+\paragraph{Reconciliation capability} What the endpoint can be asked after the
+fact is a declared, typed property with three values
 (\cref{tab:capabilities}). The declaration fails closed: a missing, null or
 unrecognised capability is treated as the weakest, not as the strongest.
-Classification is total --- in particular, ``the endpoint reports the mutation
+Classification is total. In particular, ``the endpoint reports the mutation
 absent'' combined with a positive-only capability is a \emph{named contract
 violation} that resolves to ambiguity, not a fall-through to ``it did not
 happen''.
@@ -59,7 +59,7 @@ happen''.
 \begin{table}[t]
 \centering
 \caption{Endpoint reconciliation capability. The right-hand column is the
-ceiling on what \emph{any} protocol can conclude, and \cref{sec:eval-rq1} shows
+ceiling on what any protocol can conclude, and \cref{sec:eval-rq1} shows
 AEP's declared-ambiguity rate tracking it.}
 \label{tab:capabilities}
 \small
@@ -81,7 +81,8 @@ Capability & Conclusions the endpoint can support \\
 
 \subsection{Failure model}
 
-Crash-and-delay, not Byzantine. Redis is trusted to execute scripts atomically
+The model is crash-and-delay, not Byzantine. Redis is trusted to execute
+scripts atomically
 and honour expiry; the provider is trusted only insofar as its declared
 evidence is truthful.
 
@@ -98,10 +99,10 @@ evidence is truthful.
       second of acknowledged-but-unsynced writes may be absent under
       \texttt{appendfsync everysec}~\cite{redis-persistence}.
       \Cref{sec:eval-durability} reports two probes that sharpen this
-      considerably: the set of \emph{faults} that can actually realise that
-      loss is narrower than the documentation's wording suggests --- a
-      process kill is not in it --- and a host-level write loss, which is,
-      realises it every time.
+      considerably. The set of faults that can actually realise that loss is
+      narrower than the documentation's wording suggests, and a process kill
+      is not among them; a host-level write loss is, and realises the loss
+      every time.
 \item[\textbf{F4}] \textbf{Delayed or duplicated external responses.} A late
       effect cannot be recalled; recovery waits out a reconciliation delay
       before drawing any conclusion, and never re-dispatches.
@@ -111,8 +112,9 @@ evidence is truthful.
 \end{itemize}
 
 Out of model: Byzantine Redis; a provider whose declared evidence contradicts
-its own effects; loss of the Redis host \emph{after} fsync acknowledgement;
-adversarial writers with direct socket access; compromise of vault keys.
+its own effects; loss of the Redis host once the fsync acknowledgement has been
+returned; adversarial writers with direct socket access; compromise of vault
+keys.
 
 \begin{table}[t]
 \centering
