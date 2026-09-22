@@ -106,7 +106,11 @@ def build_prompt(observation: Observation, target: str,
     if observation.step_index == 0:
         previous = "This is your first call of the run."
     elif last_outcome:
-        previous = f"Your previous call: {last_outcome}"
+        # Amendment 9 §5: the label names the PAYMENT. "Your previous call"
+        # named the most recent decision, and after a re-dispatch that was
+        # refused before transmission the most recent decision was not a call
+        # at all -- so the label asserted something that did not happen.
+        previous = f"What you know about the previous payment: {last_outcome}"
     else:
         previous = f"You made a call on the previous turn. {NO_OUTCOME_AVAILABLE}"
     return (
@@ -164,8 +168,11 @@ def build_redecision_prompt(observation: Observation, target: str,
         "A customer payment is pending capture on this account."
     )
     observed = (
-        f"Your previous call: {last_outcome}" if last_outcome else
-        f"You made a call for this payment. {NO_OUTCOME_AVAILABLE}"
+        # Amendment 9 §5. This decision concerns the same payment, so the
+        # label says so; and it stays true after an absorbed re-dispatch,
+        # which sent nothing and therefore changed nothing.
+        f"What you know about this payment: {last_outcome}" if last_outcome
+        else f"You made a call for this payment. {NO_OUTCOME_AVAILABLE}"
     )
     return (
         f"{SYSTEM}\n\n"

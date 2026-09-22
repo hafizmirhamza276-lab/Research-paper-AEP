@@ -433,6 +433,17 @@ class TransmissionObserver:
 
     connector: Any
     emit: Any
+    #: How many times ``mutate`` has been entered. Amendment 9 §2 needs the
+    #: transmission boundary as a value a caller can read, not only as a line
+    #: in the event log: reading it back from ``events.jsonl`` would breach
+    #: amendment 4 §3, which keeps the oracle's record on the oracle's side of
+    #: the wall. A counter on the passthrough is in-process state, and the
+    #: event the counter accompanies is the one ``docs/31`` already defines.
+    #:
+    #: Not a behaviour change. ``docs/31`` §2's six properties are unaffected:
+    #: every other attribute is still delegated, the return value is still the
+    #: connector's, and exceptions are still re-raised as themselves.
+    transmissions: int = 0
 
     def __getattr__(self, name: str) -> Any:
         # Delegation, so read-back, aclose and anything added later reach the
@@ -441,6 +452,10 @@ class TransmissionObserver:
 
     async def mutate(self, **kwargs: Any) -> Any:
         dispatch = kwargs.get("dispatch")
+        # Incremented BEFORE the event and before the call, so the boundary the
+        # counter marks is the same instruction boundary the event marks: the
+        # last point at which no provider byte can have left.
+        self.transmissions += 1
         binding = getattr(dispatch, "binding", None)
         self.emit(
             "provider_request_transmitted",

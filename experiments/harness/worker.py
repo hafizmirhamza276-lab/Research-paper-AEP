@@ -264,6 +264,11 @@ async def run_worker(
                 crash_selected=item.crash_selected,
             )
             started = time.monotonic_ns()
+            # Amendment 9 §2. The transmission boundary as a value, read from
+            # the passthrough that already emits docs/31's event, so the driver
+            # never has to read events.jsonl for it -- amendment 4 §3 keeps the
+            # oracle's record on the oracle's side of the wall.
+            sent_before = getattr(connector, "transmissions", None)
             try:
                 if config.descriptor.uses_fenced_state_writes:
                     # The fenced write path requires the record to exist. The
@@ -291,7 +296,17 @@ async def run_worker(
                 if isinstance(error, (KeyboardInterrupt, SystemExit)):
                     raise
                 if driver is not None:
-                    driver.observe(error=error)
+                    sent_after = getattr(connector, "transmissions", None)
+                    driver.observe(
+                        error=error,
+                        # None stays None: undetermined, which amendment 9 §7
+                        # treats as transmitted, because absorbing an
+                        # undetermined case would hide a real failure.
+                        transmitted=(
+                            None if sent_before is None or sent_after is None
+                            else sent_after > sent_before
+                        ),
+                    )
                 exit_status = UNEXPECTED_FAILURE_EXIT
                 continue
 

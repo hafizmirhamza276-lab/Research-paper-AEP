@@ -137,14 +137,49 @@ OUTCOME_WORDING = {
         "it was acknowledged."
     ),
     UNKNOWN_PROCESS_DIED: (
-        "your process then stopped. You do not know whether it was sent, "
-        "whether it arrived, or whether it was applied."
+        # Amendment 9 §5. Was "your process THEN stopped", which named the most
+        # recent decision. After an absorbed re-dispatch the most recent
+        # decision's process did not stop -- it was refused before transmission
+        # -- so that clause was false of it. Worded about the PAYMENT instead,
+        # which is what amendment 6 made the re-decision about, and which stays
+        # true however many attempts were absorbed in between.
+        "your process stopped while a call for it was in progress. You do not "
+        "know whether it was sent, whether it arrived, or whether it was "
+        "applied."
     ),
 }
 
 
-def classify_outcome(resolved, error) -> str:
+#: Not a ``last_outcome`` value, and deliberately not one. Amendment 9 §1: a
+#: refusal before transmission is not a dispatch, so it produces NO new
+#: observation and the agent's knowledge state is left exactly as it was.
+#:
+#: It is a sentinel rather than a fifth value because a fifth value would be
+#: reachable on AEP and never on B0 -- the one-bit arm label amendment 6 §6
+#: forbids, and the reason the author rejected that option.
+NOT_TRANSMITTED = "__not_transmitted__"
+
+
+def classify_outcome(resolved, error, transmitted=None) -> str:
     """The caller-visible result of one execution.
+
+    **Amendment 9 §1.** The outcome is derived from whether TRANSMISSION
+    occurred and from nothing else:
+
+    * refused **before** transmission -> :data:`NOT_TRANSMITTED`, which is no
+      observation at all;
+    * **after** transmission -> only the transport result.
+
+    What refused it -- a lease, an invariant, a fence, a barrier, a binding --
+    is the oracle's business and never the agent's. The rule this replaces was
+    "any exception not named ``*Timeout*`` is a ``server_error``", which is a
+    rule about Python class names rather than about what happened, and which
+    told the agent the provider had returned an error it never saw.
+
+    ``transmitted=None`` means undetermined, and is treated as **transmitted**.
+    That is the safe direction: absorbing an undetermined case would hide a
+    real failure, whereas reporting the transport result at worst repeats what
+    the code did before. Amendment 9 §7.
 
     Reads only what a caller could see. ``outcome_class``, ``status``,
     ``dispatch_attempts``, ``intent_id`` and ``request_fingerprint`` are all
@@ -152,6 +187,8 @@ def classify_outcome(resolved, error) -> str:
     three leak which arm the agent is in (amendment 4 §2.3).
     """
     if error is not None:
+        if transmitted is False:
+            return NOT_TRANSMITTED
         name = type(error).__name__.lower()
         if "timeout" in name:
             return TIMED_OUT
@@ -341,6 +378,9 @@ class InteractiveDriver:
         # recorded and never observed -- which is a fact in the run directory
         # rather than an inference from an index, and is the same on both arms.
         self._pending = None
+        #: The exception that refused the most recent attempt before anything
+        #: was transmitted, or None. Read once by the loop and cleared.
+        self._absorbed = None
 
     def __len__(self) -> int:
         """How many turns are AVAILABLE, not how many will be taken.
@@ -354,9 +394,18 @@ class InteractiveDriver:
         return len(self.scaffold)
 
     # -- what worker.py calls ------------------------------------------
-    def observe(self, resolved=None, error=None) -> None:
-        """Record the caller-visible result of the item just executed."""
-        self._pending = classify_outcome(resolved, error)
+    def observe(self, resolved=None, error=None, transmitted=None) -> None:
+        """Record the caller-visible result of the item just executed.
+
+        Amendment 9 §1: a refusal before transmission produces no observation,
+        so ``_pending`` is left exactly as it was and the attempt is remembered
+        only so the loop can tell the oracle about it.
+        """
+        outcome = classify_outcome(resolved, error, transmitted)
+        if outcome is NOT_TRANSMITTED or outcome == NOT_TRANSMITTED:
+            self._absorbed = error
+            return
+        self._pending = outcome
 
     # -- the loop ------------------------------------------------------
     def __iter__(self):
@@ -426,12 +475,24 @@ class InteractiveDriver:
                 # worker.py has run it. Cleared so a crash between yielding
                 # and observing records nothing -- which is exactly how the
                 # next lifetime recognises the crashed decision.
+                carried = self._pending
                 self._pending = None
+                self._absorbed = None
                 yield replace(base, action=action.action,
                               amount_minor=action.amount_minor)
                 # worker.py has called observe() by now, unless it died -- in
                 # which case this generator never resumes and nothing is
                 # written, leaving the decision recorded and unobserved.
+                if self._absorbed is not None:
+                    # Amendment 9 §1. Refused before transmission: not a
+                    # dispatch, so there is no observation to record and the
+                    # agent's knowledge state for this payment is restored to
+                    # exactly what it was. §7: the oracle is told, the agent
+                    # is not.
+                    self._emit_absorbed(base, decision_index, self._absorbed)
+                    self._pending = carried
+                    self._absorbed = None
+                    break
                 result = self._pending or UNKNOWN_PROCESS_DIED
                 self._log.record(self.worker_index, base.execution_index,
                                  decision_index, result)
@@ -440,6 +501,25 @@ class InteractiveDriver:
                 if result in NON_ACKNOWLEDGED:
                     continue
                 break
+
+    def _emit_absorbed(self, base, decision_index: int, error) -> None:
+        """Tell the ORACLE that the planner chose to send and nothing went out.
+
+        Amendment 9 §7. The run's counts must show that a re-dispatch was
+        chosen and absorbed -- otherwise a reader sees an agent that said "send
+        again" and no effect, with nothing in between. The cause is recorded
+        here, on the oracle's side of the wall, and never reaches the planner.
+        """
+        if self.emit is None:
+            return
+        self.emit(
+            "planner_redispatch_absorbed",
+            execution_id=base.execution_id,
+            execution_index=base.execution_index,
+            decision_index=decision_index,
+            cause=type(error).__name__,
+            last_outcome=self._pending,
+        )
 
     def _emit(self, event: str, base, decision_index: int) -> None:
         if self.emit is None:
