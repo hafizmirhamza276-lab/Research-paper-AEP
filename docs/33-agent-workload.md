@@ -2,6 +2,14 @@
 
 **WS-1 Option B, task 1B.1.**
 
+**Status, 2026-09-22 — the reduced reopening is CLOSED. See §0's third banner.**
+Phase 40 reopened a reduced form of this workstream to test whether the failure
+modes are reachable with a real LLM caller. It ran stub, 10, 30 and 100, and was
+**closed by author decision at stage 100's first failure** — not by a triggered
+stop rule. The record is `prompts/phase-40-closure-2026-09-22.md`. **Nothing in
+§§1 and 3–5 below became implemented by it**, and the paragraph below stands
+unchanged.
+
 **Status, corrected 2026-09-17.** §2 (WS-1a, attribution) was built and
 verified, and then **reverted the same day** by `74ea31f`. None of its code
 is in the tree: `LEDGER_SCHEMA_VERSION` is `"…ledger/1"` and
@@ -61,6 +69,59 @@ is **33**. Nothing else about the task changes.
 > Agents remain the motivating deployment context of §I and §II. `24c0a0b`
 > stands; `74ea31f` is not restored. `p30` is collected and unanalysed, so the
 > third regime can still be checked — see `docs/35`'s 2026-09-11 banner.
+>
+> ### CLOSED 2026-09-22 — the phase-40 reopening is over, by author decision
+>
+> **Phase 40 reopened this workstream in a reduced form** — two systems, one
+> crash point, one capability class, a real LLM in the caller position, and an
+> output that is *"a count with transcripts, not a rate"*. It is
+> pre-registered at `prompts/phase-40-agent-reachability.md` with nine
+> amendments, and it is now **closed at stage 100's first failure**.
+>
+> **The closure is an author decision, not a triggered stop rule**, and the
+> distinction is the point. None of §9's three conditions fired: cumulative
+> spend was **USD 0.00775720** against a USD 10 threshold, the stage-100
+> criterion had failed **once** where the rule needs twice, and the
+> 2026-10-15 date was 23 days away. The reasoning is in
+> `prompts/phase-40-closure-2026-09-22.md` §2 — in short, that continuing
+> required a **third** override of the pre-registration's own gates in order to
+> collect more of a result that had not varied across **12 of 12** offers, and
+> the author judged the credibility of the instrument worth more than that.
+>
+> **What it established, as counts.** One **declared ambiguity** reached under
+> `AEP_FULL` with a real LLM caller — the first time in this project — and
+> **zero undetected duplicates** under `B0_NAIVE_RETRY`, because the agent
+> declined the re-dispatch on every one of the twelve occasions it was offered
+> neutrally. Stage verdicts: 10 passed, 30 **PARTIAL** (clause 1 withdrawn as
+> structurally unreachable), 100 **FAILED**, 300 never opened.
+>
+> **What it does not establish.** §8's **F1 was not evaluated**: it is defined
+> over 20 runs and 4 were collected. No rate, no comparison against the matrix,
+> and no generalisation beyond one vendor, one deployment, one pinned snapshot,
+> one `api-version`, one `reasoning.effort` and one date — on a deployment that
+> reports an **alias** and is free to move, so the result is auditable from its
+> transcripts and **not reproducible**.
+>
+> **§3.2's rule was never breached and is not relaxed by the closure.** *"No
+> number that reaches the manuscript may come from it."* None did.
+> **§VI-F does not exist and is not created**; §I is unchanged; agents remain
+> the motivating deployment context. §9's on-stop clause — *"no manuscript text
+> depends on it"* — is satisfied by the manuscript being untouched.
+>
+> **Three instrument findings came out of it**, each a way an LLM caller leaked
+> arm identity into a paired comparison, and each closed before it could
+> contaminate a live result: harness-owned re-dispatch (amendment 6),
+> arm-keyed fault seeding (amendment 8), and an arm-specific pre-transmission
+> refusal reported to the caller as a provider error (amendment 9). They are the
+> part of this workstream most likely to be useful elsewhere, and
+> `reports/phase-report-40-closure-2026-09-22.md` §4 lists them as candidates
+> for a separate discussion rather than as claims.
+>
+> **Where the record lives.** Pre-registration and amendments in `prompts/`;
+> stage reports in `reports/phase-report-40-*.md`; committed text evidence in
+> `reports/raw/phase40-*/`; the full live collections unedited outside the
+> repository at `AEP/stub-results/phase40-*/`. **No live call will be made under
+> this pre-registration again.**
 
 **Option B was decided, and this document is its design.** The A-versus-B
 question was closed at the time of writing and is not reopened below; where the
@@ -867,3 +928,9 @@ reviewer asks.
 
 **Nothing in this document is implemented.** No manuscript text depends on it,
 and §VI-F does not exist yet.
+
+**Settled 2026-09-22.** The "yet" is spent. Phase 40 was the only route by which
+§VI-F could have been created — §10 of its pre-registration conditions the
+manuscript prose on stage 300 passing — and phase 40 closed at stage 100 without
+reaching it. **§VI-F does not exist and is not created.** §0's third banner
+records the closure; nothing in this document became implemented by it.
