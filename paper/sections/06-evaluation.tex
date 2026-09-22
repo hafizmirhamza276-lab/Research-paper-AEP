@@ -23,18 +23,35 @@ given system is marked inapplicable and never run rather than silently skipped.
 \paragraph{Faults} Workers are separate OS processes killed with real
 \texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
 \emph{regime} is a named fault condition --- not a matrix dimension --- and we
-report each separately because they are different experiments:
+report each separately because they are different experiments. Five are
+reported, and each is named here with the section that reports it:
 
 \begin{itemize}
 \item \textbf{crashed}: every execution is killed at the cell's crash point.
-      This is the regime RQ1 is about.
+      This is the regime RQ1 is about (\cref{sec:eval-rq1}), and it is also
+      the regime of the detection ablation (\cref{sec:eval-detection}).
 \item \textbf{crash-free} (\texttt{p0}): nothing is injected. The only regime
-      RQ3 may use.
+      RQ3 may use (\cref{sec:eval-rq3}).
 \item \textbf{\texttt{redis-kill-preack}}: no worker crash; Redis is hard-killed
       with \texttt{docker kill -s KILL} at the instruction boundary between the
       intent CAS and the barrier acknowledgement, then restarted and verified.
-      This is RQ2's ablation.
+      This is RQ2's ablation (\cref{sec:eval-prevention}).
+\item \textbf{\texttt{redis-kill-inflight}}: the same fault armed at the last
+      instruction before transmission and delivered afterwards, so that it
+      lands once both arms have dispatched. It is the control for
+      \texttt{redis-kill-preack}: where the fault falls on the far side of the
+      branch point, the arms should tie, and they do
+      (\cref{sec:eval-prevention}, under \emph{Where the fault lands after the
+      branch point}).
+\item \textbf{\texttt{write-loss-preack}}: no worker crash and no Redis kill;
+      the block device under Redis's append-only file stops accepting writes
+      while reporting success, armed at the intent checkpoint. This is the
+      fault the durability claim is defined against, and the regime that
+      refuted our prediction (\cref{sec:eval-writeloss-cell}).
 \end{itemize}
+
+A sixth regime, a $30\%$ crash probability, was collected and is in the
+artifact; no table here quotes its rates, so it is not one of the five.
 
 \paragraph{Oracle} A standalone mock provider records every \emph{actually
 applied} mutation in a SQLite ledger (WAL, \texttt{synchronous=FULL}, one
