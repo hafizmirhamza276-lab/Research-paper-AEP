@@ -1,7 +1,6 @@
 # AEP artifact
 
-The currently tracked artifact for *Declared Ambiguity: The Agent Execution
-Protocol (AEP) for Autonomous Agents Calling Non-Idempotent Legacy APIs*: the
+The currently tracked artifact for *AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys*: the
 protocol implementation, baseline systems, fault-injection harness, derived
 analysis products, and the manuscript generated from them. The raw run archive
 and immutable DOI remain external blockers (§5).

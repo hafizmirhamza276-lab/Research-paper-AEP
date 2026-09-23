@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "This metadata describes an unreleased revision; verify the final immutable release and DOI before citing it."
-title: "Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy APIs Without Idempotency Keys"
+title: "AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys"
 abstract: >-
   AEP is a fail-closed execution protocol for autonomous agents that call
   non-idempotent legacy APIs. Rather than claiming exactly-once semantics,

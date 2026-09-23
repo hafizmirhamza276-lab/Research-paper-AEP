@@ -19,7 +19,7 @@
 Checked against `main.tex`'s `\title{}` by `render_arxiv_abstract.py --check`.
 
 ```
-Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy APIs Without Idempotency Keys
+AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys
 ```
 
 ## Keywords

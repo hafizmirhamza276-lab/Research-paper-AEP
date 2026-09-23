@@ -1,7 +1,6 @@
 # Cover letter — IEEE Transactions on Software Engineering
 
-**Manuscript:** *Declared Ambiguity: Fail-Closed Execution for Non-Idempotent
-Legacy APIs Without Idempotency Keys*
+**Manuscript:** *AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys*
 
 **Type:** Regular paper
 
@@ -12,9 +11,8 @@ Legacy APIs Without Idempotency Keys*
 
 Dear Editor-in-Chief,
 
-We submit *Declared Ambiguity: Fail-Closed Execution for Non-Idempotent Legacy
-APIs Without Idempotency Keys* for consideration as a regular paper
-in IEEE Transactions on Software Engineering.
+We submit *AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys* for consideration as a regular
+paper in IEEE Transactions on Software Engineering.
 
 ## The problem, and why it is a software-engineering problem
 

@@ -1,7 +1,6 @@
 # Agent Execution Protocol (AEP)
 
-The research artifact for *Declared Ambiguity: Fail-Closed Execution for
-Non-Idempotent Legacy APIs Without Idempotency Keys* — a protocol,
+The research artifact for *AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys* — a protocol,
 five baseline designs it is measured against, a fault-injection harness,
 tracked derived results from a 432-run evaluation, and the manuscript generated
 from them. The raw run archive is **two parts, built and verified, with a

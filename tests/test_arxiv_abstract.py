@@ -228,7 +228,11 @@ def test_the_title_loses_its_typesetting_line_break(main_tex):
     title = extract_title(main_tex)
     assert "\\\\" not in title
     assert "\n" not in title
-    assert title.startswith("Declared Ambiguity:")
+    # The startswith/endswith pair is the point of this test: it proves the
+    # extraction spans BOTH authored lines, the first up to the ``\\`` and the
+    # second after it. A retitle updates these two strings -- deleting either
+    # would leave the test passing on a title that lost half of itself.
+    assert title.startswith("AEP: Declared Ambiguity")
     assert title.endswith("Without Idempotency Keys")
 
 
