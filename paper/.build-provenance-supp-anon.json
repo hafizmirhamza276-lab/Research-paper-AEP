@@ -1,7 +1,7 @@
 {
   "sources": {
-    "arxiv-metadata.md": "2e1b69fa63a21f13052918910f09ca422baa8b844a67cdee776dad73932fd13b",
-    "cover-letter-tse.md": "facd6fa12d29f72ff456bfdacf573c9c06c8248f0397439d0888cc98c91b709a",
+    "arxiv-metadata.md": "39ae2e37a3e6de3c42e98aea1518ce8ec369e1538ecf7a447d6bdb5903fdc372",
+    "cover-letter-tse.md": "af51b48fa7f5eb3fd92bf10ae0ffe6004bb0f699869a83c0932f68fc3d6a29eb",
     "figures/figure-1-undetected-vs-ambiguity.pdf": "7c22bb28c634d46894199de471891f6de2e524940efdac46613e768440fe29ad",
     "figures/figure-2-duplicates-by-crash-point.pdf": "b823694a46f2a78a1871bb843f64cf48bda7be68317ee4c5eaf063013c005d9f",
     "figures/state-machine.tex": "e3726853a630001a1a5aed4cfd3c1fcaff047f1930eec7edbd8492445061e48d",
@@ -11,9 +11,9 @@
     "generated/table-deployment-choice.tex": "1340ab0ddd0f4e37d89fc92ac4f456d322c6ee1969029d539ec018381ecf829f",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
     "generated/table-outcomes.tex": "c6116238564eab8058240b6ed1320f55dacfdb3aa484c46e07a634b65a536a01",
-    "main.tex": "88d3469b9e51eb1c7900c2d2c132b361ff59f29ba49621ef90187066c87e1c11",
+    "main.tex": "a497e80cd2684f429f3aa4a088b9f557e50ef92924512ca62bced6047f7cca3b",
     "refs.bib": "2cbceda664596e9ab240193c819022e6757ab982320f45b9c4c688b3215487d4",
-    "sections/01-introduction.tex": "45770b87b0b9d751dcd8214e2a27fb684cbadc700005a00aa33e4cabe1b2ef6f",
+    "sections/01-introduction.tex": "94b15a0c25305bc76f8af1a8ea1b747dd58aff1bb42ec194e81a7fcd60eee25e",
     "sections/02-motivating.tex": "0402632a5f634bcc516be36c48b056dd1d216ca0804ab2cd62ba9ff7986b28e8",
     "sections/03-model.tex": "3cbb81e4621379e9d6531b38f4c76fa5df7b391d8daf35583fbf44d718f98cca",
     "sections/04-protocol.tex": "272fed2946a18732a5a52e9e73f47fca21daa24d452f88337bbdf0dc84953825",
@@ -22,7 +22,7 @@
     "sections/07-related.tex": "adbf5bc845c59b0874a41c3162209f848cb1c9785d404066a8f4f78f4b282d87",
     "sections/08-threats.tex": "beb05811964eb72a9120a8e2b807fb35f9958fbb852fc50694f4a93f8eafe208",
     "sections/09-artifact.tex": "dda98d0806eedc4ccebc2c51f968b9ed0581bb5918828fa4b95f967f6f89c4a2",
-    "supplementary.tex": "880c2e1d30b8eeb66c23764274fa621463cfad4c20e171b3eee4b8555f860a0e"
+    "supplementary.tex": "5746f660a24774a9bcfe06088546c3f7dd97272f9fd17e917436c87ed7d4d662"
   },
   "version": 1
 }
