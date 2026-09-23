@@ -7,6 +7,81 @@
 
 ---
 
+> ### STALE BELOW THIS BANNER — 2026-09-23
+>
+> **Everything from "CURRENT PHASE: Phase 8" down is a record of planning as it
+> stood in August 2026 and no longer describes the project.** Phase 8's T6
+> framing decision was taken on 2026-09-04 (Option A, the retitle); phase 40's
+> agent workstream was opened and closed on 2026-09-22; the manuscript is at
+> phase 52. The current state is in `SESSION-HANDOFF-2026-09-18.md` and its
+> addendum, then the numbered reports in `reports/`.
+>
+> The section immediately below this banner is current. Nothing else on this
+> page is.
+
+---
+
+## DEFERRED TO THE LENGTH PASS — the named backlog, 2026-09-23
+
+**None of these is a defect, and none is to be taken before the supervisor's
+review.** They are collected here because each was raised, assessed and
+deliberately postponed to the same place, and a length pass that meets them one
+at a time will make four small decisions instead of one coherent one.
+
+The governing constraint: **the main paper is 24 pages against TSE's 12-page
+charge point**, and the supplementary has no page limit.
+
+### L1. The conclusion section — decided not to write, 2026-09-23
+
+**Author decision: do not write one now.** `reports/phase-report-51` and
+`reports/phase-report-52` §2 set out the investigation; §2.5 recommended adding
+one, and **the objection raised against that recommendation is the reason it
+was declined**: this paper's discipline is not to say things twice, results
+already appear in full in both §VI and §VIII, and a conclusion assembled from
+what is available would be a third statement of the central result.
+
+* **A ~215-word draft exists** at `reports/phase-report-52-abstract-conclusion-spelling-2026-09-23.md` **§2.6**. It makes no claim not already
+  evidenced elsewhere and names no agent.
+* **The forward-looking paragraph a conclusion would normally add is barred.**
+  The obvious sentence is *"place a real LLM in the caller position"*, and
+  `reports/phase-report-40-closure-2026-09-22.md` §3.2 rules that form
+  permitted in principle and inaccurate in practice — phase 40 did exactly
+  that, and the only accurate version states a result the closure forbids.
+* **The ordering half was applied separately** and is done: Artifact
+  Availability now precedes Threats to Validity, so the paper's last numbered
+  section ends on an argument. That fix did not depend on the conclusion.
+
+**Reopen this only after the duplication between §VI and §VIII has been
+resolved**, not before. If the length pass removes the repetition, a
+conclusion stops being a third statement and becomes the only one.
+
+### L2. The two near-duplicate supplementary sections — open
+
+`claims-to-review.md` entry 4. `supp:provable` and `supp:provable-detail`
+answer the same question; one prices the third barrier and the other now
+`\Cref`s it. Whether they merge is structural, and the supplementary's lack of
+a page limit means nothing forces it early.
+
+### L3. The §VII and §VIII cut candidates — 569 words, none applied
+
+`reports/phase-report-49-prose-sections-7-8-2026-09-23.md` §6 lists eight, with
+word counts and, for each, what it restates and the argument against cutting
+it. **The assessment recorded there was that none should be cut**, because 5,
+6 and 7 are each the threat-side counterpart of a result stated in §VI.
+
+**That assessment and L1's duplication objection are the same observation seen
+from two ends**, and the length pass is where they have to be reconciled: if
+§VI and §VIII genuinely duplicate, the cut belongs in one of them, and which
+one is the decision.
+
+### L4. §VI is ~6 500 words and §VIII ~3 200
+
+The two largest sections. `SESSION-HANDOFF-2026-09-18.md` §4 item 4 asks for
+**a table of proposed cuts with word counts before any large move**, and adds
+the constraint that matters: *a length pass must not delete evidence.*
+
+---
+
 ## CURRENT PHASE: Phase 8 (B2) — pre-registered through 8.3, collection not started
 
 **Nothing has been submitted anywhere.** The independent adversarial audit has happened. Its verdict was **FIX FIRST**, not SUBMIT: one SUBMIT-BLOCKER, seven MAJOR, five MINOR, nine of fourteen findings new (`reports/phase-report-6-audit-2026-08-21.md`). Phase 7 discharged the manuscript half of that list (`reports/phase-report-7-fixes-2026-08-21.md`).
