@@ -1,7 +1,18 @@
 # Phase 51 — the title and the protocol's name
 
-**PROPOSAL ONLY. No manuscript file is edited by this report.** Nothing in §§2–5
-has been applied. The recommendation is at §7.
+> ## DECIDED AND APPLIED, 2026-09-23
+>
+> **The author adopted T2 and E3.** This report was written as a proposal and is
+> kept as written; the record of what was decided and applied is §8, appended.
+>
+> | | |
+> |---|---|
+> | title | **T2** — `AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys`, applied in `67092b2` |
+> | expansion | **E3** — no expansion. AEP introduced as a bare name in `47119dd` |
+> | *"Agent Execution Protocol"* | **NOT reinstated.** Three reasons, §8.2 |
+
+**Written as a PROPOSAL. §§1–7 are as drafted, before any decision.** The
+recommendation is at §7; what was decided is at §8.
 
 **No live calls.**
 
@@ -427,3 +438,106 @@ expansion — because the alternative is letting a reviewer discover it.
 6. Never touch `paper/generated/` or the `AEP_FULL` identifiers.
 7. Rebuild all four — supplementaries first, then `main-anon`, then `main` — and
    run the full suite.
+
+---
+
+## 8. Appended 2026-09-23: what was decided, and what was applied
+
+*Everything above is as drafted, before the decision. This section is the
+record of it.*
+
+### 8.1 Title — T2, applied in `67092b2`
+
+> **AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys**
+
+11 words / 97 characters → **9 words / 72 characters.**
+
+Eleven edits in eight files: `main.tex` (`\title`, `\markboth`, header
+comment), `supplementary.tex` (title, header comment), `arxiv-metadata.md:22`,
+`cover-letter-tse.md` (subject line and opening sentence), `CITATION.cff`,
+`README.md`, `ARTIFACT.md`.
+
+**The running head needed adjusting, not just checking.** It read *"Declared
+Ambiguity for Non-Idempotent Legacy APIs"* and T2 drops *Legacy*, so it no
+longer matched the title. It is now the title's first line exactly — *"AEP:
+Declared Ambiguity for Non-Idempotent APIs"*, 47 characters against the old 49,
+so it still fits.
+
+**`ARTIFACT.md` was found carrying the pre-2026-09-04 title** — *"Declared
+Ambiguity: The Agent Execution Protocol (AEP) for Autonomous Agents Calling
+Non-Idempotent Legacy APIs"*. `241292e`'s message states *"A grep for the old
+title returns nothing"*; it missed that file, which had described the current
+artifact with a title naming autonomous agents as the subject for nineteen
+days. Corrected in the same commit.
+
+**`paper/generated/` untouched**, as §2.4 requires.
+
+**One test pinned the old title and was updated rather than weakened.**
+`test_the_title_loses_its_typesetting_line_break` asserted
+`startswith("Declared Ambiguity:")` **and** `endswith("Without Idempotency
+Keys")`. That pair is the test: it proves `extract_title` spans both authored
+lines. Deleting either assertion would leave it passing on a title that lost
+half of itself. The `startswith` string is now `"AEP: Declared Ambiguity"`, with
+a comment recording why both must move together. Verified the guard still
+bites: a title truncated to its first line fails the `endswith` assertion.
+
+### 8.2 Expansion — E3, applied in `47119dd`, and "Agent Execution Protocol" is NOT reinstated
+
+AEP is introduced as a **bare name** at its existing first use, with one
+sentence of gloss and no expansion:
+
+> What a designer can choose is where the uncertainty is allowed to surface.
+> **We call our protocol AEP. It records an intent before every external call
+> and fails closed when recovery cannot resolve the outcome.** AEP places the
+> uncertainty in a durable state that an operator can see…
+
+The gloss claims only what the abstract and §IV already state. It deliberately
+does **not** say *"durably acknowledged"*, because the barrier is C4's subject
+and C4's finding is that detection does not depend on it.
+
+**"Agent Execution Protocol" is not reinstated. Three reasons, each sufficient
+alone:**
+
+1. **It makes agents the subject.** `docs/33` §0's 2026-09-04 banner:
+   autonomous agents are *"the motivating deployment context in §I and §II
+   **rather than the subject**"*. A protocol so named has agents as its subject
+   by construction.
+2. **It contradicts §II's own disclosure.** `02-motivating.tex:9`: *"**It is a
+   scripted caller, not an agent** — the traces show what the endpoint does to a
+   caller that crashes."*
+3. **Nothing agent-shaped was evaluated.** The phase-40 closure bars that
+   collection from the manuscript in all four forms of mention
+   (`reports/phase-report-40-closure-2026-09-22.md` §3.2), so the paper contains
+   no agent execution at all. A name asserting one would be the strongest agent
+   claim in the paper and the only unevidenced one.
+
+**This is not a consequence of phase 40 failing.** The closure report §3.3 says
+the closure creates *"no manuscript debt"*, and the closure prompt §6 says §I is
+left *"exactly where it found it"* — the Option A position, which predates
+phase 40 and survived it untouched. That is the bar, and the expansion fails it.
+
+### 8.3 One thing T2 creates that is worth a decision
+
+**The title now leads with an acronym the abstract never uses.** §2.2 item 5
+anticipated this: the abstract names no protocol, and with T1/T3/T5 that was
+fine. With T2, a reader meets `AEP` on the title page and is not told what it is
+until §I.
+
+**Not changed, because it was not authorised and it is not free:** the abstract
+is under a word limit, and any edit to it forces
+`scripts/render_arxiv_abstract.py --write` and a fresh `arxiv-metadata.md`
+check. **Recorded as a question for the author**, with two cheap answers if the
+gap is judged too wide:
+
+1. Name it once in the abstract's second paragraph — *"We present AEP, a
+   fail-closed protocol in which…"* — which is where the protocol is first
+   described anyway.
+2. Leave it. The title page and §I are two pages apart in a journal two-column
+   layout, and IEEE readers meet unexplained system names in titles routinely.
+
+### 8.4 Not done, on instruction
+
+* **`pyproject.toml:8`'s stale description** — moved to
+  `reports/camera-ready-checklist.md` §1, together with `README.md:1`'s heading.
+* **`docs/26`, `docs/29`, `reports/`** keep the old title. They are dated
+  records; camera-ready gets a pointer note instead, checklist §3.
