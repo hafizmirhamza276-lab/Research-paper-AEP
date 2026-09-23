@@ -19,9 +19,11 @@ original as possible and the question is recorded below instead.
 
 ## 1. §I says the uncertainty is *never* in the accounts; the evidence for that is scoped to what was measured
 
-**Status: open.** Raised 2026-09-22 during the §I prose pass, under the author's
-ruling that the original absolute be restored rather than softened by a language
-edit.
+**Status: RESOLVED 2026-09-23.** Raised 2026-09-22 during the §I prose pass,
+under the author's ruling that the original absolute be restored rather than
+softened by a language edit. Closed by the author taking the **empirical**
+reading: §I now carries C3's scope condition. The resolution is at §
+*How it was resolved* below.
 
 ### The absolute
 
@@ -114,10 +116,36 @@ that was false, so the *durability of the record* was not established even
 though the record existed at dispatch and nothing was lost. The empirical
 reading of *never* survives here, and it survives contingently.
 
-**Status: still open, and it is a question for the author, not a wording fix.**
-Closing it needs a ruling on 1 and 3. If *never* is a design property, no text
-changes and this closes as **checked**. If it is empirical, §I takes C3's scope
-condition and this closes as **resolved** with a commit.
+### How it was resolved
+
+**The empirical reading, by author decision, 2026-09-23.** §I takes C3's scope
+condition.
+
+> **Before:** …AEP places it in a durable state that an operator can see, and
+> **never in the accounts**.
+>
+> **After:** …AEP places the uncertainty in a durable state that an operator can
+> see, and **in every cell we measured, none of it reached the accounts**.
+
+(*"it"* became *"the uncertainty"* in the same pass that introduced the name;
+the antecedent is now two sentences back.)
+
+**The author's reason, recorded as given:** AEP dispatched on a false
+acknowledgement in the write-loss cell, so the durability of the record was
+never established, and an unscoped *never* would claim something about
+conditions that were not tested.
+
+**Note what this does and does not concede.** The data in the section above is
+clean — `lost_effect_rate` and `undetected_duplicate_rate` are both 0/300 on
+both arms in `write-loss-preack`. So the unscoped *never* was not contradicted
+by anything collected. It is scoped because the **conditions** under which it
+would have been tested were not reached: the barrier was handed a successful
+acknowledgement that was false, so the regime that could have produced a
+counterexample was one the instrument could not detect. The scope condition
+records the limit of the instrument, not a failure in the result.
+
+§I and C3 now make the same claim in the same terms, which is the consistency
+the entry was raised about.
 
 ---
 
@@ -363,9 +391,18 @@ The only invariant that moved is the one intended to: `\cref` targets 1 → 2,
 adding `supp:provable`. Every label, citation, number, `\texttt` and `\emph`
 content is unchanged.
 
-**The structural question stays open.** Whether `supp:provable-detail` should
-merge into `supp:provable` — two sections answering the same question, one
-pricing the third barrier and the other now pointing at it — is not a wording
-call. Option 1 above is still for the author. Option 3 (does §VI's pointer land
-a reader on two near-identically-headed sections?) is unaffected by this fix and
-still worth a look during the length pass.
+**The structural question stays open, and it has a home.** Whether
+`supp:provable-detail` should merge into `supp:provable` — two sections
+answering the same question, one pricing the third barrier and the other now
+pointing at it — is not a wording call. Option 1 above is still for the author.
+Option 3 (does §VI's pointer land a reader on two near-identically-headed
+sections?) is unaffected by the `\Cref` fix.
+
+**Author decision, 2026-09-23: this belongs with the length work, after the
+supervisor's review, and is not to be taken before then.** Merging two sections
+changes what the supplementary contains, and the length pass is where that
+trade is decided with word counts in front of it rather than in isolation. The
+supplementary has no page limit, so nothing forces the question early.
+
+**Carry this into the length pass as a named item**, alongside the 569 words of
+§VII and §VIII cut candidates from phase 49 and the 24-page main body.
