@@ -19,7 +19,7 @@ with the append-only file enabled and RDB snapshots disabled. There is no
 replica, no Sentinel and no Cluster.
 
 Redis executes a Lua script without interleaving, so a script is a single
-serialisation point. This is the only atomicity primitive the protocol has and
+serialization point. This is the only atomicity primitive the protocol has and
 every invariant below is expressed inside one.
 
 \subsection{Clocks}
@@ -39,7 +39,7 @@ transmission, and we declare it as such.
 
 The endpoint is non-idempotent and non-cooperative: it need not accept an
 idempotency key, and its response may be absent, late, or self-contradictory.
-Two things about it are modelled explicitly, and the second is the axis the
+Two things about it are modeled explicitly, and the second is the axis the
 evaluation turns on.
 
 \paragraph{Evidence at mutation time} Ambiguity is the default here, not a
@@ -50,7 +50,7 @@ and any exception whatever, is coerced to ambiguity.
 \paragraph{Reconciliation capability} What the endpoint can be asked after the
 fact is a declared, typed property with three values
 (\cref{tab:capabilities}). The declaration fails closed: a missing, null or
-unrecognised capability is treated as the weakest, not as the strongest.
+unrecognized capability is treated as the weakest, not as the strongest.
 Classification is total. In particular, ``the endpoint reports the mutation
 absent'' combined with a positive-only capability is a \emph{named contract
 violation} that resolves to ambiguity, not a fall-through to ``it did not
@@ -83,7 +83,7 @@ Capability & Conclusions the endpoint can support \\
 
 The model is crash-and-delay, not Byzantine. Redis is trusted to execute
 scripts atomically
-and honour expiry; the provider is trusted only insofar as its declared
+and honor expiry; the provider is trusted only insofar as its declared
 evidence is truthful.
 
 \begin{itemize}
@@ -99,9 +99,9 @@ evidence is truthful.
       second of acknowledged-but-unsynced writes may be absent under
       \texttt{appendfsync everysec}~\cite{redis-persistence}.
       \Cref{sec:eval-durability} reports two probes that sharpen this
-      considerably. The set of faults that can actually realise that loss is
+      considerably. The set of faults that can actually realize that loss is
       narrower than the documentation's wording suggests, and a process kill
-      is not among them; a host-level write loss is, and realises the loss
+      is not among them; a host-level write loss is, and realizes the loss
       every time.
 \item[\textbf{F4}] \textbf{Delayed or duplicated external responses.} A late
       effect cannot be recalled; recovery waits out a reconciliation delay
@@ -112,7 +112,7 @@ evidence is truthful.
 \end{itemize}
 
 Out of model: Byzantine Redis; a provider whose declared evidence contradicts
-its own effects; loss of the Redis host once the fsync acknowledgement has been
+its own effects; loss of the Redis host once the fsync acknowledgment has been
 returned; adversarial writers with direct socket access; compromise of vault
 keys.
 

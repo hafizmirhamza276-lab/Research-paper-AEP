@@ -287,7 +287,7 @@ residual of declared ambiguity) comes from the pre-dispatch record and a
 transition table that forbids re-entry into dispatch, not from the durability
 barrier. \emph{Prevention} is what the barrier contributes, against a narrower
 fault than it appears: it withholds dispatch when the store dies inside the
-acknowledgement window, not when storage discards writes while reporting
+acknowledgment window, not when storage discards writes while reporting
 success, which we injected and where it dispatched. Because detection
 does not depend on the barrier, its cost is a deployment choice, not the
 protocol's price.

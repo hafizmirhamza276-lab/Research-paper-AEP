@@ -7,10 +7,10 @@ plus locking is new. The contribution is a capability-specific recovery
 semantics for effects outside the coordinator's atomicity domain, and an
 evaluation that separates detection from prevention.
 
-Prior work is therefore organised here by the three questions that decide
+Prior work is therefore organized here by the three questions that decide
 whether it applies to a non-cooperative endpoint. \textbf{First, what does it
 require the endpoint to supply?} A mechanism may need idempotence, an
-idempotency key, enrolment in a transaction, or a compensating action, and one
+idempotency key, enrollment in a transaction, or a compensating action, and one
 that needs any of these does not apply where none can be obtained. \textbf{Second, can it
 report \emph{unknown}?} That is, does it have a terminal outcome meaning
 ``an effect may exist and I cannot establish whether it does'', as distinct from
@@ -64,7 +64,7 @@ mutation transactional.
 
 Compensation is the standard answer once atomicity is unavailable: a
 committed effect cannot be abrogated, only altered by a further
-transaction~\cite{gray1981transaction}, formalised as compensating transactions
+transaction~\cite{gray1981transaction}, formalized as compensating transactions
 that undo committed work without cascading aborts~\cite{korth1990compensating}
 and applied to long-running activities by pairing each step with a compensating
 one~\cite{garciamolina1987sagas}. All three presuppose two facts about the
@@ -126,7 +126,7 @@ the obligations can be met at global scale, with a 2PC implementation integrated
 with replication and concurrency control and a time API that bounds clock
 uncertainty~\cite{corbett2012spanner}. It is, however, built by an operator
 who controls every participant and can equip each one. That is the condition AEP
-assumes away, and when enrolment is unavailable the burden moves to the caller
+assumes away, and when enrollment is unavailable the burden moves to the caller
 and idempotence becomes the pivot on which correctness turns. AEP is what is left
 when the endpoint does not supply that pivot either.
 
@@ -208,7 +208,7 @@ landing in the corner the supplementary comparison assigns it. The rates were
 several times below B4's and B4b's at the same crash point, and neither
 configuration declared ambiguity in any run. The comparison covers one crash
 point of five, is conditional on a fixed activity timeout the controls have no
-analogue for, and rests on frozen control cells an order of magnitude thinner
+analog for, and rests on frozen control cells an order of magnitude thinner
 than the engine's; it is reported with those bounds in \cref{sec:eval-rq1}, our
 measured comparison is with one engine and does not transfer to the others, and
 no rate in this paper should be read as a product's.
@@ -247,10 +247,10 @@ ablation.
 
 \subsection{The residual when the assumption fails}
 
-\paragraph{Durability acknowledgements and what they are worth} AEP's barrier
+\paragraph{Durability acknowledgments and what they are worth} AEP's barrier
 withholds dispatch until the store acknowledges the intent durable, so the
-protocol is only as strong as that acknowledgement, and a body of storage work
-establishes that the acknowledgement can be false. Rebello et al.\ show that none
+protocol is only as strong as that acknowledgment, and a body of storage work
+establishes that the acknowledgment can be false. Rebello et al.\ show that none
 of five widely deployed applications (PostgreSQL, LMDB, LevelDB, SQLite and
 Redis) handles \texttt{fsync} failure sufficiently, and that on Linux the
 affected pages are marked clean regardless of whether writeback
@@ -265,12 +265,12 @@ repair it for Raft-style~\cite{ongaro2014raft} systems~\cite{alagappan2018par}.
 
 We place our own durability result in that line rather than beside it:
 \cref{sec:eval-writeloss-cell} reports a barrier that dispatched on an
-acknowledgement which
-was already impossible to honour, because the underlying device discarded the
+acknowledgment which
+was already impossible to honor, because the underlying device discarded the
 write and reported success. The protocol behaved exactly as specified on an input
 that was false. What this literature supplies is the reason that is a property of
 the storage stack rather than a defect peculiar to our implementation, and the
-reason a barrier's guarantee must be stated as conditional on the acknowledgement
+reason a barrier's guarantee must be stated as conditional on the acknowledgment
 it rests on.
 
 \paragraph{Exactly-once: state, delivery, and effect} The paper declines the term
@@ -285,8 +285,8 @@ undone by restoring it.
 
 Exactly-once \emph{delivery} is not on offer from any system, and the obstacle is
 epistemic rather than engineering. For a sender and a receiver to agree that a
-message was delivered, each acknowledgement requires its own acknowledgement;
-Halpern and Moses formalise this as the unattainability of common knowledge when
+message was delivered, each acknowledgment requires its own acknowledgment;
+Halpern and Moses formalize this as the unattainability of common knowledge when
 communication is not guaranteed, and connect it to the coordinated-attack
 problem~\cite{halpern1990knowledge}. No protocol removes that regress. What
 systems provide instead is exactly-once \emph{processing}, obtained by enrolling

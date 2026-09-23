@@ -8,7 +8,7 @@ further \HarnessLoc{} lines.
 % hand-written once and the harness figure had drifted by 1,359 lines.
 
 \paragraph{What the protocol rests on} Three Lua scripts carry the intent
-path, each a single serialisation point: the intent compare-and-swap that
+path, each a single serialization point: the intent compare-and-swap that
 holds the whole transition table, the pre-dispatch preflight, and the
 dispatch-authorization writer. Three further scripts implement the lock's
 release and renewal and the generic document compare-and-swap; they are not on
@@ -38,9 +38,9 @@ repository established that the suite had grown chiefly in rejection branches,
 gate scripts and artifact metadata, while the number of tests exercising the
 write-ahead path was close to unchanged; a reader who reads a doubled test
 count as a doubled protocol guarantee would be wrong. The evidence for the
-protocol's behaviour under faults is \cref{sec:evaluation}. The harness also
+protocol's behavior under faults is \cref{sec:evaluation}. The harness also
 found three defects the suite had missed, discussed in \cref{sec:threats}
-because two of them would have biased results in AEP's favour had they gone
+because two of them would have biased results in AEP's favor had they gone
 unnoticed.
 
 \paragraph{Reproducibility} The environment is locked by a resolved dependency

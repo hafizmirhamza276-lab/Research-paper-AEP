@@ -43,7 +43,7 @@ need to be closer} The \texttt{dm-flakey} target sits on a loop device backed by
 a file on the WSL2 root filesystem, itself a virtual disk on the host. The
 layering is irrelevant to the claim, because \texttt{dm-flakey} \emph{is} the
 boundary under test: the experiment asks whether a \texttt{WAITAOF}
-acknowledgement corresponds to bytes that have crossed a chosen point in the
+acknowledgment corresponds to bytes that have crossed a chosen point in the
 storage path before that point stops accepting writes, and everything below the
 target is on the far side of it in both arms equally. What the layering
 \emph{would} threaten is a claim about absolute fsync latency on real hardware,
@@ -130,7 +130,7 @@ artifact has no escalation \emph{mechanism} (\cref{tab:nonclaims}): reaching the
 terminal state pauses the execution and alerts nobody.
 
 \paragraph{Test counts are not protocol assurance} The suite's size is evidence
-about the artifact's hygiene, not about the protocol's behaviour under faults.
+about the artifact's hygiene, not about the protocol's behavior under faults.
 The evidence for the latter is the fault-injection matrix.
 
 \subsection{Internal validity}
@@ -192,7 +192,7 @@ artifact establishes that a pre-dispatch record without an fsync barrier
 suffices for detection: the proposition is supported by two systems we wrote,
 measured by a harness we wrote, against a provider we wrote. The oracle's
 independence (below) addresses whether we counted correctly, not whether the
-finding generalises beyond our implementation of the pattern. That is the
+finding generalizes beyond our implementation of the pattern. That is the
 structural cost of the instrument, and it applies to the claim this paper
 most depends on.
 

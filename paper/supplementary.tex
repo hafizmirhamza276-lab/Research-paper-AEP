@@ -141,9 +141,9 @@ are this table's rows in prose.
 % has to change to carry it.
 \begin{table*}[h]
 \centering
-\caption{Selected design assumptions, organised by the three questions of the
+\caption{Selected design assumptions, organized by the three questions of the
 main paper's related-work section. ``Endpoint must cooperate'' denotes
-idempotence, an idempotency key, transaction enrolment, or compensation. The
+idempotence, an idempotency key, transaction enrollment, or compensation. The
 rows are not ordered by guarantee strength; they expose different residuals when
 their stated assumptions fail.}
 \label{supp:tab:related}
@@ -202,7 +202,7 @@ touching Redis again}. A recovery process reading the store afterwards sees an
 authorized, unresolved intent. That is exactly what it would see had the
 worker died \emph{during} transmission, with the request already on the wire.
 The two histories are identical in everything durable, so no amount of reasoning
-over the store separates them, and failing closed is the correct behaviour given
+over the store separates them, and failing closed is the correct behavior given
 what recovery can observe rather than a conservatism that better engineering
 would remove.
 
@@ -231,7 +231,7 @@ the uncontrolled injector sets.
 \centering
 \caption{The \emph{uncontrolled} hard-Redis-kill ablation, the original
 \texttt{docker kill} cell. Identical faults; the only difference is whether the
-system waits for the durability acknowledgement before dispatching. The rate is
+system waits for the durability acknowledgment before dispatching. The rate is
 over executions, one per run. Source: the artifact's Redis-kill ablation
 metrics, regime \texttt{redis-kill-preack}, \textsc{no-readback}.}
 \label{supptab:killablation}
@@ -370,7 +370,7 @@ since been closed and are recorded here with what closing them changed:
       data, and untested at adequate power.
 
 \item \textbf{The in-flight Redis-kill variant} (kill during transmission rather
-      than before acknowledgement) \textbf{is now collected, and it ties.} Over
+      than before acknowledgment) \textbf{is now collected, and it ties.} Over
       \InflightSessions{} sessions the two arms differ by at most
       \InflightMaxDiff{} count in any capability class, both at ceiling: the tie
       our analysis predicted. Two qualifications
@@ -475,7 +475,7 @@ any stale summary before a run writes anything, logs what it discarded, and
 leaves the run's \emph{inputs} (the rendered provider config and the oracle
 ledger) untouched, with a test pinning that distinction. Every resumed run in
 the current results was collected after the fix; runs collected before it were
-re-analysed and the single affected run was re-collected.
+re-analyzed and the single affected run was re-collected.
 
 \subsection{Two further defects the matrix found that the unit suite had not}
 
@@ -508,7 +508,7 @@ Two rules follow, and the artifact enforces both rather than documenting them:
 the runner refuses to start beside a host-level fault injector, and it now
 records the server's \texttt{run\_id} with every run so that a restart during
 collection is visible in the results rather than inferred from a connection error
-that happened to be logged. We report the episode because the generalisation is
+that happened to be logged. We report the episode because the generalization is
 not ``be careful'': it is that a fault-injection harness and a fault-injection
 test suite make the same assumptions about owning the system, and running both is
 a measurement error that produces ordinary-looking data.
@@ -534,7 +534,7 @@ Three points, and the third is the one the earlier framing of this paper
 concealed.
 
 \paragraph{\texttt{everysec} with the barrier} The default, and the expensive
-one. An acknowledgement must wait for the next scheduled fsync, up to a second
+one. An acknowledgment must wait for the next scheduled fsync, up to a second
 away, and the protocol waits twice.
 
 \paragraph{\texttt{always} with the barrier} The identical crash-free cells
@@ -610,7 +610,7 @@ reports. That second
 clause is about the \emph{record}, and it does not license the protocol-level
 inference a reader may draw from it: when we ran both arms under exactly that
 fault, neither withheld, because the storage discarded the writes while
-reporting success and the barrier was handed an acknowledgement that looked
+reporting success and the barrier was handed an acknowledgment that looked
 good (the paper's write-loss cell).
 
 \textbf{So the question a deployment answers is not ``can we afford AEP'' but
@@ -624,7 +624,7 @@ paper's headline result for a cost this evaluation cannot distinguish from zero.
 \textbf{One measurement this table does not support} is what \texttt{always}
 costs under load. The Redis
 documentation calls it ``very very slow, very safe''~\cite{redis-persistence}, a
-judgement about write throughput that our workload cannot exercise: two workers,
+judgment about write throughput that our workload cannot exercise: two workers,
 a two-second provider delay and a handful of writes per step leave the system
 latency-bound and nowhere near an fsync-rate limit. Our throughput figure is in
 fact \emph{higher} under \texttt{always} ($\AepThroughputAlways{}$ versus
@@ -641,7 +641,7 @@ workload's shape and not about Redis.
 \section{RQ4: recovery}
 \label{supp:rq4}
 
-Recovery behaviour is reported through the outcome distribution rather than a
+Recovery behavior is reported through the outcome distribution rather than a
 success rate, for a reason worth stating: ``recovery success'' means two
 different things either side of whether a recovery service was running. Where
 one ran, a crashed execution reaching a terminal classification was
@@ -706,7 +706,7 @@ Because nothing durable records it. A recovery process reading the store
 afterwards sees an authorized, unresolved intent. That is exactly what it would
 see had the worker died \emph{during} transmission, with the request already on
 the wire. The two histories are identical in everything durable, so recovery
-fails closed, which is the correct behaviour given what it can observe.
+fails closed, which is the correct behavior given what it can observe.
 \textbf{That is the negative result, and it is the protocol's, not the
 implementation's:} the cell is empty in the world and unresolvable from the
 store. Closing it is possible and we did not do it. \Cref{supp:provable} gives

@@ -14,7 +14,7 @@ The runner's sequence, with the property each step exists to serve:
 \item Write the intent \textsc{none}$\rightarrow$\textsc{about-to-fire} by
       fenced CAS, \textbf{and} run the durability barrier on the \emph{same
       pinned connection}.
-\item Convert the barrier's acknowledgement into a Redis-visible dispatch
+\item Convert the barrier's acknowledgment into a Redis-visible dispatch
       authorization.
 \item Run the atomic pre-dispatch preflight, which re-checks that
       authorization.
@@ -97,7 +97,7 @@ links:
 \item Ordinary callers cannot construct, subclass or copy
       \texttt{DurabilityAck}; the in-process registry detects reuse and binds
       the guard to \texttt{execution:intent:prepared\_version}, so a guard for
-      one attempt cannot authorise another through the supported path.
+      one attempt cannot authorize another through the supported path.
 \item Authorizing dispatch \emph{consumes} the ack, then runs a script that
       re-checks lease, version, status and binding digest and writes an
       authorization key.
@@ -151,7 +151,7 @@ ambiguity is produced by design rather than by failure, and they are what
 \toprule
 Observation & Outcome \\
 \midrule
-capability undeclared / unrecognised & \textbf{ambiguous}, no query \\
+capability undeclared / unrecognized & \textbf{ambiguous}, no query \\
 \textsc{no-readback}                 & \textbf{ambiguous}, no query \\
 applied (either querying class)      & confirmed \\
 not-applied $+$ \textsc{authoritative} & refuted \\
@@ -235,8 +235,8 @@ the status alphabet from the source and fails if the two disagree, because a
 model checker asked about the wrong state machine does not complain: it reports
 success.
 
-The endpoint is modelled as \cref{sec:model-endpoint} describes it, and this is
-the modelling decision the result rests on. It is never given an intent
+The endpoint is modeled as \cref{sec:model-endpoint} describes it, and this is
+the modeling decision the result rests on. It is never given an intent
 identifier, so it cannot deduplicate and a second dispatch yields a second
 effect; whether an effect is applied is chosen adversarially rather than
 derived from anything the caller did; and ambiguous evidence is reachable on
@@ -284,13 +284,13 @@ Operator authentication   & no lost effect       & 12 \\ % operator.cfg
 
 \emph{Not checked, and the exclusions are the interesting half.} Every
 cryptographic construction (the request binding, the vault, the digest) is
-out of the model rather than modelled badly, because an uninterpreted function
+out of the model rather than modeled badly, because an uninterpreted function
 standing in for a hash proves nothing about the real one and assuming it
 unforgeable would assume exactly what is in question. The in-process
-acknowledgement chain of the four links above is \emph{assumed}, not checked:
+acknowledgment chain of the four links above is \emph{assumed}, not checked:
 what the model checks is the part that is atomic and Redis-visible, the
 authorization key and the preflight that requires it. Real time is not
-modelled. Where that cuts in the protocol's favour it is neutralised, since a
+modeled. Where that cuts in the protocol's favor it is neutralized, since a
 lease may expire at any instant, which is more adversarial than the budget;
 where it cuts against, it is the reconciliation delay named above. Liveness is
 checked within the version bound, so it establishes that nothing gets stuck for

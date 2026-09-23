@@ -201,7 +201,7 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
         r"by pooling these columns, not by testing the cells individually: "
         r"\cref{sec:eval-detection} puts both zero-event rates in "
         r"$[0,\AblationZeroUpperRun{}\%]$ at joint coverage of at least "
-        r"90\%. The per-class cells this table is organised by are not "
+        r"90\%. The per-class cells this table is organized by are not "
         r"separately bounded --- at that scope the width would be "
         r"\AblationZeroUpperPerClass{} percentage points --- so what the "
         r"table shows per class is no observed difference, and "

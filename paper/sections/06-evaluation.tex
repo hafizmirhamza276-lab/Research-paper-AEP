@@ -34,7 +34,7 @@ reported, and each is named here with the section that reports it:
       RQ3 may use (\cref{sec:eval-rq3}).
 \item \textbf{\texttt{redis-kill-preack}}: no worker crash; Redis is hard-killed
       with \texttt{docker kill -s KILL} at the instruction boundary between the
-      intent CAS and the barrier acknowledgement, then restarted and verified.
+      intent CAS and the barrier acknowledgment, then restarted and verified.
       This is RQ2's ablation (\cref{sec:eval-prevention}).
 \item \textbf{\texttt{redis-kill-inflight}}: the same fault armed at the last
       instruction before transmission and delivered afterwards, so that it
@@ -166,9 +166,9 @@ Four things bound this and none is removed by having run the engine. The
 comparison is incomplete: the engine has no position answering to
 \textsc{after-intent-before-barrier}, because its pre-dispatch record is written
 by the server inside one RPC, so there is no worker-side instant between the
-write and its acknowledgement. That is a hole exactly where B4 and B4b have
+write and its acknowledgment. That is a hole exactly where B4 and B4b have
 data at all three capability classes. The rates are conditional on a
-\BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analogue for; a
+\BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analog for; a
 different timeout is a different cell, and no timing number here is any engine's
 recovery latency. The interval arithmetic is asymmetric: B4's intervals rest
 on three runs against the engine's thirty, and three clusters put resampled
@@ -410,7 +410,7 @@ not the same quantity as an undetected duplicate and it is not measured on the
 same regime; keeping the two apart is what this subsection is for.
 
 We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
-boundary between the intent CAS and the acknowledgement. AEP-full is inside
+boundary between the intent CAS and the acknowledgment. AEP-full is inside
 \texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is exactly
 that round trip. One execution per run, no worker crash: the fault under
 study is Redis dying.
@@ -430,7 +430,7 @@ AEP-full's unwanted-applied rate is \ArmAAepRate{} (\ArmAAepApplied{} of
 \ArmAAepN{} executions) and B3's is \ArmABthreeRate{}
 (\ArmABthreeApplied{}/\ArmABthreeN{}), on the same injected fault. The
 between-session spread in AEP-full's count, which a single collection cannot
-see and which the earlier version of this result was criticised for not
+see and which the earlier version of this result was criticized for not
 reporting, collapses to \ArmASpreadMax{} count per class across the
 \ArmASessions{} sessions. B3 stays at its ceiling throughout, never below
 \ArmABthreeFloor{} of \AepKillRuns{} in any class in any session, which is what
@@ -443,7 +443,7 @@ the data existed: \ArmAPredicted{}, bounded [\ArmABoundLow{},
 fraction of a $1\,000$\,ms \texttt{WAITAOF} window the injector leaves open.
 The observed \ArmAAepRate{} is below that bound. The pre-registration
 fixed in advance what a rate outside the bound would mean, namely the protocol
-behaving unexpectedly and not the mechanism succeeding, and we honour that here
+behaving unexpectedly and not the mechanism succeeding, and we honor that here
 rather than presenting a lower-than-predicted number as a better result.
 
 The reason the bound was wrong is measurable, and it is not calibration: the
@@ -451,8 +451,8 @@ model behind it fails on two independent premises that push in opposite
 directions. First, it treats the exposure window as the injector's bench-measured
 landing latency. That does not survive contact with a collection:
 \ModelAcksPastLanding{} of \ModelAckN{} uncontrolled AEP-full runs received a
-genuine \texttt{WAITAOF} acknowledgement \emph{after} the bench landing had
-supposedly passed, and a \texttt{WAITAOF} acknowledgement requires a live
+genuine \texttt{WAITAOF} acknowledgment \emph{after} the bench landing had
+supposedly passed, and a \texttt{WAITAOF} acknowledgment requires a live
 server. Timed during the collections themselves, the same injector call takes
 \ModelInSituKill{}\,ms against the bench's \ModelBenchKill{}\,ms, a factor of
 \ModelInSituRatio{}$\times$, with ranges that do not overlap. Second, it treats
@@ -460,7 +460,7 @@ the \texttt{WAITAOF} wait as uniform on $U(0, 1\,000)$\,ms. Measured over the
 runs the model was calibrated against, the fraction of waits under
 \ControlledLanding{}\,ms is \ModelEmpiricalWindow{}, where uniformity assigns
 \ModelUniformWindow{}, which is \ModelUniformOverstates{}$\times$ too generous,
-and worse the narrower the window. The two errors partly cancelled at the
+and worse the narrower the window. The two errors partly canceled at the
 uncontrolled window and could not at the controlled one.
 
 The calibration that appeared to license the bound compared the wrong two
@@ -521,7 +521,7 @@ because its own session-level interval is far too wide to have contradicted the
 mechanism whatever it had done. The supplementary material carries the
 per-session tables for both: the uncontrolled counts, the four session-level
 kill-latency differences with their intervals, and the same analysis for B3.
-The scope of the cell is one pre-acknowledgement crash point and one host, and
+The scope of the cell is one pre-acknowledgment crash point and one host, and
 the \textsc{authoritative-readback} class was subsequently collected over
 \ClassSessions{} sessions at a precision inadequate to the
 question.
@@ -635,7 +635,7 @@ that the widely repeated reading of the sentence as covering a crashed Redis
 exactly right.
 
 One qualification, and it is the same one the process-kill probe carries: the
-exposure window is maximised by design. The unacknowledged write is issued
+exposure window is maximized by design. The unacknowledged write is issued
 \FlakeyWindowMin{}--\FlakeyWindowMax{}\,ms before the device stops accepting
 writes, inside a $1\,000$\,ms fsync period that a preceding \texttt{WAITAOF}
 has just reset. \FlakeyUnackLost{} is therefore the loss probability for a
@@ -667,24 +667,24 @@ failure. \textbf{The prediction is refuted.} AEP-full applied an effect in
 \WriteLossBthreeApplied{}; both arms finished at ceiling, and neither withheld.
 
 \paragraph{Why, and it is the more useful finding} \textbf{\texttt{WAITAOF}
-returned success for every durability acknowledgement requested after the device
+returned success for every durability acknowledgment requested after the device
 had stopped accepting writes}, \WriteLossAcksAfterFault{} of them, with
 \WriteLossAckFailures{} failures. \texttt{dm-flakey}'s \texttt{drop\_writes}
 discards each write bio and reports success, so the kernel sees no error,
 \texttt{fsync(2)} succeeds, and Redis has no way to learn otherwise. The barrier
-withholds dispatch on a \emph{failed or absent} acknowledgement; it was handed a
+withholds dispatch on a \emph{failed or absent} acknowledgment; it was handed a
 successful one and dispatched, behaving exactly as specified on an input that
 was false.
 
 \paragraph{The bounds, stated narrowly} \textbf{This is not evidence that the
 barrier fails to withhold under write loss}: the condition the experiment exists
-to create, the barrier meeting an acknowledgement that fails or never arrives,
+to create, the barrier meeting an acknowledgment that fails or never arrives,
 was never reached, so no run exercised withholding. \textbf{Neither is it
 evidence that the barrier works.} What it establishes is that the durability
 guarantee rests on an unstated premise, that a \texttt{WAITAOF} success means
 the record reached the device, and that under storage which discards writes
 \emph{silently} the premise is false and the protocol cannot detect it. Storage
-returning \texttt{EIO} would let the acknowledgement fail and put the barrier
+returning \texttt{EIO} would let the acknowledgment fail and put the barrier
 back on the input its guarantee is defined over, so this result bounds the
 guarantee to storage that reports its own failures and says nothing about
 storage that does not. It is evidence about storage, not about the protocol. One
@@ -744,7 +744,7 @@ cannot separate it from zero. The \BarrierCostFifteen{}\,ms buys the prevention
 guarantee of \cref{sec:eval-prevention} and nothing else.
 
 That figure is also a property of a \emph{configuration}, not of AEP. Under
-\texttt{appendfsync everysec} an acknowledgement cannot return until the next
+\texttt{appendfsync everysec} an acknowledgment cannot return until the next
 scheduled fsync, and those are one second apart, so a barrier costs up to a
 second and the protocol pays that twice. The measured total sits near the top
 of that range rather than in the middle of it; the reason is unmeasured.

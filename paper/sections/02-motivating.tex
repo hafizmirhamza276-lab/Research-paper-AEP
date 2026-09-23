@@ -25,7 +25,7 @@ retry counter above its threshold, and no ambiguous record. The execution is
 green.
 
 This is not a strawman configuration. It is what a retry-on-timeout loop does,
-and it is the behaviour we measure for B0. Across the crashed cells B0 ends
+and it is the behavior we measure for B0. Across the crashed cells B0 ends
 this way in \BaselineDupLow{}--\BaselineDupHigh{} of executions depending on
 the endpoint, and so do B1 and B2 (\cref{tab:outcomes}).
 % \BaselineDupLow / \BaselineDupHigh: generated/numbers.tex, the min and max
@@ -53,7 +53,7 @@ the same rate as B0.
 B4 is an event-sourced durable-execution engine of the kind these systems are
 built on: an append-only history in Redis, each append acknowledged durable
 with the same \texttt{WAITAOF} barrier AEP uses, replay after a crash,
-and completed activities memoised so they are not re-run. It is not ablated on
+and completed activities memoized so they are not re-run. It is not ablated on
 durability, and its history is on disk before the call.
 
 It duplicates anyway. The history records that the activity was scheduled. It

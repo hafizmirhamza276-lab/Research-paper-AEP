@@ -80,7 +80,7 @@ reached the accounts.
 \item[\textbf{C2}] \textbf{A protocol and an implementation} in which a
       durably acknowledged write-ahead intent is a checked precondition of
       dispatch authority, not a matter of call ordering. Under a trusted-code
-      assumption, the fsync acknowledgement returns an opaque, non-copyable,
+      assumption, the fsync acknowledgment returns an opaque, non-copyable,
       single-use, scope-bound in-process dispatch guard. The guard is consumed
       to write a Redis-visible authorization, and the pre-dispatch script
       refuses to proceed without it (\cref{sec:protocol}). This is a
@@ -91,7 +91,7 @@ reached the accounts.
       named crash points, three endpoint reconciliation capabilities and
       five reported fault regimes, against five baseline designs, one of them
       in two configurations. The five regimes are every execution crashed,
-      none crashed, Redis hard-killed before the acknowledgement, Redis killed
+      none crashed, Redis hard-killed before the acknowledgment, Redis killed
       after dispatch, and storage discarding writes while reporting success.
       (A sixth regime, a $30\%$ crash probability, was collected; its rates
       are not in these tables and the collection is in the artifact.)
