@@ -83,3 +83,63 @@ Three things a reader might want settled, none of which a prose pass can decide:
    already carries?
 
 **No text is changed by this entry.**
+
+---
+
+## 2. The supplementary says every crashed AEP-full and B3 execution reached a terminal classification; 180 of them did not
+
+**Status: open.** Raised 2026-09-23 during the RQ4 fact-finding, which changed
+no manuscript text.
+
+### The statement
+
+`paper/supplementary.tex:654-657`, in *RQ4: recovery*:
+
+> Within that scope: **every AEP-full and B3 execution in the crashed regime
+> reached a terminal classification**, and across `\RunsCollected{}` runs
+> exactly one recorded a reconciliation disagreement.
+
+### What the collected data says
+
+`is_terminal` is defined in `experiments/analyze.py:266-273` as an
+`outcome_class` in `{CONFIRMED_APPLIED, CONFIRMED_NOT_APPLIED,
+DECLARED_AMBIGUOUS}`. Counted from `analysis/per-execution.csv`, crashed
+regime:
+
+| system | crash point | terminal / crashed |
+|---|---|---|
+| `AEP_FULL` | the other five | **450 / 450** |
+| `AEP_FULL` | `before_intent_write` | **0 / 90** |
+| `B3_INTENT_NO_BARRIER` | the other five | **450 / 450** |
+| `B3_INTENT_NO_BARRIER` | `before_intent_write` | **0 / 90** |
+
+All 180 non-terminal executions carry `outcome_class = NO_RECORD`.
+`analysis/metric-recovery-success-rate.csv` reports the same thing as a rate:
+`1.0` with CI `[1.0, 1.0]` at five crash points for both systems, and `0.0` at
+`before_intent_write` for both.
+
+### The question for the audit
+
+At `before_intent_write` the worker dies before any intent exists, so there is
+nothing for recovery to resolve. Reading `NO_RECORD` as a recovery *failure*
+would be wrong, and the metric's `0.0` should not be read that way either.
+
+But the sentence as written says *every* execution reached a terminal
+classification, and under the project's own definition 180 did not. Three
+readings, none of which a prose pass can choose between:
+
+1. *Terminal classification* is meant loosely, as "the execution was
+   classified", in which case `NO_RECORD` qualifies and the sentence is true
+   but uses a term the analysis code defines differently.
+2. The sentence means to scope itself to executions that wrote an intent, in
+   which case it should say so, and the number is 450 of 450 per system.
+3. The sentence is simply too strong and should carry the `before_intent_write`
+   exception.
+
+**Related, and minor.** `\label{supp:rq4}` at `paper/supplementary.tex:641` is
+defined and never referenced. Both places that point at that section —
+`06-evaluation.tex:768` and `08-threats.tex:384` — name it by italic title
+rather than by `\cref`, so the label does no work and a renamed section would
+not be caught.
+
+**No text is changed by this entry.**
