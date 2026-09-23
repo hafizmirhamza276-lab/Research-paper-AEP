@@ -88,8 +88,9 @@ Three things a reader might want settled, none of which a prose pass can decide:
 
 ## 2. The supplementary says every crashed AEP-full and B3 execution reached a terminal classification; 180 of them did not
 
-**Status: open.** Raised 2026-09-23 during the RQ4 fact-finding, which changed
-no manuscript text.
+**Status: RESOLVED 2026-09-23.** Raised earlier the same day during the RQ4
+fact-finding, and closed by the author's Option 1 decision. The fix is in
+§10 below.
 
 ### The statement
 
@@ -136,10 +137,29 @@ readings, none of which a prose pass can choose between:
 3. The sentence is simply too strong and should carry the `before_intent_write`
    exception.
 
-**Related, and minor.** `\label{supp:rq4}` at `paper/supplementary.tex:641` is
-defined and never referenced. Both places that point at that section —
-`06-evaluation.tex:768` and `08-threats.tex:384` — name it by italic title
-rather than by `\cref`, so the label does no work and a renamed section would
-not be caught.
+### How it was resolved
 
-**No text is changed by this entry.**
+**Reading 2**, by author decision, in the same commit that answers RQ4. The
+sentence now scopes itself to executions that wrote an intent, and says where
+the counts are:
+
+> Within that scope: every AEP-full and B3 execution in the crashed regime
+> **that had written an intent** reached a terminal classification, and the
+> main paper's RQ4 subsection gives the counts. **The executions crashed before
+> an intent existed are outside that scope rather than failures within it,
+> because no record exists for recovery to act on.**
+
+The exception is stated rather than implied, and in a form that cannot be read
+as a recovery failure. The counts it points at are §VI-E's: 450 of 450 per arm
+at the five crash points where an intent exists, with `before_intent_write`
+reported separately.
+
+**Related, and still open, but not a correctness problem.**
+`\label{supp:rq4}` at `paper/supplementary.tex:641` is defined and never
+referenced. Both places that point at that section name it in words rather than
+by `\cref` — and they must: `supplementary.tex` states in its own header that
+it cannot `\cref` labels defined in `main.tex`, and
+`check_paper_numbers.py::check_cross_document_references` enforces that the two
+are separate documents. **The label is therefore unusable by design, not merely
+unused.** Deleting it is tidying, not a fix. This session tried a `\cref` to
+`sec:eval-rq4` from the supplementary and the build correctly refused it.

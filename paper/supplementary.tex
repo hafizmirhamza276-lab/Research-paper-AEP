@@ -651,8 +651,11 @@ analysis excludes runs without a recovery service from that metric rather than
 scoring them zero or one, because both would be statements about a component
 that was not present.
 
-Within that scope: every AEP-full and B3 execution in the crashed regime
-reached a terminal classification, and across \RunsCollected{} runs exactly
+Within that scope: every AEP-full and B3 execution in the crashed regime that
+had written an intent reached a terminal classification, and the main paper's
+RQ4 subsection gives the counts. The executions crashed before an intent
+existed are outside that scope rather than failures within it, because no
+record exists for recovery to act on. Across \RunsCollected{} runs exactly
 one recorded a reconciliation disagreement --- every other completed run's
 event log agreed with its independently written oracle ledger. The harness
 performs this reconciliation after each completed run; it checks definitive
