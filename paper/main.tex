@@ -166,8 +166,8 @@
   % what scope, under whose direction, and who is responsible.
   \newcommand{\aidisclosure}{%
     The author used generative AI coding and drafting assistants
-    throughout this work --- implementation, harness, analysis pipeline,
-    documentation and manuscript prose --- under the author's direction
+    throughout this work (implementation, harness, analysis pipeline,
+    documentation and manuscript prose) under the author's direction
     and review. No AI system is an author; the author is solely
     responsible for the content of this article, including all claims,
     analysis and conclusions.}
@@ -263,7 +263,7 @@ Legacy APIs Without Idempotency Keys}
 \begin{abstract}
 Many enterprise APIs are non-idempotent, accept no idempotency key, and cannot
 be asked afterwards whether a mutation was applied. A caller that crashes around
-such a call --- an autonomous agent, a workflow engine --- has no safe option:
+such a call (an autonomous agent, a workflow engine) has no safe option:
 retrying risks a second real-world effect nobody observes, not retrying an
 effect no record accounts for. We argue this is not an engineering-quality
 problem but a three-way trade whose third corner a system must make reachable:
@@ -277,8 +277,9 @@ every unresolvable outcome escalates rather than guessing.
 We evaluate it against five baseline designs under \texttt{SIGKILL} faults,
  across endpoint capabilities differing in what a read-back can settle.
 
-Our central result separates two claims usually sold as one. \emph{Detection} --- no undetected duplicate and no lost effect, leaving
-a residual of declared ambiguity --- comes from the pre-dispatch record and a
+Our central result separates two claims usually sold as one.
+\emph{Detection} (no undetected duplicate and no lost effect, leaving a
+residual of declared ambiguity) comes from the pre-dispatch record and a
 transition table that forbids re-entry into dispatch, not from the durability
 barrier. \emph{Prevention} is what the barrier contributes, against a narrower
 fault than it appears: it withholds dispatch when the store dies inside the
