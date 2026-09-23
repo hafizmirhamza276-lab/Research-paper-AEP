@@ -9,14 +9,14 @@ evaluation that separates detection from prevention.
 
 Prior work is therefore organised here by the three questions that decide
 whether it applies to a non-cooperative endpoint. \textbf{First, what does it
-require the endpoint to supply?} --- idempotence, an idempotency key,
-enrolment in a transaction, or a compensating action; a mechanism that needs any
-of these does not apply where none can be obtained. \textbf{Second, can it
-report \emph{unknown}?} --- that is, does it have a terminal outcome meaning
+require the endpoint to supply?} A mechanism may need idempotence, an
+idempotency key, enrolment in a transaction, or a compensating action, and one
+that needs any of these does not apply where none can be obtained. \textbf{Second, can it
+report \emph{unknown}?} That is, does it have a terminal outcome meaning
 ``an effect may exist and I cannot establish whether it does'', as distinct from
 success or failure. \textbf{Third, what residual does it leave when its stated
-assumption fails?} --- a duplicate effect, a lost effect, a blocked participant,
-a compensation gap, or a declared ambiguity. The three subsections below are the
+assumption fails?} The candidates are a duplicate effect, a lost effect, a
+blocked participant, a compensation gap, or a declared ambiguity. The three subsections below are the
 three questions, and every system discussed is placed against all three. The
 same placement is tabulated in the supplementary material, which lists fourteen
 mechanisms and AEP against these columns; of the fourteen, only AEP answers
@@ -35,14 +35,14 @@ Chubby states both the hazard and the remedy in primary form, which matters
 because AEP's guard depends on the remedy and because the requirement it imposes
 is the one this paper cannot satisfy. A client holding a lock may issue a request
 and then fail, a second client may acquire the lock and act, and the first
-request may arrive afterwards. The remedy is a \emph{sequencer} --- the lock
+request may arrive afterwards. The remedy is a \emph{sequencer}: the lock
 name, a generation number that changes on every transition from free to held,
-and the acquisition mode --- which the client passes to the file server,
-\emph{and which the file server is expected to validate}~\cite{burrows2006chubby}.
+and the acquisition mode. The client passes it to the file server,
+\emph{and the file server is expected to validate it}~\cite{burrows2006chubby}.
 That validation requirement is the crux: a fencing token protects a resource only
 if the resource checks it, which makes fencing a property of the \emph{resource}
 rather than of the lock service. Chubby concedes the point by shipping a fallback
-for servers that cannot be modified to validate sequencers --- \emph{lock-delay},
+for servers that cannot be modified to validate sequencers: \emph{lock-delay},
 which merely withholds a lock for a bounded period after an abnormal release and
 which that paper calls imperfect. It is the closest prior art to AEP's setting
 and it is a timing heuristic, not a guarantee. Kleppmann's analysis remains the
@@ -72,7 +72,7 @@ effect: that it \emph{happened}, and that a semantically inverse operation
 exists and may be applied. AEP's endpoint reliably supplies neither. In the
 \textsc{no-readback} class the first is unobtainable by construction, and
 compensating for an effect that may not have occurred is itself a mutation with
-the same problem --- which is why declared ambiguity is terminal here rather
+the same problem, which is why declared ambiguity is terminal here rather
 than a prelude to compensation. Helland describes the broader consequences of
 operating without distributed transactions and the centrality of
 idempotence~\cite{helland2007apostate,helland2012idempotence}.
@@ -90,8 +90,8 @@ again~\cite{jena2025idempotencykey}. Storing the key is the least of it; the
 server must also retain the \emph{outcome}, scope the key, and decide how long
 the guarantee lasts.
 
-Notably the draft mandates little beyond publication --- it asks servers to
-declare a policy rather than prescribing retention or scope --- and the deployed
+The draft mandates little beyond publication, asking servers to
+declare a policy rather than prescribing retention or scope, and the deployed
 contracts show why that matters. Stripe saves the status code and body of the
 first request for a key and returns that same result on a repeat, including
 \texttt{500}s, prunes keys after at least 24 hours, and rejects a reused key
@@ -102,11 +102,11 @@ fourteen days~\cite{adyen-idempotency}. The same header name therefore carries
 materially different guarantees: a retry protected at one provider is outside the
 window at another, and the caller cannot tell from the protocol. These are
 specifications and vendor documentation rather than research, and are cited as
-such --- the claim is about what the contract requires, for which the normative
+such. The claim is about what the contract requires, for which the normative
 text is the primary source. AEP assumes the case beneath all of them: no key is
 interpreted at all. What the deployed contracts add is that even cooperation is
 bounded, so a caller's obligation to reason about an unsettled effect does not
-disappear where a key exists --- it shrinks to the retention window.
+disappear where a key exists; it shrinks to the retention window.
 
 \paragraph{Why not two-phase commit} The obvious objection is that atomic commit
 already solves this, so it is worth saying exactly what that would require of the
@@ -114,7 +114,7 @@ endpoint. Under 2PC each participant durably logs its own state transitions to
 stable storage and answers the coordinator from that log during
 recovery~\cite{mohan1986rstar}. A participant that has voted to commit then
 enters an uncertainty window in which it can neither commit nor abort on its own
-authority, and must block --- holding the prepared state --- until the
+authority, and must block, holding the prepared state, until the
 coordinator is heard from again~\cite{skeen1981nonblocking}. Both are obligations
 on the \emph{participant}, and a legacy endpoint that accepts a request and
 returns a response offers none of them: no prepare, no vote, and no way to ask it
@@ -124,8 +124,8 @@ that the protocol has no participant to run.
 Nor is this a counsel of despair about distributed transactions. Spanner shows
 the obligations can be met at global scale, with a 2PC implementation integrated
 with replication and concurrency control and a time API that bounds clock
-uncertainty~\cite{corbett2012spanner} --- but it is built by an operator who
-controls every participant and can equip each one. That is the condition AEP
+uncertainty~\cite{corbett2012spanner}. It is, however, built by an operator
+who controls every participant and can equip each one. That is the condition AEP
 assumes away, and when enrolment is unavailable the burden moves to the caller
 and idempotence becomes the pivot on which correctness turns. AEP is what is left
 when the endpoint does not supply that pivot either.
@@ -139,7 +139,7 @@ duplicate executions~\cite{setty2016olive}. A write-ahead intent as a checked
 precondition of execution is therefore prior work, not AEP's novelty. Olive's
 guarantee is realized through operations made recoverable within its cloud
 storage abstraction; AEP starts where that atomicity scope ends, and consequently
-offers no exactly-once claim --- it terminates in declared ambiguity and
+offers no exactly-once claim: it terminates in declared ambiguity and
 prohibits automatic re-dispatch.
 
 The idea is older than the current generation of products. Workflow management
@@ -153,7 +153,7 @@ Cadence introduced the framing: workflow code is fault-oblivious and may not cal
 an external API directly, only orchestrate \emph{activities}, and because the
 service does not recover an activity's state, activity failure is expected and
 retried~\cite{cadence-workflows}. Restate journals each step and replays after a
-crash, skipping completed steps --- and names the residual exactly: if a side
+crash, skipping completed steps, and it names the residual exactly: if a side
 effect completes but the failure prevents its result being recorded, replay runs
 it again, so side effects are required to be
 idempotent~\cite{restate-durable-execution}. AWS states it normatively: a Step
@@ -166,7 +166,7 @@ charging a card or posting to a non-idempotent
 API~\cite{aws-durable-execution-idempotency}. That last sentence is this paper's
 problem statement, written by a vendor. DBOS takes the other route, placing
 system state in a distributed transactional DBMS so that services are ordinary
-database operations, recoverable as such~\cite{skiadopoulos2022dbos} ---
+database operations, recoverable as such~\cite{skiadopoulos2022dbos}, with
 recoverability again purchased by keeping the effect inside the transactional
 domain, the same boundary Olive draws.
 
@@ -182,7 +182,7 @@ history and re-invokes activities, safe when the activity can be
 re-run~\cite{burckhardt2021durable}. ExoFlow is closest in spirit to this paper:
 it decouples recovery from execution and asks the author to annotate each task's
 semantics, including nondeterminism, so the system can choose a recovery strategy
-per task~\cite{zhuang2023exoflow} --- but that is a declaration about the task by
+per task~\cite{zhuang2023exoflow}. That is a declaration about the task by
 someone who knows it, whereas AEP's declarations are about the \emph{endpoint's}
 capacity to answer after the fact, which a caller cannot annotate its way out of.
 
@@ -203,8 +203,8 @@ That distinction is no longer only a caveat. We subsequently ran the production
 engine itself against the same endpoint, in both configurations, at the one crash
 point the engine and our controls can both be cut at (\cref{sec:eval-rq1}).
 \emph{The direction transferred and the magnitudes did not}: unlimited attempts
-duplicated and lost nothing, one attempt lost and duplicated nothing --- each
-landing in the corner the supplementary comparison assigns it --- while the rates were
+duplicated and lost nothing, and one attempt lost and duplicated nothing, each
+landing in the corner the supplementary comparison assigns it. The rates were
 several times below B4's and B4b's at the same crash point, and neither
 configuration declared ambiguity in any run. The comparison covers one crash
 point of five, is conditional on a fixed activity timeout the controls have no
@@ -249,10 +249,10 @@ ablation.
 
 \paragraph{Durability acknowledgements and what they are worth} AEP's barrier
 withholds dispatch until the store acknowledges the intent durable, so the
-protocol is only as strong as that acknowledgement --- and a body of storage work
+protocol is only as strong as that acknowledgement, and a body of storage work
 establishes that the acknowledgement can be false. Rebello et al.\ show that none
-of five widely deployed applications --- PostgreSQL, LMDB, LevelDB, SQLite and
-Redis --- handles \texttt{fsync} failure sufficiently, and that on Linux the
+of five widely deployed applications (PostgreSQL, LMDB, LevelDB, SQLite and
+Redis) handles \texttt{fsync} failure sufficiently, and that on Linux the
 affected pages are marked clean regardless of whether writeback
 succeeded~\cite{rebello2020fsync}; the operational discovery that a successful
 \texttt{fsync} does not mean the data reached persistent storage was made in
@@ -269,7 +269,7 @@ acknowledgement which
 was already impossible to honour, because the underlying device discarded the
 write and reported success. The protocol behaved exactly as specified on an input
 that was false. What this literature supplies is the reason that is a property of
-the storage stack rather than a defect peculiar to our implementation --- and the
+the storage stack rather than a defect peculiar to our implementation, and the
 reason a barrier's guarantee must be stated as conditional on the acknowledgement
 it rests on.
 
@@ -294,19 +294,19 @@ the destination: Kafka couples an idempotent producer protocol with transactions
 so that output records, offset commits and state updates commit atomically, and
 the read--process--write cycle either takes effect once or not at
 all~\cite{wang2021kafka}. That guarantee is real, and it is real \emph{because}
-the sink is inside the transaction --- which is also why the snapshot mechanisms
+the sink is inside the transaction, which is also why the snapshot mechanisms
 above are paired with a transactional sink.
 
 This is the distinction the paper needs and the one the term usually obscures. A
 message delivered once is not an external mutation performed once. Where the
-destination can be enrolled --- a Kafka topic, a database in the same commit
-scope --- exactly-once processing is available and AEP is unnecessary. Where it
+destination can be enrolled (a Kafka topic, a database in the same commit
+scope), exactly-once processing is available and AEP is unnecessary. Where it
 cannot, no retry discipline on the caller's side reconstructs it, and the
 residual is not a weaker delivery guarantee but an unanswered question about an
 effect. This is also the end-to-end argument~\cite{saltzer1984endtoend} in an
 uncomfortable form: the check that would settle whether the effect happened
 belongs at the endpoints, and the endpoint that would have to perform it is
-precisely the one that cannot.
+exactly the one that cannot.
 
 \paragraph{Fault-injection lineage} AEP's named crash boundaries and
 independent oracle follow a mature crash-consistency
@@ -322,7 +322,7 @@ specifications~\cite{gunawi2011fate}; our cells inject one fault at one named
 boundary, trading coverage of combinations for an exact statement of where the
 single fault landed. Lineage-driven injection reasons backwards from a correct
 outcome to the faults that could have prevented it, over a model of dropped
-messages, failed nodes and partitions~\cite{alvaro2015ldfi} --- a model that
+messages, failed nodes and partitions~\cite{alvaro2015ldfi}, a model that
 excludes crash recovery, the class this paper is about. Elle infers a dependency
 graph from what clients saw~\cite{kingsbury2020elle}; the contrast is the
 oracle, since our provider ledger is written independently of the system under
