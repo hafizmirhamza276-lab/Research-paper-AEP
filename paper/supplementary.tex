@@ -709,8 +709,8 @@ the wire. The two histories are identical in everything durable, so recovery
 fails closed, which is the correct behaviour given what it can observe.
 \textbf{That is the negative result, and it is the protocol's, not the
 implementation's:} the cell is empty in the world and unresolvable from the
-store. Closing it is possible and we did not do it. The supplementary material
-gives the probe detail and prices the third barrier that would split the two
+store. Closing it is possible and we did not do it. \Cref{supp:provable} gives
+the probe detail and prices the third barrier that would split the two
 cases. That trade narrows rather than closes the window, and its value depends
 entirely on a deployment's ratio of crash points, which our uniform matrix does
 not model by design.

@@ -84,6 +84,41 @@ Three things a reader might want settled, none of which a prose pass can decide:
 
 **No text is changed by this entry.**
 
+### Question 2 is now answered from the collected data, 2026-09-23
+
+**No.** In the `write-loss-preack` regime both safety metrics are zero, on both
+arms, with the interval collapsed:
+
+| metric | system | successes / total | rate | CI | run clusters |
+|---|---|---|---|---|---|
+| `lost_effect_rate` | `AEP_FULL` | **0 / 300** | 0.0 | [0.0, 0.0] | 30 |
+| `lost_effect_rate` | `B3_INTENT_NO_BARRIER` | **0 / 300** | 0.0 | [0.0, 0.0] | 30 |
+| `undetected_duplicate_rate` | `AEP_FULL` | **0 / 300** | 0.0 | [0.0, 0.0] | 30 |
+| `undetected_duplicate_rate` | `B3_INTENT_NO_BARRIER` | **0 / 300** | 0.0 | [0.0, 0.0] | 30 |
+
+Source: `reports/raw/ws4-writeloss-s1-2026-09-07/analysis/`
+`metric-lost-effect-rate.csv` and `metric-undetected-duplicate-rate.csv`,
+`crash_point=none`, `response_class=NO_READBACK`,
+`readback_keying=CALLER_REFERENCE`, 10 000 resamples, seed 20260806.
+
+The host-level probe behind the same cell agrees on its own terms:
+`g2-flakey-write-loss{,-rep2,-rep3}.json` each report
+`acknowledged_survived 30/30`, `unacknowledged_lost 30/30`, `void 0`.
+
+**What this settles and what it does not.** It settles that no effect reached
+the accounts without a record accounting for it, in the regime that looked most
+likely to produce one. It does not settle question 1 or question 3, because
+those are about what *never* was written to mean. The nuance worth having in
+front of you when you rule: in this regime AEP dispatched on an acknowledgement
+that was false, so the *durability of the record* was not established even
+though the record existed at dispatch and nothing was lost. The empirical
+reading of *never* survives here, and it survives contingently.
+
+**Status: still open, and it is a question for the author, not a wording fix.**
+Closing it needs a ruling on 1 and 3. If *never* is a design property, no text
+changes and this closes as **checked**. If it is empirical, §I takes C3's scope
+condition and this closes as **resolved** with a commit.
+
 ---
 
 ## 2. The supplementary says every crashed AEP-full and B3 execution reached a terminal classification; 180 of them did not
@@ -168,8 +203,10 @@ unused.** Deleting it is tidying, not a fix. This session tried a `\cref` to
 
 ## 3. `voided/` still renders in §VIII, after the same path was removed from the supplementary
 
-**Status: open.** Raised 2026-09-23 during the §VIII prose pass, which changed
-no text.
+**Status: CHECKED 2026-09-23.** Raised earlier the same day during the §VIII
+prose pass. Closed by reading the deposit rather than by an editorial decision:
+`voided/` is a directory in the published archive, §VIII names it correctly, and
+it is not a repository path. **No text changed.**
 
 ### The two treatments
 
@@ -214,12 +251,52 @@ in the deposit to look.
 **No text is changed by this entry.** A prose pass cannot decide what the
 deposit's public contract is.
 
+### It is (1), and the deposit says so, 2026-09-23
+
+`voided/` is a real directory in the published archive, holding exactly the run
+§VIII describes. From the archive's own `MANIFEST.sha256`, 24 entries under a
+path segment that is exactly `voided`:
+
+```
+voided/README.md
+voided/b4b_durable_workflow_at_most_once-before_intent_write-notifications-
+       6451e4c7-r1.attempt-1/events.jsonl
+voided/…/ground_truth.sqlite3          (the oracle ledger)
+voided/…/run-config.json, summary.json, mock-api.{log,yaml}, recovery.stop
+voided/…/events-worker-{0,1}-attempt-{1..6}.jsonl
+```
+
+That is §VIII's *"its event log, its ledger and a `README` giving the reason"*,
+item for item, and it is a **B4b** run at `before_intent_write` — the cell
+§VIII's oracle-disagreement passage is about.
+
+**So §VIII is right and `check_no_repo_paths.py` is right.** `voided/` denotes a
+location inside the deposit, not inside the Git repository, which is why the
+checker's repository-directory list does not contain it and why it did not
+fire. Nothing was missed.
+
+**Two follow-ups, neither blocking, both the author's call:**
+
+1. **The supplementary lost information it need not have.** It now reads *"in a
+   directory reserved for voided runs"*, where it used to name the path. The
+   name is accurate and a reader following the pointer needs it. Restoring it
+   would mean the path-removal pass's replacement was too broad in this one
+   place.
+2. **The distinction is accidental rather than enforced.** `voided/` passes
+   because `voided` happens not to be a repository directory name. If a
+   repository directory is ever created with that name, §VIII starts failing a
+   check it should never fail. An allow-list of deposit-internal paths would
+   make the distinction deliberate.
+
+**Status: CHECKED.** The claim in §VIII is accurate and no text changed.
+
 ---
 
 ## 4. The supplementary points a reader at "the supplementary material", and two of its sections answer the same question
 
-**Status: open.** Raised 2026-09-23 during the supplementary prose pass, which
-changed no text beyond punctuation at both sites.
+**Status: half RESOLVED, half open, 2026-09-23.** The self-reference was a
+wording error and is fixed. Whether the two sections should merge is structural
+and stays open.
 
 ### The self-reference
 
@@ -267,6 +344,28 @@ is no more and no less visible than it was.
    supplementary material" for the probe detail, and a reader following that
    pointer arrives at two sections with nearly the same heading.
 
-**No text is changed by this entry.** Whether the duplication is redundancy or
-deliberate restatement at two depths is a structural decision, and a language
-pass cannot take it.
+### How it was resolved, in part
+
+**The self-reference is fixed.** It was a wording error with one correct
+answer: the sentence has to name the sibling section, and both labels are
+defined in `supplementary.tex`, so `\Cref` reaches it. The header's rule is
+about labels defined in `main.tex` only, and `cleveref` is already loaded —
+`\Cref{tab:deployment}` was in the file before this.
+
+> **Before:** Closing it is possible and we did not do it. **The supplementary
+> material** gives the probe detail and prices the third barrier…
+>
+> **After:** Closing it is possible and we did not do it.
+> **`\Cref{supp:provable}`** gives the probe detail and prices the third
+> barrier…
+
+The only invariant that moved is the one intended to: `\cref` targets 1 → 2,
+adding `supp:provable`. Every label, citation, number, `\texttt` and `\emph`
+content is unchanged.
+
+**The structural question stays open.** Whether `supp:provable-detail` should
+merge into `supp:provable` — two sections answering the same question, one
+pricing the third barrier and the other now pointing at it — is not a wording
+call. Option 1 above is still for the author. Option 3 (does §VI's pointer land
+a reader on two near-identically-headed sections?) is unaffected by this fix and
+still worth a look during the length pass.
