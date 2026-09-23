@@ -59,7 +59,7 @@ def test_no_build_carries_a_british_spelling(name):
     "behaviour", "favour", "honour", "colour",          # -our
     "modelled", "labelled", "cancelled",                # doubled l
     "enrolment", "fulfil",                              # single l
-    "judgement", "analogue", "artefact", "whilst",      # miscellaneous
+    "judgement", "artefact", "whilst",                  # miscellaneous
     "centre", "defence", "licence",                     # -re, -ce
     "organised", "realise", "serialisation",            # -ise, -isation
     "analysed", "analysing",                            # -yse
@@ -96,6 +96,18 @@ def test_a_prefixed_both_englishes_word_is_not_flagged():
 @pytest.mark.parametrize("term", sorted(EXEMPT))
 def test_every_exempt_identifier_is_not_flagged(term):
     assert scan(f"See {term} for the detail.\n") == []
+
+
+def test_analogue_is_exempt_by_author_decision():
+    """Reverted 2026-09-23 after the mechanical pass converted it.
+
+    It is the British spelling, so the pass was right to convert it and the
+    check was right to know it. The revert is a judgement about the reader:
+    "analog" in an IEEE paper reads electronics-first, and both uses here mean
+    "counterpart". Removing the EXEMPT entry converts them again.
+    """
+    assert scan("a Start-To-Close timeout that B4 has no analogue for\n") == []
+    assert "analogue" in EXEMPT
 
 
 def test_every_exemption_carries_a_reason():

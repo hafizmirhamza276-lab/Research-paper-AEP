@@ -82,7 +82,6 @@ EXPLICIT = {
     "instil": "instill",
     "skilful": "skillful",
     "judgement": "judgment",
-    "analogue": "analog",
     "artefact": "artifact",
     "programme": "program",
     "centre": "center",
@@ -125,6 +124,14 @@ EXEMPT = {
     "authorize": "the verb form of the protocol's own term",
     "authorized": "the verb form of the protocol's own term",
     "capitalise": "a cleveref package option, not a word; never rendered",
+    "analogue": (
+        "kept in the sense 'counterpart', by author decision 2026-09-23. It is "
+        "the British spelling and the mechanical pass converted it, but "
+        "'analog' in an IEEE paper reads electronics-first, and the two uses "
+        "here -- a timeout B4 has no analogue for -- are about counterparts. "
+        "Remove this entry to convert them"
+    ),
+    "analogues": "the plural of the entry above",
     "Idempotency-Key": "an HTTP header name, spelled as the vendors spell it",
     "analysis": "the noun is the same in both Englishes",
     "analyses": "ambiguous noun plural; the verb is checked as -yse below",
