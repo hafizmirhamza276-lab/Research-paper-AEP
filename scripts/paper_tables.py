@@ -2097,6 +2097,11 @@ def emit_numbers(
             # true. A constant that lives in the results is a constant that
             # can drift.
             ("BootstrapResamples", "bootstrap_resamples"),
+            # RQ4 gives no latency distribution, and this is the number that
+            # says why. Generated rather than typed for the same reason as
+            # the resample count: it is a property of the collection that can
+            # move without the sentence quoting it moving.
+            ("RunsWithUsableTiming", "runs_with_usable_timing"),
         ):
             if key in coverage:
                 macro(
@@ -2104,6 +2109,86 @@ def emit_numbers(
                     f"{int(coverage[key]):,}".replace(",", r"\,"),
                     f"analysis/coverage.json | {key}",
                 )
+
+    # --- RQ4: recovery, as counts and never as a rate --------------------
+    # analyze.py has computed recovery_success_rate since the first
+    # collection and nothing in the manuscript read it, so §VI-E was a
+    # pointer at the supplementary while a complete per-cell result sat in
+    # the tracked analysis. These macros are what let it be answered.
+    #
+    # Counts, not a rate, and that is the author's decision rather than a
+    # limitation of the data. The bootstrap interval in every cell is
+    # [1.0, 1.0] because the three run clusters behind each cell are
+    # identical, so an interval would claim a precision three identical
+    # clusters cannot support. "450 of 450" is the stronger statement.
+    #
+    # before_intent_write is split out rather than pooled. The worker dies
+    # before any intent exists, so no record exists for recovery to act on,
+    # and those executions classify NO_RECORD -- which analyze.py's
+    # is_terminal excludes. Pooling them would report 450/540 and read as a
+    # recovery failure rate, which it is not.
+    for system, tag in (
+        ("AEP_FULL", "Aep"),
+        ("B3_INTENT_NO_BARRIER", "Bthree"),
+    ):
+        arm = [
+            r
+            for r in crashed
+            if r["system"] == system and r["metric"] == "recovery_success_rate"
+        ]
+        resolvable = [
+            r for r in arm if r["crash_point"] != "before_intent_write"
+        ]
+        no_record = [
+            r for r in arm if r["crash_point"] == "before_intent_write"
+        ]
+        resolved, attempted = totals(resolvable, "recovery_success_rate")
+        _, unrecorded = totals(no_record, "recovery_success_rate")
+        macro(
+            f"Recovery{tag}Resolved",
+            str(resolved),
+            f"per-cell-metrics.csv | system={system} regime={CRASHED_REGIME}",
+            "metric=recovery_success_rate | sum(successes) over the five "
+            "crash points at which an intent exists",
+        )
+        macro(
+            f"Recovery{tag}Attempted",
+            str(attempted),
+            f"per-cell-metrics.csv | system={system} regime={CRASHED_REGIME}",
+            "metric=recovery_success_rate | sum(total) over the same five "
+            "crash points; the denominator is executions that crashed",
+        )
+        macro(
+            f"Recovery{tag}NoRecord",
+            str(unrecorded),
+            f"per-cell-metrics.csv | system={system} regime={CRASHED_REGIME} "
+            "crash_point=before_intent_write",
+            "metric=recovery_success_rate | sum(total); every one classifies "
+            "NO_RECORD, which is_terminal excludes, so successes is 0",
+        )
+    # The two axes the counts are taken over, generated so the sentence
+    # cannot say "five" after a sixth crash point is collected.
+    resolvable_all = [
+        r
+        for r in crashed
+        if r["metric"] == "recovery_success_rate"
+        and r["system"] in ("AEP_FULL", "B3_INTENT_NO_BARRIER")
+        and r["crash_point"] != "before_intent_write"
+    ]
+    macro(
+        "RecoveryCrashPoints",
+        str(len({r["crash_point"] for r in resolvable_all})),
+        f"per-cell-metrics.csv | regime={CRASHED_REGIME} "
+        "metric=recovery_success_rate",
+        "distinct crash_point values excluding before_intent_write",
+    )
+    macro(
+        "RecoveryClasses",
+        str(len({r["response_class"] for r in resolvable_all})),
+        f"per-cell-metrics.csv | regime={CRASHED_REGIME} "
+        "metric=recovery_success_rate",
+        "distinct response_class values behind the same counts",
+    )
 
     # --- E1: what a hard process kill actually loses ---------------------
     # The probe that found the barrier does nothing against a SIGKILL. Its

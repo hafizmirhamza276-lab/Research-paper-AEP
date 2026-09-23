@@ -763,9 +763,31 @@ figures are stated above with their intervals.
 \subsection{RQ4 --- recovery}
 \label{sec:eval-rq4}
 
-Recovery behaviour --- how many interrupted executions the recovery
-service resolves, how it resolves them, and why absolute recovery
-latencies are not reported --- is in the supplementary material under
-\emph{RQ4: recovery}. The outcome classes it produces are the ones
-\cref{tab:outcomes} already counts, so no claim in this section depends
-on it.
+Recovery is reported as counts. In the crashed regime, every interrupted
+execution that had written an intent was resolved to a terminal
+classification: \RecoveryAepResolved{} of \RecoveryAepAttempted{} for
+AEP-full and \RecoveryBthreeResolved{} of \RecoveryBthreeAttempted{} for B3,
+over \RecoveryCrashPoints{} crash points and \RecoveryClasses{} endpoint
+capabilities. The classes those executions resolved to are the ones
+\cref{tab:outcomes} already reports.
+
+The sixth crash point is counted separately, and it is not a recovery
+failure. At \path{before_intent_write} the worker dies before any intent
+exists, so there is no record for recovery to act on
+(\cref{tab:crashpoints}). The \RecoveryAepNoRecord{} executions there for
+AEP-full and the \RecoveryBthreeNoRecord{} for B3 resolve to no terminal
+classification at all. Pooling them with
+the rest would produce a figure that reads as a failure rate for a component
+that was never given anything to do.
+
+We report no rate and no interval for this. The runs behind each cell
+resolved identically, so a bootstrap interval would be degenerate and would
+claim a precision they cannot support; the counts are the stronger statement.
+Absolute recovery latency is not reported either. Under the timing gate of
+\cref{sec:eval-setup}, \RunsWithUsableTiming{} of \RunsCollected{} runs
+contribute a duration, which leaves too few gated crashed runs for a
+distribution, and \cref{sec:threats} records that as a cost of the gate. The
+baselines declare no recovery service and are excluded from these counts
+rather than scored; the supplementary material, under \emph{RQ4: recovery},
+gives that argument in full and carries the one reconciliation disagreement
+in \RunsCollected{} runs and what became of it.

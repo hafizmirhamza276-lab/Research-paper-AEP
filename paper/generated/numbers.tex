@@ -355,6 +355,41 @@
 % analysis/coverage.json | bootstrap_resamples
 \newcommand{\BootstrapResamples}{10\,000}
 
+% analysis/coverage.json | runs_with_usable_timing
+\newcommand{\RunsWithUsableTiming}{176}
+
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed
+% metric=recovery_success_rate | sum(successes) over the five crash points at which an intent exists
+\newcommand{\RecoveryAepResolved}{450}
+
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed
+% metric=recovery_success_rate | sum(total) over the same five crash points; the denominator is executions that crashed
+\newcommand{\RecoveryAepAttempted}{450}
+
+% per-cell-metrics.csv | system=AEP_FULL regime=crashed crash_point=before_intent_write
+% metric=recovery_success_rate | sum(total); every one classifies NO_RECORD, which is_terminal excludes, so successes is 0
+\newcommand{\RecoveryAepNoRecord}{90}
+
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed
+% metric=recovery_success_rate | sum(successes) over the five crash points at which an intent exists
+\newcommand{\RecoveryBthreeResolved}{450}
+
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed
+% metric=recovery_success_rate | sum(total) over the same five crash points; the denominator is executions that crashed
+\newcommand{\RecoveryBthreeAttempted}{450}
+
+% per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed crash_point=before_intent_write
+% metric=recovery_success_rate | sum(total); every one classifies NO_RECORD, which is_terminal excludes, so successes is 0
+\newcommand{\RecoveryBthreeNoRecord}{90}
+
+% per-cell-metrics.csv | regime=crashed metric=recovery_success_rate
+% distinct crash_point values excluding before_intent_write
+\newcommand{\RecoveryCrashPoints}{5}
+
+% per-cell-metrics.csv | regime=crashed metric=recovery_success_rate
+% distinct response_class values behind the same counts
+\newcommand{\RecoveryClasses}{3}
+
 % reports/raw/e1-durability-window.txt | un-acknowledged writes lost to `docker kill -s KILL` under appendfsync=everysec
 % everysec defers the fsync, not the write; a still-running kernel flushes the page cache
 \newcommand{\ProcessKillUnackLost}{0/10}
