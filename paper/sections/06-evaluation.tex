@@ -5,7 +5,7 @@
 \item[\textbf{RQ1}] Under crashes, does AEP eliminate \emph{undetected}
       duplicates, and what does its residual ambiguity depend on?
 \item[\textbf{RQ2}] Which of the protocol's two durability mechanisms produces
-      which guarantee --- and against which faults is each one observable?
+      which guarantee, and against which faults is each one observable?
 \item[\textbf{RQ3}] What does the protocol cost, and how much of that cost is
       a choice?
 \item[\textbf{RQ4}] How does recovery behave?
@@ -84,7 +84,7 @@ the pooling rule when a mid-study review found the pooled summary table
 unusable as a source, the timing gate after a host suspension was discovered
 mid-run. Every rate and duration below is reported under them.
 
-\subsection{RQ1 --- undetected duplicates and the shape of the residual}
+\subsection{RQ1: undetected duplicates and the shape of the residual}
 \label{sec:eval-rq1}
 
 \Cref{tab:outcomes} is the anchor result; the supplementary material shows the
@@ -296,7 +296,7 @@ by a different department. We have not evaluated whether operators handle
 declared ambiguities well, or how much a real deployment would generate; both
 are stated as gaps in \cref{sec:threats}.
 
-\subsection{RQ2 --- which mechanism produces which guarantee}
+\subsection{RQ2: which mechanism produces which guarantee}
 \label{sec:eval-rq2}
 
 AEP contains two durability mechanisms and the literature usually treats them
@@ -690,7 +690,7 @@ storage that does not. It is evidence about storage, not about the protocol. One
 host, one Redis version (7.2.5, \texttt{appendfsync everysec}), and we claim it
 for no other.
 
-\subsection{RQ3 --- cost, and how much of it is optional}
+\subsection{RQ3: cost, and how much of it is optional}
 \label{sec:eval-rq3}
 
 Only crash-free runs on a suspend-disabled host contribute. The provider is
@@ -760,7 +760,7 @@ table they are read from. The claim this section rests on does not depend
 on it: the barrier costs \BarrierCostFifteen{}\,ms under \texttt{everysec}
 and \BarrierCostAlwaysFortyFive{}\,ms under \texttt{always}, and both
 figures are stated above with their intervals.
-\subsection{RQ4 --- recovery}
+\subsection{RQ4: recovery}
 \label{sec:eval-rq4}
 
 Recovery is reported as counts. In the crashed regime, every interrupted
