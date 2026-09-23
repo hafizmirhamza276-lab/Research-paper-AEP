@@ -213,3 +213,60 @@ in the deposit to look.
 
 **No text is changed by this entry.** A prose pass cannot decide what the
 deposit's public contract is.
+
+---
+
+## 4. The supplementary points a reader at "the supplementary material", and two of its sections answer the same question
+
+**Status: open.** Raised 2026-09-23 during the supplementary prose pass, which
+changed no text beyond punctuation at both sites.
+
+### The self-reference
+
+`paper/supplementary.tex`, closing `\label{supp:provable-detail}`:
+
+> Closing it is possible and we did not do it. **The supplementary material
+> gives the probe detail and prices the third barrier** that would split the two
+> cases.
+
+That sentence is itself in the supplementary material. The comment above the
+section records why:
+
+> Moved out of the evaluation section in WS-9's length pass. Section VI keeps
+> the result […] and this carries the reasoning and the third-barrier trade.
+
+When the text sat in §VI the pointer was correct. It moved, and the pointer
+moved with it, so it now names the document it is in.
+
+### The section it points at is a sibling, 500 lines earlier
+
+| label | heading |
+|---|---|
+| `supp:provable` | Why the provably-empty cell is not resolved, **and what closing it would cost** |
+| `supp:provable-detail` | Why the provably-empty cell is not resolved |
+
+Both answer the same question, and the material overlaps closely. Each states
+that a recovery process reading the store afterwards sees an authorized,
+unresolved intent, that this is what it would see had the worker died during
+transmission, and that the two histories are identical in everything durable.
+`supp:provable` then prices the third barrier at `\ThirdBarrierStepPct{}\%`;
+`supp:provable-detail` says that the supplementary prices it.
+
+Both passages were re-punctuated identically by this pass, so the duplication
+is no more and no less visible than it was.
+
+### The question for the audit
+
+1. Should `supp:provable-detail` be merged into `supp:provable`? They answer
+   one question and the later one adds the framing sentence and little else.
+2. If both stay, the self-reference needs different words: it should name the
+   sibling section. A `\cref` is available here, unlike the case in entry 2
+   above, because both labels are defined in `supplementary.tex` and the
+   restriction is only on reaching labels defined in `main.tex`.
+3. Is any of this load-bearing for §VI's pointer? §VI points at "the
+   supplementary material" for the probe detail, and a reader following that
+   pointer arrives at two sections with nearly the same heading.
+
+**No text is changed by this entry.** Whether the duplication is redundancy or
+deliberate restatement at two depths is a structural decision, and a language
+pass cannot take it.
