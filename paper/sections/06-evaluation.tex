@@ -22,7 +22,7 @@ given system is marked inapplicable and never run rather than silently skipped.
 
 \paragraph{Faults} Workers are separate OS processes killed with real
 \texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
-\emph{regime} is a named fault condition --- not a matrix dimension --- and we
+\emph{regime} is a named fault condition, not a matrix dimension, and we
 report each separately because they are different experiments. Five are
 reported, and each is named here with the section that reports it:
 
@@ -57,7 +57,7 @@ artifact; no table here quotes its rates, so it is not one of the five.
 applied} mutation in a SQLite ledger (WAL, \texttt{synchronous=FULL}, one
 transaction per mutation). Duplicates are counted from that ledger, never from
 the system's own opinion of itself. The analysis is permitted to read exactly
-two files per run --- the event log and the oracle ledger --- and a source gate
+two files per run, the event log and the oracle ledger, and a source gate
 that parses the analysis modules fails the build if they import anything that
 could reach live protocol state.
 
@@ -79,10 +79,10 @@ host cannot suspend \emph{and} the run's wall-versus-monotonic divergence stays
 within tolerance. Both halves are necessary: a host that merely was not idle
 long enough to suspend is indistinguishable from one that cannot. Under this
 gate, \emph{zero} runs collected before this rule existed contribute a timing
-number, and none does. Both rules were adopted after the first collection ---
+number, and none does. Both rules were adopted after the first collection:
 the pooling rule when a mid-study review found the pooled summary table
 unusable as a source, the timing gate after a host suspension was discovered
-mid-run --- and every rate and duration below is reported under them.
+mid-run. Every rate and duration below is reported under them.
 
 \subsection{RQ1 --- undetected duplicates and the shape of the residual}
 \label{sec:eval-rq1}
@@ -127,7 +127,7 @@ ablated on durability. It duplicates at \BfourDupPosOnly{} on
 (\BfourExecPosOnly{} and \BfourExecNoReadback{} executions), and it duplicates
 on \textsc{auth} as well, at \BfourDupAuth{} over \BfourExecAuth{}
 executions. The endpoint's
-reconciliation capability does not rescue it, which is the point --- a
+reconciliation capability does not rescue it. A
 read-back tells a recovering workflow what the provider currently holds, and
 B4's duplicate is a second application it chose to make, not a fact it failed
 to look up.
@@ -151,7 +151,7 @@ duplicated at \BfiveDup{} over \BfiveExec{} executions and lost effects at
 \BfiveLost{}; with Maximum Attempts set to one it lost at \BfivebLost{} over
 \BfivebExec{} executions and duplicated at \BfivebDup{}. Neither configuration
 declared ambiguity in any of \BfiveRuns{} non-void runs (\BfiveAmb{} and
-\BfivebAmb{} declarations) --- the third corner of \cref{sec:trilemma} going
+\BfivebAmb{} declarations), so the third corner of \cref{sec:trilemma} goes
 unreached by the engine itself and not merely by our model of it.
 
 \emph{The direction transfers; the magnitudes do not.} Each configuration lands
@@ -166,28 +166,28 @@ Four things bound this and none is removed by having run the engine. The
 comparison is \emph{incomplete}: the engine has no position answering to
 \textsc{after-intent-before-barrier}, because its pre-dispatch record is written
 by the server inside one RPC, so there is no worker-side instant between the
-write and its acknowledgement --- a hole exactly where B4 and B4b have data at
-all three capability classes. The rates are conditional on a
+write and its acknowledgement. That is a hole exactly where B4 and B4b have
+data at all three capability classes. The rates are conditional on a
 \BfiveStartToClose{}\,ms Start-To-Close timeout that B4 has no analogue for; a
 different timeout is a different cell, and no timing number here is any engine's
-recovery latency. The interval arithmetic is asymmetric --- B4's intervals rest
+recovery latency. The interval arithmetic is asymmetric: B4's intervals rest
 on three runs against the engine's thirty, and three clusters put resampled
-means on multiples of one thirtieth --- so the separation should be read from
-the point estimates, which differ by roughly $0.8$, and not from the intervals
-failing to overlap. And the crash window at the dispatch point is sized by the
+means on multiples of one thirtieth. The separation should therefore be read
+from the point estimates, which differ by roughly $0.8$, and not from the
+intervals failing to overlap. And the crash window at the dispatch point is sized by the
 server and by loopback rather than by the protocol, so its width is not
 like-for-like with B4's.
 
 That is the sharpest form of the argument the paper can make \emph{against our
-model of a durable-execution engine} --- and that qualification is load-bearing
-rather than modest, and the paragraphs above are why: B4 is our implementation
+model of a durable-execution engine}. That qualification is not modesty, and
+the paragraphs above are why: B4 is our implementation
 of the pattern, not a product, and we registered before collecting B5 that a
 gap of that size would oblige us to re-scope every B4 claim. The shape of the
 argument transfers and the magnitude is our model's. The argument is nonetheless
 made against a system that has everything the write-ahead pattern is supposed to
 provide. The record is necessary and it is not sufficient, because the
-record cannot contain the fact that matters --- whether the provider applied
-the effect. What separates B3 and AEP-full from B4 is not durability but the
+record cannot contain the fact that matters, which is whether the provider
+applied the effect. What separates B3 and AEP-full from B4 is not durability but the
 \emph{absence of an edge back into the dispatching state}: the transition
 table has no path that re-enters \textsc{about-to-fire}, checked inside the
 atomic script (\cref{fig:statemachine}). What separates them from B4b is that
@@ -206,8 +206,8 @@ protocol recovers the fact.
 
 \paragraph{The \textsc{pos-only} rate depends on how the read-back is keyed, and
 we did not expect it to} The read-back in the cells above is keyed by the
-caller's own reference. We pre-registered an alternative keying --- an oracle
-fingerprint of the request --- as a sensitivity check, and predicted it would
+caller's own reference. We pre-registered an alternative keying, an oracle
+fingerprint of the request, as a sensitivity check, and predicted it would
 leave every headline rate inside a $\pm\BthreeVsAepAmbMargin{}$ percentage-point
 margin. On \textsc{pos-only} it does not: declared ambiguity is
 \KeyingAmbiguityCaller{}\% under the caller's reference and
@@ -242,15 +242,15 @@ decomposition across all six crash points and three capability classes.
 Two cells carry the argument. At \texttt{before\_intent\_write} the rate is
 zero in every capability class: the crash precedes the intent, nothing was
 promised, and there is nothing to be ambiguous about. At
-\texttt{after\_barrier\_before\_dispatch} it is at its maximum --- and that is
+\texttt{after\_barrier\_before\_dispatch} it is at its maximum, and that is
 the crash point at which \emph{no effect can possibly exist}, because the
 worker died before sending anything. AEP declares ambiguity most often exactly
 where it is least warranted by the world. That is the false-positive ambiguity
 of \cref{sec:p2}, and its direction is the whole design: the protocol's errors
 are toward saying ``I might have done something'' when it did not, never toward
-silence when it did. The cells where an effect \emph{does} typically exist ---
+silence when it did. The cells where an effect \emph{does} typically exist,
 \texttt{mid\_dispatch} and \texttt{after\_response\_before\_resolution} under
-\textsc{pos-only} --- show low ambiguity, because a positive read-back
+\textsc{pos-only}, show low ambiguity, because a positive read-back
 confirms the effect and the intent resolves.
 
 \subsubsection{Why the provably-empty cell is not resolved}
@@ -304,8 +304,8 @@ as one. The first is the \emph{pre-dispatch record}: an intent, written and
 fenced, that exists before the external call does. The second is the
 \emph{barrier}: the \texttt{WAITAOF} round trip that makes the record's
 durability a checked precondition of dispatch authority (\cref{sec:p2}). B3 is
-the ablation that separates them --- AEP-full with the barrier removed and
-nothing else removed --- and running it against three different fault classes
+the ablation that separates them: AEP-full with the barrier removed and
+nothing else removed. Running it against three different fault classes
 assigns each guarantee to the mechanism that actually produces it.
 
 The assignment is not the one we expected, and it is the paper's central
@@ -314,9 +314,9 @@ structural result.
 \subsubsection{Detection is the record's, not the barrier's}
 \label{sec:eval-detection}
 
-Everything in \cref{sec:eval-rq1} --- zero undetected duplicates, zero lost
-effects, a residual of declared ambiguity shaped by endpoint capability ---
-survives the barrier's removal intact.
+Everything in \cref{sec:eval-rq1} survives the barrier's removal intact: zero
+undetected duplicates, zero lost effects, and a residual of declared ambiguity
+shaped by endpoint capability.
 
 \input{generated/table-ablation}
 
@@ -341,7 +341,7 @@ ambiguity as an operational outcome, and that the artifact has no escalation
 mechanism, so we have no basis on which to price one. The result
 supports equivalence under that stated, post hoc margin, but only for this
 fixed design. Each arm has \BthreeVsAepAmbClusters{} run clusters distributed
-over \BthreeVsAepAmbStrata{} matched strata---three runs per stratum---so the
+over \BthreeVsAepAmbStrata{} matched strata, three runs per stratum, so the
 cluster-aware interval is a sensitivity analysis, not a strong general
 equivalence result. The execution-level Fisher value
 ($p = \BthreeVsAepAmbP{}$) is not used as equivalence evidence.
@@ -381,7 +381,7 @@ defensible one and not because the comparison needs it.
 
 \textbf{We report this as a finding rather than as a limitation, because it
 reassigns our own headline claim.} The property that distinguishes AEP from
-B0, B1 and B2 --- and the property the paper is named for --- is produced by
+B0, B1 and B2, and the property the paper is named for, is produced by
 the pre-dispatch record and by the transition table that refuses to
 re-enter \textsc{about-to-fire}. It is not produced by waiting for
 \texttt{fsync}. A reader who wants the detection guarantee and not the
@@ -400,19 +400,19 @@ sufficient for detection. What is necessary is that the record be written
 If detection does not need the barrier, what does the barrier do? It withholds
 the external call when the durability of the intent can no longer be confirmed.
 That is a different guarantee, it is worth stating in its own metric, and no
-worker-crash fault can exercise it --- which is why \cref{sec:eval-detection}
+worker-crash fault can exercise it, which is why \cref{sec:eval-detection}
 returns a null. The fault that exercises it is loss of Redis itself.
 
 The metric is the \emph{unwanted-applied-effect rate}: the fraction of
 executions in which a real, non-idempotent mutation reached the provider while
 the durability of its own intent record could no longer be established. It is
 not the same quantity as an undetected duplicate and it is not measured on the
-same regime; keeping the two apart is the whole point of this subsection.
+same regime; keeping the two apart is what this subsection is for.
 
 We hard-kill Redis at \texttt{after\_intent\_before\_barrier}: the instruction
 boundary between the intent CAS and the acknowledgement. AEP-full is inside
-\texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is precisely
-that round trip. One execution per run, no worker crash --- the fault under
+\texttt{WAITAOF} at that moment; B3 is not, because B3's ablation is exactly
+that round trip. One execution per run, no worker crash: the fault under
 study is Redis dying.
 
 \paragraph{The controlled fault} The result below is collected under a
@@ -421,17 +421,17 @@ reporting. \texttt{docker kill} alone lands \UncontrolledLanding{}\,ms after it
 is issued on this host; freezing the container first with \texttt{docker pause}
 and killing it afterwards lands in \ControlledLanding{}\,ms, with a third of the
 spread, and leaves the container in the same end state. The fault class does not
-change --- it is the same F3 crash-stop at the same instruction boundary --- so
-the two are comparable, and the injector's own contribution to the race is
+change, since it is the same F3 crash-stop at the same instruction boundary,
+so the two are comparable, and the injector's own contribution to the race is
 narrowed by measurement rather than argued away.
 
 Over \ArmASessions{} sessions and all \ArmAClasses{} capability classes,
 AEP-full's unwanted-applied rate is \ArmAAepRate{} (\ArmAAepApplied{} of
 \ArmAAepN{} executions) and B3's is \ArmABthreeRate{}
 (\ArmABthreeApplied{}/\ArmABthreeN{}), on the same injected fault. The
-between-session spread in AEP-full's count --- the quantity a single collection
-cannot see, and the one the earlier version of this result was criticised for
-not reporting --- collapses to \ArmASpreadMax{} count per class across the
+between-session spread in AEP-full's count, which a single collection cannot
+see and which the earlier version of this result was criticised for not
+reporting, collapses to \ArmASpreadMax{} count per class across the
 \ArmASessions{} sessions. B3 stays at its ceiling throughout, never below
 \ArmABthreeFloor{} of \AepKillRuns{} in any class in any session, which is what
 rules out the reading that the injector simply disabled both arms.
@@ -442,8 +442,8 @@ the data existed: \ArmAPredicted{}, bounded [\ArmABoundLow{},
 \ArmABoundHigh{}], derived from the measured landing distribution as the
 fraction of a $1\,000$\,ms \texttt{WAITAOF} window the injector leaves open.
 The observed \ArmAAepRate{} is \emph{below} that bound. The pre-registration
-fixed in advance what a rate outside the bound would mean --- the protocol
-behaving unexpectedly, not the mechanism succeeding --- and we honour that here
+fixed in advance what a rate outside the bound would mean, namely the protocol
+behaving unexpectedly and not the mechanism succeeding, and we honour that here
 rather than presenting a lower-than-predicted number as a better result.
 
 The reason the bound was wrong is measurable, and it is not calibration: the
@@ -454,13 +454,13 @@ landing latency. That does not survive contact with a collection:
 genuine \texttt{WAITAOF} acknowledgement \emph{after} the bench landing had
 supposedly passed, and a \texttt{WAITAOF} acknowledgement requires a live
 server. Timed during the collections themselves, the same injector call takes
-\ModelInSituKill{}\,ms against the bench's \ModelBenchKill{}\,ms ---
+\ModelInSituKill{}\,ms against the bench's \ModelBenchKill{}\,ms, a factor of
 \ModelInSituRatio{}$\times$, with ranges that do not overlap. Second, it treats
 the \texttt{WAITAOF} wait as uniform on $U(0, 1\,000)$\,ms. Measured over the
 runs the model was calibrated against, the fraction of waits under
 \ControlledLanding{}\,ms is \ModelEmpiricalWindow{}, where uniformity assigns
-\ModelUniformWindow{} --- \ModelUniformOverstates{}$\times$ too generous, and
-worse the narrower the window. The two errors partly cancelled at the
+\ModelUniformWindow{}, which is \ModelUniformOverstates{}$\times$ too generous,
+and worse the narrower the window. The two errors partly cancelled at the
 uncontrolled window and could not at the controlled one.
 
 The calibration that appeared to license the bound compared the wrong two
@@ -480,9 +480,9 @@ fault class: freezing Redis synchronously at the checkpoint would make
 needs two further Redis calls, so the same freeze would stop B3 dispatching too
 and the contrast would vanish because the injector had disabled both arms. What
 the controlled fault buys is that the residual is now bounded by something we
-measured rather than by this host's \texttt{docker} latency --- and, as above,
-the bound we derived from that measurement was itself wrong in a way the data
-can show. The magnitude is not a constant of the protocol and this paper does
+measured rather than by this host's \texttt{docker} latency. As above, the
+bound we derived from that measurement was itself wrong in a way the data can
+show. The magnitude is not a constant of the protocol and this paper does
 not offer it as one.
 
 \paragraph{The uncontrolled cell replicates the direction, and is not pooled
@@ -492,16 +492,16 @@ rather than pooled: the two injectors have different landing distributions, and
 combining them would trade a stated limitation for an unstated confound. There
 the rate is \AepUnwantedRate{} for AEP-full against \BthreeUnwantedRate{} for B3
 (Fisher's exact test, two-tailed, $p = \UnwantedP{}$), a difference of
-\UnwantedPrevented{} executions on the same injected fault --- the same
+\UnwantedPrevented{} executions on the same injected fault, the same
 direction as the controlled cell, at a magnitude the uncontrolled injector sets.
 This is the only fault in the study under which the two systems diverge;
 everywhere else they differ by at most $\BthreeVsAepAmbDelta{}$ executions in
 \BthreeVsAepN{} (\cref{tab:ablation}). Both systems declared ambiguity on all
 \AepKillRuns{} runs: the endpoint is \textsc{no-readback}, so neither can
 resolve what it does not know, and both fail closed. The difference between them
-is not in what they \emph{say} --- that is the detection guarantee, and
-\cref{sec:eval-detection} already showed it does not depend on the barrier ---
-it is in what they did to the outside world before saying it.
+is not in what they \emph{say}, which is the detection guarantee that
+\cref{sec:eval-detection} already showed does not depend on the barrier. It is
+in what they did to the outside world before saying it.
 
 \textbf{The direction replicates; the magnitude moves, which is why the
 controlled cell exists.} The cell was re-collected \ReplicationSessions{}
@@ -515,11 +515,11 @@ the controlled cell's \ArmASpreadMax{}-count per-class spread over
 \ArmASessions{} sessions is the change worth reporting. Two negative findings
 travel with the cell and are not softened by being moved: attributing the
 movement to kill latency did not succeed at this design's precision, and B3 is
-not the negative control an earlier version of this paper reported it to be ---
-its own session-level interval is far too wide to have contradicted the
-mechanism whatever it had done. The per-session tables carrying both --- the
-uncontrolled counts, the four session-level kill-latency differences with their
-intervals, and the same analysis for B3 --- are in the supplementary material.
+not the negative control an earlier version of this paper reported it to be,
+because its own session-level interval is far too wide to have contradicted the
+mechanism whatever it had done. The supplementary material carries the
+per-session tables for both: the uncontrolled counts, the four session-level
+kill-latency differences with their intervals, and the same analysis for B3.
 The scope of the cell is one pre-acknowledgement crash point and one host, and
 the \textsc{authoritative-readback} class was subsequently collected over
 \ClassSessions{} sessions at a precision inadequate to the
@@ -532,7 +532,7 @@ transmission and delivering it $200$\,ms later puts it in flight, after both
 arms have already dispatched. Over \InflightSessions{} sessions the two arms
 differ by at most \InflightMaxDiff{} count in any capability class, and both sit
 at their ceiling. Two qualifications belong with that number. The second session
-is a deterministic replay of the first rather than an independent draw --- the
+is a deterministic replay of the first rather than an independent draw. The
 harness assigns seeds per cell and repetition, so where no race remains the
 second collection reproduces the first exactly, which is itself the clearest
 evidence that no race remains. And B3's lowest cell is
