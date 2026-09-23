@@ -572,16 +572,16 @@ same result reappears at $n{=}\KillCanaryN{}$ inside the ablation cells above, w
 canary write made immediately before each kill survived in \AepKillCanary{} and
 \BthreeKillCanary{} runs.
 
-That narrows the claim to a named fault class --- loss of the page cache: host
-power failure, kernel panic, VM destruction --- and an earlier draft of this
+That narrows the claim to a named fault class: loss of the page cache, by
+host power failure, kernel panic or VM destruction. An earlier draft of this
 paper stopped there, naming a fault it had not injected. We now inject it.
 
 \paragraph{Making the storage lose the writes} The probe is the one above with
 the fault swapped. A loop-backed block device carries a \texttt{dm-flakey}
 target whose \texttt{drop\_writes} feature silently discards every write bio
 while serving reads correctly, which is what a storage stack looks like to a
-kernel whose writes will never reach the platter. Redis 7.2.5 --- the same
-build as the rest of the evaluation --- runs with its append-only file on an
+kernel whose writes will never reach the platter. Redis 7.2.5, the same
+build as the rest of the evaluation, runs with its append-only file on an
 ext4 filesystem over that device. Each trial writes one key through
 \texttt{WAITAOF} and one without, switches the device into
 \texttt{drop\_writes}, kills the server, unmounts to discard the page cache,
@@ -610,12 +610,12 @@ overall. Against the same two keys under a process kill,
 $\ProcessKillUnackLost{}$ were lost; the fault classes separate completely.
 
 We give no $p$ for either comparison, and the reason is that no unit supports
-one: at the trial level the test would assume an independence the shared device
-stack violates and would ignore the pairing --- both records are written in the
-same trial and meet the same write-loss event --- while at the replication
-level, three against three, the two-sided minimum a perfectly separated result
-can reach is $0.1$, which is the design's floor rather than a statement about
-these data. The complete separation in every replication is the finding, and it
+one. At the trial level the test would assume an independence the shared
+device stack violates, and it would ignore the pairing, since both records are
+written in the same trial and meet the same write-loss event. At the
+replication level, three against three, the two-sided minimum a perfectly
+separated result can reach is $0.1$, which is the design's floor rather than a
+statement about these data. The complete separation in every replication is the finding, and it
 does not need one. The filesystem was mounted
 \texttt{ext4 rw,relatime} with its journal enabled and no \texttt{nobarrier},
 and the server's \texttt{appendfsync} was read back as \texttt{everysec} from
@@ -667,7 +667,7 @@ failure. \textbf{The prediction is refuted.} AEP-full applied an effect in
 
 \paragraph{Why, and it is the more useful finding} \textbf{\texttt{WAITAOF}
 returned success for every durability acknowledgement requested after the device
-had stopped accepting writes} --- \WriteLossAcksAfterFault{} of them, with
+had stopped accepting writes}, \WriteLossAcksAfterFault{} of them, with
 \WriteLossAckFailures{} failures. \texttt{dm-flakey}'s \texttt{drop\_writes}
 discards each write bio and reports success, so the kernel sees no error,
 \texttt{fsync(2)} succeeds, and Redis has no way to learn otherwise. The barrier
@@ -677,11 +677,11 @@ was false.
 
 \paragraph{The bounds, stated narrowly} \textbf{This is not evidence that the
 barrier fails to withhold under write loss}: the condition the experiment exists
-to create --- the barrier meeting an acknowledgement that fails or never arrives
---- was never reached, so no run exercised withholding. \textbf{Neither is it
+to create, the barrier meeting an acknowledgement that fails or never arrives,
+was never reached, so no run exercised withholding. \textbf{Neither is it
 evidence that the barrier works.} What it establishes is that the durability
-guarantee rests on an unstated premise --- that a \texttt{WAITAOF} success means
-the record reached the device --- and that under storage which discards writes
+guarantee rests on an unstated premise, that a \texttt{WAITAOF} success means
+the record reached the device, and that under storage which discards writes
 \emph{silently} the premise is false and the protocol cannot detect it. Storage
 returning \texttt{EIO} would let the acknowledgement fail and put the barrier
 back on the input its guarantee is defined over, so this result bounds the
@@ -710,9 +710,9 @@ with a 95\% interval of
 % per-execution.csv, cluster bootstrap over runs, 10000 resamples, seed
 % 20260806: median AEP-full - median B3.
 
-Everything the write-ahead protocol does apart from waiting for \texttt{fsync}
---- the intent ledger, the vault, the request binding, the preflight, the
-recovery service --- costs
+Everything the write-ahead protocol does apart from waiting for \texttt{fsync},
+meaning the intent ledger, the vault, the request binding, the preflight and
+the recovery service, costs
 \ProtocolMinusBarrierFifteen{}\,ms
 [\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]\,ms on
 a two-second call. That interval spans zero. B3's arm is a mixture of two
@@ -737,9 +737,9 @@ rested on three runs per arm, and twelve more did not confirm it.
 
 Read against \cref{sec:eval-detection} the ordering still says something
 stronger than ``AEP costs two seconds''. Whatever the detection guarantee
-costs, it is the difference between B0 and B3 --- B3 is the system that already
-has that guarantee in full --- and it is small enough that fifteen runs cannot
-separate it from zero. The \BarrierCostFifteen{}\,ms buys the prevention
+costs, it is the difference between B0 and B3, since B3 is the system that
+already has that guarantee in full, and it is small enough that fifteen runs
+cannot separate it from zero. The \BarrierCostFifteen{}\,ms buys the prevention
 guarantee of \cref{sec:eval-prevention} and nothing else.
 
 That figure is also a property of a \emph{configuration}, not of AEP. Under
@@ -754,8 +754,8 @@ carry away as ``AEP's overhead''. It is not: it is the price of one of the
 protocol's two guarantees, under one of the durability settings that
 guarantee can be bought at. The supplementary material, under \emph{The
 barrier is a deployment choice}, gives the three measured points as a
-deployment faces them --- \texttt{everysec} with the barrier,
-\texttt{always} with the barrier, and the barrier removed --- with the
+deployment faces them, \texttt{everysec} with the barrier,
+\texttt{always} with the barrier, and the barrier removed, with the
 table they are read from. The claim this section rests on does not depend
 on it: the barrier costs \BarrierCostFifteen{}\,ms under \texttt{everysec}
 and \BarrierCostAlwaysFortyFive{}\,ms under \texttt{always}, and both
