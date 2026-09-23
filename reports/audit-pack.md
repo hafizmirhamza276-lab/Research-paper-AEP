@@ -16,7 +16,7 @@ document and the repository disagree, the repository wins.
 | state | builds green, gates green, **not submitted anywhere** |
 | target venue | IEEE Transactions on Software Engineering, double-anonymous |
 | main | **24 pages** · main-anon 24 · supplementary **7 / 7** |
-| suite | **2668 passed, 34 skipped** |
+| suite | **2670 passed, 34 skipped** |
 | submission blocker | the Zenodo deposit — §7.4 |
 
 ---
@@ -489,4 +489,4 @@ or run the gate first (§3).
 
 Expected: **7 / 7 / 24 / 24** pages, `43 passed / 0 failed`, `4 builds clean`
 three times, `3 ok / 0 failed`, gate green with the tree restored clean, and
-**2668 passed, 34 skipped**.
+**2670 passed, 34 skipped**.

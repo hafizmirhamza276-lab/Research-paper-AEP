@@ -38,6 +38,7 @@ FAILED tests/test_cumulative_counter.py::test_sigkill_with_concurrent_writers_lo
 | reproduced? | **no** |
 | in isolation | **5 consecutive passes**, plus one run of the whole file (14 passed) |
 | on a full-suite re-run | **2668 passed, 34 skipped, 0 failed** |
+| on a third full-suite run, after the §VIII/§IX reorder | **2670 passed, 34 skipped, 0 failed** |
 | changed by the session that saw it? | **no** |
 
 `git diff a8fb63b~5..a8fb63b -- experiments/ aep_core/ tests/test_cumulative_counter.py`
