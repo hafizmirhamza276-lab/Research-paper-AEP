@@ -179,6 +179,16 @@ HEDGES = [
 ]
 
 
+#: A hyphen inside a flagged word has the same problem a literal space had, and
+#: one more besides. re.escape turns "load-bearing" into "load\-bearing", which
+#: matches a hyphen and nothing else: not "load-\nbearing", where the source
+#: wrapped at the hyphen, and not "load bearing", where the source spelt the
+#: compound open. The supplementary's "is load\nbearing for the paper's
+#: argument" was invisible for the second reason. A hyphen in a phrase
+#: therefore matches a hyphen, a line break, or both.
+HYPHEN_OR_BREAK = r"(?:\s*-\s*|\s+)"
+
+
 def count_phrases(prose: str, phrases: list[str]) -> dict[str, int]:
     low = prose.lower()
     found = {}
@@ -186,6 +196,9 @@ def count_phrases(prose: str, phrases: list[str]) -> dict[str, int]:
         # re.escape turns the spaces into literal spaces, which will not match
         # a phrase the source has wrapped across a line. Put \s+ back.
         escaped = re.sub(r"\\?\s+", r"\\s+", re.escape(phrase.strip()))
+        # One pass, so the hyphen inside the replacement is not itself
+        # rewritten. re.escape escapes "-" on some versions and not others.
+        escaped = re.sub(r"\\?-", lambda _: HYPHEN_OR_BREAK, escaped)
         pattern = (
             rf"\b{escaped}\b" if phrase == phrase.strip()
             else escaped + r"\s*"

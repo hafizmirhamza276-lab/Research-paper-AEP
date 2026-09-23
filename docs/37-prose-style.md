@@ -280,6 +280,57 @@ The correction moves four sections' corrective counts: `06-evaluation` 43 to 44,
 `07-related` 18 to 21, `supplementary` 40 to 43, and `04-protocol` 16 under both
 readings but with a different split. Treat §13's `corr` column as a lower bound.
 
+## 12b. A third measurement correction, 2026-09-23
+
+The same defect as §12a, one layer down, and it made the script report fewer
+faults than the text contains for the third time.
+
+**A hyphen in a flagged word matched a hyphen and nothing else.** `re.escape`
+turns `load-bearing` into `load\-bearing`, so the pattern missed two spellings
+the source actually uses: `load-\nbearing`, where LaTeX wrapped *at* the
+hyphen, and `load bearing`, where the source spelt the compound open. The
+supplementary's *"Nothing in this section is load\nbearing for the paper's
+argument"* was invisible for the second reason, and was found by eye during the
+§IX pass rather than by the script. A hyphen in a phrase now matches a hyphen,
+a line break, or both, via `HYPHEN_OR_BREAK` in `count_phrases`.
+
+`load-bearing` is currently the only hyphenated entry in `FLAGGED_WORDS`, and
+its one occurrence was removed before the fix landed, so **the fix changes no
+count in the present manuscript**. It was verified against `supplementary.tex`
+at `e091cee`, where the old code counts 0 and the new code counts 1.
+
+**The general lesson, and it is the same one twice over:** a pattern written as
+the phrase looks in the style guide will not match the phrase as LaTeX wrapped
+it. §12a fixed spaces; this fixes hyphens. Anything else that can be broken by
+a line ending — an en dash inside a term, a slash — has the same defect waiting.
+
+### The whole-manuscript run this made possible, 2026-09-23
+
+The first run over all eleven files since the section passes began. It newly
+flagged nothing, and it surfaced 14 pre-existing occurrences, of which 5 were
+language-only and were fixed:
+
+| file | word | decision |
+|---|---|---|
+| `05-implementation` | *We deliberately do not offer the test count* | **cut** — the next two sentences give the audit finding that is the reason |
+| `06-evaluation` | *the honest answer is "I do not know"* | → *the correct answer* |
+| `06-evaluation` | *the honest price of the information* | → *the price* |
+| `06-evaluation` | *This is a genuinely one-sided bound* | **cut** — the following clause draws the distinction in full |
+| `06-evaluation` | *the exposure window is deliberately maximised* | → *maximised by design* |
+
+The nine that remain are all recorded keeps:
+
+* **`04-protocol`, `silently` ×3.** *"never silently re-dispatched"* and
+  *"never silently dropped"* are **P2's property text**, quoted back at lines
+  209 and 221. This is terminology, not a tic, and §0 protects it.
+* **`06-evaluation`, `silently` ×3.** *"never run rather than silently
+  skipped"*, *"silently discards every write bio"*, *"storage which discards
+  writes silently"*. All three describe the failure mode literally, which is
+  the ground §VIII's kept *"silently inflating"* stands on.
+* **`07-related`, `discipline` ×1** and **`08-threats`, `silently` ×1** were
+  decided in those sections' own passes.
+* **`supplementary`, `precisely` ×1** — the ordinary adverb on *stating*.
+
 ## 13a. Word counts after the path-removal pass, 2026-09-22
 
 `scripts/check_no_repo_paths.py` replaced twenty-three rendered repository
