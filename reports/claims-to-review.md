@@ -163,3 +163,53 @@ it cannot `\cref` labels defined in `main.tex`, and
 are separate documents. **The label is therefore unusable by design, not merely
 unused.** Deleting it is tidying, not a fix. This session tried a `\cref` to
 `sec:eval-rq4` from the supplementary and the build correctly refused it.
+
+---
+
+## 3. `voided/` still renders in §VIII, after the same path was removed from the supplementary
+
+**Status: open.** Raised 2026-09-23 during the §VIII prose pass, which changed
+no text.
+
+### The two treatments
+
+`paper/sections/08-threats.tex`, *The oracle is independent, not infallible*:
+
+> …the voided run's raw directory (its event log, its ledger and a `README`
+> giving the reason) is in the published archive under **`\texttt{voided/}`**,
+> so the disagreement can be read rather than taken on trust.
+
+`paper/supplementary.tex`, *RQ4: recovery*, **was** the same path and is no
+longer:
+
+> the voided attempt must ship in the external raw archive, **in a directory
+> reserved for voided runs**, with this explanation beside it
+
+The supplementary said `\texttt{results/voided/}` until the path-removal pass
+on 2026-09-22, which replaced it with prose. §VIII's `\texttt{voided/}`
+survived that pass.
+
+### Why it survived, and why that is not obviously wrong
+
+`scripts/check_no_repo_paths.py` fires on a slash preceded by a known
+repository directory name. `results/` is in that list and `voided/` is not, so
+the supplementary's form was caught and §VIII's was not. **The check is
+behaving as written.**
+
+Whether it *should* fire is a different question, and it turns on what the
+string denotes. `voided/` here is a directory **inside the published evidence
+archive**, not inside the Git repository, and §IX describes the archive's
+contents by name elsewhere. A reader following the pointer needs to know where
+in the deposit to look.
+
+### The question for the audit
+
+1. Is `voided/` an archive location the paper should name, in which case §VIII
+   is right and the supplementary's replacement lost useful information?
+2. Or should both read as prose, in which case §VIII needs the same treatment
+   the supplementary got?
+3. If (1), should `check_no_repo_paths.py` gain an allow-list entry so the
+   distinction is enforced rather than accidental?
+
+**No text is changed by this entry.** A prose pass cannot decide what the
+deposit's public contract is.
