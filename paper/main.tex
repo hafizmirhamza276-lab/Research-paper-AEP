@@ -310,8 +310,20 @@ agents.
 \input{sections/05-implementation}
 \input{sections/06-evaluation}
 \input{sections/07-related}
-\input{sections/08-threats}
+% ORDER. Artifact Availability sits BEFORE Threats to Validity so the paper's
+% last numbered section ends on an argument rather than on a URL. §VIII's
+% closing subsection, "Where the protocol should not be used", states the
+% precondition under which a durable-execution engine is the better tool and
+% is the last thing a reader is told.
+%
+% The file names keep their original numbers -- 08-threats renders as §IX and
+% 09-artifact as §VIII. Renaming the files would churn every path in the
+% reports without changing a rendered word, and nothing reads the numbers:
+% every cross-reference in the manuscript is a \cref on a label, and the
+% supplementary names main-paper sections in words because it cannot \cref
+% across documents (check_paper_numbers.py::check_cross_document_references).
 \input{sections/09-artifact}
+\input{sections/08-threats}
 
 % IEEE Editorial Style Manual for Authors: the acknowledgment goes after
 % the final text and any appendixes and BEFORE the references; its heading
