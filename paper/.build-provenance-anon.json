@@ -11,7 +11,7 @@
     "generated/table-deployment-choice.tex": "1340ab0ddd0f4e37d89fc92ac4f456d322c6ee1969029d539ec018381ecf829f",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
     "generated/table-outcomes.tex": "c6116238564eab8058240b6ed1320f55dacfdb3aa484c46e07a634b65a536a01",
-    "main.tex": "c96c9e000dccafb561b60c3fea73faf0b25dad60f57faf6bf5833d8fc9536b2f",
+    "main.tex": "88d3469b9e51eb1c7900c2d2c132b361ff59f29ba49621ef90187066c87e1c11",
     "refs.bib": "2cbceda664596e9ab240193c819022e6757ab982320f45b9c4c688b3215487d4",
     "sections/01-introduction.tex": "45770b87b0b9d751dcd8214e2a27fb684cbadc700005a00aa33e4cabe1b2ef6f",
     "sections/02-motivating.tex": "0402632a5f634bcc516be36c48b056dd1d216ca0804ab2cd62ba9ff7986b28e8",
@@ -21,8 +21,8 @@
     "sections/06-evaluation.tex": "44c34340a401e2a762ec2873d07a3a24db146289ee9cde997171bbf82fc225eb",
     "sections/07-related.tex": "adbf5bc845c59b0874a41c3162209f848cb1c9785d404066a8f4f78f4b282d87",
     "sections/08-threats.tex": "beb05811964eb72a9120a8e2b807fb35f9958fbb852fc50694f4a93f8eafe208",
-    "sections/09-artifact.tex": "7ee2b07be11e883f2540fc959eb720771a9d4d3ed1131335a693b0befe528619",
-    "supplementary.tex": "7517fe5f3a4716e929cf843001751a1bcef7e9b7027f1351fb8d1292d07138e2"
+    "sections/09-artifact.tex": "dda98d0806eedc4ccebc2c51f968b9ed0581bb5918828fa4b95f967f6f89c4a2",
+    "supplementary.tex": "868a94952b8112f4e038b5dbc3bd4b9167d0c010928c84b9a79b1b503c8680c9"
   },
   "version": 1
 }
