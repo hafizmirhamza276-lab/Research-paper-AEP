@@ -274,12 +274,12 @@ problem but a three-way trade whose third corner a system must make reachable:
 silent failure converted into \emph{declared, durable, bounded ambiguity} an
 operator can act on.
 
-We present a fail-closed protocol in which every external side effect
-is preceded by a durably acknowledged write-ahead intent, every state write is
+We present AEP, a fail-closed protocol in which every external side
+effect is preceded by a durably acknowledged write-ahead intent, every state write is
 fenced by lock ownership and an expected-version CAS in one atomic script, and
 every unresolvable outcome escalates rather than guessing.
 We evaluate it against five baseline designs under \texttt{SIGKILL} faults,
- across endpoint capabilities differing in what a read-back can settle.
+across endpoint capabilities differing in what a read-back can settle.
 
 Our central result separates two claims usually sold as one.
 \emph{Detection} (no undetected duplicate and no lost effect, leaving a
