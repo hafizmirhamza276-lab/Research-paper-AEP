@@ -200,7 +200,7 @@ AEP's declared-ambiguity column is \AepAmbAuth{} on \textsc{auth},
 \textsc{none}. That ordering is not a defect that better engineering would
 remove; it is \cref{tab:capabilities} showing through. Where the endpoint can
 prove absence, recovery resolves everything and nothing is left ambiguous.
-Where it can only confirm presence, absence is uninformative and the honest
+Where it can only confirm presence, absence is uninformative and the correct
 answer is ``I do not know''. Where it cannot be queried at all, no amount of
 protocol recovers the fact.
 
@@ -290,7 +290,7 @@ stopped, that will not proceed without a human, and whose resolution requires
 someone to establish out-of-band what the endpoint will not say. On a
 \textsc{no-readback} endpoint under a crash-heavy regime that is most of the
 crashed executions. What we claim is not that this is cheap but that it is
-the honest price of the information the endpoint withholds, and that
+the price of the information the endpoint withholds, and that
 the alternative is not fewer incidents but the same incidents discovered later
 by a different department. We have not evaluated whether operators handle
 declared ambiguities well, or how much a real deployment would generate; both
@@ -357,7 +357,7 @@ is the run, not the execution: each arm's \BthreeVsAepN{} executions are
 \BthreeVsAepRuns{} runs of ten, and ten executions that share a run, a crash
 point and a system are not ten independent trials. The one-sided
 95\% Wilson upper confidence bound on a zero numerator over
-\BthreeVsAepRuns{} run clusters is \AblationZeroUpperRun{}\%. This is a genuinely
+\BthreeVsAepRuns{} run clusters is \AblationZeroUpperRun{}\%. This is a
 one-sided bound using the 95th normal quantile; it is not the upper endpoint of
 a two-sided 95\% Wilson interval, which uses the 97.5th quantile. Each system's
 rate is individually bounded this way. When the two system bounds are stated
@@ -470,7 +470,8 @@ sufficient. On the same runs the dispatch rate is \ModelDispatchRate{} and the
 applied rate is \ModelAppliedRate{}. Against the quantity it actually predicts,
 the model was already wrong on its own calibration data. We record this because
 a pre-registered bound that agrees for the wrong reason is worse than one that
-disagrees, and only the second kind is visible without looking.
+disagrees: a disagreement is visible in the result, and an agreement
+reached for the wrong reason is visible only if someone checks.
 
 \paragraph{What this does and does not license us to say} We report a rate and
 its mechanism, not a guarantee. \textbf{We do not claim that AEP-full prevents
@@ -537,8 +538,8 @@ harness assigns seeds per cell and repetition, so where no race remains the
 second collection reproduces the first exactly, which is itself the clearest
 evidence that no race remains. And B3's lowest cell is
 \InflightBthreeFloor{}/\AepKillRuns{}, exactly the floor below which the result
-would have been read as a mis-timed injector rather than a tie; it is the
-boundary, not headroom.
+would have been read as a mis-timed injector rather than a tie. The result
+sits on that boundary, with no margin above it.
 
 What is structural, across all three faults, is that the race exists for
 AEP-full at all and cannot exist for B3.
@@ -634,7 +635,7 @@ that the widely repeated reading of the sentence as covering a crashed Redis
 exactly right.
 
 One qualification, and it is the same one the process-kill probe carries: the
-exposure window is deliberately maximised. The unacknowledged write is issued
+exposure window is maximised by design. The unacknowledged write is issued
 \FlakeyWindowMin{}--\FlakeyWindowMax{}\,ms before the device stops accepting
 writes, inside a $1\,000$\,ms fsync period that a preceding \texttt{WAITAOF}
 has just reset. \FlakeyUnackLost{} is therefore the loss probability for a
