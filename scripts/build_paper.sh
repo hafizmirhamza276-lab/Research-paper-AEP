@@ -285,6 +285,19 @@ if ! "${NUMBER_RUNNER[@]}" scripts/check_no_repo_paths.py \
   failures=$((failures + 1))
 fi
 
+# Same surface, same reason. IEEE house style is American English, and the
+# manuscript was written in British -ise until the mechanical pass at the end.
+# This runs on the staged PDF for the same reason the path check does: a word
+# reaches the page from a caption, a table cell or a generated file by routes
+# no .tex-only scan sees. The organised in paper/generated/table-outcomes.tex,
+# whose caption is a string literal in paper_tables.py, is why.
+echo
+echo "=== British spellings in the rendered text ==="
+if ! "${NUMBER_RUNNER[@]}" scripts/check_american_spelling.py \
+  "$BUILD_DIR/${JOB}.pdf"; then
+  failures=$((failures + 1))
+fi
+
 if [ "$failures" -ne 0 ]; then
   echo
   echo "DO NOT SUBMIT: ${failures} check(s) failed. Existing ${JOB}.pdf preserved."
