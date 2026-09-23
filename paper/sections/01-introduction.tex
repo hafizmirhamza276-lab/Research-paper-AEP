@@ -62,8 +62,10 @@ when the channel may fail and the remote side may not answer, is the
 coordinated-attack problem; no protocol resolves it with certainty, and the
 classical results on consensus under crash faults and on failure detection say
 why~\cite{fischer1985impossibility,chandra1996failuredetectors}. What a designer
-can choose is where the uncertainty is allowed to surface. AEP places it in a
-durable state that an operator can see, and never in the accounts.
+can choose is where the uncertainty is allowed to surface. We call our protocol
+AEP. It records an intent before every external call and fails closed when
+recovery cannot resolve the outcome. AEP places the uncertainty in a durable
+state that an operator can see, and never in the accounts.
 
 \subsection{Contributions}
 
