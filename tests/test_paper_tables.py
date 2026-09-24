@@ -137,12 +137,32 @@ def test_the_barrier_cost_subtracts_within_one_fsync_policy(
 def test_the_deployment_table_carries_the_barrier_less_row(
     tmp_path: Path,
 ) -> None:
-    """The B3-mode row is what makes the other two a choice rather than a cost."""
+    """The B3-mode row is what makes the other two a choice rather than a cost.
+
+    The three rows claim three different things, and the differences are the
+    point. ``everysec`` with the barrier is the only row with a measured
+    prevention result behind it. ``always`` has the barrier and its cost, but
+    every ``always`` run collected is crash-free, so prevention under that
+    policy is untested and the row says so rather than carrying the
+    ``everysec`` answer across. B3-mode has no barrier and claims detection
+    only.
+    """
     emit_deployment_choice(EVERYSEC, ALWAYS, tmp_path)
     table = (tmp_path / "table-deployment-choice.tex").read_text(encoding="utf-8")
     assert "B3-mode" in table
     assert "detection only" in table
-    assert table.count("detection + prevention") == 2
+    # Exactly one row claims prevention as a measured result.
+    assert table.count("detection + prevention") == 1
+    # The always row names the gap instead, in both the claim and the column.
+    assert "prevention untested" in table
+    assert "not measured" in table
+    # And it must not quietly go back to claiming it. "yes" still appears for
+    # the everysec row, so the check is on the always row's own line.
+    always_row = next(
+        line for line in table.splitlines() if "not measured" in line
+    )
+    assert "always" in always_row, always_row
+    assert "& yes &" not in always_row
 
 
 def test_no_deployment_table_without_the_ablated_arm(tmp_path: Path) -> None:
