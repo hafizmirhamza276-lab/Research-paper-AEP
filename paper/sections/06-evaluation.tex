@@ -31,9 +31,18 @@ two names to a single position, and the harness delivers that position by a
 watchdog that fires inside the socket wait. For B0, B1, B2, B4 and B4b the
 request was therefore sent, and the provider may already have applied the
 mutation, at both names. What those cells measure is a kill during
-transmission rather than a kill before it, and the rates they contribute to
-this section are rates under that fault. We state this rather than adjust it:
-every number reported here is as collected.
+transmission rather than a kill before it.
+
+Those cells are therefore \emph{excluded from every pooled baseline rate} in
+this section. The systems do not all pool the same number of crash points as a
+result: AEP-full and B3 pool six, B4 and B4b pool five, and B0 to B2 pool four,
+the fourth also being unavailable to them because
+\texttt{after\_intent\_before\_barrier} cannot occur in a system that writes no
+intent. \Cref{tab:outcomes} carries the same statement in its caption. Nothing
+is excluded from AEP-full or B3, whose kill at that position was immediate.
+
+The position itself was re-collected at the intended instant, and
+\cref{sec:eval-abd} reports it as a separate session.
 
 \paragraph{Faults} Workers are separate OS processes killed with real
 \texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
