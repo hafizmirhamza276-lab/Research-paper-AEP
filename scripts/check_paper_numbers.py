@@ -84,6 +84,7 @@ def check_generated_tables(
     ws5_p30: Path,
     ws5_keying: Path,
     fsync_always_45: Path,
+    abd_immediate: Path,
 ) -> None:
     """Regenerate into a temp dir and diff against what is committed.
 
@@ -105,6 +106,7 @@ def check_generated_tables(
         ("WS-5 30%-crash regime", ws5_p30),
         ("WS-5 read-back keying variant", ws5_keying),
         ("appendfsync=always 45-run arm", fsync_always_45),
+        ("phase-53 immediate-kill cell", abd_immediate),
     ):
         result.check(path.is_dir(), f"{label} is present", f"missing {path}")
     with tempfile.TemporaryDirectory() as scratch:
@@ -130,6 +132,8 @@ def check_generated_tables(
                 str(ws5_keying),
                 "--fsync-always-45",
                 str(fsync_always_45),
+                "--abd-immediate",
+                str(abd_immediate),
                 "--out",
                 scratch,
             ],
@@ -927,6 +931,12 @@ def main() -> int:
         default=(ROOT / "experiments" / "results"
                  / "fsync-always-2026-09-14" / "analysis"),
     )
+    parser.add_argument(
+        "--abd-immediate",
+        type=Path,
+        default=(ROOT / "experiments" / "results"
+                 / "abd-immediate-2026-09-24" / "analysis"),
+    )
     arguments = parser.parse_args()
     build_dir = arguments.build_dir or arguments.paper
 
@@ -956,6 +966,7 @@ def main() -> int:
         arguments.ws5_p30,
         arguments.ws5_keying,
         arguments.fsync_always_45,
+        arguments.abd_immediate,
     )
     check_generated_captions_use_macros(result, arguments.paper)
     check_cross_document_references(result, arguments.paper)

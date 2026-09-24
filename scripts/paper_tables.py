@@ -74,6 +74,67 @@ CRASHED_REGIME = "crashed"
 CRASH_FREE_REGIME = "p0"
 REDIS_KILL_REGIME = "redis-kill-preack"
 
+#: Phase 53. ``experiments/baselines/crash_points.py`` maps BOTH
+#: ``after_barrier_before_dispatch`` and ``mid_dispatch`` onto one
+#: ``BaselineCrashPoint``, and that value is the whole of
+#: ``DEFERRED_BASELINE_POINTS``, so the harness delivered the first by the
+#: deferred watchdog: the request was sent and the provider could already have
+#: applied the mutation. The cell therefore measures a kill DURING
+#: transmission, not before it, and it is dropped from every POOLED baseline
+#: rate.
+#:
+#: AEP-full and B3 keep the cell. ``harness/crash_points.py`` gives the two
+#: names different values and defers only ``mid_dispatch``, so their kill there
+#: was always immediate -- 0 applied effects and 0 dispatch attempts in 90/90.
+#:
+#: The exclusion is asymmetric on purpose, and every rate computed through
+#: :func:`pooled_rows` says so in its provenance comment: baselines pool over
+#: five crash points, AEP-full and B3 over six.
+#:
+#: The position itself was re-collected with ``SIGKILL_IMMEDIATE`` on
+#: 2026-09-24 (``prompts/phase-53-abd-immediate-2026-09-24.md``). That
+#: collection is a DIFFERENT SESSION and is never pooled with this one; it is
+#: read separately, through ``--abd-immediate``, into the ``\Abd*`` macros.
+MIS_MAPPED_CRASH_POINT = "after_barrier_before_dispatch"
+
+#: The systems whose workers resolve roadmap names through
+#: ``experiments/baselines/crash_points.py``. B5/B5b are absent: the Temporal
+#: worker reads the roadmap name directly and was never affected.
+DEFERRED_BASELINE_SYSTEMS = frozenset(
+    {
+        "B0_NAIVE_RETRY",
+        "B1_LEASE_ONLY",
+        "B2_CAS_ONLY",
+        "B4_DURABLE_WORKFLOW",
+        "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    }
+)
+
+#: Said once, and quoted into every provenance comment that depends on it.
+POOLED_EXCLUSION_NOTE = (
+    "POOLED RATES EXCLUDE the five baselines' "
+    f"{MIS_MAPPED_CRASH_POINT} cells (phase 53): the harness delivered them "
+    "by the deferred watchdog, so they measure a kill during transmission. "
+    "AEP-full and B3 keep the cell; their kill there was immediate"
+)
+
+
+def pooled_rows(rows: Iterable[dict[str, str]]) -> list[dict[str, str]]:
+    """Rows admissible to a **pooled** rate.
+
+    Drops exactly the five baselines' :data:`MIS_MAPPED_CRASH_POINT` cells and
+    nothing else. A row without a ``crash_point`` column is kept: pooled
+    sources that do not resolve crash points cannot carry the defect.
+    """
+    return [
+        row
+        for row in rows
+        if not (
+            row.get("system") in DEFERRED_BASELINE_SYSTEMS
+            and row.get("crash_point") == MIS_MAPPED_CRASH_POINT
+        )
+    ]
+
 RESPONSE_ORDER = [
     "AUTHORITATIVE_READBACK",
     "POSITIVE_ONLY_READBACK",
@@ -155,7 +216,10 @@ def fraction(successes: int, total: int) -> str:
 
 def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
     """The anchor table: the trilemma, per system and endpoint capability."""
-    crashed = [r for r in rows if r["regime"] == CRASHED_REGIME]
+    # Pooled across crash points, so the phase-53 exclusion applies: the
+    # baseline rows pool five crash points and AEP-full/B3 pool six. The
+    # caption says so.
+    crashed = pooled_rows(r for r in rows if r["regime"] == CRASHED_REGIME)
     grouped: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
     for row in crashed:
         grouped[(row["system"], row["response_class"])].append(row)
@@ -183,13 +247,17 @@ def emit_outcomes_table(rows: list[dict[str, str]], out: Path) -> None:
     lines.append(r"\centering")
     lines.append(
         r"\caption{The trilemma, measured. Every execution in every cell was "
-        r"killed at one of the six crash points of \cref{tab:crashpoints}; "
+        r"killed at one of the crash points of \cref{tab:crashpoints}; "
         r"rates are over executions, pooled across crash points within one "
-        r"endpoint capability. B0--B2 pool over five of those six rather than "
-        r"all of them --- \texttt{after\_intent\_before\_barrier} cannot occur "
-        r"in a system that writes no intent, so for those three there is no "
-        r"such cell to pool --- and the per-crash-point rates behind every "
-        r"cell here are in the artifact\'s per-cell metrics. "
+        r"endpoint capability. The systems do not all pool the same number "
+        r"of them, and \cref{sec:eval-setup} says why. AEP-full and B3 pool "
+        r"six. B4 and B4b pool five, their "
+        r"\texttt{after\_barrier\_before\_dispatch} cells excluded because "
+        r"the harness delivered that kill inside the socket wait rather "
+        r"than before dispatch. B0 to B2 pool four, for that reason and "
+        r"because \texttt{after\_intent\_before\_barrier} cannot occur in a "
+        r"system that writes no intent. The per-crash-point rates behind "
+        r"every cell here are in the artifact\'s per-cell metrics. "
         r"\textsc{auth}/\textsc{pos-only}/\textsc{none} "
         r"are the reconciliation capabilities of \cref{tab:capabilities}. "
         r"AEP-full and B3 --- the same protocol with and without the "
@@ -1117,6 +1185,10 @@ def emit_numbers(
     # WS-5's four analysis roots, keyed "everysec" / "p30" / "keying" /
     # "always45". Absent keys emit nothing.
     ws5: dict[str, Path] | None = None,
+    # Phase 53's analysis dir. A DIFFERENT SESSION from every other argument
+    # here: it is read only into the \Abd* macros and no pooled rate touches
+    # it. Absent emits nothing rather than zeros.
+    abd: Path | None = None,
 ) -> None:
     """Headline scalars as macros, each with its provenance in a comment."""
     lines: list[str] = []
@@ -1143,7 +1215,9 @@ def emit_numbers(
         lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         lines.append("")
 
-    crashed = [r for r in per_cell if r["regime"] == CRASHED_REGIME]
+    # Every POOLED rate below comes from this list, so the phase-53 exclusion
+    # is applied once, here, rather than remembered at each call site.
+    crashed = pooled_rows(r for r in per_cell if r["regime"] == CRASHED_REGIME)
     denominators: dict[str, int] = {}
 
     # --- RQ1: AEP's three columns, per capability -----------------------
@@ -1235,23 +1309,40 @@ def emit_numbers(
     # nobody can check without recomputing it. The weakest of the three
     # comparisons is the honest figure to quote: if the least significant one
     # is this small, all three are.
-    baseline_dup_p = [
-        float(row["fisher_p_value"])
-        for row in comparisons
-        if row["metric"] == "undetected_duplicate_rate"
-        and row["regime"] == CRASHED_REGIME
-        and row["system"] in ("B0_NAIVE_RETRY", "B1_LEASE_ONLY", "B2_CAS_ONLY")
-        and row["reference"] == "AEP_FULL"
-    ]
+    # Recomputed HERE from the pooled counts rather than read from
+    # comparisons-vs-aep-full.csv, because that file is written by analyze.py
+    # over ALL SIX crash points and the rates beside it now pool five. A
+    # p-value computed on a different denominator from the rate it sits next
+    # to is the drift this whole file exists to prevent.
+    aep_dup = totals(
+        [r for r in crashed if r["system"] == "AEP_FULL"],
+        "undetected_duplicate_rate",
+    )
+    baseline_dup_p = []
+    for system in ("B0_NAIVE_RETRY", "B1_LEASE_ONLY", "B2_CAS_ONLY"):
+        successes, total = totals(
+            [r for r in crashed if r["system"] == system],
+            "undetected_duplicate_rate",
+        )
+        if total and aep_dup[1]:
+            baseline_dup_p.append(
+                fisher_exact_two_tailed(
+                    successes, total - successes,
+                    aep_dup[0], aep_dup[1] - aep_dup[0],
+                )
+            )
     if baseline_dup_p:
         macro(
             "BaselineDupMaxP",
             tex_p_value(max(baseline_dup_p)),
-            "comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, "
-            f"regime={CRASHED_REGIME}, largest (weakest) Fisher p over "
-            "{B0,B1,B2} vs AEP_FULL",
+            "per-cell-metrics.csv | metric=undetected_duplicate_rate, "
+            f"regime={CRASHED_REGIME}, largest (weakest) two-tailed Fisher p "
+            "over {B0,B1,B2} vs AEP_FULL, recomputed from the pooled counts",
+            POOLED_EXCLUSION_NOTE,
             f"{len(baseline_dup_p)} comparisons; the other "
-            f"{len(baseline_dup_p) - 1} are smaller",
+            f"{len(baseline_dup_p) - 1} are smaller. Execution-level, not "
+            "cluster-aware -- section 6 says so and the supplementary carries "
+            "the clustered intervals",
         )
 
     # --- RQ3: latency, E5-gated only ------------------------------------
@@ -3052,42 +3143,142 @@ def emit_numbers(
             "is a different cell",
         )
 
-        # B4/B4b at the SAME crash point, pooled over the same two capability
-        # classes, so the comparison in section VIII is like-for-like. The
-        # pooled B4 macros above span every crash point and would not be.
-        for system, tag, key in (
-            ("B4_DURABLE_WORKFLOW", "undetected_duplicate_rate", "BfourAtBarrier"),
-            (
-                "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
-                "lost_effect_rate",
-                "BfourbAtBarrier",
-            ),
-        ):
-            subset = [
-                r
-                for r in crashed
-                if r["system"] == system
-                and r["crash_point"] == "after_barrier_before_dispatch"
-                and r["response_class"] in (
-                    "AUTHORITATIVE_READBACK", "NO_READBACK"
-                )
-            ]
-            successes, total = totals(subset, tag)
-            if not total:
+        # \BfourAtBarrier and \BfourbAtBarrier ARE WITHDRAWN (phase 53).
+        #
+        # They were B4's and B4b's rates at after_barrier_before_dispatch,
+        # emitted so the comparison against the Temporal engine would be "at
+        # the SAME crash point" and therefore like-for-like. It was not:
+        # B5/B5b are killed immediately at that name and B4/B4b were killed by
+        # the deferred watchdog, so the two sides were never the same fault.
+        #
+        # They cannot be re-sourced from the matrix, which holds only the
+        # deferred cell. The re-collected cell is a DIFFERENT SESSION, read
+        # through --abd-immediate into the \Abd* macros, and that is where the
+        # corrected comparison lives.
+        #
+        # Deliberately not replaced by a same-named macro pooled over five
+        # crash points: that would be a different quantity wearing the old
+        # name.
+
+
+    # ----------------------------------------------------------- PHASE 53
+    #
+    # after_barrier_before_dispatch, re-collected with SIGKILL_IMMEDIATE on
+    # 2026-09-24, for the five baselines whose original cell the harness
+    # delivered by the deferred watchdog.
+    #
+    # THIS IS A DIFFERENT SESSION AND IS NEVER POOLED WITH THE MATRIX. The
+    # matrix ran in early August; docs/33 records over-dispersion of 5.37
+    # across five identical sessions in a comparable cell, and this project
+    # does not pool across sessions. Every macro below is named \Abd* so that
+    # no sentence can borrow it for a matrix rate, and every provenance
+    # comment names the session root.
+    #
+    # The registered prediction -- that all four of applied_effects,
+    # undetected_duplicate, lost_effect and dispatch_attempts would be zero in
+    # all 450 executions -- was REFUTED. Totals were 420, 55, 4 and 448. The
+    # report says why: the killed attempt sent nothing, and the effects come
+    # from the re-execution that follows the crash.
+    if abd is not None:
+        abd_exec = read_rows(abd / "per-execution.csv")
+        abd_cov = json.loads((abd / "coverage.json").read_text(encoding="utf-8"))
+        abd_root = "experiments/results/abd-immediate-2026-09-24"
+
+        macro(
+            "AbdRuns", str(abd_cov["runs"]),
+            f"{abd_root}/analysis/coverage.json | runs",
+            "phase 53, a separate session; never pooled with the matrix",
+        )
+        macro(
+            "AbdExecutions", str(abd_cov["executions"]),
+            f"{abd_root}/analysis/coverage.json | executions",
+        )
+        macro(
+            "AbdCells", str(abd_cov["cells"]),
+            f"{abd_root}/analysis/coverage.json | cells",
+            "5 baselines x 3 capability classes at one crash point",
+        )
+        macro(
+            "AbdDate", "2026-09-24",
+            f"{abd_root} | the collection date, which is what makes this a "
+            "separate session from the matrix",
+        )
+
+        # The headline. Under the DEFERRED kill, 82 of 90 B4b executions
+        # recorded an applied effect with zero dispatch attempts -- the
+        # signature of a worker dying after the bytes left. Under the
+        # immediate kill that signature is absent everywhere.
+        stranded = [
+            r for r in abd_exec
+            if r["dispatch_attempts"] == "0" and int(r["applied_effects"]) > 0
+        ]
+        macro(
+            "AbdZeroDispatchApplied",
+            f"{len(stranded)} of {len(abd_exec)}",
+            f"{abd_root}/analysis/per-execution.csv | executions with "
+            "dispatch_attempts=0 AND applied_effects>0",
+            "the same count over the matrix's deferred cell is 82 of 90 for "
+            "B4b alone; this is what establishes that the kill now lands "
+            "before transmission",
+        )
+
+        b4b = [r for r in abd_exec
+               if r["system"] == "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE"]
+        macro(
+            "AbdBfourbApplied",
+            str(sum(int(r["applied_effects"]) for r in b4b)),
+            f"{abd_root}/analysis/per-execution.csv | "
+            "system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE | sum(applied_effects) "
+            f"over {len(b4b)} executions",
+            "B4b is Maximum Attempts = 1: it does not re-execute after the "
+            "crash, so it is the control that fixes the kill's position",
+        )
+        macro(
+            "AbdBfourbDispatch",
+            str(sum(int(r["dispatch_attempts"]) for r in b4b)),
+            f"{abd_root}/analysis/per-execution.csv | "
+            "system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE | "
+            f"sum(dispatch_attempts) over {len(b4b)} executions",
+        )
+
+        abd_cell = read_rows(abd / "per-cell-metrics.csv")
+        dup_rates = {}
+        for row in abd_cell:
+            if row["metric"] != "undetected_duplicate_rate":
                 continue
+            dup_rates[(row["system"], row["response_class"])] = (
+                int(row["successes"]), int(row["total"])
+            )
+        for system, response, key in (
+            ("B0_NAIVE_RETRY", "NO_READBACK", "AbdBzeroDupNoReadback"),
+            ("B4_DURABLE_WORKFLOW", "NO_READBACK", "AbdBfourDupNoReadback"),
+            # B4's other endpoint, so section 6 can state B4's own range
+            # against the engine's single pooled rate rather than quoting one
+            # class and implying the rest.
+            ("B4_DURABLE_WORKFLOW", "AUTHORITATIVE_READBACK",
+             "AbdBfourDupAuth"),
+        ):
+            successes, total = dup_rates[(system, response)]
             macro(
                 key, rate(successes, total),
-                f"per-cell-metrics.csv | system={system} metric={tag}",
-                "crash_point=after_barrier_before_dispatch | "
-                "response_class in {AUTHORITATIVE_READBACK, NO_READBACK}",
-                f"sum(successes)/sum(total) = {successes}/{total} "
-                f"over {len(subset)} cells",
+                f"{abd_root}/analysis/per-cell-metrics.csv | system={system} "
+                f"metric=undetected_duplicate_rate response_class={response}",
+                f"{successes}/{total}",
             )
-            macro(
-                f"{key}Exec", str(total),
-                f"per-cell-metrics.csv | executions behind \\{key}",
-            )
-
+        retrying = [
+            successes / total
+            for (system, _), (successes, total) in dup_rates.items()
+            if system != "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE" and total
+        ]
+        macro(
+            "AbdDupRange",
+            f"{min(retrying):.4f}--{max(retrying):.4f}",
+            f"{abd_root}/analysis/per-cell-metrics.csv | "
+            "undetected_duplicate_rate, min--max over the "
+            f"{len(retrying)} cells of the four systems that re-execute",
+            "B4b is excluded from the range because it does not re-execute "
+            "and is zero in all three of its cells",
+        )
 
     # ------------------------------------------------------------------ WS-5
     #
@@ -3496,6 +3687,15 @@ def main() -> int:
         "--fsync-analysis, which is the three-run August cell; both are "
         "quoted and the macro names say which is which.",
     )
+    parser.add_argument(
+        "--abd-immediate",
+        type=Path,
+        default=None,
+        help="phase 53's analysis dir: after_barrier_before_dispatch "
+        "re-collected with SIGKILL_IMMEDIATE on 2026-09-24. A DIFFERENT "
+        "SESSION from the matrix and never pooled with it -- it feeds only "
+        "the \Abd* macros, which no pooled rate reads.",
+    )
     parser.add_argument("--out", type=Path, required=True)
     arguments = parser.parse_args()
     arguments.out.mkdir(parents=True, exist_ok=True)
@@ -3564,9 +3764,15 @@ def main() -> int:
     }
     ws5 = {k: v for k, v in ws5.items() if v and v.is_dir()}
 
+    abd = (
+        arguments.abd_immediate
+        if arguments.abd_immediate and arguments.abd_immediate.is_dir()
+        else None
+    )
+
     emit_numbers(
         per_cell, latency, kill, comparisons, flakey, always, coverage,
-        execution_paths, arguments.out, b5_runs=b5_runs, ws5=ws5,
+        execution_paths, arguments.out, b5_runs=b5_runs, ws5=ws5, abd=abd,
         writeloss_cell=(
             arguments.writeloss_cell
             if arguments.writeloss_cell and arguments.writeloss_cell.is_dir()

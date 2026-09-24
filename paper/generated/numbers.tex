@@ -51,21 +51,22 @@
 
 % per-cell-metrics.csv | min undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
 % regime=crashed | 9 cells
-\newcommand{\BaselineDupLow}{0.77}
+\newcommand{\BaselineDupLow}{0.74}
 
 % per-cell-metrics.csv | max undetected-duplicate rate over {B0,B1,B2} x {all collected response classes}
 % regime=crashed | 9 cells
-\newcommand{\BaselineDupHigh}{0.83}
+\newcommand{\BaselineDupHigh}{0.78}
 
 % \BaselineDupLow as a percentage, for comparison against \AblationZeroUpperRun
-\newcommand{\BaselineDupLowPct}{77}
+\newcommand{\BaselineDupLowPct}{74}
 
 % \BaselineDupHigh as a percentage, for comparison against \AblationZeroUpperRun
-\newcommand{\BaselineDupHighPct}{83}
+\newcommand{\BaselineDupHighPct}{78}
 
-% comparisons-vs-aep-full.csv | metric=undetected_duplicate_rate, regime=crashed, largest (weakest) Fisher p over {B0,B1,B2} vs AEP_FULL
-% 3 comparisons; the other 2 are smaller
-\newcommand{\BaselineDupMaxP}{5.4\times10^{-182}}
+% per-cell-metrics.csv | metric=undetected_duplicate_rate, regime=crashed, largest (weakest) two-tailed Fisher p over {B0,B1,B2} vs AEP_FULL, recomputed from the pooled counts
+% POOLED RATES EXCLUDE the five baselines' after_barrier_before_dispatch cells (phase 53): the harness delivered them by the deferred watchdog, so they measure a kill during transmission. AEP-full and B3 keep the cell; their kill there was immediate
+% 3 comparisons; the other 2 are smaller. Execution-level, not cluster-aware -- section 6 says so and the supplementary carries the clustered intervals
+\newcommand{\BaselineDupMaxP}{9.4\times10^{-155}}
 
 % latency-and-throughput.csv | system=AEP_FULL
 % step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
@@ -98,54 +99,54 @@
 \newcommand{\AepThroughputEverysec}{0.33}
 
 % per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=AUTHORITATIVE_READBACK
-% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 95/180
-\newcommand{\BfourDupAuth}{0.5278}
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 67/150
+\newcommand{\BfourDupAuth}{0.4467}
 
 % per-cell-metrics.csv | executions behind \BfourDupAuth
-\newcommand{\BfourExecAuth}{180}
+\newcommand{\BfourExecAuth}{150}
 
 % per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=POSITIVE_ONLY_READBACK
-% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 106/180
-\newcommand{\BfourDupPosOnly}{0.5889}
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 76/150
+\newcommand{\BfourDupPosOnly}{0.5067}
 
 % per-cell-metrics.csv | executions behind \BfourDupPosOnly
-\newcommand{\BfourExecPosOnly}{180}
+\newcommand{\BfourExecPosOnly}{150}
 
 % per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW regime=crashed response_class=NO_READBACK
-% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 101/180
-\newcommand{\BfourDupNoReadback}{0.5611}
+% metric=undetected_duplicate_rate | sum(successes)/sum(total) = 72/150
+\newcommand{\BfourDupNoReadback}{0.4800}
 
 % per-cell-metrics.csv | executions behind \BfourDupNoReadback
-\newcommand{\BfourExecNoReadback}{180}
+\newcommand{\BfourExecNoReadback}{150}
 
 % per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=AUTHORITATIVE_READBACK
-% metric=lost_effect_rate | sum(successes)/sum(total) = 98/180
-\newcommand{\BfourbLostAuth}{0.5444}
+% metric=lost_effect_rate | sum(successes)/sum(total) = 69/150
+\newcommand{\BfourbLostAuth}{0.4600}
 
 % per-cell-metrics.csv | executions behind \BfourbLostAuth
-\newcommand{\BfourbExecAuth}{180}
+\newcommand{\BfourbExecAuth}{150}
 
 % per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=POSITIVE_ONLY_READBACK
-% metric=lost_effect_rate | sum(successes)/sum(total) = 91/180
-\newcommand{\BfourbLostPosOnly}{0.5056}
+% metric=lost_effect_rate | sum(successes)/sum(total) = 64/150
+\newcommand{\BfourbLostPosOnly}{0.4267}
 
 % per-cell-metrics.csv | executions behind \BfourbLostPosOnly
-\newcommand{\BfourbExecPosOnly}{180}
+\newcommand{\BfourbExecPosOnly}{150}
 
 % per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE regime=crashed response_class=NO_READBACK
-% metric=lost_effect_rate | sum(successes)/sum(total) = 93/180
-\newcommand{\BfourbLostNoReadback}{0.5167}
+% metric=lost_effect_rate | sum(successes)/sum(total) = 67/150
+\newcommand{\BfourbLostNoReadback}{0.4467}
 
 % per-cell-metrics.csv | executions behind \BfourbLostNoReadback
-\newcommand{\BfourbExecNoReadback}{180}
+\newcommand{\BfourbExecNoReadback}{150}
 
 % per-cell-metrics.csv | max known_ambiguity_rate over {B4,B4b} x {all capability classes} x {all crash points}
-% regime=crashed | 36 cells
+% regime=crashed | 30 cells
 % the durable-execution engine never declares ambiguity; that is the corner of the trilemma it cannot reach
 \newcommand{\BfourFamilyAmbMax}{0.0000}
 
 % per-cell-metrics.csv | cells behind \BfourFamilyAmbMax
-\newcommand{\BfourFamilyAmbCells}{36}
+\newcommand{\BfourFamilyAmbCells}{30}
 
 % per-cell-metrics.csv | system=B3_INTENT_NO_BARRIER regime=crashed response_class=AUTHORITATIVE_READBACK
 % metric=known_ambiguity_rate | sum(successes)/sum(total) = 0/180
@@ -698,21 +699,46 @@
 % fixed at 06d51b0 before any B5 data existed; a different timeout is a different cell
 \newcommand{\BfiveStartToClose}{4000}
 
-% per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate
-% crash_point=after_barrier_before_dispatch | response_class in {AUTHORITATIVE_READBACK, NO_READBACK}
-% sum(successes)/sum(total) = 57/60 over 12 cells
-\newcommand{\BfourAtBarrier}{0.9500}
+% experiments/results/abd-immediate-2026-09-24/analysis/coverage.json | runs
+% phase 53, a separate session; never pooled with the matrix
+\newcommand{\AbdRuns}{45}
 
-% per-cell-metrics.csv | executions behind \BfourAtBarrier
-\newcommand{\BfourAtBarrierExec}{60}
+% experiments/results/abd-immediate-2026-09-24/analysis/coverage.json | executions
+\newcommand{\AbdExecutions}{450}
 
-% per-cell-metrics.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE metric=lost_effect_rate
-% crash_point=after_barrier_before_dispatch | response_class in {AUTHORITATIVE_READBACK, NO_READBACK}
-% sum(successes)/sum(total) = 55/60 over 12 cells
-\newcommand{\BfourbAtBarrier}{0.9167}
+% experiments/results/abd-immediate-2026-09-24/analysis/coverage.json | cells
+% 5 baselines x 3 capability classes at one crash point
+\newcommand{\AbdCells}{15}
 
-% per-cell-metrics.csv | executions behind \BfourbAtBarrier
-\newcommand{\BfourbAtBarrierExec}{60}
+% experiments/results/abd-immediate-2026-09-24 | the collection date, which is what makes this a separate session from the matrix
+\newcommand{\AbdDate}{2026-09-24}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv | executions with dispatch_attempts=0 AND applied_effects>0
+% the same count over the matrix's deferred cell is 82 of 90 for B4b alone; this is what establishes that the kill now lands before transmission
+\newcommand{\AbdZeroDispatchApplied}{0 of 450}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE | sum(applied_effects) over 90 executions
+% B4b is Maximum Attempts = 1: it does not re-execute after the crash, so it is the control that fixes the kill's position
+\newcommand{\AbdBfourbApplied}{0}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE | sum(dispatch_attempts) over 90 executions
+\newcommand{\AbdBfourbDispatch}{0}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B0_NAIVE_RETRY metric=undetected_duplicate_rate response_class=NO_READBACK
+% 8/30
+\newcommand{\AbdBzeroDupNoReadback}{0.2667}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate response_class=NO_READBACK
+% 6/30
+\newcommand{\AbdBfourDupNoReadback}{0.2000}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate response_class=AUTHORITATIVE_READBACK
+% 4/30
+\newcommand{\AbdBfourDupAuth}{0.1333}
+
+% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | undetected_duplicate_rate, min--max over the 12 cells of the four systems that re-execute
+% B4b is excluded from the range because it does not re-execute and is zero in all three of its cells
+\newcommand{\AbdDupRange}{0.0667--0.2667}
 
 % ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
 % point estimate of (median AEP-full - median B3), 15 and 15 runs
