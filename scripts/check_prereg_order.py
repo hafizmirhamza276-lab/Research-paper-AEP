@@ -183,6 +183,21 @@ EXPECTED: dict[str, Cell] = {
         note="NOT a collection. Quarantined debris from a failed run, "
              "retained as incident evidence (phase 20 §6).",
     ),
+    # Phase 54, B1's missing cell. The root does not exist yet -- the entry is
+    # added WITH the pre-registration so the gate sees it the moment data
+    # lands, which is the shape phase 53 used. An EXPECTED entry naming a root
+    # that ``discover()`` cannot find is inert; one MISSING when the root
+    # appears is a failure, and that asymmetry is the point.
+    "experiments/results/b1-record-loss-2026-XX-XX": Cell(
+        "prompts/phase-54-record-loss-restart-2026-09-24.md",
+        "prompts/phase-54-record-loss-restart-2026-09-24.md",
+        note="Detection under record loss: dm-flakey error_writes, then a "
+             "Redis restart. Tests whether the barrier is what separates "
+             "b3-no-barrier-restart.cfg (EXPECT: fail NoLostEffect) from "
+             "aof-rewind.cfg (NoLostEffect holds). NOT drop_writes, which "
+             "makes both arms lose and separates nothing. Rename the key to "
+             "the real date when the cell is collected.",
+    ),
     # Phase 40, the agent-reachability workstream. These four roots were
     # tracked and had no entry here, so this check failed on all four from
     # 2026-09-18 until 2026-09-24 -- correctly: the table did not say where
