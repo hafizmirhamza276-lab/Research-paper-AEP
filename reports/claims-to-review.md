@@ -500,3 +500,55 @@ supplementary has no page limit, so nothing forces the question early.
 
 **Carry this into the length pass as a named item**, alongside the 569 words of
 §VII and §VIII cut candidates from phase 49 and the 24-page main body.
+
+---
+
+## 5. Table 7's rows now pool different numbers of crash points, by family
+
+**Status: open.** Raised 2026-09-24 when phase 53's exclusion was applied.
+
+### What changed
+
+The five baselines' `after_barrier_before_dispatch` cells are excluded from
+every pooled baseline rate, because the harness delivered that kill inside the
+socket wait (`reports/audit-response-2026-09-23.md` §1). AEP-full and B3 keep
+the cell: their kill there was always immediate.
+
+So `\cref{tab:outcomes}` now pools, per row:
+
+| systems | crash points pooled | why |
+|---|---|---|
+| AEP-full, B3 | **6** | nothing excluded |
+| B4, B4b | **5** | `after_barrier_before_dispatch` excluded |
+| B0, B1, B2 | **4** | that, and `after_intent_before_barrier` does not exist for them |
+
+This is stated in §6.1 and in the table's own caption, so it is disclosed
+rather than hidden. It is recorded here because disclosure is not the same as
+being a good idea.
+
+### The question for the audit
+
+A reviewer comparing an AEP-full row against a B0 row is comparing a rate over
+six crash points against a rate over four. The exclusion was made to remove one
+non-comparability and it introduces another, smaller one.
+
+Three options, none of which this pass can choose between:
+
+1. **Leave it.** The excluded cell measured a different fault, so including it
+   would be worse; the caption says which rows pool what.
+2. **Exclude `after_barrier_before_dispatch` from AEP-full and B3 as well**, so
+   every row pools the same crash points it can. This discards two cells of
+   correct data to buy symmetry, and it would lower AEP-full's denominator
+   without changing its numerator, which is zero.
+3. **Report the table per crash point** rather than pooled, which is what the
+   supplementary's decomposition already does for AEP-full.
+
+**The direction of every comparison is unaffected**: AEP-full and B3 record
+zero undetected duplicates and zero lost effects under all three options.
+
+### Related, and deliberately not merged with this entry
+
+The re-collected cell (`\cref{sec:eval-abd}`) is a **separate session** and is
+not pooled with the matrix under any of the three options. Whether a future
+pass should pool it with a re-collected matrix is a different question and
+needs a different pre-registration.
