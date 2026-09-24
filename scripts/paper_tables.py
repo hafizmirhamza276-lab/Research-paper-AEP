@@ -1035,11 +1035,18 @@ def emit_deployment_choice(
             "detection + prevention",
         ),
         (
+            # "not measured", not "yes". Both appendfsync=always collections
+            # are regime p0 with crashed=0 on every execution -- 60 over 6
+            # runs in fsync-always and 450 over 45 in fsync-always-2026-09-14
+            # -- so nothing under this policy was ever crashed or had Redis
+            # killed. The barrier's COST under always is measured and is in
+            # this row; its prevention is not, and the column says so rather
+            # than carrying the everysec row's answer across.
             r"AEP-full, \texttt{always}",
             aep_always,
             aep_always - b3_always,
-            "yes",
-            "detection + prevention",
+            "not measured",
+            "detection; prevention untested",
         ),
         (
             r"B3-mode, \texttt{everysec}",
@@ -1069,6 +1076,9 @@ def emit_deployment_choice(
         r"same detection claim under the faults measured here; they differ "
         r"in what they pay to "
         r"also withhold dispatch when durability cannot be confirmed. The "
+        r"\emph{prevents} column reports what was measured under each "
+        r"policy, and every \texttt{always} run is crash-free, so that "
+        r"row has no prevention measurement behind it. The "
         r"barrier column is each row's own median minus a B3 median "
         r"collected under the same \texttt{appendfsync} policy. Crash-free "
         r"runs only, E5-gated, 2\,000\,ms provider floor.}",
