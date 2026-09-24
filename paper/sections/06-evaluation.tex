@@ -266,10 +266,15 @@ decomposition across all six crash points and three capability classes.
 Two cells carry the argument. At \texttt{before\_intent\_write} the rate is
 zero in every capability class: the crash precedes the intent, nothing was
 promised, and there is nothing to be ambiguous about. At
-\texttt{after\_barrier\_before\_dispatch} it is at its maximum, and that is
-the crash point at which \emph{no effect can possibly exist}, because the
-worker died before sending anything. AEP declares ambiguity most often exactly
-where it is least warranted by the world. That is the false-positive ambiguity
+\texttt{after\_barrier\_before\_dispatch} it is at its maximum, and it is
+equally at that maximum at \texttt{after\_intent\_before\_barrier}: both read
+30 of 30 under \textsc{none} and \textsc{pos-only}, and zero under
+\textsc{auth}. At both, AEP-full's worker died before sending anything, so its
+own attempt left no effect behind. That is a property of the attempt and not
+of the crash point: a system that re-executes after the crash can still reach
+the provider from there, and \cref{sec:eval-abd} reports four baselines doing
+so. AEP declares ambiguity most often exactly where its own attempt did
+nothing. That is the false-positive ambiguity
 of \cref{sec:p2}, and its direction is the whole design: the protocol's errors
 are toward saying ``I might have done something'' when it did not, never toward
 silence when it did. The cells where an effect \emph{does} typically exist,
