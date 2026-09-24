@@ -78,11 +78,6 @@
 % E5 gate: runs without a declared suspend-disabled host contribute NO timing
 \newcommand{\BzeroStepMedian}{2\,010.2}
 
-% latency-and-throughput.csv | system=B3_INTENT_NO_BARRIER
-% step_latency_ms_median over crash-free runs only (overhead_runs_crash_free=3)
-% E5 gate: runs without a declared suspend-disabled host contribute NO timing
-\newcommand{\BthreeStepMedian}{2\,038.2}
-
 % half of \BarrierCost -- the protocol runs exactly two barriers per step
 \newcommand{\BarrierCostEach}{983.3}
 
@@ -751,6 +746,10 @@
 % ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
 % 97.5th percentile of (median AEP-full - median B3), 15 and 15 runs
 \newcommand{\BarrierCostFifteenHigh}{1\,962.4}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | system=B3_INTENT_NO_BARRIER
+% median step latency over 15 crash-free runs, appendfsync=everysec
+\newcommand{\BthreeEverysecFifteenMedian}{2\,075.2}
 
 % ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, pooled over both modes of the B3 arm
 % point estimate of (median B3 - median B0), 15 and 15 runs; the POOLED reading, which amendment 2 makes the default and which spans zero

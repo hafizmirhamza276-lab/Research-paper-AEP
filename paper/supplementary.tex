@@ -573,9 +573,9 @@ Both figures are ablation differences \emph{within} one policy, which required
 collecting the barrier-less arm twice. It would have been easier to subtract
 the \texttt{everysec} B3 median from the \texttt{always} AEP-full median, and
 that would have assumed the ablated protocol's own writes cost the same under
-both policies. They nearly do (B3 is \BthreeStepMedian{}\,ms under
+both policies. They nearly do (B3 is \BthreeEverysecFifteenMedian{}\,ms under
 \texttt{everysec} and \BthreeAlwaysFortyFiveMedian{}\,ms under
-\texttt{always}), but
+\texttt{always}, both from the fifteen-run cells), but
 ``nearly'' is a measurement, and an order-of-magnitude claim resting on an
 unmeasured premise is the kind of number this paper is trying not to publish.
 

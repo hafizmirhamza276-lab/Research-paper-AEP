@@ -514,10 +514,13 @@ def emit_latency_table(rows: list[dict[str, str]], out: Path) -> None:
     lines.append(r"\begin{table}[t]")
     lines.append(r"\centering")
     lines.append(
-        r"\caption{Median step latency, crash-free runs only, E5-gated. "
-        r"Increments are over B0, the no-protocol system on the same host "
-        r"and provider. The whole write-ahead protocol minus the barrier is "
-        r"the B3 row; the barrier is the difference between B3 and AEP-full.}"
+        r"\caption{Median step latency, crash-free runs only, E5-gated, "
+        r"from the three-run cells the runs column reports. Increments are "
+        r"over B0, the no-protocol system on the same host and provider. "
+        r"The whole write-ahead protocol minus the barrier is the B3 row; "
+        r"the barrier is the difference between B3 and AEP-full. The "
+        r"intervals in \cref{sec:eval-rq3} come from a later fifteen-run "
+        r"collection, so they are not this table's arithmetic.}"
     )
     lines.append(r"\label{tab:latency}")
     lines.append(r"\small")
@@ -1358,7 +1361,13 @@ def emit_numbers(
         key = {
             "AEP_FULL": "Aep",  # the protocol with the barrier
             "B0_NAIVE_RETRY": "Bzero",  # no protocol at all
-            "B3_INTENT_NO_BARRIER": "Bthree",  # the protocol without it
+            # B3's three-run everysec median is NOT emitted. Its only reader
+            # was the supplementary's cross-policy comparison, which now takes
+            # \BthreeEverysecFifteenMedian so that both sides of that
+            # comparison come from the fifteen-run cells. The figure itself is
+            # still in \cref{tab:latency}, which is where a three-run number
+            # belongs. check_macros_are_used fails on an orphan, so leaving it
+            # emitted would be a gate failure rather than a harmless spare.
         }.get(row["system"])
         if not key:
             continue
@@ -3319,6 +3328,27 @@ def emit_numbers(
                         f"{what} of (median AEP-full - median B3), "
                         f"{len(aep15)} and {len(b3_15)} runs",
                     )
+
+            # B3's own median under everysec, from the SAME fifteen-run cell
+            # as \BthreeAlwaysFortyFiveMedian's always counterpart. The
+            # supplementary compares B3 across the two policies, and it used
+            # to put the matrix's three-run everysec median (2,038.2) beside
+            # the fifteen-run always one: a comparison whose whole point is
+            # that the two policies cost B3 the same cannot have its two
+            # sides come from different cells.
+            if b3_15:
+                import statistics as _stats
+
+                macro(
+                    "BthreeEverysecFifteenMedian",
+                    tex_number(_stats.median(
+                        [value for run in b3_15.values() for value in run]
+                    )),
+                    "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                    "per-execution.csv | system=B3_INTENT_NO_BARRIER",
+                    f"median step latency over {len(b3_15)} crash-free runs, "
+                    "appendfsync=everysec",
+                )
 
             # Protocol minus barrier, BOTH readings. Amendment 2 rules that
             # both are reported and neither is chosen silently, because they

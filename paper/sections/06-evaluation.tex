@@ -808,14 +808,16 @@ of that range rather than in the middle of it; the reason is unmeasured.
 prices it} The $\approx 2$-second figure above is the one a reader would
 carry away as ``AEP's overhead''. It is not: it is the price of one of the
 protocol's two guarantees, under one of the durability settings that
-guarantee can be bought at. The supplementary material, under \emph{The
-barrier is a deployment choice}, gives the three measured points as a
-deployment faces them, \texttt{everysec} with the barrier,
-\texttt{always} with the barrier, and the barrier removed, with the
-table they are read from. The claim this section rests on does not depend
-on it: the barrier costs \BarrierCostFifteen{}\,ms under \texttt{everysec}
-and \BarrierCostAlwaysFortyFive{}\,ms under \texttt{always}, and both
-figures are stated above with their intervals.
+guarantee can be bought at. The supplementary material, under \emph{What the
+barrier costs}, gives the three measured points as a deployment faces them:
+\texttt{everysec} with the barrier, \texttt{always} with the barrier, and the
+barrier removed. Its table is built from the three-run cells, so its
+\texttt{always} column and the \BarrierCostAlwaysFortyFive{}\,ms quoted here
+differ in sign; they are two cells, not two readings of one. The claim this
+section rests on takes the later collections: the barrier costs
+\BarrierCostFifteen{}\,ms under \texttt{everysec} over fifteen runs and
+\BarrierCostAlwaysFortyFive{}\,ms under \texttt{always} over fifteen, and
+both are stated above with their intervals.
 \subsection{RQ4: recovery}
 \label{sec:eval-rq4}
 
