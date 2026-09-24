@@ -14,6 +14,12 @@ original as possible and the question is recorded below instead.
 | **open** | raised, not investigated |
 | **checked** | investigated and found not to be a problem, with the reason |
 | **resolved** | the manuscript was changed by an author decision, with the commit |
+| **reopened** | closed once, and the closure was wrong — with what it got right, what it missed, and what would close it properly |
+
+**A closed entry is not a settled one.** Entry 3 was marked **checked** on
+2026-09-23 and reopened on 2026-09-24 after an external audit found that the
+check had tested one half of a two-part sentence. When reading a **checked**
+entry here, read what was actually tested, not what the entry is about.
 
 ---
 
@@ -229,16 +235,32 @@ unused.** Deleting it is tidying, not a fix. This session tried a `\cref` to
 
 ---
 
-## 3. `voided/` still renders in §VIII, after the same path was removed from the supplementary
+## 3. `voided/` still renders in Section 9, after the same path was removed from the supplementary
 
-**Status: CHECKED 2026-09-23.** Raised earlier the same day during the §VIII
-prose pass. Closed by reading the deposit rather than by an editorial decision:
-`voided/` is a directory in the published archive, §VIII names it correctly, and
-it is not a repository path. **No text changed.**
+**Status: REOPENED 2026-09-24.** Was CHECKED on 2026-09-23. **The check tested
+the wrong half of the sentence.** It established that `voided/` is a real
+directory — which is true, and is kept below as the record of what it did settle
+— and never tested the word *published*. The archive is not published. The
+external audit caught this (`reports/external-audit-2026-09-23.md`, blocker B3
+and consistency item 3) and `reports/audit-response-2026-09-23.md` §7 conceded
+it. The correct finding is at *§ What the 2026-09-23 closure missed* below.
+
+**Two corrections to the entry's own framing**, both made 2026-09-24:
+
+1. **The section number is stale.** This entry says §VIII throughout. The
+   sentence is in `paper/sections/08-threats.tex`, and Artifact Availability and
+   Threats to Validity were swapped on 2026-09-23 — the file keeps its name and
+   now renders as **Section 9**. The headings below are corrected; quoted text
+   from the earlier closure is left as written.
+2. **"the published archive" is quoted below as if it were settled.** It is the
+   thing at issue.
+
+**No text under `paper/` is changed by this entry, then or now.**
 
 ### The two treatments
 
-`paper/sections/08-threats.tex`, *The oracle is independent, not infallible*:
+`paper/sections/08-threats.tex` (renders as Section 9), *The oracle is
+independent, not infallible*:
 
 > …the voided run's raw directory (its event log, its ledger and a `README`
 > giving the reason) is in the published archive under **`\texttt{voided/}`**,
@@ -251,28 +273,30 @@ longer:
 > reserved for voided runs**, with this explanation beside it
 
 The supplementary said `\texttt{results/voided/}` until the path-removal pass
-on 2026-09-22, which replaced it with prose. §VIII's `\texttt{voided/}`
+on 2026-09-22, which replaced it with prose. Section 9's `\texttt{voided/}`
 survived that pass.
 
 ### Why it survived, and why that is not obviously wrong
 
 `scripts/check_no_repo_paths.py` fires on a slash preceded by a known
 repository directory name. `results/` is in that list and `voided/` is not, so
-the supplementary's form was caught and §VIII's was not. **The check is
+the supplementary's form was caught and Section 9's was not. **The check is
 behaving as written.**
 
 Whether it *should* fire is a different question, and it turns on what the
-string denotes. `voided/` here is a directory **inside the published evidence
-archive**, not inside the Git repository, and §IX describes the archive's
-contents by name elsewhere. A reader following the pointer needs to know where
-in the deposit to look.
+string denotes. `voided/` here is a directory **inside the evidence archive**,
+not inside the Git repository, and Section 8 describes the archive's contents by
+name elsewhere. A reader following the pointer needs to know where in the
+deposit to look. (This passage read *"the published evidence archive"* when it
+was written on 2026-09-23. That assumption is the one now reopened.)
 
 ### The question for the audit
 
-1. Is `voided/` an archive location the paper should name, in which case §VIII
-   is right and the supplementary's replacement lost useful information?
-2. Or should both read as prose, in which case §VIII needs the same treatment
-   the supplementary got?
+1. Is `voided/` an archive location the paper should name, in which case
+   Section 9 is right and the supplementary's replacement lost useful
+   information?
+2. Or should both read as prose, in which case Section 9 needs the same
+   treatment the supplementary got?
 3. If (1), should `check_no_repo_paths.py` gain an allow-list entry so the
    distinction is enforced rather than accidental?
 
@@ -281,8 +305,8 @@ deposit's public contract is.
 
 ### It is (1), and the deposit says so, 2026-09-23
 
-`voided/` is a real directory in the published archive, holding exactly the run
-§VIII describes. From the archive's own `MANIFEST.sha256`, 24 entries under a
+`voided/` is a real directory in the archive, holding exactly the run Section 9
+describes. From the archive's own `MANIFEST.sha256`, 24 entries under a
 path segment that is exactly `voided`:
 
 ```
@@ -294,14 +318,14 @@ voided/…/run-config.json, summary.json, mock-api.{log,yaml}, recovery.stop
 voided/…/events-worker-{0,1}-attempt-{1..6}.jsonl
 ```
 
-That is §VIII's *"its event log, its ledger and a `README` giving the reason"*,
-item for item, and it is a **B4b** run at `before_intent_write` — the cell
-§VIII's oracle-disagreement passage is about.
+That is Section 9's *"its event log, its ledger and a `README` giving the
+reason"*, item for item, and it is a **B4b** run at `before_intent_write` — the
+cell Section 9's oracle-disagreement passage is about.
 
-**So §VIII is right and `check_no_repo_paths.py` is right.** `voided/` denotes a
-location inside the deposit, not inside the Git repository, which is why the
-checker's repository-directory list does not contain it and why it did not
-fire. Nothing was missed.
+**So the path is right and `check_no_repo_paths.py` is right.** `voided/`
+denotes a location inside the deposit, not inside the Git repository, which is
+why the checker's repository-directory list does not contain it and why it did
+not fire. Nothing was missed *on that question*.
 
 **Two follow-ups, neither blocking, both the author's call:**
 
@@ -312,11 +336,81 @@ fire. Nothing was missed.
    place.
 2. **The distinction is accidental rather than enforced.** `voided/` passes
    because `voided` happens not to be a repository directory name. If a
-   repository directory is ever created with that name, §VIII starts failing a
-   check it should never fail. An allow-list of deposit-internal paths would
+   repository directory is ever created with that name, Section 9 starts failing
+   a check it should never fail. An allow-list of deposit-internal paths would
    make the distinction deliberate.
 
-**Status: CHECKED.** The claim in §VIII is accurate and no text changed.
+**That closure said "CHECKED. The claim in Section 9 is accurate."** It is not.
+See below.
+
+### What the 2026-09-23 closure missed, 2026-09-24
+
+**The entry was raised about a path and closed about a path.** The sentence makes
+two assertions and only one was tested.
+
+`paper/sections/08-threats.tex:223-227`, in full:
+
+> One voided run demonstrates that this oracle can fail: its event log and
+> ledger disagreed while sibling and repeated runs agreed. The repository
+> retains the aggregate record of that exclusion, and the voided run's raw
+> directory (its event log, its ledger and a `README` giving the reason) **is in
+> the published archive** under `\texttt{voided/}`, so the disagreement can be
+> read rather than taken on trust.
+
+| assertion | tested on 2026-09-23? | verdict |
+|---|---|---|
+| there is a directory named `voided/` holding that run | **yes** | **true**, 24 manifest entries, item for item |
+| the archive containing it **is published** | **no** | **false at submission** |
+
+**The evidence that it is false.** `paper/main.tex:145` is
+`\archivedoistate{RESERVED}`. A reserved Zenodo DOI is minted and does not
+resolve until the record is published. The manuscript says so itself, two
+sections earlier — rendered, Section 8:
+
+> "with the Zenodo record reserved under DOI 10.5281/zenodo.22766567; the
+> identifier is fixed and begins resolving when the record is published."
+
+So the paper states in Section 8 that the archive is not yet published and
+asserts in Section 9 that a run is in the published archive. That is the
+external audit's consistency item 3, and it is a contradiction internal to the
+manuscript, not a judgement call about wording.
+
+**Why the earlier closure reached the wrong place.** It read the deposit — the
+local archive tree and its `MANIFEST.sha256` — and found the directory. The
+deposit *exists*; it is built, verified, and its manifests check file by file
+(`scripts/verify_raw_archive.py`). None of that makes it *published*. "Published"
+is a property of the Zenodo record, not of the bytes on disk, and the only thing
+that establishes it is a resolving DOI. The closure checked the bytes.
+
+**What would close this entry.** Exactly two things, and they are mutually
+exclusive in practice:
+
+1. **Publish the Zenodo deposit.** `\archivedoistate` moves from `RESERVED` to
+   the published state, the DOI resolves, and the Section 9 sentence becomes true
+   **with no text change at all**. Procedure is `docs/29-archive-deposit.md` —
+   one record, six files, manual web upload — and it is already this project's
+   named submission blocker (`reports/audit-pack.md` §7.4). This is the
+   preferred close: it makes the sentence true rather than weaker, and it fixes
+   the audit's blocker B3 in the same act.
+2. **Reword so the sentence does not assert publication.** Two forms would do
+   it: drop *published* (the archive is named and described in Section 8
+   regardless), or make the availability conditional on the deposit in the same
+   way `\archiveavail` already is. This is the fallback if the paper is
+   submitted before the deposit is live, and it is strictly worse, because the
+   sentence exists to let a reviewer read the disagreement rather than take it
+   on trust — and a reviewer still cannot.
+
+**Neither is done, and nothing under `paper/` was touched.** The choice is the
+author's, and it is really a scheduling question: if the deposit is published
+before submission, option 1 costs nothing.
+
+**One thing this reopening does not disturb.** Everything the 2026-09-23 closure
+established about the *path* stands: `voided/` is a real deposit directory, it
+holds exactly the run Section 9 describes, it is not a repository path, and
+`check_no_repo_paths.py` behaved correctly in not firing. Only the word
+*published* is at issue.
+
+**Status: REOPENED.**
 
 ---
 

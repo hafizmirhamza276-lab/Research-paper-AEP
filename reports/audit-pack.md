@@ -11,10 +11,26 @@ the work, which is a limitation of §8 you should weight accordingly.
 **Nothing here is a substitute for reading `paper/main.pdf`.** Where this
 document and the repository disagree, the repository wins.
 
+**This pack was itself audited, and it lost.** An external auditor
+(`reports/external-audit-2026-09-23.md` §7) found nine claims here untrue,
+inaccurate or unconfirmed; `reports/audit-response-2026-09-23.md` §4 checked
+them finding by finding and conceded every one that could be checked without a
+network. Seven corrections were applied on 2026-09-24 and are recorded, with
+their evidence and the commands to recheck them, in
+`reports/audit-pack-corrections-2026-09-24.md`. Two of them needed work outside
+this file and have their own reports:
+`reports/prereg-order-phase40-2026-09-24.md` (the failing gate) and
+`reports/tse-venue-2026-09-24.md` (the review model and the page limit). **One
+correction could not be made here at all** — `\WriteLossAepApplied`'s provenance
+path is wrong in the *generated* output, not in this pack, and the fix is in
+`scripts/paper_tables.py`; see §2.1. Read this paragraph as the pack's own
+answer to its own standard: the repository won, in seven places.
+
 | | |
 |---|---|
-| state | builds green, gates green, **not submitted anywhere** |
-| target venue | IEEE Transactions on Software Engineering, double-anonymous |
+| state | builds green; **gates NOT all green** — `check_prereg_order.py` exits 1 with four failing cells (§3, and `reports/prereg-order-phase40-2026-09-24.md`); **not submitted anywhere** |
+| target venue | IEEE Transactions on Software Engineering — **single-anonymous**. TSE does not offer double-anonymous review (`reports/tse-venue-2026-09-24.md`). The anonymous builds and `prove_anonymous_gate.sh` are built for a review model this journal does not run |
+| length budget | TSE's regular-paper limit is **12 formatted pages**, with a mandatory overlength charge of **$220 per page** beyond it. The main body is 24 |
 | main | **24 pages** · main-anon 24 · supplementary **7 / 7** |
 | suite | **2670 passed, 34 skipped** |
 | submission blocker | the Zenodo deposit — §7.4 |
@@ -56,25 +72,25 @@ is a constraint and not a stylistic choice.
 
 | | claim | where it is evidenced |
 |---|---|---|
-| **C1** | **The declared-ambiguity formulation.** The problem is a three-way trade, not an engineering-quality problem | §III (model), `tab:trilemma` |
-| **C2** | **A protocol and an implementation** | §IV, §V |
-| **C3** | **An evaluation under real process kills** across six crash points, three capability classes and five baselines. *"AEP records no undetected duplicate and no lost effect **in any cell measured**"* | §VI |
-| **C4** | **A decomposition of the mechanism, by ablation, that reassigns our own headline result.** The write-ahead pattern is two mechanisms, not one; ablating the barrier produces no observed difference in crashed-regime detection metrics | §VI-B, `sec:eval-detection` |
+| **C1** | **The declared-ambiguity formulation.** The problem is a three-way trade, not an engineering-quality problem | Section 3 (model), `tab:trilemma` |
+| **C2** | **A protocol and an implementation** | Sections 4 and 5 |
+| **C3** | **An evaluation under real process kills** across six crash points, three capability classes and five baselines. *"AEP records no undetected duplicate and no lost effect **in any cell measured**"* | Section 6 |
+| **C4** | **A decomposition of the mechanism, by ablation, that reassigns our own headline result.** The write-ahead pattern is two mechanisms, not one; ablating the barrier produces no observed difference in crashed-regime detection metrics | Section 6.3, `sec:eval-detection` |
 
 **C4 is the claim to read first.** It says the paper's own earlier headline was
 wrong about which mechanism delivered which guarantee.
 
-**C3's scope condition — *"in any cell measured"* — is load-bearing**, and §I
+**C3's scope condition — *"in any cell measured"* — is load-bearing**, and Section 1
 now carries the same condition on the same claim (see §7.1, entry 1).
 
 ### 1.4 The four research questions, and where each is answered
 
 | RQ | question | answered in | label |
 |---|---|---|---|
-| **RQ1** | Under crashes, does AEP eliminate *undetected* duplicates, and what is the shape of the residual? | §VI-A | `sec:eval-rq1` |
-| **RQ2** | Which of the protocol's two durability mechanisms produces which guarantee? | §VI-B | `sec:eval-detection`, `sec:eval-prevention` |
-| **RQ3** | What does the protocol cost, and how much of that cost is optional? | §VI-C | `sec:eval-rq3` |
-| **RQ4** | How does recovery behave? | §VI-D **and** the supplementary's *RQ4: recovery* | `sec:eval-rq4`, `supp:rq4` |
+| **RQ1** | Under crashes, does AEP eliminate *undetected* duplicates, and what is the shape of the residual? | Section 6.2 | `sec:eval-rq1` |
+| **RQ2** | Which of the protocol's two durability mechanisms produces which guarantee? | Section 6.3 | `sec:eval-detection`, `sec:eval-prevention` |
+| **RQ3** | What does the protocol cost, and how much of that cost is optional? | Section 6.4 | `sec:eval-rq3` |
+| **RQ4** | How does recovery behave? | Section 6.5 **and** the supplementary's *RQ4: recovery* | `sec:eval-rq4`, `supp:rq4` |
 
 **RQ4 was a stub forwarding to the supplementary until 2026-09-23** and is now
 answered in the body as counts (`453a32b`). The supplementary carries the
@@ -111,20 +127,73 @@ filter and the arithmetic. Example, from `numbers.tex`:
 \newcommand{\WriteLossAepApplied}{285}
 ```
 
+**Do not follow that path as written — it resolves nowhere, and this is a defect
+in the generated provenance rather than in this pack.** Every other bare
+directory prefix in `numbers.tex` (`ws5-2026-09-10`, `fsync-always`,
+`fsync-always-2026-09-14`, `b2-paired-v2-*`, `phase13-armA-*`) resolves under
+`experiments/results/`. This one does not: the tree exists **only** at
+`reports/raw/ws4-writeloss-s1-2026-09-07`. Seven macros carry the truncated
+prefix (`grep -c 'ws4-writeloss-s1-2026-09-07' paper/generated/numbers.tex`).
+The cause is `writeloss_cell_macros()` at `scripts/paper_tables.py:625`, which
+builds all seven comments from `root.name` — `Path.name` drops the parent,
+though the full path is available (the `--writeloss-cell` default at
+`scripts/paper_tables.py:3451`). The fix is `root.relative_to(ROOT).as_posix()`
+plus a regeneration, and **it has not been applied**: it is a `paper/generated/`
+rebuild. Details and the other emitters worth checking for the same bug:
+`reports/audit-pack-corrections-2026-09-24.md` §3.
+
 ### 2.2 Generated files → collections
 
-Distinct sources cited across `numbers.tex`, by frequency:
+Distinct sources cited across `numbers.tex`, by frequency. **An earlier version
+of this table undercounted by an order of magnitude** — it said
+`per-cell-metrics.csv` supplied 3 macros where it supplies 56 provenance lines —
+because it was built from a regex for the literal string
+`analysis/per-cell-metrics.csv`, and most provenance comments write the basename
+bare. Rebuilt 2026-09-24 at `44cb5d1`.
 
-| collection | what it carries |
-|---|---|
-| `analysis/redis-kill-ablation.csv` (matrix) | 25 macros — the ablation |
-| `ws5-2026-09-10/t1-p0-everysec/` | 9 — the crash-free arm |
-| `ws4-writeloss-s1-2026-09-07/` | 5 + 2 — the write-loss cell |
-| `fsync-always-2026-09-14/` | 5 — `appendfsync always` |
-| `analysis/per-cell-metrics.csv` (matrix) | 3 — the rate source |
-| `ws5-2026-09-10/t2-p30/` | 3 — the 30 % crash regime |
-| `ws5-2026-09-10/t2-keying/` | 1 — the alternative read-back keying |
-| `analysis/comparisons-vs-aep-full.csv` | 1 |
+**How to recheck column (a):** one command per row.
+
+```
+grep -c -- "per-cell-metrics.csv" paper/generated/numbers.tex     # -> 56
+```
+
+That counts every line of the file naming that basename. **Column (b)** counts
+*macros*: walk the file, accumulate consecutive `%` lines into a block, and when
+a `\newcommand` is reached attribute it to each distinct basename named in its
+block.
+
+| source | (a) provenance lines | (b) macros |
+|---|---|---|
+| `per-cell-metrics.csv` — the rate source | **56** | 55 |
+| `redis-kill-ablation.csv` — the ablation | 41 | 40 |
+| `comparisons-vs-aep-full.csv` | 20 | 19 |
+| `e1-kill-latency-by-run.csv` | 19 | 19 |
+| `per-execution.csv` | 11 | 11 |
+| `phase13-model-gap.json` | 10 | 10 |
+| `latency-and-throughput.csv` | 9 | 8 |
+| `g2-flakey-write-loss*.json` | 9 | 8 |
+| `coverage.json` | 7 | 7 |
+| `phase13-fault-landing.json` | 5 | 5 |
+
+**Three facts that reconcile the two columns**, and that an auditor should check
+before trusting either:
+
+1. `numbers.tex` defines **221** macros (`grep -c 'newcommand'`). **182** name a
+   source in their comment block — the sum of column (b) — and **39** are
+   derived from other macros and name no file.
+2. **No comment block names two different sources** (checked; the count is 0),
+   so column (b) double-counts nothing.
+3. Column (a) exceeds column (b) by exactly **1** for five rows and by **0** for
+   the other five. The five are precisely the files listed in `numbers.tex`'s own
+   5-line header banner. That banner line is the entire discrepancy.
+
+**Which collection each source belongs to** is a second axis this table
+deliberately does not mix in, because mixing them is what produced the original
+error. Attributing full paths rather than basenames gives, largest first:
+`reports/raw/e1-kill-latency-by-run.csv` 19,
+`b2-paired-v2-*/analysis/redis-kill-ablation.csv` 12,
+`ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv` 9,
+`ws4-writeloss-s1-2026-09-07/analysis/redis-kill-ablation.csv` 5.
 
 The main matrix is **432 runs / 3 780 executions / 126 cells**
 (`\RunsCollected`, `\ExecutionsCollected`, `\CellsCollected`).
@@ -137,14 +206,15 @@ The main matrix is **432 runs / 3 780 executions / 126 cells**
 2. **Regimes are never pooled.** Every rollup filters to one regime and names
    it in the emitted comment.
 
-**An auditor should know that the second rule was violated once and caught by
-an external reviewer**, not by the gates — see §8.2.
+**An auditor should know that the second rule was violated once and caught by a
+review conducted in a separate session against the tracked CSVs**, not by the
+gates — see §8.2.
 
 ### 2.3 Raw evidence
 
 Two archives under one DOI, **2 790 run directories / 44 794 files**, 848 MB
 uncompressed. Every file carries a SHA-256 in its archive's manifest; the
-manifest's own digest attests the archive. §IX describes it.
+manifest's own digest attests the archive. Section 8 describes it.
 
 **The DOI is `RESERVED` and does not resolve.** §7.4.
 
@@ -183,7 +253,7 @@ where it was not.
 | `check_american_spelling.py` | no British spelling reaches rendered text; reads the PDFs; exempts the references section and a documented identifier list | `--selftest`, **6 of 6**, plus **77 tests** |
 | `prove_anonymous_gate.sh` | the four anonymity checks **by inducing each failure and restoring** | it is itself the proof |
 | `check_line_endings.py` | evidence files under SHA-256 manifests do not have their bytes moved |  |
-| `check_prereg_order.py` | a pre-registration is committed before the collection it governs |  |
+| `check_prereg_order.py` | a pre-registration is committed before the collection it governs | **exits 1 at `44cb5d1`**: `cells: 35 ok: 27 exempt: 4 failing: 4`. The four are the phase-40 roots under `reports/raw/`, each *"tracked collection with no entry in EXPECTED"*. They **were** pre-registered — `prompts/phase-40-agent-reachability.md`, committed 2026-09-17, precedes all four — so this is a gate-table omission, not a missing pre-registration. Diagnosis and the exact entry each root needs: `reports/prereg-order-phase40-2026-09-24.md`. **Not fixed** |
 | `check_pytest_gates.py` | no test in the suite is silently skipped |  |
 | `check_tla_transitions.py` | the formal model's transitions match the implementation |  |
 | `verify_refs.py` | every bibliography entry was resolved against DBLP, `doi.org`, or fetched on a recorded date |  |
@@ -307,7 +377,11 @@ References
 
 **Artifact Availability and Threats to Validity were swapped on 2026-09-23** so
 the last numbered section ends on an argument rather than a URL. The file names
-keep their original numbers — `08-threats.tex` renders as §IX.
+keep their original numbers — `08-threats.tex` renders as **Section 9**, and
+Artifact Availability renders as **Section 8**. Section references in this pack
+were Roman numerals until 2026-09-24 and are now the Arabic numerals the
+compsoc build actually prints; each was resolved against what the sentence is
+about, because both numerals had been used for both sections.
 
 **There is no conclusion section.** That is a decision, not an oversight —
 §7.6.
@@ -320,9 +394,9 @@ keep their original numbers — `08-threats.tex` renders as §IX.
 
 | # | entry | status |
 |---|---|---|
-| 1 | §I said the uncertainty is *never* in the accounts; C3 scopes the same claim | **RESOLVED** — empirical reading taken, §I now carries C3's scope condition |
+| 1 | Section 1 said the uncertainty is *never* in the accounts; C3 scopes the same claim | **RESOLVED** — empirical reading taken, Section 1 now carries C3's scope condition |
 | 2 | the supplementary said *every* crashed execution reached a terminal classification; 180 did not | **RESOLVED** — scoped to executions that wrote an intent |
-| 3 | `voided/` renders in §VIII after the path was removed from the supplementary | **CHECKED** — `voided/` is a real directory in the deposit, with 24 manifest entries; §VIII is correct |
+| 3 | `voided/` renders in Section 9 after the path was removed from the supplementary | **REOPENED 2026-09-24.** It was closed on the directory's existence — `voided/` is a real directory with 24 manifest entries, and that half is verified. But the sentence says the run is in the **published** archive, and `\archivedoistate` is `RESERVED`, so it is false at submission. Closes when the deposit is published, or by rewording |
 | 4 | the supplementary points a reader at "the supplementary material", and two of its sections answer the same question | **HALF RESOLVED.** The self-reference is fixed (`\Cref{supp:provable}`). **Whether the two sections merge is open** |
 
 **Entry 1 is worth your attention even though it is closed.** The data was
@@ -337,38 +411,67 @@ adequately conveyed to a reader.
 
 `PAPER_ROADMAP.md`, the *DEFERRED TO THE LENGTH PASS* section: **L1** the
 conclusion (draft exists, §7.6), **L2** entry 4's merge question, **L3** 569
-words of §VII/§VIII cut candidates with the assessment that none should be cut,
-**L4** §VI at ~6 500 words and §VIII at ~3 200.
+words of Section 7 / Section 9 cut candidates with the assessment that none
+should be cut,
+**L4** Section 6 at ~6 500 words and Section 9 at ~3 200.
 
 ### 7.3 Cut candidates — 569 words, none applied
 
 `reports/phase-report-49` §6 lists eight with word counts. **Three of them (5,
-6, 7) are the threat-side counterparts of results stated in §VI** — which is
-simultaneously the argument against cutting them and the evidence that §VI and
-§VIII duplicate.
+6, 7) are the threat-side counterparts of results stated in Section 6** — which is
+simultaneously the argument against cutting them and the evidence that Section 6
+and Section 9 duplicate.
 
 ### 7.4 The Zenodo deposit — the submission blocker
 
 `main.tex:145` is `\archivedoistate{RESERVED}`. A reserved DOI is minted but
-does not resolve until published, so `\archiveavail` renders the honest *"not
-yet deposited"* sentence. **A reviewer cannot verify the evidence.** Procedure:
-`docs/29-archive-deposit.md`, one record, six files, manual web upload.
-Inserting the real DOI is a one-line edit.
+does not resolve until published.
+
+**What the PDF actually says**, verbatim from `pdftotext -layout paper/main.pdf`,
+Section 8:
+
+> "those are carried by a separate archive, prepared and verified, with the
+> Zenodo record reserved under DOI 10.5281/zenodo.22766567; the identifier is
+> fixed and begins resolving when the record is published."
+
+An earlier version of this pack said `\archiveavail` renders *"not yet
+deposited"*. **It does not.** That text is the **PENDING** branch
+(`main.tex:232`); `RESERVED` selects the branch at `:238`. The string "not yet
+deposited" appears in **none** of the four built PDFs. The anonymous build
+renders a third sentence again, from `main.tex:158`: *"those are carried by a
+separate archive, available via the submission system."*
+
+The substantive point is unchanged and is the reason this is the blocker: **a
+reviewer cannot verify the evidence.** Procedure: `docs/29-archive-deposit.md`,
+one record, six files, manual web upload. Inserting the real DOI is a one-line
+edit.
+
+**One consequence worth carrying to Section 9.** While the deposit is
+`RESERVED`, `sections/08-threats.tex:223-227` — the voided run *"is in the
+**published** archive under `voided/`"* — is false as printed. Publishing the
+deposit makes it true with no text change. `reports/claims-to-review.md` entry 3
+is reopened on exactly this.
 
 ### 7.5 `reports/camera-ready-checklist.md`
 
-Things invisible to a double-anonymous reviewer that must be fixed before
-camera-ready: the artifact's *"for agents"* description and its *Agent
-Execution Protocol* heading; the author identity, ORCID and artifact URLs which
-are stripped from every build a reviewer sees; the stale-title records in
-`docs/`; and the deposit.
+Things that must be fixed before camera-ready: the artifact's *"for agents"*
+description and its *Agent Execution Protocol* heading; the author identity,
+ORCID and artifact URLs; the stale-title records in `docs/`; and the deposit.
+
+**That list was assembled under the heading "things invisible to a
+double-anonymous reviewer", and that framing is wrong.** TSE runs
+single-anonymous review (`reports/tse-venue-2026-09-24.md`), so the submitted
+article is the **named** build and the author identity, ORCID and artifact URLs
+are visible to reviewers from the first day. The items still need fixing; the
+reason they were safe to defer does not hold, and the artifact URL in particular
+is now something a reviewer can and will follow.
 
 ### 7.6 The conclusion — declined, with the draft kept
 
 Investigated 2026-09-23. **No IEEE or TSE guidance in the repository requires
 one.** The recommendation was to add ~200 words; **the author declined**, on
 the objection raised against that recommendation: the paper already states
-results in full in both §VI and §VIII, and a conclusion would be a third
+results in full in both Section 6 and Section 9, and a conclusion would be a third
 statement. A ~215-word draft is at `reports/phase-report-52` §2.6. The ordering
 half was applied separately (§6).
 
@@ -390,16 +493,16 @@ not a complete one.
 
 ### 8.1 The detection finding has no referent outside this artifact
 
-§VIII says it plainly: *"the proposition is supported by two systems we wrote,
+Section 9 says it plainly: *"the proposition is supported by two systems we wrote,
 measured by a harness we wrote, against a provider we wrote."* The central
 result — that detection comes from the record and not the barrier — rests
 entirely on an artifact built by the author. **Nothing external corroborates
 it.**
 
-### 8.2 An own-rule violation was found by an external reviewer, not by the gates
+### 8.2 An own-rule violation was found by a review, not by the gates
 
 `reports/paper-review-2026-08-11.md` found that the headline significance test
-pooled fault regimes — *the exact practice §VI-A(e) bans*. Recomputed on
+pooled fault regimes — *the exact practice Section 6.2(e) bans*. Recomputed on
 crashed-only counts the conclusion survived (p = 1.15 × 10⁻¹⁸³). The same
 review found the one-sided/two-sided Wilson bound mislabelled.
 
@@ -407,10 +510,25 @@ review found the one-sided/two-sided Wilson bound mislabelled.
 either**, because `check_paper_numbers` verifies a number against its source
 and not the choice of source.
 
+**An earlier version of this pack called that review "an external reviewer". It
+should not have, and the claim is withdrawn.** Nothing in the repository
+establishes who or what wrote it. The review names no person and no affiliation,
+and its own environment note (`reports/paper-review-2026-08-11.md:9`) describes
+*"a container … Python 3.12 + `uv 0.11.7`, no Docker, and outbound network
+limited to package registries and web search"* — a description consistent with
+an agent sandbox. What **is** documented, in the review's own *Review protocol*
+section, is the property the finding actually rests on: it was written in a
+separate session, stage 1 blind to everything under `reports/`, from
+`paper/main.pdf`, `ARTIFACT.md` and the public tree, with every computation run
+against the tracked CSVs in its own clone. That is what this pack now claims for
+it, and no more. Raised by the external audit; see
+`reports/audit-pack-corrections-2026-09-24.md` §6.
+
 ### 8.3 Prevention is measured far more narrowly than detection
 
-The external review put it at **1/126th** of detection's breadth. §VIII carries
-the scope; the abstract and §I are where a reader is most likely to take the
+The external review put it at **1/126th** of detection's breadth. Section 9
+carries the scope; the abstract and Section 1 are where a reader is most likely
+to take the
 two as equally supported.
 
 ### 8.4 Two comparisons fail to exclude zero for reasons of precision
@@ -418,13 +536,13 @@ two as equally supported.
 The kill-latency attribution (half-width wider than the mean it brackets) and
 the capability-class sweep, where **the applied-effect column moved,
 contradicting the authors' own registered prediction**, while the interval
-still contains zero because the sessions disagree with one another. §VIII says
+still contains zero because the sessions disagree with one another. Section 9 says
 the weaker reading is not available. **A reviewer may reasonably read these as
 underpowered rather than as informative nulls.**
 
 ### 8.5 Everything was measured on one host, under WSL2
 
-`docs/27-measurement-host.md`. §VIII §8.3.0.3 proposes re-collecting one frozen
+`docs/27-measurement-host.md`. Section 9.3 proposes re-collecting one frozen
 cell on bare metal to price the platform term. **Not done.** Every effect
 size's dependence on host timing is measured *on* that host rather than
 established *across* hosts.
@@ -441,9 +559,19 @@ abstract's *prevention* sentence may suggest on first reading.
 ### 8.7 The length problem is not cosmetic
 
 24 pages against TSE's 12-page charge point, with acknowledged duplication
-between §VI and §VIII. A reviewer who asks for cuts will be asking the authors
-to choose between two statements of the same result, and that choice has not
-been made.
+between Section 6 and Section 9. A reviewer who asks for cuts will be asking
+the authors to choose between two statements of the same result, and that
+choice has not been made.
+
+**The charge point is now confirmed and priced.** IEEE Computer Society's author
+guidance sets the regular-paper limit at 12 formatted pages and charges $220 for
+each page beyond it; the 2026 IEEE APC list's TSE row says the same
+(`reports/tse-venue-2026-09-24.md` §2). The charge is a Mandatory Overlength
+Page Charge assessed on the **final formatted** article after acceptance, not a
+desk return — so the length problem is not a rejection risk so much as a bill of
+roughly $2,640 on the current page count, and an editor's discretion on top of
+it. That makes §7.2's deferred length pass the most expensive open item in this
+pack.
 
 ### 8.8 One statistical practice worth checking independently
 
