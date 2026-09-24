@@ -5,12 +5,12 @@
     "figures/figure-1-undetected-vs-ambiguity.pdf": "7c22bb28c634d46894199de471891f6de2e524940efdac46613e768440fe29ad",
     "figures/figure-2-duplicates-by-crash-point.pdf": "b823694a46f2a78a1871bb843f64cf48bda7be68317ee4c5eaf063013c005d9f",
     "figures/state-machine.tex": "e3726853a630001a1a5aed4cfd3c1fcaff047f1930eec7edbd8492445061e48d",
-    "generated/numbers.tex": "2f4b659df56baae4d5d55d244dab554e35bec86fc59e2a862c52d839d05a0707",
+    "generated/numbers.tex": "70967474f7644660f796647391de712ba03ba47322c067d0a084cbc18e126a51",
     "generated/table-ablation.tex": "2338e6f83cd84e8af72b0d70181b498cae47d5c396a1be682248dbb5d7b08cb4",
     "generated/table-ambiguity-by-crashpoint.tex": "1e8e92a28a9b29b126e31d5e418a2717a30f2f16103c74bfc5b8f4e1bec363e6",
     "generated/table-deployment-choice.tex": "1340ab0ddd0f4e37d89fc92ac4f456d322c6ee1969029d539ec018381ecf829f",
     "generated/table-latency.tex": "09f96e8704db216f2dc9f9ad31d9cb37244c2ac0bb9aa7c35368e5b1d9f31d1c",
-    "generated/table-outcomes.tex": "7dc3a3e2d6a0c9e1d00c08828622ac95b25239ddbbd24e24fc256ceb6dea1431",
+    "generated/table-outcomes.tex": "c1caac267036b0edb8f7025f7348c99c5c2e50fc3ae557b5b85569f24eb0f0c1",
     "main.tex": "7cdbb934011fa0107a969daa940233863887e65a6b3946f94fec67677a868d33",
     "refs.bib": "2cbceda664596e9ab240193c819022e6757ab982320f45b9c4c688b3215487d4",
     "sections/01-introduction.tex": "c8c14af72fd376bc25e1a3d813be43919a84c3d8a9ccf80ebcc245348f136242",
@@ -18,11 +18,11 @@
     "sections/03-model.tex": "fc01d76277a81bcd3a976503383025d8a51a5cd082c061f3a9b6116f09563197",
     "sections/04-protocol.tex": "aca8ab4fe9d7b12f190182e301aba2153e95b9af2133f732a6947f6ba9ccf86e",
     "sections/05-implementation.tex": "62fbd767e698b710b6c5d18d226dbd16f9e810b4ac6d874ac878062ab6301b60",
-    "sections/06-evaluation.tex": "aeaeb2be8952afb976a4e6f9f1f5c7770e4e0ff32696ea22d8a3f3ce951bea7c",
+    "sections/06-evaluation.tex": "a9e8e08a5818ddb8d8900e8b270d319da8992337e0762074d66201bff3b10c8f",
     "sections/07-related.tex": "645cf411dd6c0b7058e1f036cc5232d1d17e0be5c4bbb4c31d9ee4e1a2c57a9c",
     "sections/08-threats.tex": "354536aaaa673f6889e250be176223839b748a854fc24847db2cf51d7e68d3e2",
     "sections/09-artifact.tex": "749a80c53ae78c1d29639eb012b331353864b517c281281307904b23076602c1",
-    "supplementary.tex": "4932bf94f5b61f87eafb22e0cfc7f8ff5f3379f8174d032b0b27c62c44358956"
+    "supplementary.tex": "5bf247a841446b11d95447e5ea5f26b19f0882df5f2b33271fbcd04af260210d"
   },
   "version": 1
 }
