@@ -619,7 +619,9 @@ good (the paper's write-loss cell).
 ``do we need prevention, and at which fsync policy''.} If losing Redis is the
 fault to worry about (an instance on the same host as the workers, an
 unreplicated instance, a VM that can vanish), the barrier is the point of the
-protocol and \texttt{always} makes it nearly free at this workload's shape. If
+protocol, and under \texttt{always} its cost at this workload's shape is not
+distinguishable from zero. We measured that cost under \texttt{always} and not
+the prevention itself: every \texttt{always} run is crash-free. If
 Redis is well protected and worker crashes are the concern, B3-mode gives the
 paper's headline result for a cost this evaluation cannot distinguish from zero.
 
