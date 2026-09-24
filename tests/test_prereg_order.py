@@ -236,3 +236,58 @@ def test_a_prediction_with_no_recorded_blob_fails(tmp_path):
     record = blobs_file(tmp_path, {"blobs": {}})
     problems = audit.check_blobs(repo, {CELL: audit.Cell(PRED, None)}, record)
     assert any("no recorded blob" in p for p in problems), problems
+
+
+# --------------------------------------------------------------------------
+# --update-blobs writes LF, on every platform.
+#
+# `Path.write_text` defaults to `newline=None`, which on Windows translates
+# every "\n" it is given into "\r\n". The measurement host is Windows, so the
+# first --update-blobs run there rewrote all 59 lines of prereg-blobs.json --
+# a file whose entire purpose is to make a real change visible. The one-line
+# addition it had been run for was buried in the churn, and two sessions hit
+# it before it was pinned.
+#
+# TWO assertions, because one of them is a no-op half the time:
+#   * the bytes carry no CRLF -- real on Windows, trivially true on Linux;
+#   * the call passes newline="\n" -- fails on EVERY platform if the argument
+#     is dropped, which is what makes this a guard rather than a local habit.
+# --------------------------------------------------------------------------
+
+
+def test_update_blobs_pins_the_line_ending_on_every_platform(
+    tmp_path, monkeypatch, capsys
+):
+    repo = make_repo(tmp_path, [(PRED, "2026-01-01T09:00:00"),
+                                (DATA, "2026-01-02T09:00:00")])
+    target = tmp_path / "prereg-blobs.json"
+    monkeypatch.setattr(audit, "BLOBS", target)
+
+    seen: dict = {}
+    original = Path.write_text
+
+    def spy(self, data, *args, **kwargs):
+        if self.name == "prereg-blobs.json":
+            seen.clear()
+            seen.update(kwargs)
+        return original(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", spy)
+
+    assert audit.write_blobs(repo, {CELL: audit.Cell(PRED, None)}) == 0
+    capsys.readouterr()
+
+    assert seen.get("newline") == "\n", (
+        "write_blobs must pass newline='\n' to write_text. Without it "
+        "Path.write_text uses os.linesep, and on Windows --update-blobs "
+        "rewrites the whole record instead of the line it changed."
+    )
+
+    raw = target.read_bytes()
+    assert b"\r\n" not in raw, (
+        "prereg-blobs.json carries CRLF; it is a tracked record whose diffs "
+        "are read by humans and must stay LF on every platform"
+    )
+    assert raw.endswith(b"\n")
+    # And it is still the record it claims to be.
+    assert json.loads(raw.decode("utf-8"))["blobs"][PRED]["first"]

@@ -712,3 +712,190 @@ Everything before step 5 is reversible. **Step 6 is not.**
 
 At step 9, `claims-to-review` entry 3 closes as RESOLVED **with no manuscript
 text changed** — §6 above.
+
+---
+
+# UPDATE 2 — the rebuild is still not safe, and here is the checklist
+
+Written 2026-09-24 after phase 53 landed. **Still nothing published, and the
+part has deliberately NOT been rebuilt.**
+
+## 18. Why not yet
+
+Phase 53 finished — 45/45 runs, collected, analysed, reported
+(`reports/phase-report-53-abd-immediate-2026-09-24.md`), and the four documents
+rebuilt. **The prediction was REFUTED.**
+
+But its numbers are not in the manuscript yet. `paper/generated/numbers.tex`
+names `abd-immediate` **zero** times, and `scripts/paper_tables.py` is
+uncommitted in the other session's working tree, carrying the `\Abd*` macros
+and the B2 pooled-rate exclusion. Rebuilding the archive part now would freeze
+a manifest against a manuscript that is about to change — the same class of
+mistake as building a part over a collection still being written, which
+`--with-phase53` already refuses.
+
+**Nothing of mine touched `scripts/paper_tables.py`.**
+
+## 19. The pre-rebuild checklist
+
+Run in order. **Every one must hold**; the first that does not is the reason to
+wait. Each line is a command and the answer it must give.
+
+### A. The collection is complete and committed
+
+```sh
+# A1  45 runs, no more and no fewer
+find experiments/results/abd-immediate-2026-09-24 -name run-config.json | wc -l
+#    -> 45
+
+# A2  it is committed, not just on disk
+git ls-files experiments/results/abd-immediate-2026-09-24 | wc -l
+#    -> non-zero
+
+# A3  the pre-registration still precedes the data, by date AND ancestry
+python scripts/check_prereg_order.py; echo $?
+#    -> 0
+```
+
+### B. The other session's work has landed
+
+```sh
+# B1  paper_tables.py is committed -- nothing of the macro work is uncommitted
+git status --porcelain scripts/paper_tables.py
+#    -> empty
+
+# B2  the phase-53 macros exist in the generated file
+grep -c 'newcommand{\?.Abd' paper/generated/numbers.tex
+#    -> 11   (AbdRuns, AbdExecutions, AbdCells, AbdDate,
+#             AbdZeroDispatchApplied, AbdBfourbApplied, AbdBfourbDispatch,
+#             AbdBzeroDupNoReadback, AbdBfourDupNoReadback, AbdBfourDupAuth,
+#             and one more)
+#
+#    NOTE the optional brace. The generator emits BOTH `\newcommand\AbdRuns`
+#    and `\newcommand{\Abd...}`, so a pattern anchored on the brace reports 0
+#    while eleven macros are sitting there. Verified against the real file
+#    after they landed.
+
+# B3  the new root is named in the provenance comments -- this is what makes
+#     the coverage check require it
+grep -c 'abd-immediate-2026-09-24' paper/generated/numbers.tex
+#    -> non-zero
+
+# B4  the B2 exclusion has moved the pooled baseline rates off 0.77/0.83
+grep -A2 'BaselineDupLow}' paper/generated/numbers.tex | head -3
+#    -> 0.74 (and BaselineDupHigh -> 0.78), per the recomputation in
+#       reports/audit-response-2026-09-23.md §1.6. If they are still
+#       0.77/0.83 the exclusion has not been applied and B3 will not hold.
+
+# B5  the generated file matches its generator
+python scripts/check_paper_numbers.py; echo $?
+#    -> 0   (or 39 passed / 2 failed if IEEEtran.cls is absent -- the two
+#            failures are "main.bbl/main.log exists", an environment
+#            difference, not a defect; see the external audit §1.1)
+```
+
+### C. The coverage check now DEMANDS the root — the rebuild's own trigger
+
+```sh
+# C1  this must now FAIL, naming abd-immediate-2026-09-24
+python scripts/check_archive_covers_macros.py; echo $?
+#    -> 1, with
+#       "abd-immediate-2026-09-24: supplies N macro(s) and is in NO archive part"
+```
+
+**C1 failing is the signal.** Before B2/B3 it passes, because nothing cites the
+root and there is nothing to cover. After them it fails, because the manuscript
+now rests on evidence no part carries. **If C1 still passes after B2 and B3
+hold, stop** — either the provenance comments do not name the root by a string
+this check recognises, or the macros are not attributed to it, and rebuilding
+would deposit against a coverage claim that was never tested.
+
+### D. Then, and only then, rebuild
+
+```sh
+# D1  refuses below 45 runs, by construction
+python3 scripts/build_raw_archive.py --part3 --with-phase53 \
+  --output /mnt/d/personal/AEP/aep-raw-archive-p3 \
+  --json /mnt/d/personal/AEP/aep-raw-archive-p3/BUILD-REPORT.json
+#    -> 9 roots, ~12 800 files. Record the three new digests.
+
+# D2  put the new digests into the ARCHIVES entry
+#     scripts/verify_published_archive.py, label "2026-09-24":
+#     manifest_sha256, tar_sha256, tar_gz_sha256, metadata_sha256,
+#     files, run_dirs, roots=9
+
+# D3  the contents test must be updated deliberately, not silently
+python -m pytest tests/test_published_archive_verifier.py -q
+#    -> passes only after EXPECTED_DEPOSIT is reviewed; the digests are not
+#       in that table, but roots/files are in the ARCHIVES entry it guards
+
+# D4  coverage now passes
+python scripts/check_archive_covers_macros.py; echo $?
+#    -> 0
+
+# D5  the part is clean, with the categories added 2026-09-24
+python scripts/scan_archive_for_leakage.py --selftest; echo $?
+#    -> 0, "selftest: 9 of 9"
+python scripts/scan_archive_for_leakage.py \
+  --archive /mnt/d/personal/AEP/aep-raw-archive-p3/aep-raw-evidence.tar.gz
+#    -> third_party_email, azure_principal, corporate_domain,
+#       azure_resource_path, phone_number ALL zero
+
+# D6  R4 again, all three parts
+python3 scripts/verify_published_archive.py \
+  --local .../aep-raw-archive --local .../aep-raw-archive-ext \
+  --local .../aep-raw-archive-p3 --skip-rederive
+#    -> exit 0, "VERIFIED: every archive at this source is byte-for-byte..."
+
+# D7  docs/29 §1's digest table and §3's description updated for nine files
+```
+
+### E. The two things a checklist cannot check
+
+- **`stage3-replication-2026-08-13` stays out** — decided; already declared by
+  name in the part's exclusion list with its reason.
+- **`reports/raw/phase40-deployment-2026-09-18` stays out** — decided, and it
+  stays out even though the working tree is now redacted
+  (`reports/disclosure-phase40-deployment-email-2026-09-24.md` §3.3).
+
+## 20. What now stands between you and publishing
+
+| # | blocker | whose | status |
+|---|---|---|---|
+| 1 | `\Abd*` macros and the B2 exclusion in `numbers.tex` | the other session | **DONE** — landed in `0f46ff5` while §19 was being written. See §21 |
+| 2 | Part 3 rebuilt with phase 53, §19 D1–D7 | mine, once 1 lands | ~40 min, no decisions |
+| 3 | **Sandbox rehearsal** — the fetch-by-DOI path has never run | **you** | needs an account and a browser |
+| 4 | Upload into the existing draft and Publish | **you** | **step 4 is irreversible** |
+
+Everything else is done: the part builds and verifies, the coverage check and
+its known-positive are in, the leakage scan has the third-party categories and
+its own known-positive, `docs/29` §3 states what the parts actually contain,
+and the two suite defects are fixed.
+
+---
+
+## 21. The checklist fired, within the hour
+
+`0f46ff5` *"generator: exclude the mis-mapped cell from every pooled baseline
+rate"* landed while §19 was being written, and every precondition it names is
+now green:
+
+| check | expected | actual |
+|---|---|---|
+| A1 runs | 45 | **45** |
+| A2 committed | non-zero | **committed** (`800d37f`) |
+| A3 prereg order | exit 0 | **exit 0** |
+| B1 `paper_tables.py` clean | empty | **committed** in `0f46ff5` |
+| B2 `\Abd*` macros | 11 | **11** |
+| B3 root named in provenance | non-zero | **11** |
+| B4 pooled rates moved | 0.74 / 0.78 | **`\BaselineDupLow` 0.74, `\BaselineDupHigh` 0.78** |
+| **C1 coverage check FAILS** | exit 1, naming the root | **exit 1** — *"abd-immediate-2026-09-24: supplies 10 macro(s) and is in NO archive part"* |
+
+**C1 is the point.** The check went from passing to failing the moment the
+manuscript started resting on a collection no archive part carries — which is
+the condition that was invisible for nine days when the same thing happened to
+the five WS-5 and `fsync-always` roots. It named the root, listed the macros,
+and did it without anyone remembering to look.
+
+**The rebuild was NOT performed**, per instruction. §19 D1–D7 is what remains,
+and it is now unblocked.

@@ -664,15 +664,95 @@ def test_resolve_doi_accepts_the_doi_in_the_forms_a_reader_will_paste(
 # --------------------------------------------------------------------------
 
 
-def test_the_real_table_still_describes_two_archives_and_six_files():
-    """Guards the fixtures above from describing a shape the script has left."""
+#: The deposit's shape, spelled out rather than counted.
+#:
+#: This is deliberately a table and not a number. It was
+#: ``len(ARCHIVES) == 2`` until 2026-09-24, and when the third part was added
+#: the only thing that failed was an integer -- which tells whoever is looking
+#: at a red build nothing about what changed or whether it was intended. The
+#: entry below is what a reviewer would have to read and agree with.
+#:
+#: Adding or removing a part means editing this table, and editing it means
+#: stating the label, the three deposited filenames and whether the part has a
+#: re-derivation baseline. That is the decision; the count follows from it.
+EXPECTED_DEPOSIT: dict[str, dict[str, object]] = {
+    "2026-09-03": {
+        "tar_gz": "aep-raw-evidence-2026-09-03.tar.gz",
+        "manifest": "MANIFEST-2026-09-03.sha256",
+        "metadata": "ARCHIVE-METADATA-2026-09-03.json",
+        "rederive": True,
+        "why": "the 432-run matrix and the collections around it",
+    },
+    "2026-09-15": {
+        "tar_gz": "aep-raw-evidence-2026-09-15.tar.gz",
+        "manifest": "MANIFEST-2026-09-15.sha256",
+        "metadata": "ARCHIVE-METADATA-2026-09-15.json",
+        "rederive": False,
+        "why": "WS-4 write-loss, the real-Temporal baseline, phase 13",
+    },
+    "2026-09-24": {
+        "tar_gz": "aep-raw-evidence-2026-09-24.tar.gz",
+        "manifest": "MANIFEST-2026-09-24.sha256",
+        "metadata": "ARCHIVE-METADATA-2026-09-24.json",
+        "rederive": False,
+        "why": (
+            "the roots neither earlier part reached, including the five that "
+            "supply eighteen manuscript macros"
+        ),
+    },
+}
+
+
+def test_the_real_table_still_describes_the_deposit_this_repository_claims():
+    """Guards the fixtures above from describing a shape the script has left.
+
+    Asserts the CONTENTS, not the count. A part added or removed without
+    ``EXPECTED_DEPOSIT`` being edited fails here with the label that moved,
+    which is the thing a reader needs; the count is then a consequence.
+    """
     module = load()
-    assert len(module.ARCHIVES) == 2
+    actual = {
+        a.label: {
+            "tar_gz": a.deposited_tar_gz,
+            "manifest": a.deposited_manifest,
+            "metadata": a.deposited_metadata,
+            "rederive": a.rederive,
+        }
+        for a in module.ARCHIVES
+    }
+
+    added = sorted(set(actual) - set(EXPECTED_DEPOSIT))
+    removed = sorted(set(EXPECTED_DEPOSIT) - set(actual))
+    assert not added and not removed, (
+        f"the deposit's parts changed: added {added}, removed {removed}. "
+        "Update EXPECTED_DEPOSIT in this file, and with it docs/29 §1's "
+        "digest table, §3's description, ARTIFACT.md §5 and CITATION.cff -- "
+        "each of those states the parts by name or digest."
+    )
+
+    for label, expected in EXPECTED_DEPOSIT.items():
+        got = actual[label]
+        for field in ("tar_gz", "manifest", "metadata"):
+            assert got[field] == expected[field], (
+                f"{label}: deposited {field} is {got[field]!r}, this test "
+                f"expects {expected[field]!r}"
+            )
+        assert got["rederive"] == expected["rederive"], (
+            f"{label}: rederive is {got['rederive']}, expected "
+            f"{expected['rederive']}. A part gaining or losing a "
+            "re-derivation baseline changes paper/sections/09-artifact.tex "
+            "and docs/29 §6, which both state which parts have one"
+        )
+
+    # Uniqueness is a property of the record, not of the table: Zenodo cannot
+    # hold two files of one name, which is why the deposited copies carry a
+    # date suffix at all.
     names = [n for a in module.ARCHIVES for n in a.deposited_names]
-    assert len(names) == 6
-    assert len(set(names)) == 6, "deposited names must be unique within a record"
-    labels = {a.label for a in module.ARCHIVES}
-    assert labels == {"2026-09-03", "2026-09-15"}
+    assert len(set(names)) == len(names), (
+        "deposited names must be unique within one Zenodo record"
+    )
+    assert len(names) == 3 * len(EXPECTED_DEPOSIT)
+
     for archive in module.ARCHIVES:
         for digest in (
             archive.manifest_sha256,

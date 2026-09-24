@@ -43,7 +43,7 @@ reading this file should not conclude the exposure has been undone.
   is public and is named in the manuscript's Section 8.
 - **Exposure:** six days, in a public repository, in git history.
 - **Scope:** exactly one tracked file, two fields.
-  `git grep -l "global.komatsu"` returns that file and nothing else. No other
+  `git grep -l` for the employer domain returned that file and nothing else. No other
   e-mail-shaped string exists anywhere under `reports/raw/` or `experiments/`.
 
 ## 2. Why it matters more than a normal path leak
@@ -55,7 +55,7 @@ already discusses and defends. Three differences:
    (`hafizmirhamza276@gmail.com`, ORCID `0009-0005-9380-2188`). This is a
    different individual's corporate account. Whatever consent exists for the
    author's own identifiers to be public does not extend to theirs.
-2. **It identifies an organisation.** `global.komatsu` names the employer whose
+2. **It identifies an organisation.** The domain names the employer whose
    Azure tenant hosted the phase-40 planner deployment. The repository
    otherwise says nothing about any institution except the author's university.
 3. **It contradicts the deposit's own stated standard.** `docs/29` §0c and §3
@@ -198,7 +198,7 @@ any archive part.
 
 **The "corporate domain" matches were regex artifacts** of `\.local\b` —
 `arguments.local` in `verify_published_archive.py`, `settings.local` in
-`.gitignore`, and similar. The only real one was `global.komatsu`, and only in
+`.gitignore`, and similar. The only real one was the employer domain, and only in
 this report.
 
 **The GitHub handles are organisations, not people:** `docker-library`,
