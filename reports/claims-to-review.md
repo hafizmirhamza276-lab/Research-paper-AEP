@@ -552,3 +552,57 @@ The re-collected cell (`\cref{sec:eval-abd}`) is a **separate session** and is
 not pooled with the matrix under any of the three options. Whether a future
 pass should pool it with a re-collected matrix is a different question and
 needs a different pre-registration.
+
+---
+
+## 6. Phase 54 is pre-registered and not collected; §6.3.1's prediction is waiting on it
+
+**Status: open, and it is a pointer rather than a doubt.** Raised 2026-09-24
+when blocker B1 was rescoped.
+
+### What the manuscript now says
+
+`paper/sections/06-evaluation.tex`, at the end of `sec:eval-detection`:
+
+> …the model predicts that under a fault which destroys the record the barrier
+> is what separates them, and that detection without it fails. We have not
+> tested that prediction. It is falsifiable, the cell that would decide it is
+> pre-registered, and it has not been collected.
+
+That is the only place the paper makes a prediction about a cell it has not
+run, and it is deliberate: the author chose option (ii) of
+`reports/b1-plan-2026-09-24.md`, rescope first and collect afterwards, with
+option (iii)'s addition that the prediction is stated as falsifiable.
+
+### What this entry exists to catch
+
+**The pre-registration is `prompts/phase-54-record-loss-restart-2026-09-24.md`.**
+When that cell is collected, four things in the manuscript become stale at once
+and must be revisited together:
+
+1. **The sentence above**, which says the cell has not been collected. If the
+   result arrives and this is not updated, the paper states something false
+   about its own evidence.
+2. **The scope marker itself.** Eight locations now carry *for
+   record-preserving faults*, *under these faults*, or *under the faults
+   measured here*. A confirming result narrows none of them; a refuting result
+   (AEP-full also losing effects) narrows all of them further.
+3. **C4's wording**, now *"A decomposition of the mechanism, by ablation, and
+   the boundary at which it stops."* If the cell measures the boundary, the
+   phrase *"the boundary at which it stops"* becomes an understatement and C4
+   can claim the two-sided decomposition the plan's §5 describes.
+4. **§9.2**, which now says the ablation says which half delivers which *under
+   the faults it covers*.
+
+### The outcome that would need the most care
+
+`reports/b1-plan-2026-09-24.md` §3.4 records that **both arms recording zero is
+an instrument failure, not evidence** — most likely the `freeze_bdev` sync that
+WS-4 had to defeat with `--noflush --nolockfs`. The pre-registration names that
+condition in advance. **A null from this cell must not be read into the
+manuscript as support for the unscoped claim**, which is the reading the
+rescope exists to prevent.
+
+### No text is changed by this entry
+
+It records where to look, not what to conclude.
