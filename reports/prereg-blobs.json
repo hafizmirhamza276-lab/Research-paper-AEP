@@ -1,5 +1,9 @@
 {
   "blobs": {
+    "prompts/phase-40-agent-reachability.md": {
+      "current": "8f82bf2e9ce862904c98c0a8a7176d22f6df9425",
+      "first": "8f82bf2e9ce862904c98c0a8a7176d22f6df9425"
+    },
     "prompts/phase-53-abd-immediate-2026-09-24.md": {
       "current": "bbb233474f8b8455cc8b6eb214905d9d0b40531a",
       "first": "bbb233474f8b8455cc8b6eb214905d9d0b40531a"

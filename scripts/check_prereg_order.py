@@ -183,6 +183,50 @@ EXPECTED: dict[str, Cell] = {
         note="NOT a collection. Quarantined debris from a failed run, "
              "retained as incident evidence (phase 20 §6).",
     ),
+    # Phase 40, the agent-reachability workstream. These four roots were
+    # tracked and had no entry here, so this check failed on all four from
+    # 2026-09-18 until 2026-09-24 -- correctly: the table did not say where
+    # their pre-registration was. It exists. ``prompts/phase-40-agent-
+    # reachability.md`` was committed 2026-09-17, before every one of them,
+    # and each stage's governing amendment precedes its own data. The finding
+    # and the ordering evidence are in
+    # ``reports/prereg-order-phase40-2026-09-24.md``.
+    #
+    # The pre-registration goes in the PREDICTION slot although it lives under
+    # ``prompts/``, because ``prediction_paths()`` is what ``check_blobs``
+    # pins -- a phase 40 in the prompt slot would be order-checked and free to
+    # be rewritten. Same shape as the phase 53 entry above.
+    "reports/raw/phase40-deployment-2026-09-18": Cell(
+        None, None, predates_rule=True,
+        note="NOT a collection. Two Azure metadata files (account-show.json, "
+             "deployment-show.json) captured as the evidence for amendment 1 "
+             "-- the deployment reports an alias, not a version-pinned "
+             "snapshot. No run directory, so nothing a prediction predicts. "
+             "predates_rule is borrowed here as the not-a-collection escape, "
+             "as it is for the INCIDENT root above; see "
+             "reports/prereg-not-a-collection-flag-2026-09-24.md.",
+    ),
+    "reports/raw/phase40-stage-10-interactive-2026-09-21": Cell(
+        "prompts/phase-40-agent-reachability.md", None,
+        note="Phase 40 stage 10, re-run on the interactive loop. In force at "
+             "collection: amendments 4 (interactive loop, 2026-09-18) and 5 "
+             "(cost criterion, 2026-09-21), both committed before it. The "
+             "live collection is outside the repository; this root is its "
+             "tracked text evidence.",
+    ),
+    "reports/raw/phase40-stage-30-2026-09-21": Cell(
+        "prompts/phase-40-agent-reachability.md", None,
+        note="Phase 40 stage 30, the first collection under amendment 6 "
+             "(same-payment re-decision, committed 2026-09-21T15:19, two and "
+             "a half hours before the data).",
+    ),
+    "reports/raw/phase40-stage-100-2026-09-22": Cell(
+        "prompts/phase-40-agent-reachability.md", None,
+        note="Phase 40 stage 100 -- the stage that FAILED and closed the "
+             "workstream by author decision. First collection under "
+             "amendments 8 (paired seeding) and 9 (transmission boundary); "
+             "amendment 7 withdrew the stage-30 clause before it.",
+    ),
 }
 
 
@@ -262,8 +306,14 @@ def write_blobs(repo: Path = ROOT, table: dict[str, Cell] | None = None) -> int:
             for rel in prediction_paths(table)
         },
     }
+    # newline="\n" explicitly: the measurement host is Windows, and
+    # write_text's default translates every "\n" to "\r\n" there. Without this
+    # the first --update-blobs run on Windows rewrites all 60-odd lines of a
+    # file whose whole purpose is to make a real change visible, and the
+    # one-line addition it was run for is buried in the churn. Observed
+    # 2026-09-24 while recording phase 40's blob.
     BLOBS.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
-                     encoding="utf-8")
+                     encoding="utf-8", newline="\n")
     print(f"wrote {BLOBS} ({len(payload['blobs'])} predictions)")
     return 0
 
