@@ -679,20 +679,25 @@ def test_the_outcomes_caption_names_every_system_it_claims_is_unique(
 def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
     tmp_path: Path,
 ) -> None:
-    """D11. The caption pooled five points and six under one sentence.
+    """D11. The caption pooled different crash-point counts under one sentence.
 
-    ``after_intent_before_barrier`` cannot occur in a system that never
-    writes an intent, so B0--B2 have five crash-point cells where the
-    intent-bearing systems have six. That is a semantic property of the
-    baselines rather than a sampling defect, but a caption reading "one of the
-    six crash points" and nothing more invites a reviewer to read the columns
-    as equally sampled.
+    ``after_intent_before_barrier`` cannot occur in a system that never writes
+    an intent, so B0--B2 have one fewer crash-point cell than the
+    intent-bearing systems. Phase 53 added a second reason: the five
+    baselines' ``after_barrier_before_dispatch`` cells were delivered by the
+    deferred watchdog and measure a kill during transmission, so they are
+    excluded from every pooled baseline rate while AEP-full and B3 keep
+    theirs.
+
+    The asymmetry is therefore three-way. AEP-full and B3 pool six crash
+    points, B4 and B4b pool five, and B0--B2 pool four. A caption reading "one
+    of the six crash points" and nothing more invites a reviewer to read the
+    columns as equally sampled.
 
     The assertion is two-sided on purpose. It requires the caption to state
     the asymmetry *and* requires the emitted denominator census underneath to
-    still show it -- so if the baselines ever gain the sixth point, the test
-    fails on the census rather than leaving a caption that has quietly become
-    false.
+    still show it -- so if any family's count ever moves, the test fails on
+    the census rather than leaving a caption that has quietly become false.
     """
     points_with_intent = (
         "before_intent_write",
@@ -714,7 +719,15 @@ def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
                     per_cell.append(
                         _cell(metric, system, response, 0, 30, point)
                     )
-                # The baseline never reaches the barrier point.
+                # B4 writes an intent, so it has all six positions. The
+                # generator drops its after_barrier_before_dispatch cell from
+                # the pool, leaving five.
+                per_cell.append(
+                    _cell(metric, "B4_DURABLE_WORKFLOW", response, 0, 30, point)
+                )
+                # The baseline never reaches the barrier point, and loses
+                # after_barrier_before_dispatch to the phase-53 exclusion as
+                # well, leaving four.
                 if point != "after_intent_before_barrier":
                     per_cell.append(
                         _cell(metric, "B0_NAIVE_RETRY", response, 0, 30, point)
@@ -725,9 +738,12 @@ def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
     caption = next(
         line for line in text.splitlines() if line.startswith("\\caption{")
     )
-    # The claim.
+    # The claim: all three counts, and both reasons, are stated.
+    assert "six" in caption
     assert "five" in caption
+    assert "four" in caption
     assert "after\\_intent\\_before\\_barrier" in caption
+    assert "after\\_barrier\\_before\\_dispatch" in caption
     # The caption must still attribute its source, but not by filename: a
     # rendered repository path is what scripts/check_no_repo_paths.py exists
     # to stop reaching a submitted paper. The source is now named in prose,
@@ -740,10 +756,18 @@ def test_the_outcomes_caption_discloses_the_crash_point_asymmetry(
     assert any("per-cell-metrics.csv" in line for line in text.splitlines()
                if line.startswith("%")), "the source left the file entirely"
     assert any(
-        "B0_NAIVE_RETRY" in line and "crash_points=5" in line for line in census
+        "B0_NAIVE_RETRY" in line and "crash_points=4" in line for line in census
+    )
+    assert any(
+        "B4_DURABLE_WORKFLOW" in line and "crash_points=5" in line
+        for line in census
     )
     assert any(
         "AEP_FULL" in line and "crash_points=6" in line for line in census
+    )
+    # AEP-full keeps the excluded point; that is the whole asymmetry.
+    assert not any(
+        "AEP_FULL" in line and "crash_points=5" in line for line in census
     )
 
 
