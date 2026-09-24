@@ -833,3 +833,52 @@ baselines declare no recovery service and are excluded from these counts
 rather than scored; the supplementary material, under \emph{RQ4: recovery},
 gives that argument in full and carries the one reconciliation disagreement
 in \RunsCollected{} runs and what became of it.
+
+
+\subsection{A re-collected crash point, reported separately}
+\label{sec:eval-abd}
+
+\Cref{sec:eval-setup} records that the five baselines'
+\texttt{after\_barrier\_before\_dispatch} cells were delivered by a watchdog
+firing inside the socket wait, so what they measure is a kill during
+transmission. On \AbdDate{} we collected that position again with the kill
+delivered at the instant the name denotes: \AbdCells{} cells, \AbdRuns{} runs,
+\AbdExecutions{} executions, the five baselines across all three capability
+classes.
+
+\textbf{This is a separate session, and none of it is pooled with the rest of
+this section.} The matrix was collected in early August. A rate computed
+across two sessions is in part a property of how many runs of each it
+contains, and this paper reports sessions separately for that reason
+(\cref{sec:threats}).
+
+\textbf{We registered a prediction and it was refuted.} We predicted that an
+immediate kill at this position would leave applied effects, undetected
+duplicates, lost effects and dispatch attempts all at zero across every one of
+the \AbdExecutions{} executions, because a worker killed before transmission
+sends nothing. Four of the five systems recorded all four quantities above
+zero.
+
+The prediction was wrong about the execution rather than about the kill. It
+reasoned from the killed attempt, which does send nothing, to the execution,
+which in this regime outlives its first attempt: a supervisor re-executes, and
+a system holding no durable record of the first attempt calls again. Every
+applied effect in the collection has a recorded dispatch attempt behind it.
+
+What the collection does establish is the position, and it establishes it
+three ways. The number of executions recording an applied effect with no
+dispatch attempt is \AbdZeroDispatchApplied{}; in the matrix's deferred cell
+that pattern appears in 82 of B4b's 90 executions, and it is the signature of
+a worker dying after its bytes have left. B4b, which is configured never to
+re-execute, applied \AbdBfourbApplied{} effects over \AbdBfourbDispatch{}
+dispatch attempts in all three of its cells. AEP-full and B3, whose kill at
+this position was immediate in the matrix as well, record the same zeros
+there.
+
+So the systems that re-execute do reach the provider from a position where
+nothing had been sent, at \AbdDupRange{} undetected duplicates per cell,
+\AbdBzeroDupNoReadback{} for B0 and \AbdBfourDupNoReadback{} for B4 under
+\textsc{none}. The systems that hold a pre-dispatch record, or that decline to
+retry, reach it at none. That is the same separation \cref{sec:eval-detection}
+reports, measured here without a mis-timed kill in the way, and it is one
+session rather than a replication of the matrix.
