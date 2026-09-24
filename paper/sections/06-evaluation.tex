@@ -20,6 +20,21 @@ the differences differ. Each carries a machine-readable descriptor that tests
 check against the implementation, and a crash point that does not exist in a
 given system is marked inapplicable and never run rather than silently skipped.
 
+\paragraph{What was delivered at \texttt{after\_barrier\_before\_dispatch}}
+\Cref{tab:crashpoints} names the position each crash point is meant to
+interrupt, and for two of the seven systems that is what was delivered.
+AEP-full and B3 resolve \texttt{after\_barrier\_before\_dispatch} and
+\texttt{mid\_dispatch} to different positions, and the kill at the first
+arrives before any byte is sent: in the crashed regime neither system records
+a dispatch attempt or an applied effect there. The five baselines resolve the
+two names to a single position, and the harness delivers that position by a
+watchdog that fires inside the socket wait. For B0, B1, B2, B4 and B4b the
+request was therefore sent, and the provider may already have applied the
+mutation, at both names. What those cells measure is a kill during
+transmission rather than a kill before it, and the rates they contribute to
+this section are rates under that fault. We state this rather than adjust it:
+every number reported here is as collected.
+
 \paragraph{Faults} Workers are separate OS processes killed with real
 \texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
 \emph{regime} is a named fault condition, not a matrix dimension, and we
