@@ -163,6 +163,30 @@ experiments/results/matrix/analysis/*
 !experiments/results/matrix/analysis/per-execution.csv
 !experiments/results/matrix/analysis/redis-kill-ablation.csv
 
+# Phase 53: after_barrier_before_dispatch re-collected with SIGKILL_IMMEDIATE.
+# Same rule as every other root -- the 1,052 raw run files stay out and are
+# carried by the external archive; only the derived analysis products, the
+# plan and the progress log are tracked. table-1.csv is deliberately NOT
+# tracked: it pools regimes and is banned as a source (main.tex header).
+!experiments/results/abd-immediate-2026-09-24/
+experiments/results/abd-immediate-2026-09-24/*
+!experiments/results/abd-immediate-2026-09-24/matrix-plan.json
+!experiments/results/abd-immediate-2026-09-24/matrix-plan.txt
+!experiments/results/abd-immediate-2026-09-24/matrix-progress.jsonl
+!experiments/results/abd-immediate-2026-09-24/analysis/
+experiments/results/abd-immediate-2026-09-24/analysis/*
+!experiments/results/abd-immediate-2026-09-24/analysis/comparisons-vs-aep-full.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/coverage.json
+!experiments/results/abd-immediate-2026-09-24/analysis/latency-and-throughput.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-lost-effect-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-recovery-success-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-state-corruption-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-unverified-failure-rate.csv
+
 !experiments/results/fsync-always/
 experiments/results/fsync-always/*
 !experiments/results/fsync-always/analysis/

@@ -1,0 +1,16 @@
+metric,regime,system,crash_point,response_class,readback_keying,successes,total,rate,runs,ci_low,ci_high,resamples,bootstrap_seed,clusters,observations
+state_corruption_rate,crashed,B0_NAIVE_RETRY,after_barrier_before_dispatch,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B0_NAIVE_RETRY,after_barrier_before_dispatch,NO_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B0_NAIVE_RETRY,after_barrier_before_dispatch,POSITIVE_ONLY_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B1_LEASE_ONLY,after_barrier_before_dispatch,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B1_LEASE_ONLY,after_barrier_before_dispatch,NO_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B1_LEASE_ONLY,after_barrier_before_dispatch,POSITIVE_ONLY_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B2_CAS_ONLY,after_barrier_before_dispatch,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B2_CAS_ONLY,after_barrier_before_dispatch,NO_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B2_CAS_ONLY,after_barrier_before_dispatch,POSITIVE_ONLY_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,after_barrier_before_dispatch,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,after_barrier_before_dispatch,NO_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,after_barrier_before_dispatch,POSITIVE_ONLY_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4_DURABLE_WORKFLOW,after_barrier_before_dispatch,AUTHORITATIVE_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4_DURABLE_WORKFLOW,after_barrier_before_dispatch,NO_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
+state_corruption_rate,crashed,B4_DURABLE_WORKFLOW,after_barrier_before_dispatch,POSITIVE_ONLY_READBACK,CALLER_REFERENCE,0,30,0.0,3,0.0,0.0,10000,20260806,3,30
