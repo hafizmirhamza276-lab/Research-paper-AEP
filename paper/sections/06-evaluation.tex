@@ -426,19 +426,32 @@ B0, B1 and B2, and the property the paper is named for, is produced by
 the pre-dispatch record and by the transition table that refuses to
 re-enter \textsc{about-to-fire}. It is not produced by waiting for
 \texttt{fsync}. A reader who wants the detection guarantee and not the
-barrier's cost can have it, and the supplementary material prices that
-configuration explicitly.
+barrier's cost can have it under the faults measured here, and the
+supplementary material prices that configuration explicitly.
 
 This also sharpens what B4 shows. B4 has a durable record, acknowledged by the
 same barrier, and duplicates at the highest rate in the study; B3 has a durable
-record, no barrier, and duplicates at zero. Durability is neither necessary nor
-sufficient for detection. What is necessary is that the record be written
-\emph{before} the call and that no path re-enter the dispatching state.
+record, no barrier, and duplicates at zero. What separates them is not
+durability but that the record is written \emph{before} the call and that no
+path re-enters the dispatching state. Both kept their record throughout, which
+is the condition the comparison assumes.
+
+\textbf{That condition is the scope of this result, and our own model says what
+lies outside it.} Every detection cell we collected either left the record
+readable or never restarted the store. \Cref{tab:modelchecking} carries the
+matched pair: with the barrier ablated and a restart that replays a shorter
+log, \emph{no lost effect} fails; with the barrier enabled under the same
+restart, only version monotonicity breaks and \emph{no lost effect} holds. So
+the model predicts that under a fault which destroys the record the barrier is
+what separates them, and that detection without it fails. We have not tested
+that prediction. It is falsifiable, the cell that would decide it is
+pre-registered, and it has not been collected.
 
 \subsubsection{Prevention is the barrier's, and it needs the right fault}
 \label{sec:eval-prevention}
 
-If detection does not need the barrier, what does the barrier do? It withholds
+If detection does not need the barrier under these faults, what does the
+barrier do? It withholds
 the external call when the durability of the intent can no longer be confirmed.
 That is a different guarantee, it is worth stating in its own metric, and no
 worker-crash fault can exercise it, which is why \cref{sec:eval-detection}
@@ -542,7 +555,8 @@ everywhere else they differ by at most $\BthreeVsAepAmbDelta{}$ executions in
 \AepKillRuns{} runs: the endpoint is \textsc{no-readback}, so neither can
 resolve what it does not know, and both fail closed. The difference between them
 is not in what they \emph{say}, which is the detection guarantee that
-\cref{sec:eval-detection} already showed does not depend on the barrier. It is
+\cref{sec:eval-detection} showed does not depend on the barrier under these
+faults. It is
 in what they did to the outside world before saying it.
 
 \textbf{The direction replicates; the magnitude moves, which is why the
@@ -790,7 +804,7 @@ scheduled fsync, and those are one second apart, so a barrier costs up to a
 second and the protocol pays that twice. The measured total sits near the top
 of that range rather than in the middle of it; the reason is unmeasured.
 
-\paragraph{The barrier is a deployment choice, and the supplementary
+\paragraph{What the barrier costs, and the supplementary
 prices it} The $\approx 2$-second figure above is the one a reader would
 carry away as ``AEP's overhead''. It is not: it is the price of one of the
 protocol's two guarantees, under one of the durability settings that

@@ -1060,9 +1060,10 @@ def emit_deployment_choice(
         "% what the two B3 numbers are here to establish rather than assume.",
         r"\begin{table*}[t]",
         r"\centering",
-        r"\caption{The barrier is a deployment choice, not a fixed cost. All "
-        r"three rows run the same pre-dispatch intent ledger and therefore "
-        r"make the same detection claim; they differ in what they pay to "
+        r"\caption{What the barrier costs, which is not a fixed price. All "
+        r"three rows run the same pre-dispatch intent ledger and make the "
+        r"same detection claim under the faults measured here; they differ "
+        r"in what they pay to "
         r"also withhold dispatch when durability cannot be confirmed. The "
         r"barrier column is each row's own median minus a B3 median "
         r"collected under the same \texttt{appendfsync} policy. Crash-free "
