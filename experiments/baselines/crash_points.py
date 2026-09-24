@@ -29,9 +29,11 @@ the *same physical event* in every system that has it:
 
 ``BEFORE_REQUEST_TRANSMISSION``
     The last instruction before any provider bytes can exist. Serves both
-    ``after_barrier_before_dispatch`` (delivered immediately: the mutation
-    provably was not sent) and ``mid_dispatch`` (delivered by the deferred
-    watchdog, so the death lands inside the socket wait).
+    ``after_barrier_before_dispatch`` and ``mid_dispatch``, and **both are
+    delivered by the deferred watchdog**, so in a baseline the death lands
+    inside the socket wait for either name. See "Two mappings, and they are
+    not the same" below: this is the one place where a baseline's delivered
+    position differs from the roadmap position it is named for.
 
 ``AFTER_RESPONSE_BEFORE_RECORD``
     The provider's answer has been received and classified, and nothing about
@@ -43,6 +45,56 @@ the *same physical event* in every system that has it:
     Corresponds to ``after_resolution_before_barrier``. B0, B1 and B2 write
     their outcome without any barrier at all, so the moment exists in them --
     it is simply never followed by an acknowledgement, which is the point.
+
+Two mappings, and they are not the same
+---------------------------------------
+
+There are **two** roadmap-name resolutions in this project, and at one crash
+point they disagree. Anything that reasons about a cell has to know which one
+produced it.
+
+======================================  ==========================  ==========
+roadmap name                            systems on ``aep_core``      baselines
+                                        (AEP-full, B3)               (B0-B2,
+                                                                     B4, B4b)
+======================================  ==========================  ==========
+``after_barrier_before_dispatch``       ``AFTER_DURABLE_ABOUT_TO_``  ``BEFORE_``
+                                        ``FIRE_BEFORE_PREFLIGHT``    ``REQUEST_``
+                                        -> **SIGKILL_IMMEDIATE**     ``TRANS...``
+                                                                     -> **DEFERRED**
+``mid_dispatch``                        ``AFTER_PREFLIGHT_BEFORE_``  same value
+                                        ``REQUEST_TRANSMISSION``     -> **DEFERRED**
+                                        -> **SIGKILL_DEFERRED**
+======================================  ==========================  ==========
+
+``harness/crash_points.py`` gives the two names **different** ``CrashPoint``
+values and defers only the second, so for AEP-full and B3 the two cells really
+are different positions: the kill at ``after_barrier_before_dispatch`` lands
+before any byte is sent, and no effect can exist.
+
+This module gives the two names the **same** ``BaselineCrashPoint`` value, and
+:data:`DEFERRED_BASELINE_POINTS` contains exactly that value. Deferral is
+chosen on the *resolved value*, not on the roadmap name
+(``harness/injector.py``: ``elif point in deferred_points``), so a baseline is
+killed inside the socket wait under **both** names, and an effect can have
+reached the provider.
+
+**Consequence, measured.** In the collected matrix, at
+``after_barrier_before_dispatch``: AEP-full and B3 apply 0.000 effects with
+``dispatch_attempts == 0`` in 90/90; B0, B1, B2 and B4 apply 2.09-2.32; and
+B4b records zero dispatch attempts *and* an applied effect in 82 of 90
+executions. ``tests/test_crash_point_mapping.py`` pins all of this.
+
+**B5/B5b are not affected.** They appear in :data:`ROADMAP_TO_BASELINE`, but
+``b5_temporal/worker.py`` reads the roadmap name directly and has its own
+immediate and deferred paths, so its ``after_barrier_before_dispatch`` really
+is immediate. That asymmetry is why a B4-vs-B5 comparison at this crash point
+is not like-for-like.
+
+**Overriding it.** ``AEP_HARNESS_CRASH_STYLE`` forces a style and is honoured
+ahead of this table (``RunConfig.crash_style`` -> ``runner.py``). The matrix
+never sets it: all 84 tracked ``run-config.json`` files carry
+``crash_style: null``.
 """
 
 from __future__ import annotations
