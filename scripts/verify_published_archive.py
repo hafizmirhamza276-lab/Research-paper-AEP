@@ -10,14 +10,23 @@ products against the ones this repository tracks.
     python scripts/verify_published_archive.py \\
         --local /root/aep-raw-archive --local /root/aep-raw-archive-ext
 
-**The deposit is TWO archives in ONE record, and this script requires both.**
-Until 2026-09-16 it knew only the 2026-09-03 build: one `EXPECTED` dict, one
-`ARCHIVE_NAME`. A record carrying only that archive would have passed it, while
-the extension -- 11 collection roots, 1 332 run directories, 18 494 files,
-including every WS-5 deployment session and the real-Temporal baseline -- went
-unchecked. `EXPECTED` is now a table keyed by **deposited filename**, and a
-record that does not carry all six files fails at step 1 rather than passing on
-the four digests it did find.
+**The deposit is THREE archives in ONE record, and this script requires all
+three.** Until 2026-09-16 it knew only the 2026-09-03 build: one `EXPECTED`
+dict, one `ARCHIVE_NAME`. A record carrying only that archive would have passed
+it, while the extension -- 11 collection roots, 1 332 run directories, 18 494
+files, including the real-Temporal baseline -- went unchecked. `EXPECTED` is now
+a table keyed by **deposited filename**, and a record that does not carry all
+nine files fails at step 1 rather than passing on the digests it did find.
+
+**What this script still cannot see, and why another one exists.** It verifies
+the deposit *against itself*: files present, digests matching, every file
+verifying against its own manifest. It has no idea what the manuscript cites.
+On 2026-09-24 five roots supplying eighteen macros -- including
+`\\BarrierCostFifteen`, RQ3's headline -- were in neither archive, and this
+script passed both archives while they were missing.
+`scripts/check_archive_covers_macros.py` closes that from the other direction:
+it reads `numbers.tex`'s provenance comments and fails if any root a macro
+rests on is in no part. Run both.
 
 **Deposited names are not the names inside the archives.** Both archive roots
 hold files called `aep-raw-evidence.tar.gz`, `MANIFEST.sha256` and
@@ -141,6 +150,39 @@ ARCHIVES: tuple[Archive, ...] = (
         min_configs=900,
         note="no re-derivation baseline recorded; manifest check only",
     ),
+    Archive(
+        label="2026-09-24",
+        source_root="aep-raw-archive-p3",
+        deposited_tar_gz="aep-raw-evidence-2026-09-24.tar.gz",
+        deposited_manifest="MANIFEST-2026-09-24.sha256",
+        deposited_metadata="ARCHIVE-METADATA-2026-09-24.json",
+        manifest_sha256=(
+            "a743f7ab1b92b0b1de7dc6fcac229cce385c056001f2cda6ac36693bd9f05414"
+        ),
+        tar_sha256=(
+            "62b72a5128e3a0106c4ddd529f5a2b5374692793e000f2e1ec7efa98d42ac8d7"
+        ),
+        tar_gz_sha256=(
+            "d3bfadb7f1c2131999042dc1ef59e203647c79c2b9dee5cd497aca7d2129daec"
+        ),
+        metadata_sha256=(
+            "24ec54ae6c67446ba4dacdb1caea89fbd54bb57012ae2d2bb827499da9411096"
+        ),
+        files=12147,
+        run_dirs=665,
+        roots=8,
+        # Same position as the 2026-09-15 extension: verified file-by-file
+        # against its own manifest, with no re-derivation baseline to compare
+        # against. Claiming a re-derivation pass would be claiming a
+        # comparison nobody has made.
+        rederive=False,
+        min_configs=600,
+        note=(
+            "the roots neither earlier part reached, including the five that "
+            "supply eighteen manuscript macros; no re-derivation baseline "
+            "recorded, manifest check only"
+        ),
+    ),
 )
 
 
@@ -182,7 +224,7 @@ def resolve_doi(doi: str) -> dict[str, str]:
             f"{len(required)} required files:\n"
             + "\n".join(f"  - {name}" for name in missing)
             + f"\nit carries: {sorted(links)}\n"
-            "This deposit is two archives in one record (docs/29 §0b). A record "
+            "This deposit is three archives in one record (docs/29 §0b). A record "
             "holding only one of them is not what this repository describes."
         )
     return links
@@ -524,8 +566,8 @@ def main(argv: list[str] | None = None) -> int:
         absent = [a.label for a in ARCHIVES if a.label not in sources]
         if absent:
             raise SystemExit(
-                f"missing archive(s) {absent}. The deposit is two archives "
-                "(docs/29 §0b); verifying one of them is not verifying the "
+                f"missing archive(s) {absent}. The deposit is three archives "
+                "(docs/29 §0b); verifying some of them is not verifying the "
                 "deposit. Pass --local once per archive."
             )
 
@@ -552,7 +594,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {failure}")
     else:
         print(
-            "VERIFIED: both archives at this source are byte-for-byte the ones "
+            "VERIFIED: every archive at this source is byte-for-byte the one "
             "this repository describes, and the paper's analysis products "
             "follow from the 2026-09-03 archive."
         )

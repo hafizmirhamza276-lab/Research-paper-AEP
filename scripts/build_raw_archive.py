@@ -382,6 +382,137 @@ EXTENSION_ROOTS: tuple[Root, ...] = (
     ),
 )
 
+
+#: Phase 54's THIRD part: the roots neither earlier archive reached.
+#:
+#: Why a third part and not a rebuild. The 2026-09-03 and 2026-09-15 archives
+#: are verified and their digests are already stated in `CITATION.cff`,
+#: `ARTIFACT.md`, `README.md` and `docs/29` 1. Rebuilding would change those
+#: digests and falsify every one of those statements. Adding a part changes
+#: nothing that already exists.
+#:
+#: How the gap happened, so the list below is read with the right suspicion:
+#: `build()` used to hard-code the module-global `EXCLUDED` into every part's
+#: metadata, so the extension declared the 2026-09-03 exclusions and said
+#: nothing about what IT did not reach. Five of the roots below supply
+#: eighteen manuscript macros between them and were absent from both parts
+#: while the metadata looked complete.
+#:
+#: Sources are the repository working tree, not `/root`: these collections were
+#: run in place. `run-config.json` in `t1-p0-everysec` records
+#: `results_root: /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/
+#: ws5-2026-09-10/t1-p0-everysec`, so the tree below IS the collection, not a
+#: copy of one.
+_REPO = "/mnt/d/personal/AEP/Research-paper-AEP"
+
+PART3_ROOTS: tuple[Root, ...] = (
+    Root(
+        label="ws5-2026-09-10-t1-p0-everysec",
+        source=f"{_REPO}/experiments/results/ws5-2026-09-10/t1-p0-everysec",
+        tracked_analysis=(
+            "experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis"
+        ),
+        note=(
+            "WS-5's 15-run crash-free everysec arm. Supplies NINE macros, "
+            "including BarrierCostFifteen (1,939.7 ms) with its interval and "
+            "both ProtocolMinusBarrier triples -- RQ3's headline, which the "
+            "external audit of 2026-09-23 recomputed and matched. Absent from "
+            "both earlier parts."
+        ),
+    ),
+    Root(
+        label="ws5-2026-09-10-t2-p30",
+        source=f"{_REPO}/experiments/results/ws5-2026-09-10/t2-p30",
+        tracked_analysis="experiments/results/ws5-2026-09-10/t2-p30/analysis",
+        note=(
+            "The 30% crash-probability regime. Supplies PthirtyComparisons, "
+            "PthirtyRuns and PthirtyExecutions."
+        ),
+    ),
+    Root(
+        label="ws5-2026-09-10-t2-keying",
+        source=f"{_REPO}/experiments/results/ws5-2026-09-10/t2-keying",
+        tracked_analysis="experiments/results/ws5-2026-09-10/t2-keying/analysis",
+        note=(
+            "The alternative read-back keying sensitivity cell. Supplies "
+            "KeyingAmbiguityOracle, the 9.33 pp miss against a 5 pp margin "
+            "that the manuscript reports as a negative result."
+        ),
+    ),
+    Root(
+        label="ws5-2026-09-10-t1-incomplete",
+        source=f"{_REPO}/experiments/results/ws5-2026-09-10/t1-incomplete",
+        tracked_analysis=(
+            "experiments/results/ws5-2026-09-10/t1-incomplete/analysis"
+        ),
+        note=(
+            "The incomplete sibling of t1-p0-everysec. No macro derives from "
+            "it. Archived because a discarded collection is evidence about "
+            "the instrument, which is the same rule under which the voided "
+            "and aborted roots of the first two parts were kept."
+        ),
+    ),
+    Root(
+        label="fsync-always-2026-09-14",
+        source=f"{_REPO}/experiments/results/fsync-always-2026-09-14",
+        tracked_analysis="experiments/results/fsync-always-2026-09-14/analysis",
+        note=(
+            "The 45-run appendfsync=always arm. Supplies FIVE macros: "
+            "BarrierCostAlwaysFortyFive with its interval, and both "
+            "AlwaysFortyFive medians. Distinct from the six-run "
+            "`fsync-always` root in the 2026-09-03 part, which the "
+            "manuscript also cites -- the two are different collections and "
+            "Section 6.4 quotes both."
+        ),
+    ),
+    Root(
+        label="phase40-stage-10-interactive-2026-09-21",
+        source=f"{_REPO}/reports/raw/phase40-stage-10-interactive-2026-09-21",
+        tracked_analysis=None,
+        note=(
+            "Phase 40 stage 10 on the interactive loop. Committed text "
+            "evidence; the live collection is outside the repository."
+        ),
+    ),
+    Root(
+        label="phase40-stage-30-2026-09-21",
+        source=f"{_REPO}/reports/raw/phase40-stage-30-2026-09-21",
+        tracked_analysis=None,
+        note="Phase 40 stage 30, the first collection under amendment 6.",
+    ),
+    Root(
+        label="phase40-stage-100-2026-09-22",
+        source=f"{_REPO}/reports/raw/phase40-stage-100-2026-09-22",
+        tracked_analysis=None,
+        note=(
+            "Phase 40 stage 100 -- the stage that FAILED and closed the "
+            "workstream by author decision. No manuscript text depends on it "
+            "and none is owed; the closure's restriction is on the "
+            "MANIFEST, not on the archive, and its 9 names "
+            "reports/raw/phase40-*/ as preserved evidence."
+        ),
+    ),
+)
+
+
+#: Added when phase 53 lands. Kept separate so that building the part before
+#: the collection finishes is impossible by construction rather than by
+#: remembering.
+PHASE53_ROOT = Root(
+    label="abd-immediate-2026-09-24",
+    source=f"{_REPO}/experiments/results/abd-immediate-2026-09-24",
+    tracked_analysis="experiments/results/abd-immediate-2026-09-24/analysis",
+    note=(
+        "Phase 53: after_barrier_before_dispatch re-collected for the five "
+        "baselines with SIGKILL_IMMEDIATE, because the mapping in "
+        "experiments/baselines/crash_points.py delivered the original cell by "
+        "the deferred watchdog. Its pre-registration 5 requires that it be "
+        "reported as its own session with its own macros and NOT pooled with "
+        "the matrix, so the manuscript cites it and the archive must carry it."
+    ),
+)
+
+
 @dataclass(frozen=True)
 class Excluded:
     path: str
@@ -446,6 +577,84 @@ EXCLUDED: tuple[Excluded, ...] = (
     Excluded(
         "/root/aep-5b/repo/.scratch/reproduce/smoke",
         "7 runs. Same, in the /root/aep-5b clone.",
+    ),
+)
+
+
+#: What the 2026-09-15 extension did not reach, which its own metadata should
+#: have said and did not. Recorded here so the record is corrected even though
+#: that archive is never reopened: part 3 carries these roots, and part 3's
+#: metadata names them as the extension's omission rather than pretending the
+#: gap never existed.
+EXTENSION_OMITTED: tuple[Excluded, ...] = (
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
+        "ws5-2026-09-10",
+        "FOUR roots (t1-p0-everysec, t1-incomplete, t2-p30, t2-keying). "
+        "MISSED, not declined: the 2026-09-15 extension emitted the "
+        "2026-09-03 exclusion list verbatim and declared nothing about its "
+        "own coverage. Thirteen manuscript macros derive from these roots. "
+        "Carried by the 2026-09-24 part.",
+    ),
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
+        "fsync-always-2026-09-14",
+        "MISSED, same cause. Five manuscript macros derive from it. Carried "
+        "by the 2026-09-24 part.",
+    ),
+)
+
+
+#: What the 2026-09-24 part itself does not reach. This is the list the two
+#: earlier parts each needed and neither had.
+PART3_EXCLUDED: tuple[Excluded, ...] = EXCLUDED + EXTENSION_OMITTED + (
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/"
+        "INCIDENT-fsync-always-destroyed-2026-09-14",
+        "NOT a collection and deliberately not archived. Quarantined debris "
+        "from the 2026-09-14 incident in which a collection script's "
+        "default-on clean path deleted the appendfsync=always raw runs; the "
+        "runs themselves were recovered from the 2026-09-03 archive and are "
+        "in it. No manuscript number derives from the debris, and depositing "
+        "a partial copy of runs the record already carries in full would put "
+        "two versions of the same evidence under one DOI. The incident is "
+        "reported in reports/incident-fsync-always-raw-destroyed-2026-09-14.md "
+        "and in the manuscript's Section 9.",
+    ),
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
+        "stage3-replication-2026-08-13",
+        "Stage-3 replication, 2026-08-13, recovered onto main in phase 29's "
+        "branch reconciliation. Predates rule 5 and no manuscript macro "
+        "derives from it -- check_archive_covers_macros.py confirms zero "
+        "provenance comments name it. Left out pending an explicit author "
+        "decision rather than archived by default; see "
+        "reports/zenodo-deposit-plan-2026-09-24.md 2.",
+    ),
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
+        "abd-immediate-2026-09-24",
+        "PHASE 53, IN FLIGHT AT BUILD TIME. Must be added before deposit: "
+        "its pre-registration 5 commits the manuscript to macros computed "
+        "from it. This line is the reason a part built today is a REHEARSAL "
+        "and not the deposit.",
+    ),
+    Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/"
+        "phase40-deployment-2026-09-18",
+        "WITHHELD PENDING REDACTION. deployment-show.json carries "
+        "`createdBy` and `lastModifiedBy` naming a THIRD PARTY's corporate "
+        "e-mail address. Depositing it would publish another person's "
+        "personal data under this DOI, and the 2026-09-03 part's own "
+        "description states that archive contains no e-mail addresses -- a "
+        "standard this part must meet too. The subscription/tenant id in the "
+        "same file was already redacted by hand when it was committed; these "
+        "two fields were missed. The root is otherwise exactly the evidence "
+        "for amendment 1 and should be re-added once the two values are "
+        "replaced, at which point this part is rebuilt and its digests "
+        "change. Nothing depends on those two fields: amendment 1's finding "
+        "is that `model` reports the alias `gpt-5.6-luna` rather than a "
+        "version-pinned snapshot, which is a different key in the same file.",
     ),
 )
 
@@ -522,7 +731,25 @@ class RootReport:
     filesystem: dict[str, str] = field(default_factory=dict)
 
 
-def build(output: Path, roots: tuple[Root, ...], *, compress: bool) -> dict:
+def build(
+    output: Path,
+    roots: tuple[Root, ...],
+    *,
+    compress: bool,
+    excluded: tuple[Excluded, ...] = EXCLUDED,
+    phase: int = 11,
+) -> dict:
+    """Build one archive part.
+
+    ``excluded`` is a PARAMETER and not the module global it used to read.
+    That was the defect: every part emitted the 2026-09-03 exclusion list
+    verbatim, so the extension's ``ARCHIVE-METADATA.json`` declared nothing
+    about the roots *it* did not reach. Five roots supplying eighteen
+    manuscript macros were therefore missed rather than declined, and the
+    metadata's own acceptance criterion -- "no raw run directory is silently
+    absent" -- was not met by a file that looked like it was.
+    ``scripts/check_archive_covers_macros.py`` is the guard; this is the cause.
+    """
     output.mkdir(parents=True, exist_ok=True)
     tar_path = output / "aep-raw-evidence.tar"
     manifest_path = output / "MANIFEST.sha256"
@@ -556,7 +783,7 @@ def build(output: Path, roots: tuple[Root, ...], *, compress: bool) -> dict:
     metadata = {
         "archive": "aep-raw-evidence",
         "produced_by": "scripts/build_raw_archive.py",
-        "phase": 11,
+        "phase": phase,
         "host": os.uname().nodename,
         "kernel": os.uname().release,
         "repository_head": _git_head(),
@@ -572,7 +799,7 @@ def build(output: Path, roots: tuple[Root, ...], *, compress: bool) -> dict:
             }
             for r in reports
         ],
-        "excluded": [{"path": e.path, "reason": e.reason} for e in EXCLUDED],
+        "excluded": [{"path": e.path, "reason": e.reason} for e in excluded],
         "determinism": (
             "Entries sorted by archive path; uid/gid zeroed, uname/gname "
             "emptied, modes normalised to 0644/0755, gzip member mtime=0. "
@@ -633,7 +860,7 @@ def build(output: Path, roots: tuple[Root, ...], *, compress: bool) -> dict:
             }
             for r in reports
         ],
-        "excluded": [{"path": e.path, "reason": e.reason} for e in EXCLUDED],
+        "excluded": [{"path": e.path, "reason": e.reason} for e in excluded],
     }
 
     if compress:
@@ -739,6 +966,27 @@ def main(argv: list[str] | None = None) -> int:
             "still verifies over exactly the bytes it always covered."
         ),
     )
+    parser.add_argument(
+        "--part3",
+        action="store_true",
+        help=(
+            "build the phase 54 THIRD part -- the roots neither earlier "
+            "archive reached, including the five that supply eighteen "
+            "manuscript macros. Neither earlier part is reopened, so their "
+            "manifest digests still verify over exactly the bytes they "
+            "always covered."
+        ),
+    )
+    parser.add_argument(
+        "--with-phase53",
+        action="store_true",
+        help=(
+            "include experiments/results/abd-immediate-2026-09-24 in the "
+            "--part3 build. Refuses unless the collection looks complete, "
+            "because a part built over a half-finished collection would "
+            "carry a manifest nobody can reproduce."
+        ),
+    )
     parser.add_argument("--json", default=None, help="write the build report here")
     arguments = parser.parse_args(argv)
 
@@ -747,9 +995,43 @@ def main(argv: list[str] | None = None) -> int:
     if arguments.verify_sources_unchanged:
         return verify_sources_unchanged(output / "MANIFEST.sha256", ROOTS)
 
+    if arguments.part3:
+        roots = PART3_ROOTS
+        excluded = PART3_EXCLUDED
+        phase = 54
+        if arguments.with_phase53:
+            # Refuse rather than archive a collection still being written. The
+            # pre-registration expects 45 runs; anything short of that means
+            # the manifest would cover a tree that changes after it is signed.
+            source = Path(PHASE53_ROOT.source)
+            runs = (
+                sum(1 for _ in source.glob("*/run-config.json"))
+                if source.is_dir()
+                else 0
+            )
+            if runs < 45:
+                raise SystemExit(
+                    f"--with-phase53: {PHASE53_ROOT.source} has {runs} runs "
+                    "with a run-config.json, expected 45. The collection is "
+                    "still in flight; a manifest built over it would not "
+                    "reproduce. Wait for it to finish."
+                )
+            roots = roots + (PHASE53_ROOT,)
+            excluded = tuple(
+                e for e in excluded
+                if "abd-immediate-2026-09-24" not in e.path
+            )
+    elif arguments.extension:
+        roots, excluded, phase = EXTENSION_ROOTS, EXCLUDED, 35
+    else:
+        roots, excluded, phase = ROOTS, EXCLUDED, 11
+
     started = time.monotonic()
-    print(f"archiving {len(ROOTS)} collection roots into {output}")
-    result = build(output, (EXTENSION_ROOTS if arguments.extension else ROOTS), compress=not arguments.no_compress)
+    print(f"archiving {len(roots)} collection roots into {output}")
+    result = build(
+        output, roots, compress=not arguments.no_compress,
+        excluded=excluded, phase=phase,
+    )
     result["build_seconds"] = round(time.monotonic() - started, 1)
 
     print()
