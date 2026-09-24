@@ -335,8 +335,8 @@ are shown as the
 deployment points they were collected to compare, not as the source of the
 costs quoted above.
 
-\paragraph{A failure to reject is not a null result here, and for two of them
-that is a theorem} Two comparisons in this paper fail to exclude zero for
+\paragraph{A failure to reject is not a null result here, and under the sign
+test that is a theorem} Two comparisons in this paper fail to exclude zero for
 reasons of precision rather than of effect: the kill-latency attribution above,
 whose half-width is wider than the mean it brackets, and the capability-class
 sweep reported in the supplementary material, where the applied-effect column
@@ -347,13 +347,22 @@ with one another.
 For both, the weaker reading is not available. Each rests on four paired
 sessions, and with $n$ paired sessions the smallest attainable two-sided
 sign-test $p$-value is $2/2^{n}$, which at $n=4$ is
-$\SignFloorFour{}$. \textbf{No effect size, however large, could have produced a
-rejection at $\alpha=0.05$ from these designs.} Six sessions is the smallest at
-which the test becomes capable of rejecting at all
-($2/2^{6} = \SignFloorSix{}$). So what we report is not that we looked for an
-effect and failed to find one; it is that these designs could not have found
-one, whatever was there. Neither result should be read as evidence that the
-effect is absent, and neither is offered as one.
+$\SignFloorFour{}$. \textbf{Under the sign test, no effect size however large
+could have produced a rejection at $\alpha=0.05$ from these designs.} Six
+sessions is the smallest at which that test becomes capable of rejecting at all
+($2/2^{6} = \SignFloorSix{}$).
+
+\textbf{That is a statement about the sign test and not about four-session
+designs.} The same design rejects under the $t$-analysis we report elsewhere:
+the prevention replication is four paired sessions and its interval excludes
+zero (\cref{sec:eval-prevention}). So the asymmetry a reader may notice is
+real, and the reason is the quantity rather than the arithmetic. We use the
+$t$-interval wherever the session differences are the measurement, which is all
+three of these comparisons, and we quote the sign-test floor only to say what a
+rank test could have detected at this $n$. Read that way, all three are
+reported on one standard: an interval, and its width beside its mean. Neither
+of the two should be read as evidence that the effect is absent, and neither is
+offered as one.
 
 We stopped at four sessions by choice rather than for want of machine
 time, and the class sweep is reported as a bound rather than as a test.
