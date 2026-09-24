@@ -55,6 +55,15 @@ FLAKEY_TARGET = "flakey"
 #: a device that lies about having written.
 DROP_FEATURE = "drop_writes"
 
+#: ``error_writes`` makes the device FAIL writes visibly, with an I/O error.
+#: Phase 54's fault, added 2026-09-24. It is not interchangeable with
+#: ``drop_writes``: under a lying fsync the model expects ``NoLostEffect`` to
+#: fail *with the barrier enabled*, so both arms lose and nothing separates
+#: them. An honest failure makes the barrier's ``WAITAOF`` fail, which is what
+#: lets AEP-full withhold dispatch and B3 not.
+#: ``prompts/phase-54-record-loss-restart-2026-09-24.md`` §2.
+ERROR_FEATURE = "error_writes"
+
 
 class Delivery(str, Enum):
     """Did the write-loss fault actually take effect for this run?"""
@@ -101,10 +110,26 @@ def table_declares_drop(table: str | None) -> bool:
     fields = table.split()
     if FLAKEY_TARGET not in fields:
         return False
+    return table_declares_feature(table, DROP_FEATURE)
+
+
+def table_declares_feature(table: str | None, feature: str) -> bool:
+    """Does this ``dmsetup table`` line carry `feature`?
+
+    The generalisation of :func:`table_declares_drop`, which now delegates
+    here. Kept as a separate function rather than a parameter with a default
+    so that every existing call site keeps asking the question it always
+    asked -- WS-4's collected cell must stay reproducible from this code.
+    """
+    if not table:
+        return False
+    fields = table.split()
+    if FLAKEY_TARGET not in fields:
+        return False
     target_at = fields.index(FLAKEY_TARGET)
     # Features follow the up/down interval pair; anything before the target
     # name is geometry and cannot be a feature.
-    return DROP_FEATURE in fields[target_at:]
+    return feature in fields[target_at:]
 
 
 def classify_delivery(
@@ -197,10 +222,29 @@ def read_table(device: str, *, timeout: float = 10.0) -> str | None:
     return completed.stdout.strip() or None
 
 
-def _reload_table(device: str, table: str, *, timeout: float) -> str | None:
+def _reload_table(
+    device: str, table: str, *, timeout: float, flush: bool = True
+) -> str | None:
     """suspend -> reload -> resume, resuming even if the reload fails.
 
     Returns an error string, or ``None`` on success.
+
+    ``flush`` defaults to ``True``, which is a plain ``dmsetup suspend`` and is
+    **exactly what WS-4 issued**: its collected cell must stay reproducible
+    from this code, so the default reproduces the old argv byte for byte.
+
+    ``flush=False`` adds ``--noflush --nolockfs``, which phase 54 requires.
+    A plain suspend calls ``freeze_bdev()`` and **syncs the filesystem** --
+    `experiments/flakey_write_loss.py`'s module docstring says so, and its own
+    `set_mode` has always passed both flags for that reason. For phase 54 the
+    sync is the instrument hazard named in
+    ``prompts/phase-54-record-loss-restart-2026-09-24.md`` §6: it would flush
+    the very record the cell is trying to lose, and BOTH ARMS would read zero,
+    which looks exactly like the claim being vindicated.
+
+    Found by rehearsing the arming path against a simulated ``dmsetup`` before
+    any collection -- the two arming paths in this repository disagreed, and
+    the one a run actually calls was the unflagged one.
 
     **The resume is in a `finally` on purpose.** An earlier version returned
     early when the reload failed and left the device SUSPENDED; a suspended dm
@@ -208,7 +252,10 @@ def _reload_table(device: str, table: str, *, timeout: float) -> str | None:
     than erroring. A collection would have hung the same way -- silently, with no
     progress and no failure. Found by the proof that forces a reload to fail.
     """
-    suspended = _dmsetup(["suspend", device], timeout=timeout)
+    suspend_args = ["suspend", device] if flush else [
+        "suspend", "--noflush", "--nolockfs", device
+    ]
+    suspended = _dmsetup(suspend_args, timeout=timeout)
     if suspended.returncode != 0:
         return f"dmsetup suspend failed: {suspended.stderr.strip()[:200]}"
     try:
@@ -228,7 +275,32 @@ def _reload_table(device: str, table: str, *, timeout: float) -> str | None:
 
 
 def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
-    """Flip ``device`` into ``drop_writes``: the fault, at the checkpoint.
+    """Flip ``device`` into ``drop_writes``: WS-4's fault, at the checkpoint.
+
+    Delegates to :func:`_arm_feature`. **Its behaviour is unchanged** --
+    ``reports/raw/ws4-writeloss-s1-2026-09-07`` must stay reproducible from
+    this code, so the split is a refactor and not a revision.
+    """
+    return _arm_feature(device, DROP_FEATURE, timeout=timeout)
+
+
+def arm_error_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
+    """Flip ``device`` into ``error_writes``: phase 54's fault.
+
+    Writes FAIL visibly rather than being discarded silently, so the
+    barrier's ``WAITAOF`` fails and AEP-full withholds dispatch. That is
+    the whole difference from :func:`arm_drop_writes`, and it is why the
+    two arms can separate at all.
+    """
+    # flush=False: a plain suspend would sync the filesystem and flush the
+    # record this cell exists to lose. Section 6 of the pre-registration.
+    return _arm_feature(device, ERROR_FEATURE, timeout=timeout, flush=False)
+
+
+def _arm_feature(
+    device: str, feature: str, *, timeout: float = 30.0, flush: bool = True
+) -> WriteLossRecord:
+    """Reload ``device``'s table with ``feature`` set, always-down.
 
     Mirrors :mod:`redis_kill`'s shape -- it reports what happened rather than
     raising, so a failure to arm becomes a recorded non-delivery rather than an
@@ -269,10 +341,10 @@ def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
     # experiments/flakey_write_loss.py has already proven on this host.
     head = fields[: target_at + 2]
     offset = fields[target_at + 2] if len(fields) > target_at + 2 else "0"
-    drop_table = " ".join([*head, offset, "0", "1", "1", DROP_FEATURE])
+    armed_table = " ".join([*head, offset, "0", "1", "1", feature])
 
     try:
-        failure = _reload_table(device, drop_table, timeout=timeout)
+        failure = _reload_table(device, armed_table, timeout=timeout, flush=flush)
     except Exception as error:  # noqa: BLE001
         failure = f"{type(error).__name__}: {error}"
     if failure is not None:
@@ -287,9 +359,9 @@ def arm_drop_writes(device: str, *, timeout: float = 30.0) -> WriteLossRecord:
         device=device,
         table_before=before,
         table_after=after,
-        # Armed means the table READ BACK says drop_writes, not that the
-        # commands returned 0.
-        armed=table_declares_drop(after),
+        # Armed means the table READ BACK carries the feature, not that
+        # the commands returned 0.
+        armed=table_declares_feature(after, feature),
         arm_ms=int((time.monotonic() - started) * 1000),
     )
 

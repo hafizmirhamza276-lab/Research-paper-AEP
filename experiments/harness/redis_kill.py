@@ -139,6 +139,18 @@ MECHANISM_PAUSE_THEN_KILL = "pause-then-kill"
 #: already have, and only what happens at the checkpoint differs.
 MECHANISM_WRITE_LOSS = "write-loss"
 
+#: Phase 54. The device FAILS writes visibly (``error_writes``) and then Redis
+#: is killed and restarted, so recovery reads an AOF that never received the
+#: record. **Deliberately NOT in** :data:`NON_KILLING_MECHANISMS`: the restart
+#: is the experiment, and a version of this that skipped it would collect the
+#: WS-4 cell again under a new name.
+#:
+#: It is a separate mechanism rather than a flag on the existing one because
+#: ``write-loss`` must keep behaving exactly as it did -- WS-4's collected cell
+#: has to stay reproducible from this code.
+#: ``prompts/phase-54-record-loss-restart-2026-09-24.md``.
+MECHANISM_WRITE_LOSS_RESTART = "write-loss-restart"
+
 #: The dm-flakey device the write-loss mechanism arms. Read from the environment
 #: for the same reason the mechanism is: it must not enter ``config_digest``
 #: (``docs/31-transmission-event.md`` section 4).
@@ -256,10 +268,12 @@ def killer_for(mechanism: str | None) -> Callable[[str], dict[str, Any]]:
         return pause_then_kill
     if mechanism == MECHANISM_WRITE_LOSS:
         return drop_writes_on_device
+    if mechanism == MECHANISM_WRITE_LOSS_RESTART:
+        return error_writes_on_device
     raise ValueError(
         f"unknown {REDIS_FAULT_MECHANISM_VARIABLE}={mechanism!r}; expected "
-        f"{MECHANISM_KILL!r}, {MECHANISM_PAUSE_THEN_KILL!r} or "
-        f"{MECHANISM_WRITE_LOSS!r}"
+        f"{MECHANISM_KILL!r}, {MECHANISM_PAUSE_THEN_KILL!r}, "
+        f"{MECHANISM_WRITE_LOSS!r} or {MECHANISM_WRITE_LOSS_RESTART!r}"
     )
 
 
@@ -318,6 +332,73 @@ def drop_writes_on_device(container: str) -> dict[str, Any]:
     return {
         "issued": record.armed,
         "mechanism": MECHANISM_WRITE_LOSS,
+        "device": record.device,
+        "table_before": record.table_before,
+        "table_after": record.table_after,
+        "armed": record.armed,
+        "error": record.error,
+        "command_ms": record.arm_ms,
+    }
+
+
+def error_writes_on_device(container: str) -> dict[str, Any]:
+    """Phase 54's fault: make the device FAIL writes, visibly.
+
+    The same shape as :func:`drop_writes_on_device` and the same refusals, with
+    one difference that is the entire point of the phase: ``error_writes``
+    rather than ``drop_writes``, so the write fails with an I/O error instead
+    of being discarded silently.
+
+    Why that matters, from
+    ``prompts/phase-54-record-loss-restart-2026-09-24.md`` §2: under
+    ``drop_writes`` the barrier's ``WAITAOF`` *succeeds* on a lie, AEP-full
+    dispatches, and the restart loses the record for both arms -- the cell
+    separates nothing. Under ``error_writes`` the ``WAITAOF`` fails, AEP-full
+    withholds dispatch, and B3 does not. That is the contrast between
+    ``b3-no-barrier-restart.cfg`` and ``aof-rewind.cfg``.
+
+    **The container is killed and restarted afterwards**, because this
+    mechanism is not in :data:`NON_KILLING_MECHANISMS`. The device fault alone
+    would leave the record in memory and reproduce WS-4.
+    """
+    from experiments.harness import write_loss
+
+    device = os.environ.get(WRITE_LOSS_DEVICE_VARIABLE, "").strip()
+    if not device:
+        return {
+            "issued": False,
+            "mechanism": MECHANISM_WRITE_LOSS_RESTART,
+            "error": f"{WRITE_LOSS_DEVICE_VARIABLE} is not set",
+            "command_ms": 0,
+        }
+
+    # Same refusal as the WS-4 path: a run that begins already armed ran its
+    # pre-fault portion under the fault too, which is a different experiment.
+    existing = write_loss.read_table(device)
+    if write_loss.table_declares_feature(existing, write_loss.ERROR_FEATURE) or (
+        write_loss.table_declares_drop(existing)
+    ):
+        return {
+            "issued": False,
+            "mechanism": MECHANISM_WRITE_LOSS_RESTART,
+            "device": device,
+            "table_before": existing,
+            "table_after": existing,
+            "armed": True,
+            "error": (
+                "the device was already failing or dropping writes when this "
+                "run reached the fault point, so the run's pre-fault portion "
+                "also ran under the fault. Restore the device to pass mode "
+                "between runs; a run that begins armed is not the experiment "
+                "this regime declares."
+            ),
+            "command_ms": 0,
+        }
+
+    record = write_loss.arm_error_writes(device)
+    return {
+        "issued": record.armed,
+        "mechanism": MECHANISM_WRITE_LOSS_RESTART,
         "device": record.device,
         "table_before": record.table_before,
         "table_after": record.table_after,

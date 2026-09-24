@@ -91,6 +91,23 @@ BACKING_MEGABYTES = 256
 PASS_INTERVALS = (1, 0)
 DROP_INTERVALS = (0, 1)
 
+#: The dm-flakey feature each mode adds to the table, or ``None`` for none.
+#:
+#: ``drop_writes`` is WS-4's fault and MUST NOT CHANGE: the collected cell at
+#: ``reports/raw/ws4-writeloss-s1-2026-09-07`` has to remain reproducible from
+#: this code. ``error_writes`` is phase 54's, added 2026-09-24 alongside the
+#: pre-registration that explains why the two are not interchangeable
+#: (``prompts/phase-54-record-loss-restart-2026-09-24.md`` §2).
+MODE_FEATURES: dict[str, str | None] = {
+    "pass": None,
+    "drop": "drop_writes",
+    "error": "error_writes",
+}
+
+#: Every mode :meth:`Device.table` will build. Membership is checked so an
+#: unknown mode raises instead of silently becoming ``drop``.
+MODES = frozenset(MODE_FEATURES)
+
 
 class ProbeError(RuntimeError):
     """The harness cannot honestly proceed."""
@@ -152,10 +169,43 @@ class DeviceStack:
         self.set_mode("pass")
 
     def table(self, mode: str) -> str:
+        """The dm table line for `mode`.
+
+        Three modes, and the third was added for phase 54:
+
+        * ``pass``  -- the device behaves normally;
+        * ``drop``  -- ``drop_writes``: writes are accepted and silently
+          discarded. **WS-4's fault, and it must not change**, because
+          ``reports/raw/ws4-writeloss-s1-2026-09-07`` has to stay reproducible
+          from this code;
+        * ``error`` -- ``error_writes``: writes FAIL, visibly, with an I/O
+          error. Phase 54's fault.
+
+        The difference is the whole of phase 54's design. ``drop_writes``
+        models a lying ``fsync`` (``TruthfulFsync = FALSE``), under which the
+        model expects ``NoLostEffect`` to fail *with the barrier enabled* --
+        so both arms lose and the cell separates nothing. ``error_writes``
+        fails honestly, so the barrier's ``WAITAOF`` fails and withholds
+        dispatch, which is the contrast between ``b3-no-barrier-restart.cfg``
+        and ``aof-rewind.cfg``.
+
+        An unknown mode RAISES rather than falling back. A silent fallback to
+        ``drop_writes`` would deliver the non-discriminating fault into a run
+        whose name says otherwise, and the table line in the run log would not
+        contradict it -- the same reasoning as ``redis_kill.killer_for``.
+        """
+        if mode not in MODES:
+            raise ProbeError(
+                f"unknown dm-flakey mode {mode!r}; expected one of "
+                f"{sorted(MODES)}. Refusing rather than defaulting: a "
+                "fallback to drop_writes would silently deliver a fault that "
+                "cannot separate the arms."
+            )
         up, down = PASS_INTERVALS if mode == "pass" else DROP_INTERVALS
         line = f"0 {self.sectors} flakey {self.loop} 0 {up} {down}"
-        if mode == "drop":
-            line += " 1 drop_writes"
+        feature = MODE_FEATURES.get(mode)
+        if feature:
+            line += f" 1 {feature}"
         return line
 
     def set_mode(self, mode: str) -> None:
