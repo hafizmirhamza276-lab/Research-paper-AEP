@@ -71,6 +71,17 @@ EXPECTED: dict[str, Cell] = {
              "rule 5 existed. Its design is recorded in the phase 2B and "
              "session-3 reports, not in a pre-registration.",
     ),
+    "experiments/results/abd-immediate-2026-09-24": Cell(
+        "prompts/phase-53-abd-immediate-2026-09-24.md",
+        "prompts/phase-53-abd-immediate-2026-09-24.md",
+        note="after_barrier_before_dispatch re-collected with "
+             "SIGKILL_IMMEDIATE for the five baselines, because the mapping "
+             "in experiments/baselines/crash_points.py delivered the original "
+             "cell by the deferred watchdog. One file carries both the "
+             "prediction and the issued scope; it is committed before the "
+             "data and is NOT pooled with experiments/results/matrix, which "
+             "is a different session.",
+    ),
     "experiments/results/fsync-always": Cell(
         None, None, predates_rule=True,
         note="The three-run appendfsync=always cell, collected 2026-08-07 "
