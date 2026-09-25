@@ -27,6 +27,17 @@
 # check_paper_numbers.py builds its own invocation and never consulted this
 # one -- two callers of the same generator, drifting apart. Found by running
 # the target in a clean clone (phase 39).
+#
+# IT RECURRED. Phase 53 added `--abd-immediate` to paper_tables.py and to
+# check_paper_numbers.py and not to this target, so from 2026-09-24 until
+# 2026-09-25 this target regenerated a numbers.tex missing all ELEVEN \Abd*
+# macros and reported DIFFERS -- while every gate passed, because the gate
+# builds its own invocation. Found by auditing what a clean clone can
+# reproduce, which is the only thing that exercises this caller.
+#
+# The two argument lists must be diffed whenever either changes. There is
+# still no check that does it; `comm -23` over the two `--flag` sets is the
+# whole of the manual procedure.
 WS5 := experiments/results/ws5-2026-09-10
 
 SHELL := /bin/bash
@@ -200,6 +211,7 @@ reproduce-figures:
 	    --ws5-p30 $(WS5)/t2-p30/analysis \
 	    --ws5-keying $(WS5)/t2-keying/analysis \
 	    --fsync-always-45 experiments/results/fsync-always-2026-09-14/analysis \
+	    --abd-immediate experiments/results/abd-immediate-2026-09-24/analysis \
 	    --out "$(FIG_ROOT)/generated"
 	@echo
 	@echo "=== byte-comparing against paper/generated/ ==="

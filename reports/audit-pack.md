@@ -681,6 +681,93 @@ too.
 
 ---
 
+## 8a. What you can and cannot verify from a clone
+
+**Read this before you start, so you do not spend time discovering it.** Audited
+2026-09-25 at `b762290`; the evidence is in
+`reports/clone-completeness-2026-09-25.md`.
+
+### The remote is complete, with two exceptions
+
+`origin/main == HEAD`, one branch, no stashes, one worktree, and **nothing
+reachable from any local ref that is not on `origin/main`**
+(`git log --all --not origin/main` → 0). The remote carries only `refs/heads/main`.
+
+**Two things exist on the author's machine and nowhere else**, and neither is
+evidence for any number:
+
+1. **Two commits in a second clone** (`audit-clone`), on branches the remote
+   does not have. They add `docs/25-rebuttal-notes.md` and
+   `docs/26-rebuttal-notes.md` — prepared rebuttal paragraphs written
+   2026-08-13 against the Stage-2 manuscript. **Those files have never existed
+   on `main`** (`git log --all -- <path>` → 0 commits). Not pushed: they are
+   submission strategy, and the repository is public.
+2. **An aborted collection**, `experiments/results/b2-s4-2026-09-14-ABORTED-order-mismatch`
+   — 19 run directories, 286 files, 3.8 MB — **untracked and in no archive
+   part.** It is not a session and its own `ABORTED.md` says so; phase report 22
+   gives the full account and deliberately left it untracked. But the precedent
+   it cites (`b2-paired-v2-s2-aborted-2026-08-28`) *is* archived, and this one
+   is not. **Now recorded in `build_raw_archive.py`'s part-3 exclusion list to
+   be added on the next rebuild.** Nothing in the paper derives from it.
+
+### What a clone can do
+
+| | |
+|---|---|
+| **Regenerate all six files in `paper/generated/`, byte-identically** | **Yes** — verified 2026-09-25: 6 of 6 `IDENTICAL`, from tracked inputs only. Every path `numbers.tex` names resolves to a tracked file, and **no collection root has an untracked `analysis/` directory** |
+| Rebuild all four PDFs | **Yes, if you have `pdflatex`, `bibtex` and `IEEEtran.cls`.** All 20 `.tex` files, `refs.bib` and all 3 figures are tracked. The four built PDFs are tracked too, so you can diff rather than trust |
+| Run 11 of the gates | **Yes** — §3.1 |
+| Read every phase report, pre-registration and amendment | **Yes.** `reports/` and `prompts/` are fully tracked |
+| Check pre-registration ordering by ancestry | **Yes** — it is a property of the git history you just cloned |
+
+**One thing that was broken until 2026-09-25 and is worth knowing, because it
+tells you what the project's own reproduction target does not cover.**
+`make reproduce-figures` omitted `--abd-immediate`, so it regenerated a
+`numbers.tex` missing all **eleven** `\Abd*` macros and reported `DIFFERS` —
+while every gate passed, because `check_paper_numbers.py` builds its own
+invocation. **This is the second occurrence**: the Makefile's own comment
+records the same drift in phase 25, costing seventeen macros over four passes.
+Fixed, and the two argument lists now agree — but **there is still no check that
+they agree**, and `comm -23` over the two `--flag` sets is the whole of the
+procedure.
+
+### What a clone cannot do
+
+| | why |
+|---|---|
+| **See any raw run directory** | 1 315 paths under `experiments/results/` and 86 under `reports/raw/` are ignored as bulk data. Only the derived `analysis/` products are tracked — which is deliberate, and is why the archive exists |
+| **Obtain the raw evidence at all** | **The DOI is `RESERVED` and does not resolve.** The three archive parts — 147 MB, 20 MB, 375 MB — exist on one machine and are unpublished. Until the deposit is published, **no raw run directory is reachable by anyone but the author** |
+| Re-derive the analysis products from raw | Needs an unpacked archive part. `make reproduce-figures` documents pointing `FIG_ROOT` at one |
+| Run the evaluation, or `make reproduce-smoke` | Needs **Docker** and **Redis** (pinned by digest to `redis:7.2.5-alpine@sha256:6aaf3f5e…`) |
+| Run phase 54, or reproduce the WS-4 write-loss cell | Needs **root**, a **loop device** and **`dm-flakey`**. On the audit machine `sudo -n` required a password and the docker socket was permission-denied to the ordinary user |
+| Run the full suite | Needs Docker and Redis. **This file quotes no suite number** — §3.2 |
+| Run `prove_anonymous_gate.sh` | It appends to `paper/sections/08-threats.tex` and rebuilds the PDFs. Commit that file first |
+| Run `verify_refs.py` | Network access to DBLP and `doi.org` |
+| Run the TLC model checks | TLA+ tooling. The 15 `.cfg` files are tracked; only the *runs* are not |
+| See the phase-40 live collections | They are at `AEP/stub-results/phase40-*`, **outside the repository by design** (the closure's §9). 18 MB, one machine. `reports/raw/phase40-*` is the committed text evidence |
+
+**Three gates fail on a Windows checkout** for reasons that are not defects, and
+pass under WSL — §3.3. Run on Linux or WSL.
+
+**A clone is missing no input that any generator, gate or test reads.** That was
+checked explicitly rather than assumed, because five roots supplying eighteen
+macros were once outside both archive parts: every provenance path in
+`numbers.tex` was resolved against `git ls-files`, and every collection root was
+checked for an untracked `analysis/`. **None was found.** The gap that existed
+was in the *archive*, not in the repository, and it is tracked as such (§7.3).
+
+### If this machine were lost today
+
+Everything the paper's numbers are computed **from** would be gone, and
+everything they are computed **to** would survive. The repository carries the
+analysis products, the manuscript, the reports and the pre-registrations. It does
+not carry: 2 790 run directories / 44 794 files / 848 MB of raw evidence in the
+three unpublished archive parts; 18 MB of phase-40 live collections; the two
+rebuttal-note commits; and the 3.8 MB aborted collection. **Publishing the
+deposit is the only step that changes this**, and it is §7.4.
+
+---
+
 ## 9. How to verify the state yourself
 
 ```

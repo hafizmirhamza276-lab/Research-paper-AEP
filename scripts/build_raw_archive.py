@@ -640,6 +640,20 @@ PART3_EXCLUDED: tuple[Excluded, ...] = EXCLUDED + EXTENSION_OMITTED + (
         "and not the deposit.",
     ),
     Excluded(
+        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
+        "b2-s4-2026-09-14-ABORTED-order-mismatch",
+        "ABORTED at 19 of 60 runs and NOT a session -- stopped when the "
+        "collection order was found interleaved while the four existing "
+        "class-sweep sessions are cell-major. Its own ABORTED.md says so and "
+        "phase report 22 gives the account. Retained on the precedent of "
+        "b2-paired-v2-s2-aborted-2026-08-28, that an aborted collection is "
+        "evidence about the instrument. **ADD IT ON THE NEXT REBUILD.** That "
+        "precedent is IN the 2026-09-03 part and this root is in none, while "
+        "phase report 22 also left it untracked -- so as of 2026-09-25 it is "
+        "3.8 MB of run directories existing on exactly one disk, in neither "
+        "git nor any archive. Found by auditing what a clean clone carries.",
+    ),
+    Excluded(
         "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/"
         "phase40-deployment-2026-09-18",
         "WITHHELD PENDING REDACTION. deployment-show.json carries "
