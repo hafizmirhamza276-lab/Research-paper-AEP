@@ -700,3 +700,111 @@ two-second call"*). It is correct today and it is the one part of the fault
 surface that can drift from its setting without a gate noticing, which is the
 reason `\BootstrapResamples` is generated. A fourth macro and three word
 substitutions would close it.
+
+---
+
+## 10. The two data figures are still the pre-exclusion ones (audit 2, F1)
+
+**Status: OPEN, and blocked on the environment rather than on the data.**
+Raised 2026-09-25 during the B2 pass. **This is a pre-submission blocker.**
+
+### What was fixed
+
+`experiments/analyze.py` `write_figures()` now applies the same exclusion the
+tables apply, from the same two names, which are defined there once and
+imported by `scripts/paper_tables.py`:
+
+```
+MIS_MAPPED_CRASH_POINT     = "after_barrier_before_dispatch"
+DEFERRED_BASELINE_SYSTEMS  = {B0, B1, B2, B4, B4b}
+admissible_to_a_pooled_rate(row)
+```
+
+Before this, the rule existed only in the table generator, which is how the
+tables dropped these cells on 2026-09-24 and the figures kept plotting them.
+
+### What is not fixed
+
+**`paper/figures/figure-1-undetected-vs-ambiguity.pdf` and
+`figure-2-duplicates-by-crash-point.pdf` are unchanged**, still the files
+committed in `c2fffa6` on 2026-08-12. Regenerating them needs `matplotlib`,
+which is installed in neither the Windows nor the WSL interpreter on this
+machine, and installing it is a network operation this session was told not to
+perform. They were **not** edited by hand.
+
+A second obstacle is worth recording because it is not obvious: the figure path
+runs `experiments.analyze` over the **raw run tree**, and this machine holds 84
+of the 432 run directories `experiments/results/matrix/MANIFEST.md` records.
+`make reproduce-figures` detects that and skips rather than plotting a quarter
+of the data. So regenerating these two figures needs matplotlib **and** an
+unpacked archive part, or a driver that calls `write_figures()` with the
+tracked `per-cell-metrics.csv` relabelled from `(session-3)` to `crashed`.
+
+### Exactly what the regenerated figures must show
+
+Computed here from the tracked CSV through the fixed predicate, so the check is
+one command rather than an eye:
+
+| system | Figure 1 plots now | must become | n now | n must become |
+|---|---|---|---|---|
+| AEP-full | 0.0000 | 0.0000 | 540 | 540 |
+| B0 | 0.7978 | **0.7639** | 450 | **360** |
+| B1 | 0.8156 | **0.7778** | 450 | **360** |
+| B2 | 0.7933 | **0.7611** | 450 | **360** |
+| B3 | 0.0000 | 0.0000 | 540 | 540 |
+| B4b | 0.0000 | 0.0000 | 540 | **450** |
+| B4 | 0.5593 | **0.4778** | 540 | **450** |
+
+The right-hand denominators are Table 7's: 360 for B0–B2, 450 for B4 and B4b,
+540 for AEP-full and B3.
+
+**Figure 2** must lose the five baselines' bars at
+`after_barrier_before_dispatch` entirely, leaving only AEP-full's and B3's,
+both zero, because their kill at that position was immediate. It currently
+plots B0 0.93, B1 0.97, B2 0.92 and B4 0.97 there, which is a kill during
+transmission under a label that says otherwise.
+
+### Two sentences that are false until that happens
+
+Both in `06-evaluation.tex`, and both become true on regeneration, so they were
+left alone rather than rewritten twice:
+
+- *"the supplementary material shows the same executions pooled to one bar pair
+  per system"* — the figure currently carries 90 more executions per system
+  than Table 7.
+- *"The figure adds no number this section does not state"* — it currently adds
+  0.7978, 0.8156, 0.7933 and 0.5593.
+
+**What was fixed now**, because it is false under both the old figure and the
+new one: the claim that *"the three systems on the right have an empty left
+bar"*. The x-order is AEP, B0, B1, B2, B3, B4b, B4, so the rightmost is B4 at
+0.5593 now and 0.4778 after. Both the caption and the main text now name the
+three systems instead of their position.
+
+### What would close it
+
+`pip install matplotlib`, then regenerate and byte-compare. The verdict is the
+table above.
+
+---
+
+## 11. Table 6's step counts are counterexample lengths, and `run_tlc.sh` prints something else
+
+**Status: CHECKED 2026-09-25, no manuscript change needed beyond a corrected
+provenance comment.**
+
+Table 6's caption defines *steps* as *"the length of the counterexample TLC
+returns"*, and its values are that. The provenance comment beside it said the
+numbers came from `scripts/run_tlc.sh`, whose `DEPTH` column is the **search
+depth reached**, a different and larger quantity. For `aof-rewind` the
+counterexample is 4 states and the search depth is 5, with 24 states left on
+the queue.
+
+The comment now says which quantity the column is and warns that the script's
+`DEPTH` is not it. Recorded here because the next person to regenerate the
+table from the script's output would have put the wrong numbers in and every
+gate would have stayed green.
+
+The same run is the evidence for entry `§2.5` of the second audit:
+`24 states left on the queue` is what "the committed run never explores the
+states where the paper's claim could fail" means, measured.
