@@ -143,6 +143,43 @@ TIMING_SUSPENSION_TOLERANCE_SECONDS = 2.0
 #: Derived artifacts give that condition the explicit label ``crashed``.
 FIGURE_REGIME = "crashed"
 
+#: The crash point the harness delivered later than its name says, and the five
+#: systems it delivered it late for. For those five the roadmap's
+#: ``after_barrier_before_dispatch`` and ``mid_dispatch`` resolve to one
+#: position, and the kill lands inside the socket wait with the request already
+#: sent. AEP-full and B3 give the two names different positions and are not
+#: affected.
+#:
+#: **Defined here rather than in the table generator** because the figures and
+#: the tables have to apply one rule. They did not: the tables dropped these
+#: cells from every pooled rate on 2026-09-24 and the figures, last regenerated
+#: 2026-08-12, kept plotting them, so the supplementary figure showed 0.7978 for
+#: B0 where Table 7 showed 0.7417--0.7833. ``scripts/paper_tables.py`` imports
+#: both names from here.
+MIS_MAPPED_CRASH_POINT = "after_barrier_before_dispatch"
+
+DEFERRED_BASELINE_SYSTEMS = frozenset(
+    {
+        "B0_NAIVE_RETRY",
+        "B1_LEASE_ONLY",
+        "B2_CAS_ONLY",
+        "B4_DURABLE_WORKFLOW",
+        "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    }
+)
+
+
+def admissible_to_a_pooled_rate(row: Mapping[str, Any]) -> bool:
+    """False for exactly the five baselines' mis-mapped cells.
+
+    A row with no ``crash_point`` is admissible: a source that does not
+    resolve crash points cannot carry the defect.
+    """
+    return not (
+        row.get("system") in DEFERRED_BASELINE_SYSTEMS
+        and row.get("crash_point") == MIS_MAPPED_CRASH_POINT
+    )
+
 #: Revision-stage operational sensitivity threshold for the B3/AEP declared-
 #: ambiguity comparison. This was not preregistered. Five percentage points is
 #: 27 additional terminal escalations in the 540-execution crashed arm, which
@@ -1233,6 +1270,11 @@ def write_figures(
     for row in per_cell:
         if row.get("regime") != figure_regime:
             continue
+        # The same exclusion the tables apply. Without it this figure pools
+        # six crash points for systems the outcomes table pools four or five
+        # of, and the two disagree on the same quantity.
+        if not admissible_to_a_pooled_rate(row):
+            continue
         bucket = pooled[row["system"]][row["metric"]]
         bucket[0] += int(row["successes"])
         bucket[1] += int(row["total"])
@@ -1311,11 +1353,17 @@ def write_figures(
     written.append(path)
 
     # -- Figure 2: undetected duplicate rate by crash point -----------------
+    # Excluded here too, and the effect is visible rather than arithmetical:
+    # the five baselines simply have no bar at
+    # ``after_barrier_before_dispatch``, because what was collected there is a
+    # kill during transmission and not the position the axis names. AEP-full
+    # and B3 keep theirs, their kill at that point having been immediate.
     duplicate_cells = [
         row
         for row in per_cell
         if row["metric"] == "undetected_duplicate_rate"
         and row.get("regime") == figure_regime
+        and admissible_to_a_pooled_rate(row)
     ]
     crash_points = sorted({row["crash_point"] for row in duplicate_cells})
     # Pool across response classes and keyings ON THE COUNTS.

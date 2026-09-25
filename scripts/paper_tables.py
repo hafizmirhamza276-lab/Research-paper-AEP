@@ -70,6 +70,14 @@ from experiments.statistics import (  # noqa: E402
     wilson_upper_bound,
 )
 
+# One definition of the exclusion, shared with the figure writer. See the
+# comment beside MIS_MAPPED_CRASH_POINT below.
+from experiments.analyze import (  # noqa: E402
+    DEFERRED_BASELINE_SYSTEMS,
+    MIS_MAPPED_CRASH_POINT,
+    admissible_to_a_pooled_rate,
+)
+
 #: The explicit fault-regime label whose runs answer RQ1.
 CRASHED_REGIME = "crashed"
 CRASH_FREE_REGIME = "p0"
@@ -96,20 +104,13 @@ REDIS_KILL_REGIME = "redis-kill-preack"
 #: 2026-09-24 (``prompts/phase-53-abd-immediate-2026-09-24.md``). That
 #: collection is a DIFFERENT SESSION and is never pooled with this one; it is
 #: read separately, through ``--abd-immediate``, into the ``\Abd*`` macros.
-MIS_MAPPED_CRASH_POINT = "after_barrier_before_dispatch"
-
-#: The systems whose workers resolve roadmap names through
-#: ``experiments/baselines/crash_points.py``. B5/B5b are absent: the Temporal
-#: worker reads the roadmap name directly and was never affected.
-DEFERRED_BASELINE_SYSTEMS = frozenset(
-    {
-        "B0_NAIVE_RETRY",
-        "B1_LEASE_ONLY",
-        "B2_CAS_ONLY",
-        "B4_DURABLE_WORKFLOW",
-        "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
-    }
-)
+#: Imported, not restated. The figures apply the same rule from the same
+#: names (``experiments/analyze.py``), because when the tables dropped these
+#: cells and the figures did not, the supplementary figure plotted 0.7978 for
+#: B0 against the outcomes table's 0.7417--0.7833 for six weeks.
+#:
+#: B5/B5b are absent from the set: the Temporal worker reads the roadmap name
+#: directly and was never affected.
 
 #: Said once, and quoted into every provenance comment that depends on it.
 POOLED_EXCLUSION_NOTE = (
@@ -127,14 +128,7 @@ def pooled_rows(rows: Iterable[dict[str, str]]) -> list[dict[str, str]]:
     nothing else. A row without a ``crash_point`` column is kept: pooled
     sources that do not resolve crash points cannot carry the defect.
     """
-    return [
-        row
-        for row in rows
-        if not (
-            row.get("system") in DEFERRED_BASELINE_SYSTEMS
-            and row.get("crash_point") == MIS_MAPPED_CRASH_POINT
-        )
-    ]
+    return [row for row in rows if admissible_to_a_pooled_rate(row)]
 
 RESPONSE_ORDER = [
     "AUTHORITATIVE_READBACK",
@@ -385,8 +379,9 @@ def emit_ambiguity_by_crashpoint(rows: list[dict[str, str]], out: Path) -> None:
         r"endpoint capability. The rate is not a constant of the protocol: it "
         r"is zero where the crash precedes the intent write (nothing was "
         r"promised), zero throughout \textsc{auth} (absence is provable), and "
-        r"highest exactly where no effect can exist but the endpoint cannot "
-        r"say so. Undetected duplicates and lost effects are $0$ in every cell "
+        r"at its maximum at the two crash points where no effect can exist but "
+        r"the endpoint cannot say so. "
+        r"Undetected duplicates and lost effects are $0$ in every cell "
         r"of this table.}"
     )
     lines.append(r"\label{tab:ambiguity-by-crashpoint}")

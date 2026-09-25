@@ -4,7 +4,7 @@
 % Cells are successes/total straight from the CSV row.
 \begin{table}[t]
 \centering
-\caption{AEP-full's declared-ambiguity rate, by crash point and endpoint capability. The rate is not a constant of the protocol: it is zero where the crash precedes the intent write (nothing was promised), zero throughout \textsc{auth} (absence is provable), and highest exactly where no effect can exist but the endpoint cannot say so. Undetected duplicates and lost effects are $0$ in every cell of this table.}
+\caption{AEP-full's declared-ambiguity rate, by crash point and endpoint capability. The rate is not a constant of the protocol: it is zero where the crash precedes the intent write (nothing was promised), zero throughout \textsc{auth} (absence is provable), and at its maximum at the two crash points where no effect can exist but the endpoint cannot say so. Undetected duplicates and lost effects are $0$ in every cell of this table.}
 \label{tab:ambiguity-by-crashpoint}
 \small
 \renewcommand{\arraystretch}{1.08}
