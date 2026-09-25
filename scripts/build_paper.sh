@@ -298,6 +298,21 @@ if ! "${NUMBER_RUNNER[@]}" scripts/check_american_spelling.py \
   failures=$((failures + 1))
 fi
 
+# Same surface again, and here for the same reason: the article carries no
+# acknowledgment and no reference to AI tools or coding agents (the author's
+# supervisor, 2026-09-25), and the disclosure ships as a separate report whose
+# source material is reports/ai-use-disclosure-source-2026-09-25.md. The block
+# that carried it is gone; what this catches is the language coming back by
+# another route -- a caption, a table cell, or paper/generated/, none of which
+# a reader would associate with the removed block. Staged PDF, before
+# promotion, so a build that would ship it never replaces a clean artifact.
+echo
+echo "=== AI-tool language in the rendered text ==="
+if ! "${NUMBER_RUNNER[@]}" scripts/check_no_ai_language.py \
+  "$BUILD_DIR/${JOB}.pdf"; then
+  failures=$((failures + 1))
+fi
+
 if [ "$failures" -ne 0 ]; then
   echo
   echo "DO NOT SUBMIT: ${failures} check(s) failed. Existing ${JOB}.pdf preserved."
