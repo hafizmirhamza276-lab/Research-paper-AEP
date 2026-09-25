@@ -80,8 +80,8 @@ guarantee is evaluated where durability is \emph{raced for} and lost, not where
 it is \emph{unavailable}; the latter is untested.
 
 \paragraph{The mock provider's realism} The endpoint is a purpose-built service
-with a configurable delay, timeout and error distribution, and a
-transactionally written ground-truth ledger. It is realistic in the dimension
+with a transactionally written ground-truth ledger, run at the delay, timeout
+and error rates \cref{sec:eval-setup} states. It is realistic in the dimension
 the experiment turns on (its reconciliation capability, the independent
 variable of \cref{tab:outcomes}) and unrealistic in most others: no
 authentication, no rate limits, no partial writes, no schema evolution, one
@@ -111,14 +111,14 @@ set Maximum Attempts to 3, add a heartbeat, or make the activity idempotent.
 The first two land between our two points on the same duplicate/loss trade, and
 the third leaves the problem this paper is about.
 
-\paragraph{B4 is our model of a durable-execution engine, and the real one
-disagrees with it on magnitude} \Cref{sec:eval-rq1} reports the production
-engine run against the same endpoint in both configurations B4 and B4b
-instantiate, together with the four things that bound the comparison. The threat
-this leaves is narrow and is stated once: every B4 and B4b rate in this paper is
-our implementation's, the direction of the result transfers and the magnitude
-does not, and no rate here should be read as any engine's. We registered that
-obligation before collecting the engine data rather than after seeing it.
+\paragraph{B4 is our model of a durable-execution engine, and no rate here is
+the engine's} \Cref{sec:eval-rq1} reports the production engine run against the
+same endpoint in both configurations B4 and B4b instantiate, together with the
+four things that bound it. The threat this leaves is narrow: every B4 and B4b
+rate in this paper is our implementation's, and no rate here should be read as
+any engine's. We registered that obligation before collecting the engine data
+rather than after seeing it. We do not compare the engine's rates against B4's,
+for the reason \cref{sec:eval-rq1} gives.
 
 \paragraph{Declared ambiguity is not evaluated as an operational outcome} The
 paper measures how often AEP declares ambiguity and shows that it never

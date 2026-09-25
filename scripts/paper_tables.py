@@ -40,6 +40,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import json
 import math
@@ -440,6 +441,43 @@ def tex_number(value: float) -> str:
     no barrier". Formatting belongs to the number.
     """
     return f"{value:,.1f}".replace(",", r"\,")
+
+
+def provider_fault_surface() -> dict[str, float]:
+    """The provider fault configuration every matrix run was collected under.
+
+    Not a measurement. It is a setting, and §VI-A states it because a reader
+    cannot otherwise tell how much of a baseline's duplicate rate the harness
+    manufactured. Generated for the same reason as ``\\BootstrapResamples``:
+    a constant that lives in the code can move without the sentence quoting it
+    moving.
+
+    Parsed rather than imported. ``experiments.run_matrix`` pulls the harness
+    and its Redis client in at module scope, and the generator reads results,
+    never protocol state.
+    """
+    source = (ROOT / "experiments" / "run_matrix.py").read_text(encoding="utf-8")
+    for node in ast.parse(source).body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "FAULTS"
+            for target in node.targets
+        ):
+            continue
+        return {
+            key: float(value)
+            for key, value in ast.literal_eval(node.value).items()
+            if isinstance(value, (int, float))
+        }
+    raise SystemExit(
+        "paper_tables.py: experiments/run_matrix.py defines no FAULTS"
+    )
+
+
+def tex_percent(fraction: float) -> str:
+    """A probability as a whole-number percentage where it is one."""
+    return f"{round(fraction * 100, 6):g}"
 
 
 def tex_sigfigs(value: float, digits: int = 2) -> str:
@@ -1178,6 +1216,17 @@ SUPERSEDED_MACROS: frozenset[str] = frozenset({
     "BthreeAlwaysMedian",
     "AepAlwaysMedian",
     "AepAlwaysPninetyfive",
+    # Phase 53's three per-cell duplicate rates. The second audit showed that
+    # the duplicates in that cell are the provider's timeout background and
+    # not the post-crash re-execution: the same systems duplicate at
+    # \CrashFreeDupLow--\CrashFreeDupHigh with no worker killed at all. §VI-F
+    # therefore states the cell's range against that background and draws no
+    # per-cell duplicate conclusion, so these three have no sentence left.
+    # \AbdDupRange stays: it is the range the comparison is made with.
+    # They keep their provenance in reports/phase-report-53-abd-immediate.
+    "AbdBzeroDupNoReadback",
+    "AbdBfourDupNoReadback",
+    "AbdBfourDupAuth",
 })
 
 def emit_numbers(
@@ -2221,6 +2270,25 @@ def emit_numbers(
                     f"{int(coverage[key]):,}".replace(",", r"\,"),
                     f"analysis/coverage.json | {key}",
                 )
+
+    # --- The fault surface every run shares ------------------------------
+    # One code path applies these to every plan entry, so they hold for every
+    # regime: the crashed cells, the crash-free p0 cells and phase 53 alike.
+    # §VI-A had said the crash-free regime injects nothing, which is what
+    # makes these macros necessary rather than decorative.
+    faults = provider_fault_surface()
+    for name, key in (
+        ("ProviderTimeoutPct", "timeout_probability"),
+        ("ProviderErrorPct", "server_error_probability"),
+        ("ProviderDuplicatePct", "duplicate_response_probability"),
+    ):
+        macro(
+            name,
+            tex_percent(faults[key]),
+            f"experiments/run_matrix.py | FAULTS[{key!r}] as a percentage",
+            "applied at the single fault_overrides call site, so every "
+            "regime carries it",
+        )
 
     # --- RQ4: recovery, as counts and never as a rate --------------------
     # analyze.py has computed recovery_success_rate since the first
@@ -3318,6 +3386,52 @@ def emit_numbers(
         ws5_everysec = ws5.get("everysec")
         if ws5_everysec:
             executions = ws5_everysec / "per-execution.csv"
+
+            # The crash-free duplicate rates. No worker is killed in this
+            # cell, so what the retrying baselines duplicate here is what the
+            # provider's timeouts produce on their own, and §VI-F reads phase
+            # 53's rates against it. Emitted from per-cell-metrics.csv, which
+            # is this file's only rate source.
+            retrying = (
+                "B0_NAIVE_RETRY",
+                "B1_LEASE_ONLY",
+                "B2_CAS_ONLY",
+                "B4_DURABLE_WORKFLOW",
+            )
+            crash_free_cells = [
+                row
+                for row in read_rows(ws5_everysec / "per-cell-metrics.csv")
+                if row["metric"] == "undetected_duplicate_rate"
+                and row["regime"] == "p0"
+                and row["system"] in retrying
+            ]
+            if len(crash_free_cells) == len(retrying):
+                crash_free_rates = sorted(
+                    float(row["rate"]) for row in crash_free_cells
+                )
+                for name, value, which in (
+                    ("CrashFreeDupLow", crash_free_rates[0], "lowest"),
+                    ("CrashFreeDupHigh", crash_free_rates[-1], "highest"),
+                ):
+                    macro(
+                        name,
+                        f"{value:.4f}",
+                        "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                        "per-cell-metrics.csv | "
+                        "metric=undetected_duplicate_rate regime=p0",
+                        f"{which} of the four retrying baselines "
+                        "(B0, B1, B2, B4), no worker killed",
+                    )
+                denominator = {int(row["total"]) for row in crash_free_cells}
+                if len(denominator) == 1:
+                    macro(
+                        "CrashFreeDupExec",
+                        str(denominator.pop()),
+                        "ws5-2026-09-10/t1-p0-everysec/analysis/"
+                        "per-cell-metrics.csv | executions per system behind "
+                        "the two rates above",
+                    )
+
             aep15 = crash_free_latencies(executions, "AEP_FULL")
             b3_15 = crash_free_latencies(executions, "B3_INTENT_NO_BARRIER")
             b0_15 = crash_free_latencies(executions, "B0_NAIVE_RETRY")

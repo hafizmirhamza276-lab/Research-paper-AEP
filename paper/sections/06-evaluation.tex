@@ -44,18 +44,29 @@ is excluded from AEP-full or B3, whose kill at that position was immediate.
 The position itself was re-collected at the intended instant, and
 \cref{sec:eval-abd} reports it as a separate session.
 
-\paragraph{Faults} Workers are separate OS processes killed with real
-\texttt{SIGKILL} at one of the six crash points of \cref{tab:crashpoints}. A
-\emph{regime} is a named fault condition, not a matrix dimension, and we
-report each separately because they are different experiments. Five are
-reported, and each is named here with the section that reports it:
+\paragraph{Faults} Two fault sources run in every cell, and the first is not a
+regime. The provider times out on \ProviderTimeoutPct{}\% of requests and
+returns a 5xx on \ProviderErrorPct{}\%, answering the rest after a constant
+delay. It never returns a duplicate of its own
+(\ProviderDuplicatePct{}\%), so every duplicate the oracle records was applied
+by a caller that called twice. One code path in the runner applies this
+configuration to every run, which means it holds in every regime below,
+including the crash-free one.
+
+The second source is the worker. Workers are separate OS processes killed with
+real \texttt{SIGKILL} at one of the six crash points of
+\cref{tab:crashpoints}. A \emph{regime} is a named crash or store fault, not a
+matrix dimension, and we report each separately because they are different
+experiments. Five are reported, and each is named here with the section that
+reports it:
 
 \begin{itemize}
 \item \textbf{crashed}: every execution is killed at the cell's crash point.
       This is the regime RQ1 is about (\cref{sec:eval-rq1}), and it is also
       the regime of the detection ablation (\cref{sec:eval-detection}).
-\item \textbf{crash-free} (\texttt{p0}): nothing is injected. The only regime
-      RQ3 may use (\cref{sec:eval-rq3}).
+\item \textbf{crash-free} (\texttt{p0}): no worker is killed and the store is
+      left alone. The provider faults above still apply. The only regime RQ3
+      may use (\cref{sec:eval-rq3}).
 \item \textbf{\texttt{redis-kill-preack}}: no worker crash; Redis is hard-killed
       with \texttt{docker kill -s KILL} at the instruction boundary between the
       intent CAS and the barrier acknowledgment, then restarted and verified.
@@ -76,6 +87,18 @@ reported, and each is named here with the section that reports it:
 
 A sixth regime, a $30\%$ crash probability, was collected and is in the
 artifact; no table here quotes its rates, so it is not one of the five.
+
+The timeouts change how every rate below should be read. A timeout leaves the
+caller unable to say whether the effect was applied, which is the situation
+this protocol exists for, and a caller that retries can apply the effect twice
+with no crash involved. The four retrying baselines do: in the crash-free
+cells they duplicate at \CrashFreeDupLow{}--\CrashFreeDupHigh{} over
+\CrashFreeDupExec{} executions each, where AEP-full, B3 and B4b record none.
+Every pooled baseline rate below sits on that background. Where the kill lands
+after the request is on the wire the rate approaches one; where it lands
+before transmission it falls back toward the background
+(\cref{fig:bycrashpoint}). A low per-cell rate is therefore evidence about the
+timeouts and not about the crash.
 
 \paragraph{Oracle} A standalone mock provider records every \emph{actually
 applied} mutation in a SQLite ledger (WAL, \texttt{synchronous=FULL}, one
@@ -178,20 +201,18 @@ declared ambiguity in any of \BfiveRuns{} non-void runs (\BfiveAmb{} and
 \BfivebAmb{} declarations), so the third corner of \cref{sec:trilemma} goes
 unreached by the engine itself and not merely by our model of it.
 
-The direction transfers, and the magnitudes are closer than an earlier
-comparison of ours suggested. Each configuration lands in the corner the
-supplementary comparison assigns it, with exactly zero events of the other
-kind. At the same crash point, measured at the intended instant
-(\cref{sec:eval-abd}), B4 duplicates at \AbdBfourDupAuth{} to
-\AbdBfourDupNoReadback{} across the three capability classes against the
-engine's \BfiveDup{}, and B4b, which does not re-execute, loses nothing at all
-against the engine's \BfivebLost{}. \textbf{B4's rates are our model's, not
-the product's}, and no rate in this paper should be read as an engine's.
-
-The two cells are still not matched on exposure, and the comparison should not
-be read as though they were. The engine's cell kills one worker per ten-execution
-run; ours kills every execution. A cell that matched both the position and the
-exposure has not been collected.
+Each configuration lands in the corner the supplementary comparison assigns
+it, with exactly zero events of the other kind. The provider produced those
+events, not the crash: the engine's cell kills one worker per ten-execution
+run, and its \BfiveDup{} sits at the provider's \ProviderTimeoutPct{}\%
+timeout rate. The result is therefore about what a durable-execution engine
+does with an ambiguous call, which is the case this paper is about, and not
+about how it recovers from a crash. We do not set its rates against B4's or
+B4b's: ours kills every execution, so the two cells differ in exposure and in
+how many executions meet a timeout at all, and a cell matching both the
+position and the exposure has not been collected. \textbf{B4's rates are our
+model's, not the product's}, and no rate in this paper should be read as an
+engine's.
 
 The collection itself took three attempts, and the record is in the
 artifact. The first was voided; the second was replaced because every run
@@ -208,9 +229,7 @@ data at all three capability classes. The rates are conditional on a
 different timeout is a different cell, and no timing number here is any engine's
 recovery latency. The interval arithmetic is asymmetric: B4's intervals rest
 on three runs against the engine's thirty, and three clusters put resampled
-means on multiples of one thirtieth. The separation should therefore be read
-from the point estimates, which differ by roughly $0.8$, and not from the
-intervals failing to overlap. And the crash window at the dispatch point is sized by the
+means on multiples of one thirtieth. And the crash window at the dispatch point is sized by the
 server and by loopback rather than by the protocol, so its width is not
 like-for-like with B4's.
 
@@ -218,12 +237,11 @@ That is the sharpest form of the argument the paper can make \emph{against our
 model of a durable-execution engine}. That qualification carries the argument, and
 the paragraphs above are why: B4 is our implementation
 of the pattern, not a product, and we registered before collecting B5 that a
-gap of that size would oblige us to re-scope every B4 claim. The shape of the
-argument transfers and the magnitude is our model's. The argument is nonetheless
-made against a system that has everything the write-ahead pattern is supposed to
-provide. The record is necessary and it is not sufficient, because the
-record cannot contain the fact that matters, which is whether the provider
-applied the effect. What separates B3 and AEP-full from B4 is not durability but the
+large gap between the two would oblige us to re-scope every B4 claim. The
+argument is nonetheless made against a system that has everything the
+write-ahead pattern is supposed to provide. The record is necessary and it is
+not sufficient, because the record cannot contain the fact that matters, which
+is whether the provider applied the effect. What separates B3 and AEP-full from B4 is not durability but the
 absence of an edge back into the dispatching state: the transition
 table has no path that re-enters \textsc{about-to-fire}, checked inside the
 atomic script (\cref{fig:statemachine}). What separates them from B4b is that
@@ -315,10 +333,11 @@ that would split the two cases.
 \centering
 \includegraphics[width=\columnwidth]{figures/figure-2-duplicates-by-crash-point.pdf}
 \caption{Undetected duplicate rate by crash point, crashed regime, pooled over
-endpoint capabilities weighted by executions. The baselines' rate is not
-concentrated at one crash point: any interruption after the request is on the
-wire is enough, which is why a mechanism that acts only \emph{after} the call
-cannot help.}
+endpoint capabilities weighted by executions. The baselines' rate is near one
+wherever the kill lands once the request is on the wire, which is why a
+mechanism acting only \emph{after} the call cannot help. At
+\texttt{before\_intent\_write}, where nothing has been sent, it falls back to
+the timeout background of \cref{sec:eval-setup}.}
 % Generated by experiments/analyze.py write_figures(), regime "(session-3)".
 \label{fig:bycrashpoint}
 \end{figure}
@@ -877,9 +896,9 @@ zero.
 
 The prediction was wrong about the execution rather than about the kill. It
 reasoned from the killed attempt, which does send nothing, to the execution,
-which in this regime outlives its first attempt: a supervisor re-executes, and
-a system holding no durable record of the first attempt calls again. Every
-applied effect in the collection has a recorded dispatch attempt behind it.
+which in this regime outlives it: a supervisor re-executes, and the four
+systems configured to retry call again. Every applied effect in the collection
+has a recorded dispatch attempt behind it.
 
 What the collection does establish is the position, and it establishes it
 three ways. The number of executions recording an applied effect with no
@@ -891,10 +910,10 @@ dispatch attempts in all three of its cells. AEP-full and B3, whose kill at
 this position was immediate in the matrix as well, record the same zeros
 there.
 
-So the systems that re-execute do reach the provider from a position where
-nothing had been sent, at \AbdDupRange{} undetected duplicates per cell,
-\AbdBzeroDupNoReadback{} for B0 and \AbdBfourDupNoReadback{} for B4 under
-\textsc{none}. The systems that hold a pre-dispatch record, or that decline to
-retry, reach it at none. That is the same separation \cref{sec:eval-detection}
-reports, measured here without a mis-timed kill in the way, and it is one
-session rather than a replication of the matrix.
+The duplicates in this cell are the provider's timeouts and not the
+re-execution, and we draw no duplicate-rate conclusion from it. A kill before
+transmission leaves one re-execution, and one re-execution applies one effect;
+every duplicate here required a second dispatch inside the same execution,
+which is what a timeout produces. The rates are \AbdDupRange{} per cell,
+against \CrashFreeDupLow{}--\CrashFreeDupHigh{} for the same systems in the
+crash-free cells, where no worker is killed at all.

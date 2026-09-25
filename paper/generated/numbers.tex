@@ -354,6 +354,18 @@
 % analysis/coverage.json | runs_with_usable_timing
 \newcommand{\RunsWithUsableTiming}{176}
 
+% experiments/run_matrix.py | FAULTS['timeout_probability'] as a percentage
+% applied at the single fault_overrides call site, so every regime carries it
+\newcommand{\ProviderTimeoutPct}{15}
+
+% experiments/run_matrix.py | FAULTS['server_error_probability'] as a percentage
+% applied at the single fault_overrides call site, so every regime carries it
+\newcommand{\ProviderErrorPct}{5}
+
+% experiments/run_matrix.py | FAULTS['duplicate_response_probability'] as a percentage
+% applied at the single fault_overrides call site, so every regime carries it
+\newcommand{\ProviderDuplicatePct}{0}
+
 % per-cell-metrics.csv | system=AEP_FULL regime=crashed
 % metric=recovery_success_rate | sum(successes) over the five crash points at which an intent exists
 \newcommand{\RecoveryAepResolved}{450}
@@ -719,21 +731,20 @@
 % experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv | system=B4B_DURABLE_WORKFLOW_AT_MOST_ONCE | sum(dispatch_attempts) over 90 executions
 \newcommand{\AbdBfourbDispatch}{0}
 
-% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B0_NAIVE_RETRY metric=undetected_duplicate_rate response_class=NO_READBACK
-% 8/30
-\newcommand{\AbdBzeroDupNoReadback}{0.2667}
-
-% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate response_class=NO_READBACK
-% 6/30
-\newcommand{\AbdBfourDupNoReadback}{0.2000}
-
-% experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | system=B4_DURABLE_WORKFLOW metric=undetected_duplicate_rate response_class=AUTHORITATIVE_READBACK
-% 4/30
-\newcommand{\AbdBfourDupAuth}{0.1333}
-
 % experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv | undetected_duplicate_rate, min--max over the 12 cells of the four systems that re-execute
 % B4b is excluded from the range because it does not re-execute and is zero in all three of its cells
 \newcommand{\AbdDupRange}{0.0667--0.2667}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-cell-metrics.csv | metric=undetected_duplicate_rate regime=p0
+% lowest of the four retrying baselines (B0, B1, B2, B4), no worker killed
+\newcommand{\CrashFreeDupLow}{0.1333}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-cell-metrics.csv | metric=undetected_duplicate_rate regime=p0
+% highest of the four retrying baselines (B0, B1, B2, B4), no worker killed
+\newcommand{\CrashFreeDupHigh}{0.1800}
+
+% ws5-2026-09-10/t1-p0-everysec/analysis/per-cell-metrics.csv | executions per system behind the two rates above
+\newcommand{\CrashFreeDupExec}{150}
 
 % ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv | cluster bootstrap over runs, 10000 resamples, seed 20260806, appendfsync=everysec
 % point estimate of (median AEP-full - median B3), 15 and 15 runs
