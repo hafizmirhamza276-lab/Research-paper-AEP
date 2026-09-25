@@ -89,9 +89,9 @@ real-world effect may be unaccounted for.
 durable write-ahead record is necessary (Traces 1, 2) and not sufficient
 (Trace 3); what distinguishes AEP is an outcome class in which it can decline
 to decide. B3, which is AEP with the durability barrier removed and nothing
-else, reaches the same corner, so the barrier is not what buys
-declared ambiguity (\cref{sec:eval-detection} measures the ablation), and
-\cref{sec:eval-prevention} isolates what it does buy.}
+else, reaches the same corner wherever the record survives, so the barrier is
+not what buys declared ambiguity (\cref{sec:eval-detection} measures the
+ablation), and \cref{sec:eval-prevention} isolates what it does buy.}
 \label{tab:trilemma}
 \small
 \renewcommand{\arraystretch}{1.08}

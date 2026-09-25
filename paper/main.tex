@@ -244,12 +244,12 @@ Our central result separates two claims usually sold as one.
 \emph{Detection} (no undetected duplicate and no lost effect, leaving a
 residual of declared ambiguity) comes from the pre-dispatch record and a
 transition table that forbids re-entry into dispatch, not from the durability
-barrier. \emph{Prevention} is the barrier's, against a narrower
+barrier, for every fault that leaves the record readable.
+\emph{Prevention} is the barrier's, against a narrower
 fault than it appears: it withholds dispatch when the store dies inside the
 acknowledgment window, not when storage discards writes while reporting
-success, which we injected and where it dispatched. Because detection
-does not depend on the barrier for record-preserving faults, its cost is a
-deployment choice, not the protocol's price.
+success, which we injected and where it dispatched. Detection's cost is
+therefore a deployment choice, not the protocol's price.
 \end{abstract}
 
 \begin{IEEEkeywords}

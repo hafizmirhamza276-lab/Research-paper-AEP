@@ -116,7 +116,8 @@ reached the accounts.
       and the boundary at which it stops.} The write-ahead pattern is
       normally presented as one mechanism delivering one guarantee, and it is
       two. The pre-dispatch record together with no re-entry
-      is what makes an outcome detectable, and it does so without the
+      is what makes an outcome detectable, and where the record survives it
+      does so without the
       durability barrier: ablating the barrier produces no observed difference
       in the crashed-regime detection metrics (\cref{sec:eval-detection}). The
       barrier contributes something else, withholding the external call when
@@ -124,9 +125,9 @@ reached the accounts.
       the crash faults that dominate this literature and large under the fault
       that targets Redis (\cref{sec:eval-prevention}). Separating the two
       changes what a deployment must pay for: detection is nearly free,
-      prevention is where the fsync cost lives, and an operator can buy the
-      first without the second (the supplementary material, \emph{The barrier
-      is a deployment choice}).
+      prevention is where the fsync cost lives, and where the record survives
+      an operator can buy the first without the second (the supplementary
+      material, \emph{What the barrier costs, at three measured points}).
 \end{itemize}
 
 \subsection{What this paper does not claim}

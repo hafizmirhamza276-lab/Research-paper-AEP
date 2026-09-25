@@ -283,8 +283,8 @@ because a read-back that can prove absence resolves the execution whichever key
 it is asked under.
 
 The supplementary material plots the same executions as one bar pair per system,
-pooled over crash points and capabilities: the three systems on the right have an
-empty left bar, and only AEP-full and its ablation B3 have a right bar at all.
+pooled over crash points and capabilities: AEP-full, B3 and B4b have no left
+bar, and only AEP-full and its ablation B3 have a right bar at all.
 The figure adds no number this section does not state; the bars are Wilson
 intervals on pooled counts, and the cluster-aware bootstrap intervals in the artifact's
 per-cell metrics are wider and are the ones to quote.
@@ -371,7 +371,7 @@ assigns each guarantee to the mechanism that actually produces it.
 The assignment is not the one we expected, and it is the paper's central
 structural result.
 
-\subsubsection{Detection is the record's, not the barrier's}
+\subsubsection{Detection is the record's, where the record survives}
 \label{sec:eval-detection}
 
 Everything in \cref{sec:eval-rq1} survives the barrier's removal intact: zero
@@ -419,14 +419,14 @@ point and a system are not ten independent trials. The one-sided
 95\% Wilson upper confidence bound on a zero numerator over
 \BthreeVsAepRuns{} run clusters is \AblationZeroUpperRun{}\%. This is a
 one-sided bound using the 95th normal quantile; it is not the upper endpoint of
-a two-sided 95\% Wilson interval, which uses the 97.5th quantile. Each system's
-rate is individually bounded this way. When the two system bounds are stated
-simultaneously, Bonferroni gives joint coverage of at least 90\%, not 95\%.
-Under that simultaneous event, both rates lie in
-$[0,\AblationZeroUpperRun{}\%]$, so their absolute difference is at most
-\AblationZeroUpperRun{} percentage points. This finite-sample bound is the support
-for ``no observed difference'' in the two zero-event metrics; the corresponding
-Fisher values are not evidence of equivalence.
+a two-sided 95\% Wilson interval, which uses the 97.5th quantile. Each rate is
+individually bounded this way. Four are stated simultaneously, two metrics on
+each of the two systems, so Bonferroni gives joint coverage of at least 80\%,
+not 95\%. Under that simultaneous event every rate lies in
+$[0,\AblationZeroUpperRun{}\%]$, so each metric's difference between the arms
+is at most \AblationZeroUpperRun{} percentage points. This finite-sample bound
+is the support for ``no observed difference'' in the two zero-event metrics;
+the corresponding Fisher values are not evidence of equivalence.
 
 Treating the executions as independent would give
 \AblationZeroUpperExec{}\%. We use the run, for the same reason the Fisher
@@ -449,8 +449,8 @@ barrier's cost can have it under the faults measured here, and the
 supplementary material prices that configuration explicitly.
 
 This also sharpens what B4 shows. B4 has a durable record, acknowledged by the
-same barrier, and duplicates at the highest rate in the study; B3 has a durable
-record, no barrier, and duplicates at zero. What separates them is not
+same barrier, and is the only system holding one that duplicates at all; B3 has
+a durable record, no barrier, and duplicates at zero. What separates them is not
 durability but that the record is written \emph{before} the call and that no
 path re-enters the dispatching state. Both kept their record throughout, which
 is the condition the comparison assumes.
@@ -458,9 +458,11 @@ is the condition the comparison assumes.
 \textbf{That condition is the scope of this result, and our own model says what
 lies outside it.} Every detection cell we collected either left the record
 readable or never restarted the store. \Cref{tab:modelchecking} carries the
-matched pair: with the barrier ablated and a restart that replays a shorter
-log, \emph{no lost effect} fails; with the barrier enabled under the same
-restart, only version monotonicity breaks and \emph{no lost effect} holds. So
+matched pair, two configurations differing in one constant: with the barrier
+ablated and a restart that replays a shorter
+log, \emph{no lost effect} fails at eight steps; with the barrier enabled under
+the same restart, version monotonicity breaks and \emph{no lost effect} holds
+over the complete bounded state space. So
 the model predicts that under a fault which destroys the record the barrier is
 what separates them, and that detection without it fails. We have not tested
 that prediction. It is falsifiable, the cell that would decide it is
@@ -812,10 +814,12 @@ rested on three runs per arm, and twelve more did not confirm it.
 
 Read against \cref{sec:eval-detection} the ordering still says something
 stronger than ``AEP costs two seconds''. Whatever the detection guarantee
-costs, it is the difference between B0 and B3, since B3 is the system that
-already has that guarantee in full, and it is small enough that fifteen runs
+costs, it is the difference between B0 and B3, since B3 already has that
+guarantee under these faults, and it is small enough that fifteen runs
 cannot separate it from zero. The \BarrierCostFifteen{}\,ms buys the prevention
-guarantee of \cref{sec:eval-prevention} and nothing else.
+guarantee of \cref{sec:eval-prevention}. Under a fault that destroys the
+record it would buy detection as well, which \cref{sec:eval-detection}
+predicts and we have not tested.
 
 That figure is also a property of a \emph{configuration}, not of AEP. Under
 \texttt{appendfsync everysec} an acknowledgment cannot return until the next
@@ -834,9 +838,9 @@ barrier removed. Its table is built from the three-run cells, so its
 \texttt{always} column and the \BarrierCostAlwaysFortyFive{}\,ms quoted here
 differ in sign; they are two cells, not two readings of one. The claim this
 section rests on takes the later collections: the barrier costs
-\BarrierCostFifteen{}\,ms under \texttt{everysec} over fifteen runs and
-\BarrierCostAlwaysFortyFive{}\,ms under \texttt{always} over fifteen, and
-both are stated above with their intervals.
+\BarrierCostFifteen{}\,ms under \texttt{everysec} over fifteen runs, stated
+above with its interval, and \BarrierCostAlwaysFortyFive{}\,ms under
+\texttt{always} over fifteen, whose interval is in the supplementary.
 \subsection{RQ4: recovery}
 \label{sec:eval-rq4}
 
