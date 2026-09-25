@@ -899,3 +899,219 @@ and did it without anyone remembering to look.
 
 **The rebuild was NOT performed**, per instruction. §19 D1–D7 is what remains,
 and it is now unblocked.
+
+---
+
+# UPDATE 3 — part 3 is rebuilt and the deposit is ready to publish
+
+Written 2026-09-25. **Nothing was published and no upload was started.**
+Author decision: rebuild now, `numbers.tex` is settled.
+
+## 22. The §19 checklist, run immediately before the rebuild
+
+Not trusted from an earlier green — re-run at `b71ad7a` in the minutes before
+the build:
+
+| check | expected | actual |
+|---|---|---|
+| A1 runs with a `run-config.json` | 45 | **45** |
+| A2 committed | non-zero | **14 files** |
+| A3 `check_prereg_order.py` | exit 0 | **0** |
+| B1 `paper_tables.py` clean | empty | **empty** |
+| B2 `\Abd*` macros | 11 | **11** |
+| B3 root named in provenance | non-zero | **11** |
+| B4 pooled rates | 0.74 / 0.78 | **0.74 / 0.78** |
+| B5 `check_paper_numbers.py` | exit 0 | **0** |
+| **C1 coverage check FAILS** | exit 1, naming the root | **exit 1** — *"abd-immediate-2026-09-24: supplies 10 macro(s) and is in NO archive part"* |
+
+Also confirmed the manuscript is settled: the last `paper/` change was
+`82247f9`, five commits back.
+
+## 23. The rebuilt part
+
+| | before | **after** |
+|---|---|---|
+| roots | 8 | **10** |
+| files in manifest | 12 147 | **13 485** |
+| run directories | 665 | **729** (729 by `-r<N>`, 729 by `run-config.json` — the two agree) |
+| payload uncompressed | 356 739 129 | **385 567 093 bytes** |
+| `aep-raw-evidence.tar` | — | 402 688 000 bytes, sha256 `75077ebdaa48c208…` |
+| **`aep-raw-evidence.tar.gz`** | 18 984 605 | **20 557 415 bytes**, sha256 `752de049bce5627e…` |
+| `MANIFEST.sha256` | — | 2 280 002 bytes, sha256 `88fa47ed05d73883…` |
+| `ARCHIVE-METADATA.json` | — | 13 911 bytes, sha256 `f1dde7da5ee2dcec…` |
+
+**Two roots added:**
+
+| root | runs | files | why |
+|---|---|---|---|
+| `abd-immediate-2026-09-24` | 45 | 1 052 | Phase 53. Supplies ten macros; the reason C1 was failing |
+| `b2-s4-2026-09-14-ABORTED-order-mismatch` | 19 | 286 | Retention kept it, archiving had missed it. In neither git nor any part until now |
+
+**Total upload: 69 MB across nine files.**
+
+## 24. Every verification, re-run after the rebuild
+
+| check | result |
+|---|---|
+| **`check_archive_covers_macros.py`** | **exit 0** — *"every macro's evidence is obtainable: deposited, or tracked"*; 13 roots, 156 attributions, 42 top-level names across 3 parts |
+| `scan_archive_for_leakage.py` over the new part, 17 categories | **`No blocking category present.`** All six credential/personal-data categories **0**; the five 2026-09-24 additions **0** |
+| independent pattern scan, 20 patterns | **0** on every credential and identity pattern |
+| non-zero categories | only the disclosed ones, 1 distinct value each: `KP248`, `D:\134`, `6.6.114.1` (the kernel version), plus the `/root/` and `/mnt/d/` layout paths |
+| **R1** only parts 1+2 | **FAILS exit 1** — *"missing archive(s) ['2026-09-24']"* |
+| **R2** part 3's `tar.gz` deleted | **FAILS exit 1** — *"is missing"* |
+| **R3** one byte flipped at offset 6 000 000 | **FAILS exit 1** — digest mismatch, `file count 3921 != 13485`, `9565 manifest problems` |
+| **R4** all three parts intact | **PASSES exit 0** — 26 300 / 18 494 / **13 485** files, 0 problems; *"VERIFIED: every archive at this source is byte-for-byte the one this repository describes"* |
+
+## 25. `docs/29` corrected for three parts
+
+§0's shape block now says **three archives, nine files** and lists all nine;
+Ruin #2 now says all three are required and tells you to run the coverage check
+before uploading; §0c's caveat that the extension had never been scanned is
+**gone**, replaced by the results for all three; §1 is the nine-file digest
+table; and §3's contents paragraph names phase 53, the aborted session, and the
+one root deliberately withheld with the reason.
+
+## 26. THE PUBLICATION SEQUENCE
+
+Steps marked **YOURS** need a browser, a Zenodo login or a decision. **Step 6 is
+irreversible.**
+
+### Step 0 — a last look. 2 minutes, not yours.
+
+```sh
+python scripts/check_archive_covers_macros.py     # expect exit 0
+python scripts/check_prereg_order.py              # expect exit 0
+python3 scripts/verify_published_archive.py \
+  --local <D>/aep-raw-archive \
+  --local <D>/aep-raw-archive-ext \
+  --local <D>/aep-raw-archive-p3 --skip-rederive  # expect VERIFIED
+```
+
+All three were green at `b71ad7a`. Re-run if anything has changed since.
+
+### Step 1 — YOURS. Rehearse on the sandbox. Reversible.
+
+**This is the only exercise of the fetch-by-DOI path, which has never run.**
+
+1. Go to **https://sandbox.zenodo.org** and create a record. This is the one
+   place in the whole procedure where you create anything.
+2. Upload all **nine** files, from `docs/29` §1's table.
+3. Paste the metadata from **`docs/29` §3** — upload type `Dataset`; the title;
+   author `Khan, Hamza` with ORCID `0009-0005-9380-2188`; the description HTML
+   block; version `1.0.0`; language `eng`; the ten keywords; licence
+   `MIT License`; access `Open Access`; and the one related identifier — the
+   GitHub URL, relation *is supplement to*, resource type *Software*.
+4. **Publish it on the sandbox** so it gets a resolvable sandbox DOI.
+5. Check the seven things in `docs/29` §2: nine files with §1's sizes; the
+   description renders as headings and a table, not raw HTML; all three manifest
+   digests appear and are copyable; the date-suffix paragraph is present; the
+   related identifier is a link; the licence shows MIT; the author name renders
+   as you want it cited.
+6. Run the verifier against the sandbox DOI:
+
+   ```sh
+   python3 scripts/verify_published_archive.py \
+     --doi 10.5281/zenodo.<sandbox-id> --json /tmp/sandbox.json
+   ```
+
+7. **Then delete one file from the sandbox record and re-run it.** It must exit
+   non-zero with *"the record … is missing 1 of 9 required files"*. A gate that
+   has never been seen to fail has not been tested.
+8. Delete the sandbox draft.
+
+### Step 2 — not yours. Nothing. Everything else was done.
+
+### Step 3 — YOURS. Open the existing draft. Reversible.
+
+Go to **https://zenodo.org/deposit** and open the draft holding
+**`10.5281/zenodo.22766567`** → Edit.
+
+> **Do not create a new record.** That identifier is already in
+> `paper/main.tex:125`, all four built PDFs, `README.md`, `ARTIFACT.md`,
+> `CITATION.cff` and `docs/36`. A new record mints a *different* DOI and orphans
+> every one of them. `docs/29` §0, Ruin #1.
+
+### Step 4 — YOURS. Upload the nine files. Reversible until you publish.
+
+From `D:\personal\AEP\`:
+
+| from | upload as |
+|---|---|
+| `aep-raw-archive\MANIFEST.sha256` | `MANIFEST-2026-09-03.sha256` |
+| `aep-raw-archive\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-03.json` |
+| `aep-raw-archive\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-03.tar.gz` |
+| `aep-raw-archive-ext\MANIFEST.sha256` | `MANIFEST-2026-09-15.sha256` |
+| `aep-raw-archive-ext\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-15.json` |
+| `aep-raw-archive-ext\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-15.tar.gz` |
+| `aep-raw-archive-p3\MANIFEST.sha256` | `MANIFEST-2026-09-24.sha256` |
+| `aep-raw-archive-p3\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-24.json` |
+| `aep-raw-archive-p3\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-24.tar.gz` |
+
+**Rename on upload — the date suffix is required**, because one record cannot
+hold three files called `aep-raw-evidence.tar.gz`. Renaming changes no bytes, so
+every digest in `docs/29` §1 is equally a digest of the local file and of the
+deposited one.
+
+**Do not select the whole folder.** `aep-raw-archive\` also contains two loose
+run directories (`ws6-b5-s1-2026-09-08\`, `…-attempt3\`) that are already inside
+the tarballs. Select the three files by name in each folder.
+
+Upload the small files first, so a reader sees the map before the territory.
+
+### Step 5 — YOURS. Paste the description. Reversible.
+
+The whole HTML block from **`docs/29` §3**, which now states what the three parts
+actually contain. Copy it; do not retype it.
+
+### Step 6 — YOURS. PUBLISH. **THIS IS IRREVERSIBLE.**
+
+A published Zenodo file cannot be replaced or withdrawn. New versions can be
+added; this one cannot be taken back. Everything before this point is cheap.
+
+### Step 7 — YOURS. Confirm the version DOI did not change.
+
+Zenodo shows two DOIs: a **version** DOI for this exact deposit, and a
+**concept** DOI that always resolves to the newest. `10.5281/zenodo.22766567` is
+the version DOI of this draft and **must be unchanged after publishing.**
+
+> **If it changed, stop.** Something created a new record, and step 9 onward is
+> wrong until that is resolved.
+
+Record the concept DOI in `docs/36` for completeness; the manuscript does not
+cite it.
+
+### Step 8 — not yours. The verifier, against the real record.
+
+```sh
+python3 scripts/verify_published_archive.py \
+  --doi 10.5281/zenodo.22766567 \
+  --json reports/raw/verify-published-archive.json
+```
+
+It resolves the DOI, refuses a record missing any of the nine files, downloads
+**from Zenodo rather than from disk**, checks twelve digests, extracts 26 300 /
+18 494 / 13 485 files and verifies each against its own manifest, counts run
+directories both ways, and re-derives the analysis products for the 2026-09-03
+part. Anything other than `VERIFIED` is a finding to report, **not** to
+re-upload over.
+
+### Step 9 — not yours. Flip the state. Reversible.
+
+`paper/main.tex:126`: `\archivedoistate{RESERVED}` → `PUBLISHED`. Leave
+`\archivedoi` alone. **Exactly one manuscript sentence changes**, Section 8's,
+from *"the Zenodo record reserved under DOI … begins resolving when the record
+is published"* to *"deposited at https://doi.org/10.5281/zenodo.22766567."*
+
+Then the seven non-LaTeX sites in `docs/29` §5 — `README.md`, `ARTIFACT.md`,
+`CITATION.cff` (three places), `paper/arxiv-metadata.md` (three places) and
+`docs/36` — rebuild all four documents supplementaries-first, and tag.
+
+**And `claims-to-review.md` entry 3 closes as RESOLVED with no manuscript text
+changed at all**, because `voided/` genuinely is in the 2026-09-03 part and the
+only thing that was false was the word *published*.
+
+### What is no longer a blocker
+
+`check_archive_covers_macros.py` was the last non-author blocker and it now
+exits 0. **Everything between here and a resolving DOI is steps 1 and 3–7 — all
+yours.**

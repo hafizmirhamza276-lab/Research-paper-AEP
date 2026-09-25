@@ -157,20 +157,20 @@ ARCHIVES: tuple[Archive, ...] = (
         deposited_manifest="MANIFEST-2026-09-24.sha256",
         deposited_metadata="ARCHIVE-METADATA-2026-09-24.json",
         manifest_sha256=(
-            "a743f7ab1b92b0b1de7dc6fcac229cce385c056001f2cda6ac36693bd9f05414"
+            "88fa47ed05d73883fbee3f59afeade726b80477e8eb95ea25a1984b19aa204d8"
         ),
         tar_sha256=(
-            "62b72a5128e3a0106c4ddd529f5a2b5374692793e000f2e1ec7efa98d42ac8d7"
+            "75077ebdaa48c2080f5b04a340a2df668b7d45759c4c624969114ef87f8428df"
         ),
         tar_gz_sha256=(
-            "d3bfadb7f1c2131999042dc1ef59e203647c79c2b9dee5cd497aca7d2129daec"
+            "752de049bce5627e5f37355827be7e3d78a8af01e0e18a54fdb6ab10b9ae3141"
         ),
         metadata_sha256=(
-            "24ec54ae6c67446ba4dacdb1caea89fbd54bb57012ae2d2bb827499da9411096"
+            "f1dde7da5ee2dcecef284787716e99dfcb1bb193fde2a9f850fccc323dfe1d1c"
         ),
-        files=12147,
-        run_dirs=665,
-        roots=8,
+        files=13485,
+        run_dirs=729,
+        roots=10,
         # Same position as the 2026-09-15 extension: verified file-by-file
         # against its own manifest, with no re-derivation baseline to compare
         # against. Claiming a re-derivation pass would be claiming a
@@ -178,9 +178,11 @@ ARCHIVES: tuple[Archive, ...] = (
         rederive=False,
         min_configs=600,
         note=(
-            "the roots neither earlier part reached, including the five that "
-            "supply eighteen manuscript macros; no re-derivation baseline "
-            "recorded, manifest check only"
+            "the roots neither earlier part reached: the five supplying "
+            "eighteen manuscript macros, phase 53's re-collected crash "
+            "point, the phase-40 text evidence, and the aborted "
+            "class-sweep session; no re-derivation baseline recorded, "
+            "manifest check only"
         ),
     ),
 )

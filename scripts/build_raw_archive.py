@@ -492,6 +492,28 @@ PART3_ROOTS: tuple[Root, ...] = (
             "reports/raw/phase40-*/ as preserved evidence."
         ),
     ),
+    Root(
+        label="b2-s4-2026-09-14-ABORTED-order-mismatch",
+        source=(
+            f"{_REPO}/experiments/results/"
+            "b2-s4-2026-09-14-ABORTED-order-mismatch"
+        ),
+        tracked_analysis=None,
+        note=(
+            "ABORTED at 19 of 60 runs and NOT a session. Stopped deliberately "
+            "on 2026-09-14 when the collection order was found interleaved "
+            "while the four existing class-sweep sessions are cell-major -- a "
+            "structural difference that would have been pooled into one paired "
+            "sign test. Its own ABORTED.md says it must never be counted as a "
+            "session and phase report 22 gives the account. NO analysis "
+            "directory, and no manuscript number derives from it. Archived on "
+            "the precedent it cites, b2-paired-v2-s2-aborted-2026-08-28, that "
+            "an aborted collection is evidence about the instrument -- that "
+            "precedent is in the 2026-09-03 part, and until 2026-09-25 this "
+            "root was in none of the three AND untracked, so it existed on "
+            "exactly one disk. Found by auditing what a clean clone carries."
+        ),
+    ),
 )
 
 
@@ -638,20 +660,6 @@ PART3_EXCLUDED: tuple[Excluded, ...] = EXCLUDED + EXTENSION_OMITTED + (
         "its pre-registration 5 commits the manuscript to macros computed "
         "from it. This line is the reason a part built today is a REHEARSAL "
         "and not the deposit.",
-    ),
-    Excluded(
-        "/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/"
-        "b2-s4-2026-09-14-ABORTED-order-mismatch",
-        "ABORTED at 19 of 60 runs and NOT a session -- stopped when the "
-        "collection order was found interleaved while the four existing "
-        "class-sweep sessions are cell-major. Its own ABORTED.md says so and "
-        "phase report 22 gives the account. Retained on the precedent of "
-        "b2-paired-v2-s2-aborted-2026-08-28, that an aborted collection is "
-        "evidence about the instrument. **ADD IT ON THE NEXT REBUILD.** That "
-        "precedent is IN the 2026-09-03 part and this root is in none, while "
-        "phase report 22 also left it untracked -- so as of 2026-09-25 it is "
-        "3.8 MB of run directories existing on exactly one disk, in neither "
-        "git nor any archive. Found by auditing what a clean clone carries.",
     ),
     Excluded(
         "/mnt/d/personal/AEP/Research-paper-AEP/reports/raw/"

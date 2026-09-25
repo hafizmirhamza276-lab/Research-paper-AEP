@@ -16,17 +16,26 @@ re-checked against the tree as it stands.
 
 ## 0. The shape of the deposit, and the two ways to ruin it
 
-**One record. Two archives. Six files. One DOI — the one that already exists.**
+**One record. THREE archives. NINE files. One DOI — the one that already
+exists.**
 
 ```
 https://doi.org/10.5281/zenodo.22766567     <- RESERVED, already a draft
-├── aep-raw-evidence-2026-09-03.tar.gz        from /root/aep-raw-archive
-├── MANIFEST-2026-09-03.sha256                from /root/aep-raw-archive
-├── ARCHIVE-METADATA-2026-09-03.json          from /root/aep-raw-archive
-├── aep-raw-evidence-2026-09-15.tar.gz        from /root/aep-raw-archive-ext
-├── MANIFEST-2026-09-15.sha256                from /root/aep-raw-archive-ext
-└── ARCHIVE-METADATA-2026-09-15.json          from /root/aep-raw-archive-ext
+├── aep-raw-evidence-2026-09-03.tar.gz        from aep-raw-archive
+├── MANIFEST-2026-09-03.sha256                from aep-raw-archive
+├── ARCHIVE-METADATA-2026-09-03.json          from aep-raw-archive
+├── aep-raw-evidence-2026-09-15.tar.gz        from aep-raw-archive-ext
+├── MANIFEST-2026-09-15.sha256                from aep-raw-archive-ext
+├── ARCHIVE-METADATA-2026-09-15.json          from aep-raw-archive-ext
+├── aep-raw-evidence-2026-09-24.tar.gz        from aep-raw-archive-p3
+├── MANIFEST-2026-09-24.sha256                from aep-raw-archive-p3
+└── ARCHIVE-METADATA-2026-09-24.json          from aep-raw-archive-p3
 ```
+
+**The third part was added 2026-09-24 and rebuilt 2026-09-25.** It carries the
+roots neither earlier part reached — including five that supply eighteen
+manuscript macros, which were outside both parts for nine days. Neither earlier
+part was reopened.
 
 **Ruin #1 — creating a new record.** `10.5281/zenodo.22766567` is *reserved*: a
 draft record already holds it, and that identifier is already written into
@@ -35,11 +44,17 @@ draft record already holds it, and that identifier is already written into
 *different* DOI and orphans every one of those references. There is no step
 anywhere in this checklist that creates a record on zenodo.org.
 
-**Ruin #2 — uploading one archive.** Both are required. The extension carries
-the WS-5 deployment sweep, the real-Temporal baseline and the write-loss cell —
-numbers §VI of the paper states. §6's verifier now refuses a record that is
-missing any of the six files, but that check runs *after* publication and a
-published record cannot be replaced.
+**Ruin #2 — uploading fewer than three archives.** All three are required.
+The extension carries the real-Temporal baseline and the write-loss cell; the
+third carries the WS-5 deployment sweep behind Section 6.4's barrier cost and
+phase 53's re-collected crash point — numbers Section 6 states. §6's verifier
+refuses a record missing any of the **nine** files, but that check runs *after*
+publication and a published record cannot be replaced.
+
+`scripts/check_archive_covers_macros.py` is the check that would have caught
+the nine-day gap: it derives the required roots from `numbers.tex`'s own
+provenance comments and fails if any root a macro rests on is in no part. **Run
+it before uploading.** It exits 0 as of 2026-09-25.
 
 ### Why one record rather than two
 
@@ -136,16 +151,35 @@ archive, 493 MB, before this checklist was written. Full result:
 **There is no personal identifier of any kind.** What is there is a machine name
 and a directory layout, both disclosed in §3 rather than removed.
 
-> **The extension archive has not been through this scan.** It was built after
-> it (phase 35) and carries the same kind of content from the same host, but
-> "the same kind of content" is an inference, not a scan. If that matters to
-> you, run
-> `python scripts/scan_archive_for_leakage.py --root /root/aep-raw-archive-ext`
-> before uploading and record the result beside the first.
+**All three parts have now been scanned.** The caveat that used to sit here —
+that the extension had not been — no longer applies.
+
+The 2026-09-24 part, scanned 2026-09-25 over all 13 485 files:
+**`credential` 0, `third_party_email` 0, `azure_principal` 0,
+`corporate_domain` 0, `azure_resource_path` 0, `phone_number` 0,
+`email_address` 0, `windows_user_path` 0, `account_name` 0, `mac_address` 0,
+`github_identity` 0, `env_dump` 0 — and `No blocking category present.`** What
+is present is the same disclosed set as the first part: `hostname` 1 distinct
+(`KP248`), `windows_drive_path` 1 (`D:\`, the 9p device name),
+`non_loopback_ip` 1 (`6.6.114.1`, the kernel version — the same false positive),
+and the `/root/…` and `/mnt/d/…` layout paths, which are load-bearing for
+`docs/28` §3.1.
+
+**Five of those categories are new**, added 2026-09-24 after a third party's
+corporate account name was found in a phase-40 metadata file: third-party
+e-mail, Azure principal fields, corporate domain, ARM subscription path and
+phone number. They are **blocking**, and they carry an author allow-list so the
+author's own deliberate identifiers do not drown the signal. `--selftest`
+proves they fire, 9 of 9.
 
 ---
 
-## 1. The six files, their digests, and where they are
+## 1. The NINE files, their digests, and where they are
+
+**Nine, not six.** A third part was built 2026-09-24 and rebuilt 2026-09-25 to
+add phase 53's re-collected crash point and the aborted class-sweep session.
+Neither earlier part was reopened, so rows 1-6 are unchanged and still verify
+over exactly the bytes they always covered.
 
 | # | deposited as | from | bytes | sha256 |
 |---|---|---|---|---|
@@ -155,6 +189,14 @@ and a directory layout, both disclosed in §3 rather than removed.
 | 4 | `MANIFEST-2026-09-15.sha256` | `aep-raw-archive-ext/MANIFEST.sha256` | 3 027 470 | `54d1ab0fc1e55283dc0aa1dabf121b047c432063d077074c3c45728735d63cd5` |
 | 5 | `ARCHIVE-METADATA-2026-09-15.json` | `aep-raw-archive-ext/ARCHIVE-METADATA.json` | 8 650 | `91fbd343d255b3023ed36074a09db4c096e1091fdda967f09609b835d6d486a2` |
 | 6 | `aep-raw-evidence-2026-09-15.tar.gz` | `aep-raw-archive-ext/aep-raw-evidence.tar.gz` | 17 563 367 | `6ef11d7c88eef5927f478941f7df71ae25685fdb153afd636fe0250dd37eebf1` |
+| **7** | `MANIFEST-2026-09-24.sha256` | `aep-raw-archive-p3/MANIFEST.sha256` | **2 280 002** | `88fa47ed05d73883fbee3f59afeade726b80477e8eb95ea25a1984b19aa204d8` |
+| **8** | `ARCHIVE-METADATA-2026-09-24.json` | `aep-raw-archive-p3/ARCHIVE-METADATA.json` | **13 911** | `f1dde7da5ee2dcecef284787716e99dfcb1bb193fde2a9f850fccc323dfe1d1c` |
+| **9** | `aep-raw-evidence-2026-09-24.tar.gz` | `aep-raw-archive-p3/aep-raw-evidence.tar.gz` | **20 557 415** | `752de049bce5627e5f37355827be7e3d78a8af01e0e18a54fdb6ab10b9ae3141` |
+
+The third part's uncompressed tar is 402 688 000 bytes, sha256
+`75077ebdaa48c2080f5b04a340a2df668b7d45759c4c624969114ef87f8428df`.
+
+Total upload: **69 MB**.
 
 Upload the small files before the big ones, so a reader browsing the record sees
 the map before the territory.
@@ -307,7 +349,8 @@ HTML; this is written for it.
 <h3>Contents</h3>
 <p><strong>2026-09-03 &mdash; 20 roots.</strong> The 432-run <code>matrix</code> evaluation, from which every outcome rate in the paper is computed; <code>fsync-always</code>, the <strong>six-run</strong> 2026-08-07 appendfsync=always arm; <code>voided/</code>, the excluded oracle-disagreement run and its written explanation; four prevention-replication sessions from 2026-08-21; six paired prevention collections from 2026-08-28, two of them aborted and retained as such; four runtime-replication arms from 2026-09-02; and two arms voided for having been collected against the wrong container runtime.</p>
 <p><strong>2026-09-15 &mdash; 11 roots.</strong> The WS-4 block-level write-loss cell and its voided first attempt; the real-Temporal (B5) baseline, attempt 3 with the superseded attempt 2 and the voided attempt 1; the three phase-13 controlled-prevention sessions with the voided session-3 attempt stopped at run 152; and the two phase-13 in-flight-kill sessions.</p>
-<p><strong>2026-09-24 &mdash; 9 roots.</strong> The trees neither earlier part reached. <strong>WS-5's deployment sweep</strong>: the 15-run crash-free <code>everysec</code> arm behind Section 6.4's barrier cost, the 30% crash-probability regime, the alternative read-back keying cell, and the incomplete sibling of the first. The <strong>45-run</strong> 2026-09-14 appendfsync=always arm &mdash; a different collection from the six-run <code>fsync-always</code> in the 2026-09-03 part, and the manuscript quotes both. And the phase-40 agent-reachability workstream's committed text evidence: the deployment metadata behind its first amendment, and stages 10, 30 and 100.</p>
+<p><strong>2026-09-24 &mdash; 10 roots, 729 run directories, 13&nbsp;485 files.</strong> The trees neither earlier part reached. <strong>WS-5's deployment sweep</strong>: the 15-run crash-free <code>everysec</code> arm behind Section 6.4's barrier cost (105 runs), the 30% crash-probability regime (315), the alternative read-back keying cell (180), and the incomplete sibling of the first (12). The <strong>45-run</strong> 2026-09-14 appendfsync=always arm &mdash; a different collection from the six-run <code>fsync-always</code> in the 2026-09-03 part, and the manuscript quotes both. <strong>Phase 53's re-collected crash point</strong> (<code>abd-immediate-2026-09-24</code>, 45 runs / 450 executions): <code>after_barrier_before_dispatch</code> collected again with the kill delivered at the instant the name denotes, reported by the manuscript as its own session and pooled with nothing. The phase-40 agent-reachability workstream's committed text evidence for stages 10, 30 and 100. And <strong>an aborted collection that is not a session</strong>: <code>b2-s4-2026-09-14-ABORTED-order-mismatch</code>, 19 of a planned 60 runs, stopped when the collection order was found interleaved while the four existing class-sweep sessions are cell-major. Its own <code>ABORTED.md</code> says it must never be counted as a session; it is here because an aborted collection is evidence about the instrument, which is the same reason the 2026-09-03 part carries <code>b2-paired-v2-s2-aborted-2026-08-28</code>.</p>
+<p><strong>One root is deliberately absent, and this record says which.</strong> <code>phase40-deployment-2026-09-18</code> &mdash; two Azure metadata files captured as the evidence for phase 40's first amendment &mdash; is withheld: its <code>deployment-show.json</code> carried a third party's corporate account name in the fields Azure uses to record who created a resource, and publishing it here would publish another person's personal data under this DOI. The finding it supports (that the deployment reports a model alias rather than a version-pinned snapshot) rests on a different key in the same file and is unaffected. Each part's <code>ARCHIVE-METADATA.json</code> lists every root it did not reach, with the reason.</p>
 <p><strong>A correction, stated rather than quietly fixed.</strong> Until 2026-09-24 this description claimed the 2026-09-15 extension contained &ldquo;the WS-5 deployment sweep &hellip; and the 45-run appendfsync=always extension&rdquo;. <strong>It did not.</strong> Those five roots were in neither part, and eighteen macros in the manuscript derive from them. They were missed rather than declined: the archive builder emitted one shared exclusion list into every part, so the extension's <code>ARCHIVE-METADATA.json</code> declared the first archive's exclusions and said nothing about its own coverage. The 2026-09-24 part carries them, its metadata names the omission as an exclusion of its own, and <code>scripts/check_archive_covers_macros.py</code> now fails if any root supplying a macro is absent from every part.</p>
 
 <h3>Counting run directories</h3>
