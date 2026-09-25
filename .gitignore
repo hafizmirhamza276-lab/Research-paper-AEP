@@ -702,3 +702,10 @@ experiments/results/fsync-always-2026-09-14/analysis/*
 # reports/ and prompts/, which are tracked. Ignored rather than deleted --
 # phase 34 classifies, it does not remove (docs/36 section 2.5).
 [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-*.txt
+
+# Delivery archives, rebuilt on demand from paper-overleaf/ and paper/.
+# Not tracked: they are a packaging of files that are already tracked, and
+# aep-for-supervisor.zip additionally bundles QA records that belong in
+# reports/ rather than in a second copy under a different name.
+/aep-overleaf.zip
+/aep-for-supervisor.zip
