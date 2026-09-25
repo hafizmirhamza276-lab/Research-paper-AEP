@@ -705,8 +705,10 @@ substitutions would close it.
 
 ## 10. The two data figures are still the pre-exclusion ones (audit 2, F1)
 
-**Status: OPEN, and blocked on the environment rather than on the data.**
-Raised 2026-09-25 during the B2 pass. **This is a pre-submission blocker.**
+**Status: CLOSED 2026-09-25.** Raised 2026-09-25 during the B2 pass and
+closed the same day: both figures were regenerated and every value in the
+table below was read back out of the regenerated PDFs. It was a
+pre-submission blocker.
 
 ### What was fixed
 
@@ -723,14 +725,21 @@ admissible_to_a_pooled_rate(row)
 Before this, the rule existed only in the table generator, which is how the
 tables dropped these cells on 2026-09-24 and the figures kept plotting them.
 
-### What is not fixed
+### What was not fixed when this entry was raised
 
 **`paper/figures/figure-1-undetected-vs-ambiguity.pdf` and
-`figure-2-duplicates-by-crash-point.pdf` are unchanged**, still the files
+`figure-2-duplicates-by-crash-point.pdf` were unchanged**, still the files
 committed in `c2fffa6` on 2026-08-12. Regenerating them needs `matplotlib`,
-which is installed in neither the Windows nor the WSL interpreter on this
-machine, and installing it is a network operation this session was told not to
-perform. They were **not** edited by hand.
+which the session that raised this entry could not reach, and installing it is
+a network operation that session was told not to perform. They were **not**
+edited by hand, then or since.
+
+The premise turned out to be half right. `matplotlib` 3.11.1 **is** installed,
+in this repository's own `.venv` — but that venv's base interpreter is
+`/root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu`, readable only
+by root, so from an unprivileged shell the venv looks empty. Running the
+generator as root inside WSL uses the matplotlib that was already there. No
+install and no download were needed.
 
 A second obstacle is worth recording because it is not obvious: the figure path
 runs `experiments.analyze` over the **raw run tree**, and this machine holds 84
@@ -781,10 +790,59 @@ bar"*. The x-order is AEP, B0, B1, B2, B3, B4b, B4, so the rightmost is B4 at
 0.5593 now and 0.4778 after. Both the caption and the main text now name the
 three systems instead of their position.
 
-### What would close it
+### How it was closed, 2026-09-25
 
-`pip install matplotlib`, then regenerate and byte-compare. The verdict is the
-table above.
+Regenerated with the driver this entry describes, which already existed:
+
+```
+./.venv/bin/python scripts/rebuild_paper_figures.py
+```
+
+run as root inside WSL, on default arguments — `per-cell-metrics.csv`,
+`per-execution.csv`, `--out paper/figures`. It relabels the legacy
+`(session-3)` regime to `crashed` after checking every legacy execution is a
+crashed one, and calls `write_figures()`, so the exclusion is applied by
+`admissible_to_a_pooled_rate()` in `experiments/analyze.py` and by nothing
+else. No figure was edited by hand. `make reproduce-figures` was *not* the
+path used and still skips: it drives `experiments.analyze` over the raw run
+tree, and this machine holds 84 of 432 run directories.
+
+**Every value below was read back out of the regenerated PDFs, not recomputed
+from the CSV.** The PDFs' content streams were inflated and parsed: bar
+heights were calibrated against the y-axis tick marks and their rendered
+labels, and the denominators were recovered by inverting the Wilson error
+bars, which are a function of (successes, total). The same reader applied to
+the *old* committed figures reproduces this entry's "plots now" column exactly
+— 0.7978/450, 0.8156/450, 0.7933/450, 0.5593/540, and B4b at n 540 — which is
+what establishes that the reader is measuring the figure rather than the CSV.
+
+| system | required | read from figure 1 | n required | n read from figure 1 |
+|---|---|---|---|---|
+| AEP-full | 0.0000 | 0.0000 | 540 | 540 |
+| B0 | 0.7639 | 0.7639 | 360 | 360 |
+| B1 | 0.7778 | 0.7778 | 360 | 360 |
+| B2 | 0.7611 | 0.7611 | 360 | 360 |
+| B3 | 0.0000 | 0.0000 | 540 | 540 |
+| B4b | 0.0000 | 0.0000 | 450 | 450 |
+| B4 | 0.4778 | 0.4778 | 450 | 450 |
+
+Seven of seven. The denominators now match \cref{tab:outcomes}'s exactly:
+360 for B0–B2, 450 for B4 and B4b, 540 for AEP-full and B3.
+
+**Figure 2 lost the bars.** At `after_barrier_before_dispatch` all seven bars
+are now zero height: the five deferred baselines have no cell there at all,
+and AEP-full's and B3's are genuinely zero. The same reader on the old figure
+returns B0 0.9333, B1 0.9667, B2 0.9222, B4 0.9667 at that crash point. The
+crash-point axis still carries six positions, because AEP-full and B3 keep
+theirs. B0–B2 are also empty at `after_intent_before_barrier`, which is the
+other reason \cref{tab:outcomes} pools four for them and not five.
+
+The x-order read from figure 1's tick labels is AEP, B0, B1, B2, B3, B4b, B4,
+and figure 2's legend is in the same order, so the positional claim this entry
+already corrected stays corrected: the rightmost system is B4, at 0.4778.
+
+Both figure captions were checked against the regenerated figures and both
+hold. Two loose ends are recorded in entry 12 rather than fixed here.
 
 ---
 
@@ -808,3 +866,83 @@ gate would have stayed green.
 The same run is the evidence for entry `§2.5` of the second audit:
 `24 states left on the queue` is what "the committed run never explores the
 states where the paper's claim could fail" means, measured.
+
+---
+
+## 12. Three loose ends left by the figure regeneration (entry 10)
+
+**Status: OPEN, none of them a wrong number.** Raised 2026-09-25 immediately
+after entry 10 was closed. Recorded rather than fixed because the manuscript
+is another session's, and because each is an omission or an imprecision rather
+than a false value. Nothing here blocks submission on its own.
+
+### 12.1 Figure 2's caption does not say why a whole crash point is empty
+
+`06-evaluation.tex`, the caption of `fig:bycrashpoint`. The exclusion is now
+visible in the figure as an entirely empty group at
+`after_barrier_before_dispatch`, and a second empty group for B0–B2 at
+`after_intent_before_barrier`. The caption explains neither. \Cref{tab:outcomes}
+carries exactly this explanation for the same exclusion — *"B4 and B4b pool
+five, their `after_barrier_before_dispatch` cells excluded because the harness
+delivered that kill inside the socket wait rather than before dispatch. B0 to
+B2 pool four, for that reason and because `after_intent_before_barrier` cannot
+occur in a system that writes no intent"* — and the figure's caption has no
+counterpart. A reader who checks the figure against the table sees a gap with
+no stated cause.
+
+The caption's own claims are all true as drawn. *"The baselines' rate is near
+one wherever the kill lands once the request is on the wire"* holds for B0–B2
+at every on-the-wire crash point that remains: `mid_dispatch` 0.9667/0.9667/
+0.9889, `after_response_before_resolution` 0.9667/0.9333/0.9333,
+`after_resolution_before_barrier` 1.0000/1.0000/1.0000. It does not hold for
+B4, which reads 0.1444 at `after_resolution_before_barrier` — so "the
+baselines" has to be read as B0–B2. That reading was already required before
+the regeneration and is not something the regeneration changed.
+
+### 12.2 `06-evaluation.tex:288` is true in the sense entry 10 meant, and loose in another
+
+*"The figure adds no number this section does not state."* Entry 10 recorded
+this as false-until-regeneration because the figure *"adds 0.7978, 0.8156,
+0.7933 and 0.5593"* — four values outside anything the section states. Those
+four are gone. Each bar now falls inside a value or range the section does
+state: B0–B2 at 0.7639/0.7778/0.7611 inside `\BaselineDupLow`–
+`\BaselineDupHigh` (0.74–0.78), and B4 at 0.4778 inside its stated per-class
+0.4467/0.5067/0.4800. On that reading the sentence is now true, and it was
+left alone.
+
+Read strictly, it still overstates. The bar heights themselves are pooled
+over capability classes and none of them is printed anywhere in the section:
+not 0.4778, and not the two declared-ambiguity bars at 0.3574 (AEP-full) and
+0.3611 (B3). The ambiguity pair was never inside entry 10's complaint, because
+the exclusion does not touch AEP-full or B3, so this imprecision predates the
+stale figure and survives it. If it is worth tightening, the minimal form is
+*"every rate the figure plots lies within the values this section states"*.
+
+The companion sentence at `06-evaluation.tex:137` — *"the supplementary
+material shows the same executions pooled to one bar pair per system"* — is
+now true without qualification. The figure's denominators, recovered from its
+Wilson bars, are 540/360/360/360/540/450/450, which are \cref{tab:outcomes}'s
+exactly. Before the regeneration they were 540/450/450/450/540/540/540.
+
+### 12.3 Two provenance comments name the wrong regime
+
+`06-evaluation.tex`, beside `fig:bycrashpoint`:
+
+```
+% Generated by experiments/analyze.py write_figures(), regime "(session-3)".
+```
+
+and `supplementary.tex`, beside `supp:fig:trade`:
+
+```
+% filtered to regime "(session-3)". NOT from table-1.csv, which pools regimes.
+```
+
+Both figures are now filtered to `FIGURE_REGIME = "crashed"`.
+`scripts/rebuild_paper_figures.py` relabels the legacy `(session-3)` rows to
+`crashed` before plotting, so `(session-3)` is no longer the regime either
+figure is filtered to. These are LaTeX comments and render nowhere, so no gate
+reads them and no number is affected — which is exactly the shape entry 11
+records for Table 6, and the same reason to fix it: the next person to
+regenerate from the comment would filter on a label that the generator has
+already rewritten.
