@@ -168,8 +168,8 @@ direction} A crash after a durable intent but before transmission yields
 an intent that recovery must treat as ambiguous even though no effect
 exists. This inflates the declared-ambiguity rate; it can never inflate the
 undetected-duplicate rate. \Cref{sec:eval-rq1} shows this asymmetry directly in
-the data: ambiguity is highest at exactly the crash point where no effect can
-possibly exist.
+the data: ambiguity is at its maximum at the two crash points where no effect
+can exist.
 
 \subsection{P3: Fail-closed liveness bound}
 \label{sec:p3}
@@ -267,10 +267,14 @@ antecedent is reachable rather than letting it pass while meaning nothing.}
 \toprule
 Assumption removed & Property that breaks & Steps \\
 \midrule
-% Steps are counterexample depths from scripts/run_tlc.sh at the committed
-% bounds; one row per file in formal/configs/. Depths are used rather than
-% state counts because a failing run stops at its first counterexample, so its
-% state count reflects the search order and is not reproducible.
+% Steps are COUNTEREXAMPLE LENGTHS -- the number of States in the trace TLC
+% prints -- at the committed bounds; one row per failing file in
+% formal/configs/. Not the DEPTH column scripts/run_tlc.sh prints, which is the
+% search depth reached and is a larger number: aof-rewind returns a 4-state
+% counterexample at search depth 5, with 24 states left on the queue. Lengths
+% are used rather than state counts because a failing run stops at its first
+% counterexample, so its state count reflects the search order and is not
+% reproducible.
 A single Redis timeline   & P1 monotonicity      & 4 \\  % aof-rewind.cfg
 A truthful \texttt{fsync} & no lost effect       & 8 \\  % write-loss.cfg
 The barrier, plus a restart & no lost effect     & 8 \\  % b3-no-barrier-restart.cfg

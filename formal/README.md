@@ -1,6 +1,6 @@
 # WS-7 — the TLA+ specification
 
-**Status.** Design and specification complete; model-checked in fifteen
+**Status.** Design and specification complete; model-checked in sixteen
 configurations. **The CI job (WS-7 task 7.2) is deliberately not written yet**,
 and neither is the new §IV-D (task 7.3). This pass is the specification and the
 evidence about what it does and does not establish.
@@ -46,7 +46,7 @@ did not have."*
 
 ```sh
 # needs a JRE and tla2tools.jar (TLA_TOOLS=/path/to/tla2tools.jar to override)
-scripts/run_tlc.sh                  # all fifteen configurations
+scripts/run_tlc.sh                  # all sixteen configurations
 scripts/run_tlc.sh base aof-rewind  # named ones
 
 python scripts/check_tla_transitions.py --all   # the drift gate
@@ -135,7 +135,7 @@ the safety result.
 
 ### 4.2 The configuration matrix
 
-Nine of the fifteen configurations exist to show that a stated assumption is
+Nine of the sixteen configurations exist to show that a stated assumption is
 *load-bearing*, or that a liveness antecedent is reachable. Each declares the
 outcome it must produce on its own first line, and `run_tlc.sh` reports a
 configuration that fails for the wrong reason, or that passes when it should
@@ -149,10 +149,10 @@ because the lost effect is seven steps cheaper. The runner reported
 the model actually does, and the duplicate horn got its own configuration —
 which is the outcome an expectation-free runner would have missed entirely.
 
-All fifteen matched their declared expectation, in 137s total. TLC 2.19,
+All sixteen matched their declared expectation. TLC 2.19,
 pinned by digest; `scripts/run_tlc.sh`.
 
-**Assumptions hold — the protocol's claims (6 configurations).**
+**Assumptions hold — the protocol's claims (7 configurations).**
 
 | Configuration | Switched | Distinct states | Depth | Result |
 |---|---|---|---|---|
@@ -162,9 +162,24 @@ pinned by digest; `scripts/run_tlc.sh`.
 | `no-readback` | `Capability=NO_READBACK` | 10,568 | 22 | **pass** |
 | `positive-only` | `Capability=POSITIVE_ONLY_READBACK` | 16,012 | 22 | **pass** |
 | `undeclared-capability` | `Capability=UNDECLARED` | 10,568 | 22 | **pass** |
+| `aof-rewind-invariants` | `SingleTimeline=FALSE`, properties dropped | 52,940 | 28 | **pass** |
 
-All six check all ten properties. These counts are complete state spaces
+The first six check all ten properties. These counts are complete state spaces
 and reproduce exactly run to run.
+
+**`aof-rewind-invariants` checks only the invariants, and that is its
+purpose.** Section VI-C-1 of the manuscript states a matched pair: with the
+barrier ablated and an AOF rewind, `no lost effect` fails (that is
+`b3-no-barrier-restart`, 8 steps); with the barrier enabled under the same
+rewind, only P1 breaks and `no lost effect` holds. Nothing checked the second
+half. `aof-rewind` lists the invariants but `P1_VersionMonotone` is an **action
+property** (`AEP.tla:637`), which TLC evaluates during state generation, and
+`run_tlc.sh` passes no `-continue` — so that run halts at P1's counterexample
+around depth 4–5 with states still on the queue, well short of the depth 8 at
+which the barrier-off violation lives. Dropping the `PROPERTIES` block lets the
+search complete: 52,940 states, depth 28, no invariant violated. It differs
+from `b3-no-barrier-restart` in one constant, `BarrierEnabled`, which is what
+makes the two an ablation. Found by an external audit, 2026-09-25.
 
 Three of them carry most of the weight. **`no-readback` is the configuration
 that matters most for the paper's framing**: the endpoint supplies nothing, can
@@ -212,7 +227,7 @@ that cannot fail is the thing this whole file is trying not to produce.
 2 workers, 2 intent slots, 5 versions, attempt budget 2, one execution, one
 step. The bounds are small, and §7 says what that costs.
 
-**All fifteen configurations run in CI, at exactly these bounds.** The whole
+**All sixteen configurations run in CI, at exactly these bounds.** The whole
 sweep is 137s on a 4-worker TLC, so there is no CI-only model and no subset:
 the repository ships one set of configurations and CI checks all of them,
 including the nine that must fail. `scripts/run_tlc.sh` reads each
@@ -243,7 +258,7 @@ TLC_MAX_VERSION=6 scripts/run_tlc.sh                 # 242s, all 15
 TLC_WORKER_SET='{w1, w2, w3}' scripts/run_tlc.sh base   # 188s, 373,944 states
 ```
 
-A third worker across all fifteen configurations exceeds ten minutes and is not
+A third worker across all sixteen configurations exceeds ten minutes and is not
 part of the routine; `base` alone at three workers passes, which is the useful
 part of that probe. This is the same shape as `verify_refs`' offline/online
 split: the cheap complete check runs per push, the expensive deeper one runs
