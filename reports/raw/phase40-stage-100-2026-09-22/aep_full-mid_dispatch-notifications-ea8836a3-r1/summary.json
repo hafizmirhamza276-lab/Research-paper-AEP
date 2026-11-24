@@ -1,0 +1,36 @@
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 2,
+    "FIRED_UNCONFIRMED": 1
+  },
+  "config_digest": "7877032b06dacbb8da5ac8982f2a8fd59b50e93cad463fcfe221235a4c8a84f6",
+  "crash_injections": 3,
+  "declared_ambiguous_executions": 1,
+  "disagreements": [],
+  "duplicate_prediction_applies": true,
+  "executions_planned": 3,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 2,
+  "expected_effect_executions_upper": 3,
+  "keys_removed": 3,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 2,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 2,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 2,
+    "DECLARED_AMBIGUOUS": 1
+  },
+  "poisoned_detection": [],
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r1",
+  "settled": false,
+  "system": "AEP_FULL",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}

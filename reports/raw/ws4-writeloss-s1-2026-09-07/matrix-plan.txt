@@ -1,0 +1,30 @@
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     True   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     30 (3 runs x 10 executions)
+  workers per run      2
+  cells (total)        2
+  cells (applicable)   2
+  cells (not applic.)  0
+  runs planned         60
+  estimated wall time  1.07 h (3870.0 s)
+
+  by tier:
+    tier 2:   60 runs,  1.07 h   E1: the hard-Redis-kill ablation, AEP-full versus B3
+
+  regimes (a regime is a condition, not a dimension):
+    write-loss-preack      p(crash)=0.0  runs=60   shape=30 x 10, redis kill @ after_intent_before_barrier +0ms
+      block-level write loss at the intent CAS, before the barrier (B1)
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    2     write-loss-preack    AEP_FULL                             none                               ledger_postings  CALLER_REFERENCE     30
+    2     write-loss-preack    B3_INTENT_NO_BARRIER                 none                               ledger_postings  CALLER_REFERENCE     30
+
+==============================================================================

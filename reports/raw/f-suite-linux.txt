@@ -1,0 +1,26 @@
+=== The suite, Linux tree, real Redis 7.2.5, matrix idle ===
+
+$ uv run --frozen python -m pytest experiments/ -q
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+407 passed, 25 skipped, 1 warning in 15.92s
+
+$ REDIS_URL=redis://127.0.0.1:6381/15 uv run --frozen python -m pytest tests/ -q
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+.........................................                                [100%]
+1256 passed, 9 skipped in 18.61s
+
+--- Note on Session 3B section F8 ---
+F8 recorded test_cleanup_spans_more_keys_than_one_scan_batch as failing
+on Windows. It is not an OS artifact: it fails wherever fakeredis is the
+backend and passes wherever real Redis is, on either OS. Demonstrated:
+
+$ pytest tests/test_conftest_safety.py -q          # no REDIS_URL -> fakeredis
+=========================== short test summary info ============================
+FAILED tests/test_conftest_safety.py::test_cleanup_spans_more_keys_than_one_scan_batch
+1 failed, 20 passed in 0.12s
+
+$ REDIS_URL=... pytest tests/test_conftest_safety.py -q   # real Redis
+.....................                                                    [100%]
+21 passed in 0.30s

@@ -1,0 +1,61 @@
+# MockLegacyAPI as a standalone service (PAPER_ROADMAP.md section 3.1(1)).
+#
+#   docker compose -f experiments/mock_api/compose.mock-api.yml up --build -d
+#   curl -s localhost:8099/v1/config | python -m json.tool
+#   docker compose -f experiments/mock_api/compose.mock-api.yml down
+#
+# Deliberately a separate file from compose.phase2.yml. That file provisions
+# the Redis every test in the repository runs against, and both CI jobs bring
+# it up; folding an image build into it would put a Python build on the
+# critical path of every suite run.
+#
+# The tests do not use this file: they start the service in-process
+# (TestClient) or as a plain subprocess (tests/server_harness.py), because a
+# test that SIGKILLs the API needs the process, not the container. This entry
+# exists for running experiments and for reviewers who want the service up
+# with one command.
+
+name: aep-mock-legacy-api
+
+services:
+  mock-legacy-api:
+    build:
+      context: ../..
+      dockerfile: experiments/mock_api/Dockerfile
+    container_name: aep-mock-legacy-api
+    command:
+      - python
+      - -m
+      - experiments.mock_api
+      - --config
+      - /app/config/mock-api.yaml
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8099"
+    ports:
+      - "127.0.0.1:8099:8099"
+    volumes:
+      # Edit the configuration without rebuilding. The service validates it
+      # fully before binding the socket, so a bad edit fails loudly at start.
+      - ./config.example.yaml:/app/config/mock-api.yaml:ro
+      # The ground-truth ledger and the run log outlive the container: they
+      # are the experiment's results, not its scratch space.
+      - mock-api-results:/app/experiments/results
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import urllib.request, sys
+          sys.exit(0 if urllib.request.urlopen(
+              "http://127.0.0.1:8099/v1/health", timeout=2
+          ).status == 200 else 1)
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: "no"
+
+volumes:
+  mock-api-results:

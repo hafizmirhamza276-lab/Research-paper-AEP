@@ -1,0 +1,19 @@
+RunConfig field-set generations found in git history: 3
+  e67efd1f 2026-08-27   42 fields  <- current
+  9154d85a 2026-08-06   38 fields
+  2fefe5e5 2026-08-05   35 fields
+
+verdicts
+    468  VERIFIES AGAINST THE CURRENT SCHEMA
+    150  EXPLAINED BY SCHEMA GENERATION
+
+by root
+  b2-2026-08-21                        {'current': 60}
+  b2-paired-v2-s1-2026-08-28           {'current': 120}
+  fsync-always                         {'current': 6}
+  matrix                               {'EXPLAINED BY SCHEMA GENERATION': 150, 'current': 282}
+
+failures explained, by the generation that reproduces them
+    150  9154d85a
+
+NONE UNEXPLAINED: every stored digest is reproduced by some historical field set, so every failure is schema evolution and nothing was altered after collection.

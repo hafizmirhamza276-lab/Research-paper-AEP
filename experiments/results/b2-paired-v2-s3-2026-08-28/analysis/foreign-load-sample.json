@@ -1,0 +1,729 @@
+{
+  "session": "b2-paired-v2-s3-2026-08-28",
+  "window_start": "2026-08-28T16:48:39+05:00",
+  "window_end": null,
+  "samples": 72,
+  "interval_seconds": 60,
+  "foreign_running_seen": {
+    "komserv-pg-race-cbdd352a": 5,
+    "komserv-pg-race-a397cef4": 5,
+    "komserv-pg-race-0ab1f2ab": 5
+  },
+  "foreign_free_samples": 57,
+  "coverage_note": "sampling began 396 s after this session's collection started; the first 396 s are unsampled",
+  "interpretation_limit": "An empty or sparse foreign list bounds only what was visible at 60 s resolution. A container living less than one interval can be missed entirely, and both foreign containers observed in Phase 8.4 were removed within four minutes. Absence here is weak evidence of quiet, not proof of it.",
+  "session_2_has_no_series": "Sampling was added mid-collection, after session 2. Session 2 has no series; sessions 3 and 4 are not uniformly instrumented with it.",
+  "records": [
+    {
+      "t": "2026-08-28T16:55:15+05:00",
+      "loadavg": "0.56 0.47 0.41",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T16:56:16+05:00",
+      "loadavg": "0.65 0.49 0.42",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T16:57:17+05:00",
+      "loadavg": "0.82 0.56 0.45",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T16:58:17+05:00",
+      "loadavg": "0.51 0.52 0.44",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T16:59:18+05:00",
+      "loadavg": "0.34 0.48 0.44",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:00:19+05:00",
+      "loadavg": "0.12 0.39 0.41",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:01:20+05:00",
+      "loadavg": "0.30 0.40 0.41",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:02:21+05:00",
+      "loadavg": "0.21 0.36 0.39",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-cbdd352a",
+          "state": "running",
+          "status": "Up 18 seconds",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-cbdd352a"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:03:22+05:00",
+      "loadavg": "0.90 0.52 0.44",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-cbdd352a",
+          "state": "running",
+          "status": "Up About a minute",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-cbdd352a"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:04:22+05:00",
+      "loadavg": "0.96 0.58 0.47",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-cbdd352a",
+          "state": "running",
+          "status": "Up 2 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-cbdd352a"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:05:23+05:00",
+      "loadavg": "0.74 0.59 0.48",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-cbdd352a",
+          "state": "running",
+          "status": "Up 3 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-cbdd352a"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:06:24+05:00",
+      "loadavg": "0.34 0.51 0.46",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-cbdd352a",
+          "state": "running",
+          "status": "Up 4 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-cbdd352a"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:07:24+05:00",
+      "loadavg": "0.67 0.54 0.47",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:08:26+05:00",
+      "loadavg": "1.40 0.75 0.54",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:09:29+05:00",
+      "loadavg": "0.89 0.71 0.55",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:10:30+05:00",
+      "loadavg": "0.48 0.64 0.53",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:11:30+05:00",
+      "loadavg": "0.66 0.66 0.54",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:12:31+05:00",
+      "loadavg": "0.31 0.55 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:13:31+05:00",
+      "loadavg": "0.54 0.58 0.53",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:14:32+05:00",
+      "loadavg": "0.48 0.54 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:15:33+05:00",
+      "loadavg": "0.68 0.60 0.54",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:16:33+05:00",
+      "loadavg": "0.42 0.53 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:17:34+05:00",
+      "loadavg": "0.46 0.54 0.53",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:18:35+05:00",
+      "loadavg": "0.79 0.58 0.54",
+      "containers": 2,
+      "running": 1,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:19:36+05:00",
+      "loadavg": "0.55 0.56 0.54",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:20:37+05:00",
+      "loadavg": "0.50 0.54 0.53",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:21:37+05:00",
+      "loadavg": "0.84 0.61 0.56",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:22:38+05:00",
+      "loadavg": "0.61 0.58 0.55",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:23:38+05:00",
+      "loadavg": "0.26 0.49 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:24:39+05:00",
+      "loadavg": "0.22 0.44 0.50",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:25:39+05:00",
+      "loadavg": "0.20 0.40 0.48",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:26:40+05:00",
+      "loadavg": "0.29 0.39 0.47",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:27:40+05:00",
+      "loadavg": "0.14 0.33 0.44",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:28:40+05:00",
+      "loadavg": "0.12 0.30 0.42",
+      "containers": 2,
+      "running": 1,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:29:41+05:00",
+      "loadavg": "0.26 0.31 0.42",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:30:41+05:00",
+      "loadavg": "0.85 0.49 0.48",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-a397cef4",
+          "state": "running",
+          "status": "Up 37 seconds",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-a397cef4"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:31:42+05:00",
+      "loadavg": "0.78 0.52 0.49",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-a397cef4",
+          "state": "running",
+          "status": "Up About a minute",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-a397cef4"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:32:43+05:00",
+      "loadavg": "0.28 0.43 0.45",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-a397cef4",
+          "state": "running",
+          "status": "Up 2 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-a397cef4"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:33:43+05:00",
+      "loadavg": "0.32 0.41 0.44",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-a397cef4",
+          "state": "running",
+          "status": "Up 3 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-a397cef4"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:34:44+05:00",
+      "loadavg": "0.70 0.50 0.47",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-a397cef4",
+          "state": "running",
+          "status": "Up 4 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-a397cef4"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:35:44+05:00",
+      "loadavg": "1.01 0.61 0.51",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:36:45+05:00",
+      "loadavg": "1.03 0.71 0.55",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:37:47+05:00",
+      "loadavg": "1.00 0.77 0.58",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:38:50+05:00",
+      "loadavg": "1.53 1.00 0.67",
+      "containers": 2,
+      "running": 1,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:39:50+05:00",
+      "loadavg": "0.92 0.91 0.66",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:40:51+05:00",
+      "loadavg": "0.56 0.83 0.65",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:41:52+05:00",
+      "loadavg": "0.68 0.81 0.65",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:42:52+05:00",
+      "loadavg": "0.54 0.76 0.64",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:43:53+05:00",
+      "loadavg": "0.73 0.80 0.66",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:44:54+05:00",
+      "loadavg": "0.64 0.75 0.65",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:45:55+05:00",
+      "loadavg": "0.41 0.67 0.63",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:46:56+05:00",
+      "loadavg": "0.61 0.67 0.63",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:47:57+05:00",
+      "loadavg": "0.46 0.62 0.62",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:48:57+05:00",
+      "loadavg": "0.65 0.65 0.63",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:49:58+05:00",
+      "loadavg": "0.45 0.60 0.62",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:50:58+05:00",
+      "loadavg": "0.15 0.48 0.57",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:51:59+05:00",
+      "loadavg": "0.35 0.48 0.56",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:52:59+05:00",
+      "loadavg": "0.13 0.39 0.53",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:54:00+05:00",
+      "loadavg": "0.10 0.33 0.50",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T17:55:00+05:00",
+      "loadavg": "0.27 0.33 0.48",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-0ab1f2ab",
+          "state": "running",
+          "status": "Up 13 seconds",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-0ab1f2ab"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:56:01+05:00",
+      "loadavg": "0.83 0.46 0.52",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-0ab1f2ab",
+          "state": "running",
+          "status": "Up About a minute",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-0ab1f2ab"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:57:02+05:00",
+      "loadavg": "0.66 0.48 0.52",
+      "containers": 3,
+      "running": 2,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-0ab1f2ab",
+          "state": "running",
+          "status": "Up 2 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-0ab1f2ab"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:58:02+05:00",
+      "loadavg": "0.66 0.56 0.55",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-0ab1f2ab",
+          "state": "running",
+          "status": "Up 3 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-0ab1f2ab"
+      ]
+    },
+    {
+      "t": "2026-08-28T17:59:03+05:00",
+      "loadavg": "0.32 0.49 0.52",
+      "containers": 3,
+      "running": 3,
+      "foreign": [
+        {
+          "name": "komserv-pg-race-0ab1f2ab",
+          "state": "running",
+          "status": "Up 4 minutes",
+          "image": "postgres:16-alpine"
+        }
+      ],
+      "foreign_running": [
+        "komserv-pg-race-0ab1f2ab"
+      ]
+    },
+    {
+      "t": "2026-08-28T18:00:04+05:00",
+      "loadavg": "0.31 0.44 0.50",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:01:04+05:00",
+      "loadavg": "0.27 0.42 0.49",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:02:05+05:00",
+      "loadavg": "0.20 0.38 0.47",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:03:06+05:00",
+      "loadavg": "0.72 0.54 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:04:07+05:00",
+      "loadavg": "0.53 0.52 0.52",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:05:07+05:00",
+      "loadavg": "0.31 0.46 0.50",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:06:08+05:00",
+      "loadavg": "0.34 0.44 0.49",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    },
+    {
+      "t": "2026-08-28T18:07:09+05:00",
+      "loadavg": "0.41 0.43 0.48",
+      "containers": 2,
+      "running": 2,
+      "foreign": [],
+      "foreign_running": []
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+=== ARCHIVE default: experiments/results/matrix (84 runs, stale copy) ===
+-rwxrwxrwx 1 hamzakhan hamzakhan 22640 Aug 10 11:45 experiments/results/matrix/analysis/figure-1-undetected-vs-ambiguity.pdf
+-rwxrwxrwx 1 hamzakhan hamzakhan 19305 Aug 10 11:45 experiments/results/matrix/analysis/figure-2-duplicates-by-crash-point.pdf
+
+=== A: paper/figures vs figures regenerated from the ARCHIVED 432-run tree ===
+  IDENTICAL figure-1-undetected-vs-ambiguity.pdf (apart from 8 bytes of PDF CreationDate)
+  IDENTICAL figure-2-duplicates-by-crash-point.pdf (apart from 8 bytes of PDF CreationDate)
+
+=== B: paper/figures vs figures regenerated from the 84-run repo copy ===
+  analyze exit=0 (log /root/aep-f3-84.log)
+  DIFFERS   figure-1-undetected-vs-ambiguity.pdf: 11726 bytes differ, and not only in the timestamp.
+  DIFFERS   figure-2-duplicates-by-crash-point.pdf: 12551 bytes differ, and not only in the timestamp.
+
+=== run counts the two branches see ===
+  archived 432 tree    runs= 432 executions= 3780 cells=126
+  repo 84 copy         runs=  83 executions=  830 cells=28

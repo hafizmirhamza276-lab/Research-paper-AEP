@@ -1,0 +1,56 @@
+
+
+########## 0. the real thing -- must PASS ##########
+  clean                                {'EXPLAINED BY SCHEMA GENERATION': 6, 'current': 6}
+
+failures explained, by the generation that reproduces them
+      6  9154d85a
+
+NONE UNEXPLAINED: every stored digest is reproduced by some historical field set, so every failure is schema evolution and nothing was altered after collection.
+
+run configs examined: 12
+exit=0
+
+
+########## (a) a stored digest that matches NO generation -- must FAIL ##########
+  set config_digest to 64 zeroes in aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0
+
+failures explained, by the generation that reproduces them
+      5  9154d85a
+
+UNEXPLAINED (1) -- these are the serious ones:
+  bad-digest/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0
+
+run configs examined: 12
+exit=1
+
+
+########## (b) CONTENTS altered, digest left untouched -- must FAIL ##########
+  aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0: durability_timeout_ms 2000 -> 2001, config_digest left unchanged
+
+failures explained, by the generation that reproduces them
+      5  9154d85a
+
+UNEXPLAINED (1) -- these are the serious ones:
+  tampered/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0
+
+run configs examined: 12
+exit=1
+
+
+########## (c) nothing to check -- must FAIL rather than pass vacuously ##########
+NONE UNEXPLAINED: every stored digest is reproduced by some historical field set, so every failure is schema evolution and nothing was altered after collection.
+
+run configs examined: 0
+GATE FAILED: examined 0 run configs, required at least 12. A digest check that found nothing to check has not checked anything.
+exit=2
+
+
+########## the copies used for (a) and (b) came from untouched originals ##########
+  clean-copy digest before: e33b860d7e46bf3afebeda84d62f7dc0347f4d1f166eec3fbcd86a575fa4a187  -
+  clean-copy digest after : e33b860d7e46bf3afebeda84d62f7dc0347f4d1f166eec3fbcd86a575fa4a187  -
+  UNCHANGED
+
+  and the real tree:
+re-digested 26299 source files against /root/aep-raw-archive/MANIFEST.sha256
+UNCHANGED: every source file still digests to its manifest value.

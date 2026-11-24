@@ -1,0 +1,34 @@
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 3
+  },
+  "config_digest": "dd51905b0a961f01840baaa187e2827d15e2fdf1f2c22f06dd6884875aa6b862",
+  "crash_injections": 3,
+  "declared_ambiguous_executions": 0,
+  "disagreements": [],
+  "duplicate_prediction_applies": true,
+  "executions_planned": 3,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 3,
+  "expected_effect_executions_upper": 3,
+  "keys_removed": 3,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 3,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 3,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 3
+  },
+  "poisoned_detection": [],
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0",
+  "settled": true,
+  "system": "AEP_FULL",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}

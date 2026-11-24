@@ -1,0 +1,5 @@
+{"event": "b5_worker_connected", "pid": 8387, "wall_ms": 1788859111956}
+{"event": "b5_worker_running", "pid": 8387, "wall_ms": 1788859115847}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859123527}
+{"event": "b5_point_reached", "fires": true, "pid": 8387, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788859123530}
+{"event": "b5_crash_firing", "pid": 8387, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788859123532}

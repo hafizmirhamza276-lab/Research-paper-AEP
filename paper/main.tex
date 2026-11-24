@@ -1,0 +1,290 @@
+% =====================================================================
+% AEP: Declared Ambiguity for Non-Idempotent APIs
+%      Without Idempotency Keys
+%
+% Target venue: IEEE Transactions on Software Engineering (TSE).
+% Class: IEEEtran, journal mode, double column.
+%
+% NUMBERS DISCIPLINE (amendment F3). Every numeric claim in this manuscript
+% carries a LaTeX comment naming the CSV cell or raw report section it came
+% from. The two permitted sources are:
+%
+%   experiments/results/matrix/analysis/per-cell-metrics.csv
+%       -- the ONLY quotable source for rates. Keyed by
+%          (regime, system, crash_point, response_class, readback_keying).
+%   experiments/results/matrix/analysis/latency-and-throughput.csv
+%       -- timings, and only from runs that passed the E5 gate.
+%
+% Table-1-pooled (analysis/table-1.csv) is BANNED as a source: it pools three
+% fault regimes and three response classes, so every rate in it is a property
+% of the collected mix rather than of any system. Session 3B section F2 says
+% so, and analyze.py prints the warning itself.
+%
+% scripts/check_paper_numbers.py re-reads the CSVs and fails if any number
+% annotated below has drifted from its source.
+% =====================================================================
+
+% TSE is an IEEE Computer Society journal, and the IEEEtran options are
+% orthogonal: `journal` selects the mode, `compsoc` selects the Society's
+% layout, and the second has to be named explicitly. It was missing here while
+% paper/supplementary.tex already carried it, so the two documents disagreed
+% about their own venue. Three things say this file was always meant to be
+% compsoc: it uses \IEEEtitleabstractindextext and
+% \IEEEdisplaynontitleabstractindextext, which are the Computer Society
+% title/abstract macros, and \markboth names TSE. Adding the option is
+% compliance; that it also comes out a page shorter (Palatino sets tighter here
+% than Times did, and CS reference style is more compact) is incidental.
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
+% The Computer Society does not want citation runs compressed to ranges --
+% [1], [2], [3] rather than [1]--[3]. This file previously loaded no `cite`
+% package at all, which happens to produce the same result by doing nothing;
+% loading it with nocompress states the requirement instead of relying on an
+% absence, and adds numeric sorting within a multi-key \cite. Guarded on the
+% class option so a non-compsoc build still gets the plain behaviour.
+\ifCLASSOPTIONcompsoc
+  \usepackage[nocompress]{cite}
+\else
+  \usepackage{cite}
+\fi
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds}
+\usepackage{listings}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+% The \crefname{paragraph} pair that used to sit here is gone with the
+% numbering it existed for: with paragraphs unnumbered a \label on one
+% resolves through the enclosing subsection's counter, which cleveref
+% already names "Section". Verified by building with and without it --
+% both render "Section 6.2". Restore it if secnumdepth ever goes to 4.
+% Numbering stops at subsubsection. IEEEtran compsoc numbers \paragraph
+% too, which printed run-in headings as "6.3.2.1" and "8.1.0.11" -- a
+% depth journal papers do not normally number, and one that reads as a
+% defect. 3 and not 2: at 2 the subsubsections go unnumbered as well, and
+% sec:eval-detection, sec:eval-prevention and sec:eval-writeloss-cell then
+% all resolve to "6.3" -- sixteen references rendering one number for
+% three different targets. Measured, not assumed: both depths were built
+% and their .aux compared.
+\setcounter{secnumdepth}{3}
+
+% \todo markers: amendment F4 permits them only where a cell still running at
+% the time of writing could change the value.
+% \todoitem was defined here and never used. It is removed rather than left:
+% a macro that typesets a red [TODO: ...] is one careless edit from shipping
+% in a submission, and with no definition the same edit is an Undefined
+% control sequence -- a build failure instead of a published note to self.
+% check_paper_numbers.py's check_todos still scans for the literal string,
+% now across main.tex and supplementary.tex as well as sections/.
+
+% Semantic macros for the three outcome classes, so the trilemma reads the
+% same way everywhere it appears.
+\newcommand{\undetdup}{\emph{undetected duplicate}}
+\newcommand{\lostfx}{\emph{lost effect}}
+\newcommand{\declamb}{\emph{declared ambiguity}}
+
+\newtheorem{property}{Property}
+\newtheorem{definition}{Definition}
+
+% Headline scalars, generated from the frozen CSVs by scripts/paper_tables.py.
+% Every macro in here carries a comment naming the file, the filter and the
+% arithmetic that produced it. Do not hand-edit; regenerate.
+\input{generated/numbers}
+
+% =====================================================================
+% ANONYMITY TOGGLE (Monday audit, fix F2).
+%
+% The manuscript shipped `Anonymous Author(s)` and a URL naming a personal
+% GitHub account at the same time: under double-anonymous review the URL
+% defeats the anonymisation, and without it the author block is unfinished.
+% Rather than pick one, the source now builds both from identical text:
+%
+%   public build      bash scripts/build_paper.sh              -> main.pdf
+%   anonymous build   bash scripts/build_paper.sh --anonymous  -> main-anon.pdf
+%
+% The flag defines \ANONYMOUS before this file is read, so neither build has
+% any prose of its own and the two cannot drift apart.
+\newif\ifanonymous
+\anonymousfalse
+\ifdefined\ANONYMOUS \anonymoustrue \fi
+
+% The artifact pointer lives here, once. Every place that cites the artifact
+% uses one of these two macros, so there is exactly one block to audit for a
+% leak. Two forms because the two sites need different grammar: \artifacturl
+% is a bare pointer after a colon, \artifactavail completes "... are ...".
+% The public build renders exactly as it did before this toggle existed.
+% The author identity is gated by the SAME switch, and lives in the SAME
+% block, for the same reason: one place to audit for a leak rather than two.
+% The anonymous branch names nobody and adds no correspondence footnote, so
+% an identity added to the wrong branch cannot reach main-anon.pdf.
+% The address is set in \texttt rather than \url so it produces no link
+% annotation -- an annotation is a second surface an anonymity check has to
+% clear, and the Monday audit found four of them the text check had missed.
+% ---------------------------------------------------------------------
+% THE ARCHIVE DOI. One line, and it is the next line.
+%
+% Minting it is a manual web upload (docs/29-archive-deposit.md); until that
+% happens this reads PENDING and every site that mentions the archive renders
+% the honest "not yet deposited" sentence. Inserting the real DOI is a
+% one-line edit HERE and nowhere else -- \archiveavail below derives every
+% rendering from it, and no section file contains a DOI string.
+% THREE states, not two. A reserved Zenodo DOI is minted but does not
+% resolve until the record is published, so the deposited-at sentence
+% below would be false today. \archivedoistate selects which sentence
+% \archiveavail becomes; the anonymous branch reads none of them.
+\newcommand{\archivedoi}{10.5281/zenodo.22766567}
+\newcommand{\archivedoistate}{RESERVED}
+\newcommand{\archivedoipendingmarker}{PENDING}
+\newcommand{\archivedoireservedmarker}{RESERVED}
+% ---------------------------------------------------------------------
+
+\ifanonymous
+  \newcommand{\artifacturl}{available via the submission system}
+  \newcommand{\artifactavail}{available via the submission system}
+  % A Zenodo record names its depositor, so under double-anonymous review the
+  % DOI defeats the anonymisation exactly as the GitHub URL did. It gets the
+  % same treatment, in the same block, for the same reason -- and note that
+  % this branch does not test \archivedoi at all: an anonymous build cannot
+  % leak a DOI even if one is inserted above.
+  \newcommand{\archiveavail}{available via the submission system}
+  \newcommand{\authorname}{Anonymous Author(s)}
+  \newcommand{\authorcontact}{}
+  % The identifying string must not survive in the document properties either,
+  % which is where an anonymised PDF usually leaks. Set empty explicitly rather
+  % than relying on them happening to be unset.
+  \hypersetup{pdfauthor={},pdftitle={},pdfsubject={},pdfkeywords={},
+              pdfcreator={},pdfproducer={}}
+\else
+  \newcommand{\artifacturl}{%
+    \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
+  \newcommand{\artifactavail}{available at%
+    \ \url{https://github.com/hafizmirhamza276-lab/Research-paper-AEP}}
+  \newcommand{\authorname}{Hamza Khan}
+  % ORCID lives in this branch ONLY. It identifies the author as surely as
+  % the name does, so under double-anonymous review it gets the same
+  % treatment as the name, the e-mail and the GitHub URL.
+  % IEEEtran compsoc's convention for a single-author journal paper: the
+  % affiliation is a first-page \thanks footnote, not a line beside the
+  % name, and it reads "A. Author is with the <unit>, <city>, <country>".
+  % It sits in this branch with the name, the e-mail and the ORCID because
+  % an institution identifies an author under double-anonymous review as
+  % surely as the name does. The anonymous branch defines \authorcontact
+  % empty, so there is no string here for that build to leak.
+  \newcommand{\authorcontact}{%
+    \thanks{H. Khan is with the National University of Computer and
+      Emerging Sciences (FAST-NUCES), Islamabad, Pakistan.
+      E-mail: \texttt{hafizmirhamza276@gmail.com}.
+      ORCID: \texttt{0009-0005-9380-2188}.}}
+  % Rendered from \archivedoi, never from a literal. While it is PENDING the
+  % sentence says so; the moment a DOI replaces it the same sentence becomes a
+  % true availability claim, with no other file edited.
+  \ifx\archivedoistate\archivedoipendingmarker
+    \newcommand{\archiveavail}{prepared and verified but not yet deposited; no
+      DOI exists at the time of writing}
+  \else\ifx\archivedoistate\archivedoireservedmarker
+    % Reserved, not registered. The identifier is fixed and the record is
+    % a draft; the DOI begins resolving only when that record is
+    % published. Saying "deposited at" here would be false.
+    \newcommand{\archiveavail}{prepared and verified, with the Zenodo record
+      reserved under DOI \ \texttt{\archivedoi}; the identifier is fixed and
+      begins resolving when the record is published}
+  \else
+    \newcommand{\archiveavail}{deposited at%
+      \ \texttt{https://doi.org/\archivedoi}}
+  \fi\fi
+\fi
+% =====================================================================
+
+\begin{document}
+
+% The break is after "Non-Idempotent", not after "APIs": at title size the
+% first line holds 42 characters and not 46, so breaking after "APIs" made
+% IEEEtran wrap it anyway and orphan "APIs" onto a line of its own. Verified
+% in the built PDF, not assumed.
+\title{AEP: Declared Ambiguity for Non-Idempotent\\
+APIs Without Idempotency Keys}
+
+\author{%
+  \IEEEauthorblockN{\authorname}%
+  \thanks{Manuscript prepared \today. Artifact: \artifacturl.}%
+  \authorcontact%
+}
+
+\markboth{IEEE Transactions on Software Engineering}%
+{AEP: Declared Ambiguity for Non-Idempotent APIs}
+
+\IEEEtitleabstractindextext{%
+\begin{abstract}
+Many enterprise APIs are non-idempotent, accept no idempotency key, and cannot
+be asked afterwards whether a mutation was applied. A caller that crashes around
+such a call (an autonomous agent, a workflow engine) has no safe option:
+retrying risks a second real-world effect nobody observes, not retrying an
+effect no record accounts for. We argue this is not an engineering-quality
+problem but a three-way trade whose third corner a system must make reachable:
+silent failure converted into \emph{declared, durable, bounded ambiguity} an
+operator can act on.
+
+We present AEP, a fail-closed protocol in which every external side
+effect is preceded by a durably acknowledged write-ahead intent, every state write is
+fenced by lock ownership and an expected-version CAS in one atomic script, and
+every unresolvable outcome escalates rather than guessing.
+We evaluate it against five baselines under \texttt{SIGKILL} faults,
+across endpoint capabilities differing in what a read-back can settle.
+
+Our central result separates two claims usually sold as one.
+\emph{Detection} (no undetected duplicate and no lost effect, leaving a
+residual of declared ambiguity) comes from the pre-dispatch record and a
+transition table that forbids re-entry into dispatch, not from the durability
+barrier, for every fault that leaves the record readable.
+\emph{Prevention} is the barrier's, against a narrower
+fault than it appears: it withholds dispatch when the store dies inside the
+acknowledgment window, not when storage discards writes while reporting
+success, which we injected and where it dispatched. Detection's cost is
+therefore a deployment choice, not the protocol's price.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Fault tolerance, non-idempotent APIs, idempotence, distributed coordination,
+write-ahead logging, fault injection, reliability engineering, autonomous
+agents.
+\end{IEEEkeywords}}
+
+\maketitle
+\IEEEdisplaynontitleabstractindextext
+\IEEEpeerreviewmaketitle
+
+\input{sections/01-introduction}
+\input{sections/02-motivating}
+\input{sections/03-model}
+\input{sections/04-protocol}
+\input{sections/05-implementation}
+\input{sections/06-evaluation}
+\input{sections/07-related}
+% ORDER. Artifact Availability sits BEFORE Threats to Validity so the paper's
+% last numbered section ends on an argument rather than on a URL. §VIII's
+% closing subsection, "Where the protocol should not be used", states the
+% precondition under which a durable-execution engine is the better tool and
+% is the last thing a reader is told.
+%
+% The file names keep their original numbers -- 08-threats renders as §IX and
+% 09-artifact as §VIII. Renaming the files would churn every path in the
+% reports without changing a rendered word, and nothing reads the numbers:
+% every cross-reference in the manuscript is a \cref on a label, and the
+% supplementary names main-paper sections in words because it cannot \cref
+% across documents (check_paper_numbers.py::check_cross_document_references).
+\input{sections/09-artifact}
+\input{sections/08-threats}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

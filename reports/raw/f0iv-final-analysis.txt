@@ -1,0 +1,102 @@
+=== F0(iv) FREEZE: final analyze.py pass over the complete matrix ===
+
+$ uv run --frozen python -m experiments.analyze --results-root experiments/results/matrix
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 91,
+  "crash_free_runs": 21,
+  "crash_points": [
+    "after_barrier_before_dispatch",
+    "after_intent_before_barrier",
+    "after_resolution_before_barrier",
+    "after_response_before_resolution",
+    "before_intent_write",
+    "mid_dispatch",
+    "none"
+  ],
+  "executions": 2720,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "(session-3)",
+    "p0",
+    "redis-kill-preack"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK",
+    "NO_READBACK",
+    "POSITIVE_ONLY_READBACK"
+  ],
+  "runs": 326,
+  "runs_dropped_for_clock_suspension": 7,
+  "runs_dropped_for_undeclared_suspend_policy": 143,
+  "runs_with_a_hard_redis_kill": 60,
+  "runs_with_usable_timing": 176,
+  "systems": [
+    "AEP_FULL",
+    "B0_NAIVE_RETRY",
+    "B1_LEASE_ONLY",
+    "B2_CAS_ONLY",
+    "B3_INTENT_NO_BARRIER",
+    "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    "B4_DURABLE_WORKFLOW"
+  ],
+  "worst_suspension_seconds": 65559.272
+}
+
+Table 1 -- per system, pooled over every cell collected
+==============================================================================================
+system                  runs   exec  undet.dup           95% CI  known amb.    lost   Fisher p
+----------------------------------------------------------------------------------------------
+AEP_FULL                  87    600     0.0000   [0.000, 0.000]      0.3717  0.0000         --
+B0_NAIVE_RETRY            48    480     0.7542   [0.646, 0.854]      0.0000  0.0125  2.13e-183
+B1_LEASE_ONLY             48    480     0.7750   [0.677, 0.867]      0.0000  0.0063  2.21e-191
+B2_CAS_ONLY               48    480     0.7542   [0.646, 0.852]      0.0000  0.0042  2.13e-183
+B3_INTENT_NO_BARRIER      87    600     0.0000   [0.000, 0.000]      0.3750  0.0000   1.00e+00
+B4B_DURABLE_WORKFLOW_AT_MOST_ONCE     3     30     0.0000   [0.000, 0.000]      0.0000  0.1000   1.00e+00
+B4_DURABLE_WORKFLOW        5     50     0.4400   [0.060, 0.820]      0.0000  0.0200   1.87e-27
+==============================================================================================
+
+WARNING: Table 1 pools 3 fault regimes -- (session-3), p0, redis-kill-preack. They are different experiments, not repetitions of one: a crash-free run and a run in which every execution was killed contribute to the same rate here, and the pooled number is therefore a property of how many runs of each kind happen to have been collected. It is a coverage summary, NOT a result. Quote per-cell-metrics.csv, which is grouped by regime, system, crash point, response class and keying. The regime is in that key precisely so that the file this warning points at cannot repeat the defect the warning describes.
+WARNING: 7 of 326 run(s) show a wall-versus-monotonic divergence above 2.0s (worst: 65559.272s). The host suspended during them, so every wall-clock duration they contain includes the suspension. Their COUNTS are unaffected and are still in the rate metrics; their TIMINGS are excluded from the latency and throughput aggregates.
+E5: 143 of 326 run(s) were collected on a host that did not declare suspend disabled. No suspension was detected in them, and that is not evidence of absence -- a host that was never idle long enough looks the same. Their COUNTS stand; NO absolute timing from them may enter the paper, and none is in the aggregates above.
+
+E1 -- the hard-Redis-kill ablation
+------------------------------------------------------------------------------
+regime                system                 response class          runs  applied  ambig  canary survived
+redis-kill-preack     AEP_FULL               NO_READBACK               30       10     30            30/30
+redis-kill-preack     B3_INTENT_NO_BARRIER   NO_READBACK               30       28     30            30/30
+
+'applied' is the discriminator: a system whose durability acknowledgement never arrived must not have dispatched.
+'canary survived' counts runs in which an UN-acknowledged write made immediately before the kill was still
+there afterwards. It is expected to be every run: appendfsync everysec defers the fsync, not the write(2),
+so a process kill leaves the bytes in the kernel's page cache. See experiments/harness/redis_kill.py.
+written:
+  experiments/results/matrix/analysis/table-1.csv
+  experiments/results/matrix/analysis/per-cell-metrics.csv
+  experiments/results/matrix/analysis/comparisons-vs-aep-full.csv
+  experiments/results/matrix/analysis/latency-and-throughput.csv
+  experiments/results/matrix/analysis/per-execution.csv
+  experiments/results/matrix/analysis/redis-kill-ablation.csv
+  experiments/results/matrix/analysis/metric-undetected-duplicate-rate.csv
+  experiments/results/matrix/analysis/metric-known-ambiguity-rate.csv
+  experiments/results/matrix/analysis/metric-lost-effect-rate.csv
+  experiments/results/matrix/analysis/metric-unverified-failure-rate.csv
+  experiments/results/matrix/analysis/metric-state-corruption-rate.csv
+  experiments/results/matrix/analysis/metric-recovery-success-rate.csv
+  experiments/results/matrix/analysis/figure-1-undetected-vs-ambiguity.pdf
+  experiments/results/matrix/analysis/figure-2-duplicates-by-crash-point.pdf
+  experiments/results/matrix/analysis/coverage.json
+
+=== the manifest and the digests ===
+$ uv run --frozen python scripts/freeze_results.py --results-root experiments/results/matrix --label "Phase 4 Session 1"
+wrote experiments/results/matrix/MANIFEST.md
+wrote experiments/results/matrix/MANIFEST.csv
+wrote experiments/results/matrix/SHA256SUMS  (17 files)
+
+completed runs 326   executions 2720 (2450 crashed)   cells 91   incomplete dirs 2
+  incomplete: analysis-interim
+  incomplete: b4_durable_workflow-after_barrier_before_dispatch-payments-11d6b7e1-r2

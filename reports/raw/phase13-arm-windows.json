@@ -1,0 +1,60 @@
+{
+  "event_vocabulary_seen": [
+    "all_workers_finished",
+    "clock_reference",
+    "composition_validated",
+    "durability_ack_observed",
+    "execution_failed",
+    "execution_resolved",
+    "execution_started",
+    "final_classification",
+    "recovery_exited",
+    "recovery_finished",
+    "recovery_pass",
+    "recovery_pass_failed",
+    "recovery_resolution",
+    "recovery_spawned",
+    "recovery_started",
+    "redis_hard_killed",
+    "redis_kill_armed",
+    "redis_kill_issued",
+    "run_finished",
+    "run_started",
+    "settled",
+    "settling_poll",
+    "worker_exited",
+    "worker_finished",
+    "worker_spawned",
+    "worker_started"
+  ],
+  "systems": {
+    "aep_full": {
+      "kill_command_ms": {
+        "max": 2116.3,
+        "median": 1045.2,
+        "min": 872.4,
+        "n": 60,
+        "p05": 881.8,
+        "p95": 1467.8
+      }
+    },
+    "b3_intent_no_barrier": {
+      "kill_command_ms": {
+        "max": 4028.8,
+        "median": 1046.8,
+        "min": 837.9,
+        "n": 60,
+        "p05": 895.6,
+        "p95": 1446.4
+      },
+      "to_resolved_ms": {
+        "max": 2357.7,
+        "median": 2277.8,
+        "min": 2197.8,
+        "n": 2,
+        "p05": 2197.8,
+        "p95": 2197.8
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{"event": "b5_worker_connected", "pid": 11399, "wall_ms": 1788859399253}
+{"event": "b5_worker_running", "pid": 11399, "wall_ms": 1788859402183}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859402220}
+{"event": "b5_point_reached", "fires": true, "pid": 11399, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788859402223}
+{"event": "b5_crash_firing", "pid": 11399, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788859402225}
+{"event": "b5_worker_connected", "pid": 11489, "wall_ms": 1788859409147}
+{"event": "b5_worker_running", "pid": 11489, "wall_ms": 1788859412169}
+{"attempt": 2, "event": "b5_activity_started", "wall_ms": 1788859412185}
+{"attempt": 2, "elapsed_ms": 2893.577, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859415080}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859415155}
+{"attempt": 1, "elapsed_ms": 2095.441, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859417254}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859417323}
+{"attempt": 1, "elapsed_ms": 2090.808, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859419416}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859419496}
+{"attempt": 1, "elapsed_ms": 2066.577, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859421565}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859421635}
+{"attempt": 1, "elapsed_ms": 2061.958, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859423699}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859423777}
+{"attempt": 2, "event": "b5_activity_started", "wall_ms": 1788859428781}
+{"attempt": 3, "event": "b5_activity_started", "wall_ms": 1788859433788}
+{"attempt": 3, "elapsed_ms": 2072.701, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859435864}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859435944}
+{"attempt": 2, "event": "b5_activity_started", "wall_ms": 1788859440977}
+{"attempt": 2, "elapsed_ms": 2075.018, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859443055}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859443130}
+{"attempt": 1, "elapsed_ms": 2074.791, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859445206}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859445294}
+{"attempt": 1, "elapsed_ms": 2088.575, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859447385}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788859447476}
+{"attempt": 2, "event": "b5_activity_started", "wall_ms": 1788859452480}
+{"attempt": 2, "elapsed_ms": 2073.233, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788859454556}

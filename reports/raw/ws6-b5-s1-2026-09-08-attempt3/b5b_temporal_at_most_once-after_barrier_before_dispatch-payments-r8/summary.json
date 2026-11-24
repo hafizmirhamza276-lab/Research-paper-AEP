@@ -1,0 +1,33 @@
+{
+  "agrees": true,
+  "b5_verdict": "COMPLETED",
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "activity_failed": 2,
+    "completed": 8
+  },
+  "config_digest": "110640f1aa77e6eb50198edf90a4e311c7f8980a11db1904145c0e19809b2883",
+  "declared_ambiguous_executions": 0,
+  "disagreements": [],
+  "duplicate_prediction_applies": true,
+  "executions_planned": 10,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 8,
+  "expected_effect_executions_upper": 10,
+  "lost_effect_executions": 1,
+  "oracle_applied_rows": 9,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 9,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 8,
+    "UNVERIFIED_FAILURE": 2
+  },
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b5b_temporal_at_most_once-after_barrier_before_dispatch-payments-r8",
+  "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 2
+}

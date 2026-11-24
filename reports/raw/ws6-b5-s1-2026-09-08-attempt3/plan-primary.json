@@ -1,0 +1,962 @@
+[
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 0,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 1,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 2,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 3,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 4,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 5,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 6,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 7,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 8,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 9,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 10,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 11,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 12,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 13,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 14,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 15,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 16,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 17,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 18,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 19,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 20,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 21,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 22,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 23,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 24,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 25,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 26,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 27,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 28,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 29,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 0,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 1,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 2,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 3,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 4,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 5,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 6,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 7,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 8,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 9,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 10,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 11,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 12,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 13,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 14,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 15,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 16,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 17,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 18,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 19,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 20,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 21,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 22,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 23,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 24,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 25,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 26,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 27,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 28,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "ledger_postings",
+    "repetition": 29,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 0,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 1,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 2,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 3,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 4,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 5,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 6,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 7,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 8,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 9,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 10,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 11,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 12,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 13,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 14,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 15,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 16,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 17,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 18,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 19,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 20,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 21,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 22,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 23,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 24,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 25,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 26,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 27,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 28,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5_TEMPORAL",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 29,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 0,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 1,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 2,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 3,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 4,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 5,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 6,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 7,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 8,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 9,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 10,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 11,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 12,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 13,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 14,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 15,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 16,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 17,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 18,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 19,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 20,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 21,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 22,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 23,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 24,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 25,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 26,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 27,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 28,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  },
+  {
+    "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+    "crash_point": "after_barrier_before_dispatch",
+    "endpoint": "payments",
+    "repetition": 29,
+    "injected_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+    "status": "planned"
+  }
+]

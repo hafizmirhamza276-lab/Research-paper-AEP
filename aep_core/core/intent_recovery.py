@@ -1,0 +1,603 @@
+"""Phase 2 discovery, fenced claiming, and read-only reconciliation."""
+
+from __future__ import annotations
+
+import asyncio
+import inspect
+import logging
+import math
+import random
+import time
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Mapping
+
+from aep_core.core.connector_contract import (
+    UNDECLARED_CAPABILITY_EVIDENCE_CLASS,
+    UNDECLARED_CAPABILITY_REASON,
+    ConnectorContractError,
+    ReadbackResult,
+    ReconciliationCapability,
+    ReconciliationOutcome,
+    classify_readback,
+    declared_capability,
+    parse_readback_result,
+)
+from aep_core.core.durability import DurabilityBarrier
+from aep_core.core.intent_workflow import (
+    ConnectorPolicy,
+    CrashInjectorProtocol,
+    WriteAheadWorkflowError,
+)
+from aep_core.core.intents import (
+    IntentLedgerStore,
+    IntentRecord,
+    IntentStatus,
+    ReconciliationProgress,
+)
+from aep_core.core.locks import DistributedLockManager
+from aep_core.core.request_binding import ReconciliationContext
+
+
+#: The protocol outcome vocabulary mapped onto persisted intent statuses.
+_OUTCOME_TO_STATUS = {
+    ReconciliationOutcome.CONFIRMED: IntentStatus.FIRED_CONFIRMED,
+    ReconciliationOutcome.REFUTED: IntentStatus.FAILED_CONFIRMED,
+    ReconciliationOutcome.PERMANENTLY_AMBIGUOUS: (
+        IntentStatus.PERMANENTLY_AMBIGUOUS
+    ),
+    ReconciliationOutcome.RETRY: IntentStatus.FIRED_UNCONFIRMED,
+}
+
+
+logger = logging.getLogger("aep.recovery")
+
+#: Hard ceiling on retained per-pass failure records, so an adversarial
+#: keyspace cannot grow the service's memory without bound.
+MAX_RETAINED_SCAN_FAILURES = 256
+
+
+class RecoveryScanPhase(str, Enum):
+    """Where in a scan pass a single-execution failure was isolated."""
+
+    DISCOVERY = "DISCOVERY"
+    RECOVERY = "RECOVERY"
+
+
+@dataclass(frozen=True)
+class RecoveryScanFailure:
+    """One isolated single-execution failure from a scan pass.
+
+    Carries only bounded, non-sensitive metadata: identifiers already present
+    in Redis keys plus the exception class name.
+    """
+
+    execution_id: str
+    intent_id: str | None
+    failure_class: str
+    phase: RecoveryScanPhase
+
+
+@dataclass(frozen=True)
+class RecoveryConnectorConfig:
+    connector: Any
+    barrier: DurabilityBarrier
+    policy: ConnectorPolicy
+
+
+@dataclass(frozen=True)
+class RecoveryResult:
+    execution_id: str
+    intent_id: str
+    status: IntentStatus
+    readback_performed: bool
+
+
+class IntentRecoveryService:
+    """Cursor-scan state keys and reconcile eligible intents read-only."""
+
+    def __init__(
+        self,
+        *,
+        store: IntentLedgerStore,
+        lock_manager: DistributedLockManager,
+        connectors: Mapping[str, RecoveryConnectorConfig],
+        scan_count: int = 500,
+        max_concurrency: int = 16,
+        crash_injector: CrashInjectorProtocol | None = None,
+        crash_point_enum: type[Any] | None = None,
+        random_source: random.Random | None = None,
+        recovery_lag_alert: Any | None = None,
+        scan_failure_alert: Any | None = None,
+    ) -> None:
+        if scan_count <= 0 or max_concurrency <= 0:
+            raise ValueError("scan_count and max_concurrency must be positive")
+        self.store = store
+        self.lock_manager = lock_manager
+        self.connectors = dict(connectors)
+        self.scan_count = scan_count
+        self.max_concurrency = max_concurrency
+        self.crash_injector = crash_injector
+        self.crash_point_enum = crash_point_enum
+        self.random = random_source or random.Random()
+        self.recovery_lag_alert = recovery_lag_alert
+        self.scan_failure_alert = scan_failure_alert
+        self.last_scan_failures: tuple[RecoveryScanFailure, ...] = ()
+        #: Barriers whose startup contract this service has already satisfied.
+        #: Keyed by identity: two connectors may share one barrier object, and
+        #: validation is four Redis round trips, not something to repeat per
+        #: recovered intent.
+        self._validated_barriers: set[int] = set()
+        for name, config in self.connectors.items():
+            required_retention = math.ceil(
+                config.policy.max_reconciliation_duration_seconds
+            ) + 7 * 24 * 60 * 60
+            if store.unresolved_ttl_seconds < required_retention:
+                raise ValueError(
+                    f"intent TTL for connector {name!r} must cover maximum "
+                    "reconciliation duration plus 7-day operator retention"
+                )
+
+    async def _checkpoint(self, name: str) -> None:
+        if self.crash_injector is not None:
+            if self.crash_point_enum is None:
+                raise RuntimeError(
+                    "crash_point_enum is required when a crash injector is supplied"
+                )
+            await self.crash_injector.checkpoint(self.crash_point_enum[name])
+
+    @staticmethod
+    def _eligible(intent: IntentRecord, now: float) -> bool:
+        if intent.status is IntentStatus.ABOUT_TO_FIRE:
+            return now >= intent.reconcile_after
+        if intent.status is IntentStatus.FIRED_UNCONFIRMED:
+            assert intent.reconciliation is not None
+            return now >= intent.reconciliation.next_check_at
+        return False
+
+    async def _record_scan_failure(
+        self,
+        failures: list[RecoveryScanFailure],
+        *,
+        execution_id: str,
+        intent_id: str | None,
+        exc: BaseException,
+        phase: RecoveryScanPhase,
+    ) -> None:
+        """Record one isolated single-execution failure and keep scanning."""
+
+        failure = RecoveryScanFailure(
+            execution_id=execution_id,
+            intent_id=intent_id,
+            failure_class=type(exc).__name__,
+            phase=phase,
+        )
+        if len(failures) < MAX_RETAINED_SCAN_FAILURES:
+            failures.append(failure)
+        logger.warning(
+            "AEP recovery isolated a %s failure for execution_id=%s "
+            "intent_id=%s failure_class=%s; the scan continues.",
+            phase.value,
+            execution_id,
+            intent_id,
+            failure.failure_class,
+        )
+        if self.scan_failure_alert is not None:
+            try:
+                alerted = self.scan_failure_alert(failure)
+                if inspect.isawaitable(alerted):
+                    await alerted
+            except Exception:  # noqa: BLE001 -- alerting must never break a scan
+                logger.warning(
+                    "AEP recovery scan-failure alert raised for "
+                    "execution_id=%s; suppressed.",
+                    execution_id,
+                )
+
+    async def scan_once(self) -> list[RecoveryResult]:
+        """Perform one cursor-based SCAN pass with bounded concurrency.
+
+        Fault isolation (Phase 1B): a failure affecting one execution — a
+        corrupt state key during discovery, or any exception raised while
+        recovering one intent — is recorded and skipped.  It never aborts the
+        pass for the other executions.  ``asyncio.CancelledError`` is
+        deliberately not isolated so shutdown still works.
+        """
+
+        now = await self.store.redis_time()
+        failures: list[RecoveryScanFailure] = []
+        candidates: list[tuple[str, str]] = []
+        async for key in self.store.redis.scan_iter(
+            match="aep:state:*", count=self.scan_count
+        ):
+            execution_id = key.removeprefix("aep:state:")
+            try:
+                state = await self.store.get_execution(execution_id)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001 -- isolate one execution
+                # get_execution has already quarantined a corrupt payload
+                # (src/core/intents.py get_execution -> _quarantine).
+                await self._record_scan_failure(
+                    failures,
+                    execution_id=execution_id,
+                    intent_id=None,
+                    exc=exc,
+                    phase=RecoveryScanPhase.DISCOVERY,
+                )
+                continue
+            if state is None:
+                continue
+            for intent in state.intent_ledger.values():
+                if self._eligible(intent, now):
+                    candidates.append((execution_id, intent.intent_id))
+
+        semaphore = asyncio.Semaphore(self.max_concurrency)
+
+        async def bounded(execution_id: str, intent_id: str):
+            async with semaphore:
+                return await self.recover_intent(execution_id, intent_id)
+
+        gathered = await asyncio.gather(
+            *(
+                bounded(execution_id, intent_id)
+                for execution_id, intent_id in candidates
+            ),
+            return_exceptions=True,
+        )
+
+        results: list[RecoveryResult] = []
+        for (execution_id, intent_id), outcome in zip(candidates, gathered):
+            if isinstance(outcome, BaseException):
+                if isinstance(outcome, asyncio.CancelledError):
+                    raise outcome
+                await self._record_scan_failure(
+                    failures,
+                    execution_id=execution_id,
+                    intent_id=intent_id,
+                    exc=outcome,
+                    phase=RecoveryScanPhase.RECOVERY,
+                )
+                continue
+            if outcome is not None:
+                results.append(outcome)
+
+        self.last_scan_failures = tuple(failures)
+        return results
+
+    async def run_forever(
+        self,
+        stop: asyncio.Event,
+        *,
+        pass_interval_seconds: float = 30.0,
+        pass_slo_seconds: float = 300.0,
+        failure_backoff_base_seconds: float = 1.0,
+        failure_backoff_cap_seconds: float = 60.0,
+    ) -> None:
+        """Continuously scan, spacing passes 30s after cursor zero by default.
+
+        A pass that fails wholesale (for example a Redis transport fault
+        during ``SCAN``) does not terminate the loop: it is logged and the
+        next pass is delayed by exponential backoff, reset on success.
+        Cancellation still propagates.
+        """
+
+        if pass_interval_seconds <= 0 or pass_slo_seconds <= 0:
+            raise ValueError("recovery interval and SLO must be positive")
+        if failure_backoff_base_seconds <= 0 or failure_backoff_cap_seconds <= 0:
+            raise ValueError("recovery failure backoff values must be positive")
+        consecutive_failures = 0
+        while not stop.is_set():
+            started = time.monotonic()
+            try:
+                await self.scan_once()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001 -- the loop must survive
+                consecutive_failures += 1
+                delay = min(
+                    failure_backoff_base_seconds
+                    * (2 ** (consecutive_failures - 1)),
+                    failure_backoff_cap_seconds,
+                )
+                logger.warning(
+                    "AEP recovery scan pass failed (failure_class=%s, "
+                    "consecutive=%d); retrying in %.3fs.",
+                    type(exc).__name__,
+                    consecutive_failures,
+                    delay,
+                )
+                try:
+                    await asyncio.wait_for(stop.wait(), timeout=delay)
+                except asyncio.TimeoutError:
+                    pass
+                continue
+            consecutive_failures = 0
+            elapsed = time.monotonic() - started
+            if elapsed > pass_slo_seconds and self.recovery_lag_alert is not None:
+                result = self.recovery_lag_alert(elapsed)
+                if inspect.isawaitable(result):
+                    await result
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=pass_interval_seconds)
+            except asyncio.TimeoutError:
+                pass
+
+    async def _acquire(self, execution_id: str, policy: ConnectorPolicy) -> str | None:
+        for attempt in range(1, policy.lease_acquire_attempts + 1):
+            token = await self.lock_manager.acquire_lock(
+                execution_id, ttl_seconds=policy.lock_ttl_seconds
+            )
+            if token is not None:
+                return token
+            if attempt < policy.lease_acquire_attempts:
+                ceiling = min(
+                    0.05 * (2 ** (attempt - 1)), policy.lease_backoff_cap_seconds
+                )
+                await asyncio.sleep(self.random.uniform(0, ceiling))
+        return None
+
+    async def _validate_barrier(self, barrier) -> None:
+        """Satisfy the barrier's startup contract once, before first use.
+
+        The production barrier refuses to issue ``WAITAOF`` until its
+        capability check has succeeded (``RealWaitAofDurabilityBarrier``).
+        The write-ahead workflow calls that check before every dispatch;
+        recovery did not, so with the production barrier every recovery
+        resolution wrote its transition and then failed to confirm it --
+        leaving the state advanced but unacknowledged, and reporting the
+        resolution as an isolated failure. Regression:
+        ``tests/test_recovery_durability_barrier.py``.
+
+        A barrier with no ``validate_startup`` is left alone: this service has
+        no dispatch-mode concept and so cannot tell a test barrier from a
+        production one. Deciding which barriers are admissible is the
+        composition's job (``WriteAheadRunner.validate_startup``); deciding
+        that a barrier's own precondition is met before calling it is this
+        one's.
+        """
+
+        if id(barrier) in self._validated_barriers:
+            return
+        validator = getattr(barrier, "validate_startup", None)
+        if callable(validator):
+            await validator(self.store.redis)
+        self._validated_barriers.add(id(barrier))
+
+    async def _durable(self, barrier, connection, timeout_ms: int) -> None:
+        try:
+            await self._validate_barrier(barrier)
+            durable = await barrier.confirm_durable(connection, timeout_ms)
+        except Exception as exc:
+            raise WriteAheadWorkflowError(
+                f"recovery durability barrier failed:{type(exc).__name__}"
+            ) from None
+        if not durable:
+            raise WriteAheadWorkflowError(
+                "recovery durability barrier did not acknowledge the write"
+            )
+
+    async def recover_intent(
+        self, execution_id: str, intent_id: str
+    ) -> RecoveryResult | None:
+        """Claim one eligible intent, perform one read-back, persist evidence."""
+
+        initial = await self.store.get_execution(execution_id)
+        if initial is None or intent_id not in initial.intent_ledger:
+            return None
+        initial_intent = initial.intent_ledger[intent_id]
+        config = self.connectors.get(initial_intent.connector)
+        if config is None:
+            raise WriteAheadWorkflowError(
+                f"no recovery connector declaration for {initial_intent.connector!r}"
+            )
+
+        token = await self._acquire(execution_id, config.policy)
+        if token is None:
+            return None
+        try:
+            current = await self.store.get_execution(execution_id)
+            now = await self.store.redis_time()
+            if current is None or intent_id not in current.intent_ledger:
+                return None
+            intent = current.intent_ledger[intent_id]
+            if not self._eligible(intent, now):
+                return None
+            if intent.status not in {
+                IntentStatus.ABOUT_TO_FIRE,
+                IntentStatus.FIRED_UNCONFIRMED,
+            }:
+                return None
+
+            if intent.status is IntentStatus.ABOUT_TO_FIRE:
+                await self._checkpoint("DURING_RECOVERY_BEFORE_CLAIM_CAS")
+                async with self.store.pinned_connection() as connection:
+                    intent = await self.store.transition_intent(
+                        execution_id=execution_id,
+                        intent_id=intent_id,
+                        expected_version=current.version,
+                        lock_token=token,
+                        new_status=IntentStatus.FIRED_UNCONFIRMED,
+                        actor="recovery",
+                        reason="orphaned-about-to-fire",
+                        evidence={"class": "ORPHANED_ABOUT_TO_FIRE"},
+                        observation_class="AMBIGUOUS",
+                        connection=connection,
+                    )
+                    await self._durable(
+                        config.barrier,
+                        connection,
+                        config.policy.durability_timeout_ms,
+                    )
+                current_version = current.version + 1
+            else:
+                current_version = current.version
+
+            try:
+                capability = declared_capability(config.connector)
+            except ConnectorContractError:
+                # Evidence from a connector whose authority is undeclared
+                # cannot be interpreted, so the intent is escalated instead of
+                # being queried or retried forever.  This preserves the P3
+                # bound; an operator may still resolve it explicitly.
+                return await self._persist_recovery_resolution(
+                    execution_id=execution_id,
+                    intent=intent,
+                    expected_version=current_version,
+                    token=token,
+                    config=config,
+                    target=IntentStatus.PERMANENTLY_AMBIGUOUS,
+                    reason=UNDECLARED_CAPABILITY_REASON,
+                    evidence_class=UNDECLARED_CAPABILITY_EVIDENCE_CLASS,
+                    external_reference=None,
+                    reconciliation=intent.reconciliation,
+                    readback_performed=False,
+                )
+
+            if capability is ReconciliationCapability.NO_READBACK:
+                return await self._persist_recovery_resolution(
+                    execution_id=execution_id,
+                    intent=intent,
+                    expected_version=current_version,
+                    token=token,
+                    config=config,
+                    target=IntentStatus.PERMANENTLY_AMBIGUOUS,
+                    reason="connector-has-no-readback",
+                    evidence_class=capability.value,
+                    external_reference=None,
+                    reconciliation=intent.reconciliation,
+                    readback_performed=False,
+                )
+
+            try:
+                context = ReconciliationContext(
+                    execution_id=execution_id,
+                    step_id=intent.step_id,
+                    intent_id=intent.intent_id,
+                    correlation_id=intent.correlation_id,
+                    connector_operation=intent.connector,
+                    redacted_target=intent.target,
+                    request_fingerprint=intent.request_fingerprint,
+                    external_reference=None,
+                    attempt_count=(
+                        intent.reconciliation.attempt_count
+                        if intent.reconciliation is not None
+                        else 0
+                    ),
+                )
+                observation = await config.connector.read_back(
+                    context=context,
+                    readback_timeout=config.policy.client_timeout_seconds,
+                )
+            except Exception:
+                observation = None
+            except BaseException:
+                # Process/coroutine death must remain observable to crash tests.
+                raise
+            result = parse_readback_result(observation)
+            # No endpoint-profile rule exists for provider-returned opaque
+            # identifiers, so they are not persisted or fed back to readback.
+            external_reference = None
+
+            decision = classify_readback(capability, result)
+            if decision.outcome is ReconciliationOutcome.RETRY:
+                previous = intent.reconciliation
+                if previous is None:
+                    raise WriteAheadWorkflowError(
+                        "FIRED_UNCONFIRMED intent lacks reconciliation progress"
+                    )
+                attempts = previous.attempt_count + 1
+                first_check = previous.first_check_at or now
+                exhausted = (
+                    attempts >= config.policy.max_reconciliation_attempts
+                    or now
+                    >= intent.reconcile_after
+                    + config.policy.max_reconciliation_duration_seconds
+                )
+                if exhausted:
+                    target = IntentStatus.PERMANENTLY_AMBIGUOUS
+                    reason = "reconciliation-attempt-or-duration-limit"
+                    next_check = now
+                else:
+                    target = _OUTCOME_TO_STATUS[decision.outcome]
+                    reason = decision.reason
+                    delay = self.random.uniform(
+                        0, config.policy.backoff_ceiling(attempts)
+                    )
+                    next_check = now + delay
+                progress = ReconciliationProgress(
+                    attempt_count=attempts,
+                    first_check_at=first_check,
+                    last_check_at=now,
+                    next_check_at=next_check,
+                    last_evidence_class=decision.evidence_class,
+                )
+            else:
+                target = _OUTCOME_TO_STATUS[decision.outcome]
+                reason = decision.reason
+                progress = intent.reconciliation
+
+            return await self._persist_recovery_resolution(
+                execution_id=execution_id,
+                intent=intent,
+                expected_version=current_version,
+                token=token,
+                config=config,
+                target=target,
+                reason=reason,
+                evidence_class=decision.evidence_class,
+                external_reference=external_reference,
+                reconciliation=progress,
+                readback_performed=True,
+            )
+        finally:
+            await self.lock_manager.release_lock(execution_id, token)
+
+    async def _persist_recovery_resolution(
+        self,
+        *,
+        execution_id: str,
+        intent: IntentRecord,
+        expected_version: int,
+        token: str,
+        config: RecoveryConnectorConfig,
+        target: IntentStatus,
+        reason: str,
+        evidence_class: str,
+        external_reference: str | None,
+        reconciliation: ReconciliationProgress | None,
+        readback_performed: bool,
+    ) -> RecoveryResult:
+        await self._checkpoint("DURING_RECOVERY_RESOLUTION_CAS")
+        async with self.store.pinned_connection() as connection:
+            updated = await self.store.transition_intent(
+                execution_id=execution_id,
+                intent_id=intent.intent_id,
+                expected_version=expected_version,
+                lock_token=token,
+                new_status=target,
+                actor="recovery",
+                reason=reason,
+                evidence={"class": evidence_class},
+                observation_class=evidence_class,
+                external_reference=external_reference,
+                reconciliation=reconciliation,
+                connection=connection,
+            )
+            await self._checkpoint(
+                "AFTER_RECOVERY_RESOLUTION_CAS_BEFORE_DURABILITY_BARRIER"
+            )
+            await self._checkpoint(
+                "DURING_RECOVERY_RESOLUTION_DURABILITY_BARRIER"
+            )
+            await self._durable(
+                config.barrier,
+                connection,
+                config.policy.durability_timeout_ms,
+            )
+        return RecoveryResult(
+            execution_id=execution_id,
+            intent_id=intent.intent_id,
+            status=updated.status,
+            readback_performed=readback_performed,
+        )

@@ -1,0 +1,355 @@
+r"""Bring the harness stack up with Redis's data directory on the flakey device.
+
+WS-4 / backlog B1. The instrument (`experiments/harness/write_loss.py`, the
+`write-loss-preack` regime) is inert unless Redis is actually writing through the
+`dm-flakey` mapping. `compose.phase2.yml` backs `/data` with the named volume
+`redis-data`, so a session started the ordinary way runs against a device that
+**cannot** drop writes — and the regime would then report a clean AEP-full result
+for the wrong reason. That is the exact contamination `docs/24` B1 describes:
+
+    An instrument that intermittently fails to deliver the fault does not cost B1
+    precision -- it silently removes the phenomenon while leaving runs that look
+    successful.
+
+So this script refuses rather than falls back. Every check below is a refusal,
+not a warning, and each names what it would otherwise have let through.
+
+Usage::
+
+    sudo python scripts/up_write_loss.py --root /var/tmp/aep-ws4
+    sudo python scripts/up_write_loss.py --root /var/tmp/aep-ws4 --check-only
+
+`--check-only` runs every refusal check and the post-up verification against a
+stack that is already running, without touching it.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
+from experiments.harness.write_loss import read_table  # noqa: E402
+from experiments.harness.redis_kill import (  # noqa: E402
+    MECHANISM_WRITE_LOSS,
+    REDIS_FAULT_MECHANISM_VARIABLE,
+    WRITE_LOSS_DEVICE_VARIABLE,
+)
+
+#: The variable `compose.write-loss.yml` interpolates. Its `:?` guard is the
+#: second line of defence; the refusals here are the first, because compose's
+#: message cannot explain *why* the path was wrong.
+COMPOSE_PATH_VARIABLE = "AEP_WS4_REDIS_DIR"
+
+BASE_COMPOSE = "compose.phase2.yml"
+OVERRIDE_COMPOSE = "compose.write-loss.yml"
+
+CONTAINER = "aep-phase2-redis72"
+
+#: Rule 9: the harness refuses destructive cleanup against an instance that has
+#: not asserted it is disposable. A freshly provisioned device is empty, so this
+#: marker -- which lived in the `redis-data` volume -- is necessarily absent, and
+#: every write-loss session would otherwise abort on its first run.
+TEST_INSTANCE_MARKER = "aep:test-instance-marker"
+
+#: The URL the collection will use. Must match `run_matrix.py`'s default, because
+#: the whole point of the read-back below is that the *consumer's* route is the
+#: one that gets checked.
+RUNNER_REDIS_URL = "redis://127.0.0.1:6381/15"
+
+
+def container_id() -> str | None:
+    """The container's id, resolved once, after compose has settled.
+
+    Addressing by **id** rather than by name is the fix for an observed race:
+    `docker exec <name>` issued while Compose is replacing the container can
+    reach the container that is being destroyed. The instrumented diagnostic of
+    2026-09-07 caught exactly that -- a sampler's `docker exec` by name returned
+    *"container b140c5d1643c... is not running"* during the recreate that this
+    script itself triggers, because `/data` changes from a named volume to a
+    bind. A marker set on a dying container would be lost seconds later.
+    """
+    completed = run("docker", "inspect", "-f", "{{.Id}}", CONTAINER)
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip() or None
+
+
+def assert_marker_visible_to_the_runner(url: str) -> str:
+    """Read the marker back through the runner's own client. Returns a reason
+    on failure, or an empty string on success.
+
+    **The write route and the check route must be the same route.** Setting via
+    `docker exec` and confirming via `docker exec` establishes that the write
+    happened; it says nothing about what a different client, at a different
+    address, on a different connection, will observe. That is the agreement the
+    collection actually depends on, and it is what this checks --
+    `Redis.from_url` on the same URL string `run_matrix.py` passes to the runner.
+    """
+    try:
+        from redis import Redis
+    except Exception as error:  # noqa: BLE001
+        return f"cannot import the runner's redis client: {error}"
+    try:
+        client = Redis.from_url(url, decode_responses=True,
+                                socket_connect_timeout=5, socket_timeout=5)
+        present = client.exists(TEST_INSTANCE_MARKER)
+    except Exception as error:  # noqa: BLE001
+        return f"cannot reach {url!r} as the runner would: {error}"
+    if not present:
+        return (
+            f"the marker is not visible at {url!r}, which is the exact address "
+            "and database the runner opens. It was written, and the consumer "
+            "cannot see it."
+        )
+    return ""
+
+
+class Refused(RuntimeError):
+    """A precondition failed, so the session does not start."""
+
+
+def run(*args: str, check: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(list(args), capture_output=True, text=True, check=check)
+
+
+def backing_device(path: Path) -> str | None:
+    """Which device backs ``path``? The anti-fallback check.
+
+    A provisioned directory that is really on the root filesystem -- because the
+    mount failed, or the record is stale, or someone passed the wrong root --
+    looks identical to a correct one from Python. ``findmnt`` answers what is
+    actually underneath it.
+    """
+    completed = run("findmnt", "-no", "SOURCE", "--target", str(path))
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip() or None
+
+
+def load_and_check(root: Path) -> dict:
+    """Every refusal, in the order that gives the most useful message first."""
+    record_path = root / "write-loss-provision.json"
+    if not record_path.is_file():
+        raise Refused(
+            f"no provision record at {record_path}. Run "
+            f"`scripts/provision_write_loss.py provision --root {root}` first. "
+            "Starting without one would put Redis on the ordinary redis-data "
+            "volume, which cannot drop writes."
+        )
+
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+
+    self_test = record.get("self_test") or {}
+    if not self_test.get("valid"):
+        raise Refused(
+            "the provision record's self-test did not pass "
+            f"({self_test.get('reason', 'no reason recorded')}). "
+            "§4 of the pre-registration: if the self-test does not pass, the "
+            "session does not run."
+        )
+
+    device = record.get("device")
+    table = read_table(device) if device else None
+    if table is None:
+        raise Refused(
+            f"the provisioned device {device!r} no longer exists. The record is "
+            "stale -- re-provision rather than starting against whatever is "
+            "mounted there now."
+        )
+    if "flakey" not in table.split():
+        raise Refused(
+            f"{device!r} is not a dm-flakey target (table: {table!r}). It cannot "
+            "drop writes, so the fault could never be delivered."
+        )
+
+    redis_dir = Path(record["redis_dir"])
+    if not redis_dir.is_dir():
+        raise Refused(f"the provisioned redis dir {redis_dir} does not exist")
+
+    backing = backing_device(redis_dir)
+    expected = f"/dev/mapper/{device}"
+    if backing != expected:
+        raise Refused(
+            f"{redis_dir} is backed by {backing!r}, not by the provisioned "
+            f"device {expected!r}. This is the silent fallback the regime must "
+            "never run under: the path exists, so nothing else would have "
+            "complained, and Redis would have written to a device that cannot "
+            "drop writes."
+        )
+
+    return record
+
+
+def verify_running_stack(record: dict) -> list[str]:
+    """After `up`: is Redis *really* writing through the flakey device?
+
+    Two observations, because neither alone is enough. The container's mount
+    table says what Docker was asked to do; a file appearing on the host path
+    says what Redis actually did.
+    """
+    findings: list[str] = []
+    redis_dir = record["redis_dir"]
+
+    inspected = run(
+        "docker", "inspect", "-f",
+        "{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}\n{{end}}",
+        CONTAINER,
+    )
+    if inspected.returncode != 0:
+        raise Refused(f"cannot inspect {CONTAINER}: {inspected.stderr.strip()[:200]}")
+    mounts = inspected.stdout.strip()
+    findings.append(f"container mounts:\n{mounts}")
+
+    data_mount = [line for line in mounts.splitlines() if line.endswith("-> /data")]
+    if not data_mount:
+        raise Refused("the container has no /data mount at all")
+    if not any(redis_dir in line for line in data_mount):
+        raise Refused(
+            f"/data is {data_mount[0]!r}, not the provisioned {redis_dir!r}. "
+            "Redis is running against the wrong backing."
+        )
+    if any("volume" in line for line in data_mount):
+        raise Refused(
+            f"/data is still a named volume ({data_mount[0]!r}). The override "
+            "did not take effect and writes cannot be dropped."
+        )
+
+    # What Redis itself did: force an append and look for it on the host.
+    run("docker", "exec", CONTAINER, "redis-cli", "-n", "15", "SET",
+        "aep:ws4:wiring-probe", "1")
+    run("docker", "exec", CONTAINER, "redis-cli", "-n", "15", "WAITAOF", "1", "0", "2000")
+    on_host = list(Path(redis_dir).rglob("*.aof")) + list(Path(redis_dir).rglob("*.manifest"))
+    if not on_host:
+        raise Refused(
+            f"Redis acknowledged a write but no AOF file appeared under "
+            f"{redis_dir}. Its data directory is not this device."
+        )
+    findings.append(
+        "AOF files on the provisioned device: "
+        + ", ".join(str(p.relative_to(redis_dir)) for p in sorted(on_host)[:4])
+    )
+    run("docker", "exec", CONTAINER, "redis-cli", "-n", "15", "UNLINK",
+        "aep:ws4:wiring-probe")
+    return findings
+
+
+def teardown_on_refusal(root: Path) -> None:
+    """A refused session leaves no device behind.
+
+    Mirrors `provision_write_loss.py`'s failure path: if the session will not
+    run, the dm-flakey mapping and its loop must not be left for the next one to
+    trip over (`docs/25` R8).
+    """
+    # Release the bind FIRST. While the container is running with /data bound
+    # into the device's mount, umount and `dmsetup remove` both fail and the
+    # teardown reports success over a device that is still there -- R8's failure
+    # mode, which the read-back proof reproduced in this very function.
+    #
+    # Base compose file alone, never -v: the named volume must survive.
+    subprocess.run(
+        ["docker", "compose", "-f", BASE_COMPOSE, "up", "-d", "--wait"],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+    )
+    completed = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "provision_write_loss.py"),
+         "teardown", "--root", str(root)],
+        capture_output=True, text=True,
+    )
+    print(f"teardown: {completed.stdout.strip()[:120]}", file=sys.stderr)
+
+    # Verify per R8 rather than trust the exit code.
+    left = subprocess.run(["dmsetup", "ls"], capture_output=True, text=True).stdout
+    if "aep-ws4" in left:
+        subprocess.run(["dmsetup", "remove", "--force", "aep-ws4-flakey"],
+                       capture_output=True, text=True)
+        print("teardown: mapping survived the first attempt; forced",
+              file=sys.stderr)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--root", type=Path, default=Path("/var/tmp/aep-ws4"))
+    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--redis-url", default=RUNNER_REDIS_URL,
+        help="the URL the collection will use; the marker is read back through it",
+    )
+    arguments = parser.parse_args(argv)
+
+    try:
+        record = load_and_check(arguments.root)
+    except Refused as refusal:
+        print(f"REFUSED: {refusal}", file=sys.stderr)
+        return 1
+
+    redis_dir = record["redis_dir"]
+    print(f"provisioned device : {record['device']}")
+    print(f"redis dir          : {redis_dir}")
+    print(f"backed by          : {backing_device(Path(redis_dir))}")
+
+    if not arguments.check_only:
+        environment = {COMPOSE_PATH_VARIABLE: redis_dir}
+        completed = subprocess.run(
+            ["docker", "compose", "-f", BASE_COMPOSE, "-f", OVERRIDE_COMPOSE,
+             "up", "-d", "--wait"],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+            env={**os.environ, **environment},
+        )
+        if completed.returncode != 0:
+            print(f"compose up failed: {completed.stderr.strip()[:400]}", file=sys.stderr)
+            return 1
+        print("stack up")
+
+    # Rule 9. Asserted only for the Redis this script just pointed at a
+    # provisioned flakey device -- a throwaway loop device created seconds ago --
+    # and never for an arbitrary instance.
+    #
+    # BY ID, not by name, and resolved only after `compose up --wait` returned.
+    identifier = container_id()
+    if identifier is None:
+        print(f"cannot resolve the container id for {CONTAINER}", file=sys.stderr)
+        teardown_on_refusal(arguments.root)
+        return 1
+    print(f"container id       : {identifier[:12]}")
+
+    # THE MARKER IS NO LONGER SET HERE. It is seeded durably into the device's
+    # AOF by `provision_write_loss.py` (R10), so it survives the restarts that
+    # aborted attempt 4. Setting it here as well would mask a failed seed behind
+    # a RAM-only copy -- which is precisely the defect being closed.
+    #
+    # THE READ-BACK, through the consumer's route, is therefore now a gate on
+    # the SEEDING. A failure refuses the session rather than warning: a marker
+    # the runner cannot see is the condition that aborted 60 runs on 2026-09-07
+    # and 47 more on attempt 4.
+    reason = assert_marker_visible_to_the_runner(arguments.redis_url)
+    if reason:
+        print(f"REFUSED: {reason}", file=sys.stderr)
+        print("THE SESSION DOES NOT RUN. Tearing the device down.", file=sys.stderr)
+        teardown_on_refusal(arguments.root)
+        return 1
+    print(f"{TEST_INSTANCE_MARKER}: seeded at provision, READ BACK at "
+          f"{arguments.redis_url} (rule 9)")
+
+    try:
+        for finding in verify_running_stack(record):
+            print(finding)
+    except Refused as refusal:
+        print(f"REFUSED after start: {refusal}", file=sys.stderr)
+        return 1
+
+    print()
+    print("Redis is writing through the flakey device. Export before collecting:")
+    print(f"  {REDIS_FAULT_MECHANISM_VARIABLE}={MECHANISM_WRITE_LOSS}")
+    print(f"  {WRITE_LOSS_DEVICE_VARIABLE}={record['device']}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

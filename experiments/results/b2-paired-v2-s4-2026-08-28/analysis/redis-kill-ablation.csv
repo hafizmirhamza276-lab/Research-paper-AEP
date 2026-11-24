@@ -1,0 +1,5 @@
+regime,system,response_class,runs,executions,executions_with_an_applied_effect,applied_effects_total,declared_ambiguous,confirmed_not_applied,undetected_duplicates,lost_effects,canary_survived,canary_lost
+redis-kill-preack,AEP_FULL,AUTHORITATIVE_READBACK,30,30,23,23,0,7,0,0,30,0
+redis-kill-preack,AEP_FULL,NO_READBACK,30,30,12,12,30,0,0,0,30,0
+redis-kill-preack,B3_INTENT_NO_BARRIER,AUTHORITATIVE_READBACK,30,30,30,30,0,0,0,0,30,0
+redis-kill-preack,B3_INTENT_NO_BARRIER,NO_READBACK,30,30,28,28,29,0,0,0,30,0

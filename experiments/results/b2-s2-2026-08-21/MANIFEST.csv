@@ -1,0 +1,3 @@
+regime,system,crash_point,response_class,readback_keying,runs
+redis-kill-preack,AEP_FULL,none,NO_READBACK,CALLER_REFERENCE,30
+redis-kill-preack,B3_INTENT_NO_BARRIER,none,NO_READBACK,CALLER_REFERENCE,30

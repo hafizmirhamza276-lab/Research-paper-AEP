@@ -1,0 +1,21 @@
+withdrawal commit : 9545ccba02252d85bef48b89aceb5caa324bb90b  2026-08-31T16:36:40+05:00 Withdraw the flakey probe's two p-values; state the separation instead
+its parent        : e6ff2936832b4a04b79ebdc3dfa6368823d00d79  2026-08-31T16:33:30+05:00 F.0e: the second instance rests on an account, and the first was never filed
+
+=== e6ff2936832b4a04b79ebdc3dfa6368823d00d79 (2026-08-31T16:33:30+05:00) ===
+    .                                                                        [100%]
+    1 passed in 0.12s
+    -> pytest exit 0
+=== 9545ccba02252d85bef48b89aceb5caa324bb90b (2026-08-31T16:36:40+05:00) ===
+                    [_payload(60, 60, 60, [_trial()] * 60)]
+                )
+            )
+            # 0/10 lost under a process kill vs 60/60 under write loss.
+    >       assert macros["FlakeyVsProcessKillP"] == "2.5\\times10^{-12}"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    E       KeyError: 'FlakeyVsProcessKillP'
+    
+    tests/test_paper_tables.py:242: KeyError
+    =========================== short test summary info ============================
+    FAILED tests/test_paper_tables.py::test_the_cross_fault_comparison_is_against_the_process_kill_probe
+    1 failed in 2.73s
+    -> pytest exit 1

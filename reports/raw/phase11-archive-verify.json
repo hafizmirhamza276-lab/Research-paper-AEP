@@ -1,0 +1,243 @@
+{
+  "comparison": {
+    "b2-2026-08-21": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns)",
+        "redis-kill-ablation.csv": "IDENTICAL"
+      },
+      "seconds": 7.7
+    },
+    "b2-paired-s1-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 9.9
+    },
+    "b2-paired-v2-s1-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 10.4
+    },
+    "b2-paired-v2-s2-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "container-precondition.json": "NOT REGENERATED (analyze.py does not write it)",
+        "coverage.json": "IDENTICAL",
+        "fault-injection-census.json": "NOT REGENERATED (analyze.py does not write it)",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 13.1
+    },
+    "b2-paired-v2-s2-aborted-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 8.1
+    },
+    "b2-paired-v2-s3-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "container-precondition.json": "NOT REGENERATED (analyze.py does not write it)",
+        "coverage.json": "IDENTICAL",
+        "fault-injection-census.json": "NOT REGENERATED (analyze.py does not write it)",
+        "foreign-load-sample.json": "NOT REGENERATED (analyze.py does not write it)",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 10.5
+    },
+    "b2-paired-v2-s4-2026-08-28": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "container-precondition.json": "NOT REGENERATED (analyze.py does not write it)",
+        "coverage.json": "IDENTICAL",
+        "fault-injection-census.json": "NOT REGENERATED (analyze.py does not write it)",
+        "foreign-load-sample.json": "NOT REGENERATED (analyze.py does not write it)",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "metric-known-ambiguity-rate.csv": "IDENTICAL",
+        "metric-lost-effect-rate.csv": "IDENTICAL",
+        "metric-recovery-success-rate.csv": "IDENTICAL",
+        "metric-state-corruption-rate.csv": "IDENTICAL",
+        "metric-undetected-duplicate-rate.csv": "IDENTICAL",
+        "metric-unverified-failure-rate.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL",
+        "redis-kill-ablation.csv": "IDENTICAL",
+        "table-1.csv": "IDENTICAL"
+      },
+      "seconds": 11.9
+    },
+    "b2-s1-2026-08-21": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns)",
+        "redis-kill-ablation.csv": "IDENTICAL"
+      },
+      "seconds": 7.1
+    },
+    "b2-s2-2026-08-21": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns)",
+        "redis-kill-ablation.csv": "IDENTICAL"
+      },
+      "seconds": 7.6
+    },
+    "b2-s3-2026-08-21": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL",
+        "coverage.json": "IDENTICAL",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns)",
+        "redis-kill-ablation.csv": "IDENTICAL"
+      },
+      "seconds": 6.9
+    },
+    "fsync-always": {
+      "analyze_returncode": 0,
+      "files": {
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns)"
+      },
+      "seconds": 4.7
+    },
+    "matrix": {
+      "analyze_returncode": 0,
+      "files": {
+        "comparisons-vs-aep-full.csv": "IDENTICAL (producer: rebuild_comparisons.py)",
+        "coverage.json": "IDENTICAL (normalised: regime-label)",
+        "latency-and-throughput.csv": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL (normalised: regime-label)",
+        "per-execution.csv": "IDENTICAL (normalised: added-columns, regime-label)",
+        "redis-kill-ablation.csv": "IDENTICAL"
+      },
+      "seconds": 26.0
+    },
+    "phase10-replication-drvfs-2026-09-02": {
+      "analyze_returncode": 0,
+      "files": {
+        "coverage.json": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL"
+      },
+      "seconds": 6.8
+    },
+    "phase10-replication-drvfs-arbb30-2026-09-02": {
+      "analyze_returncode": 0,
+      "files": {
+        "coverage.json": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL"
+      },
+      "seconds": 9.1
+    },
+    "phase10-replication-ext4-2026-09-02": {
+      "analyze_returncode": 0,
+      "files": {
+        "coverage.json": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL"
+      },
+      "seconds": 7.2
+    },
+    "phase10-replication-ext4-arbb30-2026-09-02": {
+      "analyze_returncode": 0,
+      "files": {
+        "coverage.json": "IDENTICAL",
+        "per-cell-metrics.csv": "IDENTICAL",
+        "per-execution.csv": "IDENTICAL"
+      },
+      "seconds": 8.0
+    }
+  },
+  "steps": {
+    "manifest": {
+      "checked": 26300,
+      "problems": []
+    }
+  },
+  "totals": {
+    "differs": 0,
+    "identical": 114,
+    "identical_normalised": 8,
+    "missing": 8,
+    "timestamped": 0
+  }
+}

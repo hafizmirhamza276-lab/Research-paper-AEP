@@ -1,0 +1,788 @@
+% =====================================================================
+% refs.bib -- every entry verified to exist before it was written here.
+%
+% Amendment F4: "every citation must be checked to exist via web search or a
+% known DOI; a fabricated reference is a D4-level halt."
+%
+% Verification method, per entry:
+%   [DBLP]  matched against dblp.org's search API -- authors, venue, year,
+%           pages and DOI copied from the returned record, not from memory.
+%   [DOI]   the DOI was resolved through doi.org with
+%           `Accept: application/x-bibtex` and returned HTTP 200 with a
+%           record whose title and authors match.
+%   [URL]   no DBLP/DOI record exists (vendor documentation); the live page
+%           was fetched and the quoted text read off it on the stated date.
+%
+% Raw output of the sweep: reports/raw/f4-citation-verification.txt
+% Re-run with: python scripts/verify_refs.py
+%
+% -- Two failures worth keeping, because both were silent --
+%
+% 1. A FABRICATED DOI. The ACM Queue version of Helland's idempotence article
+%    was first written from memory as 10.1145/2181796.2229155. That DOI does
+%    not resolve; doi.org returned HTTP 404 ("DOI Not Found") while the nine
+%    real DOIs in this file all returned 200. The correct records are
+%    10.1145/2160718.2160734 (CACM, used below) and 10.1145/2181796.2187821
+%    (ACM Queue). A plausible-looking DOI is precisely what F4 is about, and
+%    only the resolution check caught it.
+%
+% 2. COMMENTS INSIDE ENTRIES. The first version of this file put the
+%    provenance note on the line after the entry's opening brace. BibTeX does
+%    not accept "%" comments inside an entry: it reported "You're missing a
+%    field name ... I'm skipping whatever remains of this entry" and emitted
+%    24 EMPTY \bibitem blocks. The document still compiled and reported no
+%    undefined citations, so nothing in the build said the bibliography was
+%    blank. Provenance comments therefore live ABOVE each entry, never inside
+%    one.
+%
+%    A second bite of the same apple: BibTeX's scanner treats an at-sign as
+%    the start of an entry even on a line beginning with "%", so a comment
+%    quoting an entry header silently swallowed the entry after it. No at-sign
+%    appears in any comment in this file.
+%
+%    scripts/check_paper_numbers.py greps main.bbl for empty \bibitem blocks
+%    and main.blg for BibTeX errors, so neither failure can recur silently.
+% =====================================================================
+
+
+% --------------------------------------------------------------------
+% Leases, locks, and fencing
+% --------------------------------------------------------------------
+
+% [DBLP][DOI 200] Gray, Cheriton. SOSP 1989, pp. 202-210.
+@inproceedings{gray1989leases,
+  author    = {Cary G. Gray and David R. Cheriton},
+  title     = {Leases: An Efficient Fault-Tolerant Mechanism for Distributed
+               File Cache Consistency},
+  booktitle = {Proceedings of the 12th ACM Symposium on Operating Systems
+               Principles (SOSP)},
+  pages     = {202--210},
+  year      = {1989},
+  doi       = {10.1145/74850.74870}
+}
+
+% [DBLP] Burrows. OSDI 2006, pp. 335-350. No DOI; USENIX permalink.
+@inproceedings{burrows2006chubby,
+  author    = {Michael Burrows},
+  title     = {The {Chubby} Lock Service for Loosely-Coupled Distributed
+               Systems},
+  booktitle = {Proceedings of the 7th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {335--350},
+  year      = {2006}
+}
+
+% [URL] Redis distributed-locks pattern page, re-read 2026-08-10. The path
+% recorded on 2026-08-07 (.../develop/use-cases/patterns/distributed-locks/)
+% now returns HTTP 404 -- Redis moved the page from use-cases to clients
+% without a redirect. The URL below was fetched on 2026-08-10 and returned
+% HTTP 200 carrying the Redlock content this entry is cited for. This is the
+% only entry of the 25 whose recorded location had rotted; see
+% reports/phase-report-5c-2026-08-10.md section C.6.
+@misc{redis-locks,
+  author       = {{Redis}},
+  title        = {Distributed Locks with {Redis}},
+  howpublished = {\url{https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-10}
+}
+
+% [URL] Kleppmann's critique of Redlock, read 2026-08-07. Cited for the
+% fencing-token argument, which is why AEP pairs the lock token with an
+% expected-version CAS rather than trusting the lock alone.
+@misc{kleppmann2016locking,
+  author       = {Martin Kleppmann},
+  title        = {How to Do Distributed Locking},
+  howpublished = {\url{https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html}},
+  year         = {2016},
+  note         = {Accessed 2026-08-07}
+}
+
+
+% --------------------------------------------------------------------
+% Transactions, logging, and the limits of agreement
+% --------------------------------------------------------------------
+
+% [DOI 200] Garcia-Molina, Salem. SIGMOD 1987, pp. 249-259. doi.org returned a
+% record keyed Garcia_Molina_1987 with title "Sagas" and pages 249-259.
+@inproceedings{garciamolina1987sagas,
+  author    = {Hector Garcia-Molina and Kenneth Salem},
+  title     = {Sagas},
+  booktitle = {Proceedings of the 1987 ACM SIGMOD International Conference on
+               Management of Data},
+  pages     = {249--259},
+  year      = {1987},
+  doi       = {10.1145/38713.38742}
+}
+
+% [DBLP][DOI 200] Mohan, Haderle, Lindsay, Pirahesh, Schwarz.
+% ACM TODS 17(1):94-162, 1992.
+@article{mohan1992aries,
+  author  = {C. Mohan and Don Haderle and Bruce G. Lindsay and Hamid Pirahesh
+             and Peter M. Schwarz},
+  title   = {{ARIES}: A Transaction Recovery Method Supporting
+             Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead
+             Logging},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {17},
+  number  = {1},
+  pages   = {94--162},
+  year    = {1992},
+  doi     = {10.1145/128765.128770}
+}
+
+% [DBLP][DOI 200] Kung, Robinson. ACM TODS 6(2):213-226, 1981.
+% (A 1979 VLDB abstract also exists; the journal version is cited.)
+@article{kung1981optimistic,
+  author  = {H. T. Kung and John T. Robinson},
+  title   = {On Optimistic Methods for Concurrency Control},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {6},
+  number  = {2},
+  pages   = {213--226},
+  year    = {1981},
+  doi     = {10.1145/319566.319567}
+}
+
+% [DOI 200] Fischer, Lynch, Paterson. J. ACM 32(2):374-382, 1985.
+@article{fischer1985impossibility,
+  author  = {Michael J. Fischer and Nancy A. Lynch and Michael S. Paterson},
+  title   = {Impossibility of Distributed Consensus with One Faulty Process},
+  journal = {Journal of the ACM},
+  volume  = {32},
+  number  = {2},
+  pages   = {374--382},
+  year    = {1985},
+  doi     = {10.1145/3149.214121}
+}
+
+% [DBLP][DOI 200] Chandra, Toueg. J. ACM 43(2):225-267, 1996.
+@article{chandra1996failuredetectors,
+  author  = {Tushar Deepak Chandra and Sam Toueg},
+  title   = {Unreliable Failure Detectors for Reliable Distributed Systems},
+  journal = {Journal of the ACM},
+  volume  = {43},
+  number  = {2},
+  pages   = {225--267},
+  year    = {1996},
+  doi     = {10.1145/226643.226647}
+}
+
+% [DBLP] Ongaro, Ousterhout. USENIX ATC 2014, pp. 305-319. No DOI.
+@inproceedings{ongaro2014raft,
+  author    = {Diego Ongaro and John Ousterhout},
+  title     = {In Search of an Understandable Consensus Algorithm},
+  booktitle = {Proceedings of the 2014 USENIX Annual Technical Conference
+               (USENIX ATC)},
+  pages     = {305--319},
+  year      = {2014}
+}
+
+% [DBLP] Helland. CIDR 2007, pp. 132-141. No DOI; cidrdb.org PDF.
+@inproceedings{helland2007apostate,
+  author    = {Pat Helland},
+  title     = {Life beyond Distributed Transactions: An Apostate's Opinion},
+  booktitle = {Proceedings of the 3rd Biennial Conference on Innovative Data
+               Systems Research (CIDR)},
+  pages     = {132--141},
+  year      = {2007}
+}
+
+% [DBLP][DOI 200] Helland. CACM 55(5):56-65, 2012.
+% See the header note: the ACM Queue variant is 10.1145/2181796.2187821, and
+% 10.1145/2181796.2229155 -- written from memory -- does not exist.
+@article{helland2012idempotence,
+  author  = {Pat Helland},
+  title   = {Idempotence Is Not a Medical Condition},
+  journal = {Communications of the ACM},
+  volume  = {55},
+  number  = {5},
+  pages   = {56--65},
+  year    = {2012},
+  doi     = {10.1145/2160718.2160734}
+}
+
+
+% --------------------------------------------------------------------
+% Durable execution and stateful serverless
+% --------------------------------------------------------------------
+
+% [URL] Official USENIX OSDI 2016 proceedings page and BibTeX, verified
+% 2026-08-11. Pages 501-516; no DOI assigned by USENIX.
+@inproceedings{setty2016olive,
+  author    = {Srinath T. V. Setty and Chunzhi Su and Jacob R. Lorch and Lidong Zhou
+               and Hao Chen and Parveen Patel and Jinglei Ren},
+  title     = {Realizing the {Fault-Tolerance} Promise of Cloud Storage Using
+               Locks with Intent},
+  booktitle = {Proceedings of the 12th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {501--516},
+  year      = {2016},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi16/technical-sessions/presentation/setty}
+}
+
+% [DBLP] Zhang, Cardoza, Chen, Angel, Liu. OSDI 2020, pp. 1187-1204 (Beldi).
+@inproceedings{zhang2020beldi,
+  author    = {Haoran Zhang and Adney Cardoza and Peter Baile Chen and
+               Sebastian Angel and Vincent Liu},
+  title     = {Fault-Tolerant and Transactional Stateful Serverless Workflows},
+  booktitle = {Proceedings of the 14th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {1187--1204},
+  year      = {2020}
+}
+
+% [DBLP] Zhuang, Wang, Liang, Cheng, Stoica. OSDI 2023, pp. 269-286.
+@inproceedings{zhuang2023exoflow,
+  author    = {Siyuan Zhuang and Stephanie Wang and Eric Liang and Yi Cheng
+               and Ion Stoica},
+  title     = {{ExoFlow}: A Universal Workflow System for Exactly-Once {DAGs}},
+  booktitle = {Proceedings of the 17th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {269--286},
+  year      = {2023}
+}
+
+% [DBLP][DOI 200] Burckhardt, Gillum, Justo, Kallas, McMahon, Meiklejohn.
+% PACMPL 5(OOPSLA):1-27, 2021.
+@article{burckhardt2021durable,
+  author  = {Sebastian Burckhardt and Chris Gillum and David Justo and
+             Konstantinos Kallas and Connor McMahon and
+             Christopher S. Meiklejohn},
+  title   = {Durable Functions: Semantics for Stateful Serverless},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume  = {5},
+  number  = {OOPSLA},
+  pages   = {1--27},
+  year    = {2021},
+  doi     = {10.1145/3485510}
+}
+
+% [DBLP][DOI 200] Jia, Witchel. SOSP 2021, pp. 691-707.
+@inproceedings{jia2021boki,
+  author    = {Zhipeng Jia and Emmett Witchel},
+  title     = {{Boki}: Stateful Serverless Computing with Shared Logs},
+  booktitle = {Proceedings of the 28th ACM Symposium on Operating Systems
+               Principles (SOSP)},
+  pages     = {691--707},
+  year      = {2021},
+  doi       = {10.1145/3477132.3483541}
+}
+
+
+% --------------------------------------------------------------------
+% Crash-consistency testing lineage
+% --------------------------------------------------------------------
+
+% [URL] Official USENIX OSDI 2014 proceedings page and BibTeX, verified
+% 2026-08-11. This paper introduces ALICE.
+@inproceedings{pillai2014alice,
+  author    = {Thanumalayan Sankaranarayana Pillai and Vijay Chidambaram and
+               Ramnatthan Alagappan and Samer Al-Kiswany and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {All File Systems Are Not Created Equal: On the Complexity of
+               Crafting Crash-Consistent Applications},
+  booktitle = {Proceedings of the 11th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {433--448},
+  year      = {2014},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi14/technical-sessions/presentation/pillai}
+}
+
+% [URL] Official USENIX OSDI 2014 proceedings page and BibTeX, verified
+% 2026-08-11.
+@inproceedings{zheng2014torturing,
+  author    = {Mai Zheng and Joseph A. Tucek and Dachuan Huang and Feng Qin and
+               Mark Lillibridge and Elizabeth S. Yang and Bill W. Zhao and
+               Shashank Singh},
+  title     = {Torturing Databases for Fun and Profit},
+  booktitle = {Proceedings of the 11th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {449--464},
+  year      = {2014},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi14/technical-sessions/presentation/zheng_mai}
+}
+
+% [URL] Official USENIX OSDI 2018 proceedings page and BibTeX, verified
+% 2026-08-11. The implementations are CrashMonkey and Ace.
+@inproceedings{mohan2018crashmonkey,
+  author    = {Jayashree Mohan and Ashlie Martinez and Soujanya Ponnapalli and
+               Pandian Raju and Vijay Chidambaram},
+  title     = {Finding Crash-Consistency Bugs with Bounded Black-Box Crash
+               Testing},
+  booktitle = {Proceedings of the 13th USENIX Symposium on Operating Systems
+               Design and Implementation (OSDI)},
+  pages     = {33--50},
+  year      = {2018},
+  publisher = {USENIX Association},
+  url       = {https://www.usenix.org/conference/osdi18/presentation/mohan}
+}
+
+
+% --------------------------------------------------------------------
+% Agents
+% --------------------------------------------------------------------
+
+% [DBLP] Yao, Zhao, Yu, Du, Shafran, Narasimhan, Cao. ICLR 2023.
+% [DBLP] Schick, Dwivedi-Yu, Dessi, Raileanu, Lomeli, Hambro, Zettlemoyer,
+% Cancedda, Scialom. NeurIPS 2023.
+% [DBLP] Mei, Li, Xu, Ye, Ge, Zhang. CoRR abs/2403.16971. Preprint, cited
+% as such.
+% [DBLP] Zheng, Yang, Zhang, Quinn. CoRR abs/2603.20625, 2026. Preprint,
+% cited as such.
+@article{zheng2026acrfence,
+  author  = {Yusheng Zheng and Yiwei Yang and Wei Zhang and Andi Quinn},
+  title   = {{ACRFence}: Preventing Semantic Rollback Attacks in Agent
+             Checkpoint-Restore},
+  journal = {CoRR},
+  volume  = {abs/2603.20625},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2603.20625}
+}
+
+% [arXiv] Original preprint pages and author metadata verified 2026-08-11.
+@article{mansoor2026verified,
+  author  = {Isham Kalappurackal Mansoor and Abhishek Phadke and Pratip Rana},
+  title   = {Verified Tool Calls Improve {LLM} Agent Reliability Under
+             Non-Atomic Failures},
+  journal = {CoRR},
+  volume  = {abs/2608.02645},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2608.02645}
+}
+
+@article{balakrishnan2026logact,
+  author  = {Mahesh Balakrishnan and Ashwin Bharambe and Davide Testuggine and
+             David Geraghty and David Mao and Vidhya Venkat and Ilya Mironov
+             and Rithesh Baradi and Gayathri Aiyer and Victoria Dudin},
+  title   = {{LogAct}: Enabling Agentic Reliability via Shared Logs},
+  journal = {CoRR},
+  volume  = {abs/2604.07988},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2604.07988}
+}
+
+@article{he2026seb,
+  author  = {Jun He and Deying Yu},
+  title   = {Sovereign Execution Broker: Enforcing Certificate-Bound Authority
+             in Agentic Control Planes},
+  journal = {CoRR},
+  volume  = {abs/2606.20520},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2606.20520}
+}
+
+
+% --------------------------------------------------------------------
+% Protocol and practitioner patterns
+% --------------------------------------------------------------------
+
+% [URL] IETF HTTPAPI working-group draft 07, published 2025-10-15 and expired
+% 2026-04-18. Verified on the official Datatracker page 2026-08-11; cited as
+% work in progress, not as an RFC or active standard.
+@techreport{jena2025idempotencykey,
+  author      = {Jayadeba Jena and Sanjay Dalal},
+  title       = {The {Idempotency-Key} {HTTP} Header Field},
+  institution = {Internet Engineering Task Force},
+  number      = {draft-ietf-httpapi-idempotency-key-header-07},
+  type        = {Internet-Draft},
+  year        = {2025},
+  month       = oct,
+  url         = {https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-07},
+  note        = {Work in progress; expired 2026-04-18}
+}
+
+% [URL] Original pattern catalogue maintained by Chris Richardson, read
+% 2026-08-11. The page explicitly documents relay re-publication after crash.
+@misc{richardson-transactional-outbox,
+  author       = {Chris Richardson},
+  title        = {Pattern: Transactional Outbox},
+  howpublished = {Microservices.io},
+  url          = {https://microservices.io/patterns/data/transactional-outbox.html},
+  note         = {Accessed 2026-08-11}
+}
+
+
+% --------------------------------------------------------------------
+% Vendor documentation -- no DBLP record. URL plus access date, and the
+% quoted text was read off the live page on the stated day.
+% experiments/baselines/B4_SEMANTICS.md holds the full quotations.
+% --------------------------------------------------------------------
+
+% [URL] Read 2026-08-07. Load-bearing: "blocks the current client until all
+% previous write commands by that client are acknowledged as having been
+% fsynced to the AOF of the local Redis"; available "since 7.2.0"; and
+% "WAITAOF does not make Redis a strongly-consistent store."
+@misc{redis-waitaof,
+  author       = {{Redis}},
+  title        = {{WAITAOF}},
+  howpublished = {\url{https://redis.io/docs/latest/commands/waitaof/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-07}
+}
+
+% [URL] Read 2026-08-07. Load-bearing for Section 6.2: "appendfsync everysec:
+% fsync every second. Fast enough ... and you may lose 1 second of data if
+% there is a disaster"; "appendfsync always: fsync every time new commands are
+% appended to the AOF. Very very slow, very safe."
+@misc{redis-persistence,
+  author       = {{Redis}},
+  title        = {{Redis} Persistence},
+  howpublished = {\url{https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/}},
+  year         = {2026},
+  note         = {Accessed 2026-08-07}
+}
+
+% [URL] Read 2026-08-06 (recorded in B4_SEMANTICS.md). Load-bearing: the
+% default Activity Maximum Attempts is unlimited, and "Setting the value to 1
+% means a single execution attempt and no retries."
+@misc{temporal-retry,
+  author       = {{Temporal Technologies}},
+  title        = {Retry Policies},
+  howpublished = {\url{https://docs.temporal.io/encyclopedia/retry-policies}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}
+
+% [URL] Read 2026-08-06. Load-bearing: "If a Retry Policy dictates a retry,
+% the Temporal Service schedules another Activity Task."
+@misc{temporal-activity-failures,
+  author       = {{Temporal Technologies}},
+  title        = {Detecting Activity Failures},
+  howpublished = {\url{https://docs.temporal.io/encyclopedia/detecting-activity-failures}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}
+
+% [URL] Read 2026-08-06. Load-bearing: "You should always make your business
+% logic Activities idempotent in Temporal. Because Activities may be retried,
+% these functions may be executed more than once."
+@misc{temporal-activity-definition,
+  author       = {{Temporal Technologies}},
+  title        = {Activity Definition},
+  howpublished = {\url{https://docs.temporal.io/activity-definition}},
+  year         = {2026},
+  note         = {Accessed 2026-08-06}
+}
+
+% ---------------------------------------------------------------------------
+% Storage durability and fsync semantics. Added WS-8. Every entry below was
+% confirmed against the publisher's own page before being cited, and each is
+% cited for a claim the paper it names actually makes.
+% ---------------------------------------------------------------------------
+
+@inproceedings{rebello2020fsync,
+  author    = {Anthony Rebello and Yuvraj Patel and Ramnatthan Alagappan and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Can Applications Recover from fsync Failures?},
+  booktitle = {2020 USENIX Annual Technical Conference (USENIX ATC)},
+  pages     = {753--767},
+  year      = {2020},
+  url       = {https://www.usenix.org/conference/atc20/presentation/rebello}
+}
+
+@misc{corbet2018fsync,
+  author       = {Jonathan Corbet},
+  title        = {{PostgreSQL}'s fsync() surprise},
+  howpublished = {\url{https://lwn.net/Articles/752063/}},
+  year         = {2018},
+  note         = {LWN.net. Accessed 2026-09-08}
+}
+
+@inproceedings{ganesan2017redundancy,
+  author    = {Aishwarya Ganesan and Ramnatthan Alagappan and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Redundancy Does Not Imply Fault Tolerance: Analysis of
+               Distributed Storage Reactions to Single Errors and Corruptions},
+  booktitle = {15th USENIX Conference on File and Storage Technologies (FAST)},
+  pages     = {149--166},
+  year      = {2017},
+  url       = {https://www.usenix.org/conference/fast17/technical-sessions/presentation/ganesan}
+}
+
+@inproceedings{alagappan2018par,
+  author    = {Ramnatthan Alagappan and Aishwarya Ganesan and Eric Lee and
+               Aws Albarghouthi and Vijay Chidambaram and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau},
+  title     = {Protocol-Aware Recovery for Consensus-Based Storage},
+  booktitle = {16th USENIX Conference on File and Storage Technologies (FAST)},
+  pages     = {15--32},
+  year      = {2018},
+  url       = {https://www.usenix.org/conference/fast18/presentation/alagappan}
+}
+
+@article{saltzer1984endtoend,
+  author  = {Jerome H. Saltzer and David P. Reed and David D. Clark},
+  title   = {End-to-End Arguments in System Design},
+  journal = {ACM Transactions on Computer Systems},
+  volume  = {2},
+  number  = {4},
+  pages   = {277--288},
+  year    = {1984},
+  doi     = {10.1145/357401.357402}
+}
+
+@article{chandy1985snapshots,
+  author  = {K. Mani Chandy and Leslie Lamport},
+  title   = {Distributed Snapshots: Determining Global States of Distributed
+             Systems},
+  journal = {ACM Transactions on Computer Systems},
+  volume  = {3},
+  number  = {1},
+  pages   = {63--75},
+  year    = {1985},
+  doi     = {10.1145/214451.214456}
+}
+
+@article{carbone2015abs,
+  author  = {Paris Carbone and Gyula F{\'o}ra and Stephan Ewen and
+             Seif Haridi and Kostas Tzoumas},
+  title   = {Lightweight Asynchronous Snapshots for Distributed Dataflows},
+  journal = {CoRR},
+  volume  = {abs/1506.08603},
+  year    = {2015},
+  url     = {https://arxiv.org/abs/1506.08603}
+}
+
+% ---------------------------------------------------------------------------
+% Distributed transactions and their retreat; compensation. Added WS-8 part 2.
+% Each confirmed against the publisher's own page before being cited.
+% ---------------------------------------------------------------------------
+
+@inproceedings{skeen1981nonblocking,
+  author    = {Dale Skeen},
+  title     = {Nonblocking Commit Protocols},
+  booktitle = {Proceedings of the 1981 ACM SIGMOD International Conference on
+               Management of Data},
+  pages     = {133--142},
+  year      = {1981},
+  doi       = {10.1145/582318.582339}
+}
+
+@article{mohan1986rstar,
+  author  = {C. Mohan and Bruce Lindsay and Ron Obermarck},
+  title   = {Transaction Management in the {R*} Distributed Database
+             Management System},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {11},
+  number  = {4},
+  pages   = {378--396},
+  year    = {1986},
+  doi     = {10.1145/7239.7266}
+}
+
+@inproceedings{corbett2012spanner,
+  author    = {James C. Corbett and Jeffrey Dean and Michael Epstein and
+               Andrew Fikes and Christopher Frost and J. J. Furman and
+               Sanjay Ghemawat and Andrey Gubarev and Christopher Heiser and
+               Peter Hochschild and Wilson Hsieh and Sebastian Kanthak and
+               Eugene Kogan and Hongyi Li and Alexander Lloyd and
+               Sergey Melnik and David Mwaura and David Nagle and
+               Sean Quinlan and Rajesh Rao and Lindsay Rolig and
+               Yasushi Saito and Michal Szymaniak and Christopher Taylor and
+               Ruth Wang and Dale Woodford},
+  title     = {Spanner: {Google}'s Globally-Distributed Database},
+  booktitle = {10th USENIX Symposium on Operating Systems Design and
+               Implementation (OSDI)},
+  year      = {2012},
+  url       = {https://www.usenix.org/conference/osdi12/technical-sessions/presentation/corbett}
+}
+
+@inproceedings{gray1981transaction,
+  author    = {Jim Gray},
+  title     = {The Transaction Concept: Virtues and Limitations},
+  booktitle = {Proceedings of the 7th International Conference on Very Large
+               Data Bases (VLDB)},
+  pages     = {144--154},
+  year      = {1981},
+  url       = {https://dl.acm.org/doi/10.5555/1286831.1286846}
+}
+
+@inproceedings{korth1990compensating,
+  author    = {Henry F. Korth and Eliezer Levy and Abraham Silberschatz},
+  title     = {A Formal Approach to Recovery by Compensating Transactions},
+  booktitle = {Proceedings of the 16th International Conference on Very Large
+               Data Bases (VLDB)},
+  pages     = {95--106},
+  year      = {1990},
+  url       = {https://www.vldb.org/conf/1990/P095.PDF}
+}
+
+% ---------------------------------------------------------------------------
+% Idempotency-key contracts as deployed, and exactly-once delivery.
+% Added WS-8 part 3. The two vendor entries are specifications, not research,
+% and are cited as such: the claim they support is about what the contract
+% requires, for which the normative text is the primary source.
+% ---------------------------------------------------------------------------
+
+@misc{stripe-idempotency,
+  author       = {{Stripe}},
+  title        = {Idempotent Requests --- {Stripe} {API} Reference},
+  howpublished = {\url{https://docs.stripe.com/api/idempotent_requests}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@misc{adyen-idempotency,
+  author       = {{Adyen}},
+  title        = {{API} Idempotency},
+  howpublished = {\url{https://docs.adyen.com/development-resources/api-idempotency/}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@article{halpern1990knowledge,
+  author  = {Joseph Y. Halpern and Yoram Moses},
+  title   = {Knowledge and Common Knowledge in a Distributed Environment},
+  journal = {Journal of the ACM},
+  volume  = {37},
+  number  = {3},
+  pages   = {549--587},
+  year    = {1990},
+  doi     = {10.1145/79147.79161}
+}
+
+@inproceedings{wang2021kafka,
+  author    = {Guozhang Wang and Lei Chen and Ayusman Dikshit and
+               Jason Gustafson and Boyang Chen and Matthias J. Sax and
+               John Roesler and Sophie Blee-Goldman and Bruno Cadonna and
+               Apurva Mehta and Varun Madan and Jun Rao},
+  title     = {Consistency and Completeness: Rethinking Distributed Stream
+               Processing in {Apache} {Kafka}},
+  booktitle = {Proceedings of the 2021 International Conference on Management
+               of Data (SIGMOD)},
+  pages     = {2602--2613},
+  year      = {2021},
+  doi       = {10.1145/3448016.3457556}
+}
+
+% ---------------------------------------------------------------------------
+% The durable-orchestration line, and coordination kernels. Added WS-8 part 4.
+% Vendor documentation is cited as documentation: the claims it supports are
+% about what each system states it assumes of an invoked step.
+% ---------------------------------------------------------------------------
+
+@article{georgakopoulos1995workflow,
+  author  = {Dimitrios Georgakopoulos and Mark Hornick and Amit Sheth},
+  title   = {An Overview of Workflow Management: From Process Modeling to
+             Workflow Automation Infrastructure},
+  journal = {Distributed and Parallel Databases},
+  volume  = {3},
+  number  = {2},
+  pages   = {119--153},
+  year    = {1995},
+  doi     = {10.1007/BF01277643}
+}
+
+@article{skiadopoulos2022dbos,
+  author  = {Athinagoras Skiadopoulos and Qian Li and Peter Kraft and
+             Kostis Kaffes and Daniel Hong and Shana Mathew and
+             David Bestor and Michael Cafarella and Vijay Gadepally and
+             Goetz Graefe and Jeremy Kepner and Christos Kozyrakis and
+             Tim Kraska and Michael Stonebraker and Lalith Suresh and
+             Matei Zaharia},
+  title   = {{DBOS}: A {DBMS}-oriented Operating System},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {15},
+  number  = {1},
+  pages   = {21--30},
+  year    = {2021},
+  doi     = {10.14778/3485450.3485454}
+}
+
+@inproceedings{hunt2010zookeeper,
+  author    = {Patrick Hunt and Mahadev Konar and Flavio P. Junqueira and
+               Benjamin Reed},
+  title     = {{ZooKeeper}: Wait-free Coordination for Internet-scale Systems},
+  booktitle = {2010 USENIX Annual Technical Conference (USENIX ATC)},
+  year      = {2010},
+  url       = {https://www.usenix.org/conference/usenix-atc-10/zookeeper-wait-free-coordination-internet-scale-systems}
+}
+
+@misc{cadence-workflows,
+  author       = {{Uber Technologies}},
+  title        = {{Cadence} Documentation: Workflows and Activities},
+  howpublished = {\url{https://cadenceworkflow.io/docs/concepts/workflows}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@misc{restate-durable-execution,
+  author       = {{Restate}},
+  title        = {Key Concepts: Durable Execution},
+  howpublished = {\url{https://docs.restate.dev/foundations/key-concepts}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@misc{aws-stepfunctions-bestpractices,
+  author       = {{Amazon Web Services}},
+  title        = {Best Practices for {Step Functions}},
+  howpublished = {\url{https://docs.aws.amazon.com/step-functions/latest/dg/sfn-best-practices.html}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+@misc{aws-durable-execution-idempotency,
+  author       = {{Amazon Web Services}},
+  title        = {Idempotency and Retries --- {AWS} Durable Execution {SDK}},
+  howpublished = {\url{https://docs.aws.amazon.com/durable-execution/patterns/best-practices/idempotency/}},
+  year         = {2026},
+  note         = {Accessed 2026-09-08}
+}
+
+% ---------------------------------------------------------------------------
+% Fault-injection and consistency-testing methodology. Added WS-8 part 5.
+% Each is cited for what it injects and at what layer, which is the axis that
+% makes it comparable to, or different from, this paper's harness.
+% ---------------------------------------------------------------------------
+
+@article{kingsbury2020elle,
+  author  = {Kyle Kingsbury and Peter Alvaro},
+  title   = {Elle: Inferring Isolation Anomalies from Experimental
+             Observations},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {14},
+  number  = {3},
+  pages   = {268--280},
+  year    = {2020},
+  doi     = {10.14778/3430915.3430918}
+}
+
+@inproceedings{gunawi2011fate,
+  author    = {Haryadi S. Gunawi and Thanh Do and Pallavi Joshi and
+               Peter Alvaro and Joseph M. Hellerstein and
+               Andrea C. Arpaci-Dusseau and Remzi H. Arpaci-Dusseau and
+               Koushik Sen and Dhruba Borthakur},
+  title     = {{FATE} and {DESTINI}: A Framework for Cloud Recovery Testing},
+  booktitle = {8th USENIX Symposium on Networked Systems Design and
+               Implementation (NSDI)},
+  year      = {2011},
+  url       = {https://www.usenix.org/conference/nsdi11/fate-and-destini-framework-cloud-recovery-testing}
+}
+
+@inproceedings{bornholt2016ferrite,
+  author    = {James Bornholt and Antoine Kaufmann and Jialin Li and
+               Arvind Krishnamurthy and Emina Torlak and Xi Wang},
+  title     = {Specifying and Checking File System Crash-Consistency Models},
+  booktitle = {Proceedings of the 21st International Conference on
+               Architectural Support for Programming Languages and Operating
+               Systems (ASPLOS)},
+  pages     = {83--98},
+  year      = {2016},
+  doi       = {10.1145/2872362.2872406}
+}
+
+@inproceedings{alvaro2015ldfi,
+  author    = {Peter Alvaro and Joshua Rosen and Joseph M. Hellerstein},
+  title     = {Lineage-driven Fault Injection},
+  booktitle = {Proceedings of the 2015 ACM SIGMOD International Conference on
+               Management of Data},
+  pages     = {331--346},
+  year      = {2015},
+  doi       = {10.1145/2723372.2723711}
+}
+

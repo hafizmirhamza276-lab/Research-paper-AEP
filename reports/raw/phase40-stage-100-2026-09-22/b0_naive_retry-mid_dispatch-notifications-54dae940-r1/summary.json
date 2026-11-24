@@ -1,0 +1,34 @@
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "NO_RECORD": 3
+  },
+  "config_digest": "cd3aff291919bac9937654bdc36c4fd0d7244c8015a124376adce9dcee64cb0e",
+  "crash_injections": 1,
+  "declared_ambiguous_executions": 0,
+  "disagreements": [],
+  "duplicate_prediction_applies": false,
+  "executions_planned": 3,
+  "expected_duplicate_groups": -1,
+  "expected_effect_executions_lower": 0,
+  "expected_effect_executions_upper": 3,
+  "keys_removed": 0,
+  "lost_effect_executions": 1,
+  "oracle_applied_rows": 1,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 1,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "NO_RECORD": 3
+  },
+  "poisoned_detection": [],
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r1",
+  "settled": true,
+  "system": "B0_NAIVE_RETRY",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}

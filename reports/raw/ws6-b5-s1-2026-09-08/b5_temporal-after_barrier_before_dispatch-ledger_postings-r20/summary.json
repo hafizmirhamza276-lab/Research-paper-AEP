@@ -1,0 +1,31 @@
+{
+  "agrees": true,
+  "b5_verdict": "VOID_WORKER_NEVER_READY",
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "NO_RECORD": 10
+  },
+  "config_digest": "aa503410bb4169e0ad813108f454e02e2178fac3da6bcea57614ebc8eb2b5c82",
+  "declared_ambiguous_executions": 0,
+  "disagreements": [],
+  "duplicate_prediction_applies": false,
+  "executions_planned": 10,
+  "expected_duplicate_groups": -1,
+  "expected_effect_executions_lower": 0,
+  "expected_effect_executions_upper": 0,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 0,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 0,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "NO_RECORD": 10
+  },
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b5_temporal-after_barrier_before_dispatch-ledger_postings-r20",
+  "system": "B5_TEMPORAL",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}

@@ -1,0 +1,28 @@
+runtime label   aep-native
+docker context  aep-native
+docker server   29.4.3
+redis backing   volume /var/lib/docker/volumes/aep-phase2_redis-data/_data
+iterations      20
+
+  iter  1 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter  2 PASS
+  iter  3 PASS
+  iter  4 PASS
+  iter  5 PASS
+  iter  6 PASS
+  iter  7 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter  8 PASS
+  iter  9 PASS
+  iter 10 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter 11 PASS
+  iter 12 PASS
+  iter 13 PASS
+  iter 14 PASS
+  iter 15 PASS
+  iter 16 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter 17 PASS
+  iter 18 PASS
+  iter 19 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter 20 PASS
+
+RESULT aep-native: 5 failed / 20 iterations

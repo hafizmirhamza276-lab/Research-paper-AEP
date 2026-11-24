@@ -1,0 +1,324 @@
+==============================================================================
+Storage backing across existing collections
+==============================================================================
+
+12 results roots are represented in git:
+  b2-2026-08-21
+  b2-paired-s1-2026-08-28
+  b2-paired-v2-s1-2026-08-28
+  b2-paired-v2-s2-2026-08-28
+  b2-paired-v2-s2-aborted-2026-08-28
+  b2-paired-v2-s3-2026-08-28
+  b2-paired-v2-s4-2026-08-28
+  b2-s1-2026-08-21
+  b2-s2-2026-08-21
+  b2-s3-2026-08-21
+  fsync-always
+  matrix
+
+Raw run directories are gitignored by design (.gitignore:134-151); only analysis products and manifests are tracked. No TRACKED file carries results_root_filesystem or redis_storage_backing.
+
+==============================================================================
+TREE /root/aep
+==============================================================================
+
+  fsync-always
+    run directories        6
+    run-configs            6  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  matrix
+    run directories        433
+    run-configs            432  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  matrix-smoke
+    run directories        6
+    run-configs            6  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  smoke
+    run directories        6
+    run-configs            6  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  throughput
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  voided
+    run directories        1
+    run-configs            1  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+==============================================================================
+TREE /root/aep-phase8
+==============================================================================
+
+  b2-2026-08-21
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-s1-2026-08-28
+    run directories        120
+    run-configs            120  (with environment: 120)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [120 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [120 run(s)]
+    recorded results_root  experiments/results/b2-paired-s1-2026-08-28  [120 run(s)]
+
+  b2-paired-v2-s1-2026-08-28
+    run directories        120
+    run-configs            120  (with environment: 120)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [120 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [120 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s1-2026-08-28  [120 run(s)]
+
+  b2-paired-v2-s2-2026-08-28
+    run directories        120
+    run-configs            120  (with environment: 120)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [120 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [120 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s2-2026-08-28  [120 run(s)]
+
+  b2-paired-v2-s2-aborted-2026-08-28
+    run directories        26
+    run-configs            26  (with environment: 26)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [26 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [26 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s2-2026-08-28  [26 run(s)]
+
+  b2-paired-v2-s2-operator-aborted-2026-08-28
+    run directories        16
+    run-configs            16  (with environment: 16)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [16 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [16 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s2-2026-08-28  [16 run(s)]
+
+  b2-paired-v2-s3-2026-08-28
+    run directories        120
+    run-configs            120  (with environment: 120)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [120 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [120 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s3-2026-08-28  [120 run(s)]
+
+  b2-paired-v2-s4-2026-08-28
+    run directories        120
+    run-configs            120  (with environment: 120)
+    filesystem             type=ext2/ext3 device=/dev/sdf mount=/ is_drvfs=False  [120 run(s)]
+    redis_storage_backing  volume /var/lib/docker/volumes/aep-phase2_redis-data/_data name=aep-phase2_redis-data  [120 run(s)]
+    recorded results_root  experiments/results/b2-paired-v2-s4-2026-08-28  [120 run(s)]
+
+  b2-s1-2026-08-21
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-s2-2026-08-21
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-s3-2026-08-21
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  fsync-always
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  matrix
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+==============================================================================
+TREE /root/aep-stage3
+==============================================================================
+
+  fsync-always
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  matrix
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  stage3-replication-2026-08-13
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+==============================================================================
+TREE /mnt/d/personal/AEP/Research-paper-AEP
+==============================================================================
+
+  b2-2026-08-21
+    run directories        60
+    run-configs            60  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-s1-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-v2-s1-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-v2-s2-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-v2-s2-aborted-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-v2-s3-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-paired-v2-s4-2026-08-28
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-s1-2026-08-21
+    run directories        60
+    run-configs            60  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-s2-2026-08-21
+    run directories        60
+    run-configs            60  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  b2-s3-2026-08-21
+    run directories        60
+    run-configs            60  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  fsync-always
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  matrix
+    run directories        84
+    run-configs            84  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  selfcheck
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  selfcheck-c5
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  smoke
+    run directories        6
+    run-configs            6  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+  throughput
+    run directories        0
+    run-configs            0  (with environment: 0)
+    filesystem             UNDETERMINED from recorded metadata
+    redis_storage_backing  UNDETERMINED from recorded metadata
+
+==============================================================================
+Comparisons in section VI that span two or more results roots
+==============================================================================
+
+  paper/sections/06-evaluation.tex:340-349  -> b2-paired-v2-*, matrix
+      [b2-paired-v2-*] \ClassSessions
+      [matrix] \AepKillRuns
+
+  paper/sections/06-evaluation.tex:385-397  -> e1-durability-window probe, matrix
+      [e1-durability-window probe] \ProcessKillWindowMax, \ProcessKillWindowMin
+      [matrix] \AepKillApplied
+
+  paper/sections/06-evaluation.tex:406-419  -> b2-*-2026-08-21, matrix
+      [b2-*-2026-08-21] \ReplicationAepMax, \ReplicationAepMin, \ReplicationBthreeApplied, \ReplicationBthreeRange, \ReplicationPreventedHigh, \ReplicationPreventedLow, \ReplicationPreventedMean, \ReplicationRuns
+      [matrix] \AepKillRuns, \UnwantedPrevented
+
+  paper/sections/06-evaluation.tex:421-438  -> b2-*-2026-08-21, e1-kill-latency (matrix + b2-*)
+      [DERIVED (2 * (1/2)^4)] \KillLatencySignFloor
+      [b2-*-2026-08-21] \ReplicationRuns
+      [e1-kill-latency (matrix + b2-*)] \KillLatencyHalfWidth, \KillLatencyHigh, \KillLatencyLow, \KillLatencyMean, \KillLatencyPerSession, \KillLatencyPrecisionRatio, \KillLatencySessions
+
+  paper/sections/06-evaluation.tex:440-447  -> b2-*-2026-08-21, e1-kill-latency (matrix + b2-*)
+      [b2-*-2026-08-21] \ReplicationRuns
+      [e1-kill-latency (matrix + b2-*)] \KillLatencyBthreeHalfWidth, \KillLatencyBthreeHigh, \KillLatencyBthreeLow, \KillLatencyBthreeMean, \KillLatencyBthreePerSession, \KillLatencyBthreePrecisionRatio
+
+  paper/sections/06-evaluation.tex:462-468  -> b2-*-2026-08-21, matrix
+      [b2-*-2026-08-21] \ReplicationAepMax, \ReplicationAepMin, \ReplicationSessions
+      [matrix] \AepKillRuns, \UnwantedPrevented
+
+  paper/sections/06-evaluation.tex:525-534  -> e1-durability-window probe, g2-flakey (no Docker in the path)
+      [e1-durability-window probe] \ProcessKillUnackLost
+      [g2-flakey (no Docker in the path)] \FlakeyAckSurvived, \FlakeyN, \FlakeyPerRepAckSurvived, \FlakeyPerRepUnackLost, \FlakeyReplications, \FlakeyUnackLost
+
+  paper/sections/06-evaluation.tex:558-568  -> e1-durability-window probe, g2-flakey (no Docker in the path)
+      [e1-durability-window probe] \ProcessKillUnackLost
+      [g2-flakey (no Docker in the path)] \FlakeyUnackLost, \FlakeyWindowMax, \FlakeyWindowMin
+
+  paper/sections/06-evaluation.tex:623-631  -> fsync-always, matrix
+      [fsync-always] \BarrierCostAlways
+      [matrix] \BarrierCost
+
+  paper/sections/06-evaluation.tex:633-640  -> fsync-always, matrix
+      [fsync-always] \BthreeAlwaysMedian
+      [matrix] \BthreeStepMedian
+
+  paper/sections/06-evaluation.tex:648-658  -> fsync-always, matrix
+      [fsync-always] \BarrierCostAlways
+      [matrix] \BarrierCost, \BarrierCostAlwaysHigh, \BarrierCostAlwaysLow, \BarrierCostHigh, \BarrierCostLow
+
+  paper/sections/06-evaluation.tex:704-715  -> fsync-always, matrix
+      [fsync-always] \AepThroughputAlways
+      [matrix] \AepThroughputEverysec
+
+  TOTAL: 12 paragraph(s)
+
+wrote reports/raw/phase10-storage-backing-survey.json

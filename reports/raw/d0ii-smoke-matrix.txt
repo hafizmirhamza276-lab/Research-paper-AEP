@@ -1,0 +1,177 @@
+======================================================================
+D0(ii) smoke matrix -- 6 crash points x 1 run
+  platform:      Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python:        3.13.0
+  has_sigkill:   True
+  kill:          SIGKILL
+  redis:         redis://127.0.0.1:6381/15
+  template:      experiments/configs/smoke.yaml
+  results root:  experiments/results/smoke
+======================================================================
+
+----------------------------------------------------------------------
+[1/6] crash point: before_intent_write
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "NO_INTENT": 6
+  },
+  "config_digest": "597a8c86cb289dfe12979a2246a379c448b1831660cc84b34c4ee2da3015ed11",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 0,
+  "expected_effect_executions_upper": 0,
+  "oracle_applied_rows": 0,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 0,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-before_intent_write",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 3.0s
+agrees:  True
+
+----------------------------------------------------------------------
+[2/6] crash point: after_intent_before_barrier
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FAILED_CONFIRMED": 6
+  },
+  "config_digest": "52e0ec5be98f4a2161252e91a173512ed046ec8e1866e55850dd9bcbbf5ffb80",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 0,
+  "expected_effect_executions_upper": 0,
+  "oracle_applied_rows": 0,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 0,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-after_intent_before_barrier",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 31.0s
+agrees:  True
+
+----------------------------------------------------------------------
+[3/6] crash point: after_barrier_before_dispatch
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FAILED_CONFIRMED": 6
+  },
+  "config_digest": "9bf4b57f784ddd041a53cae595250e836f65664c5d3c51f1d2505ee5357099c8",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 0,
+  "expected_effect_executions_upper": 0,
+  "oracle_applied_rows": 0,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 0,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-after_barrier_before_dispatch",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 35.0s
+agrees:  True
+
+----------------------------------------------------------------------
+[4/6] crash point: mid_dispatch
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 6
+  },
+  "config_digest": "b209205896dd7e7e7949ba442afe308b9f29c5dc8053e546c05c60e691b728d3",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 6,
+  "expected_effect_executions_upper": 6,
+  "oracle_applied_rows": 6,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 6,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-mid_dispatch",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 36.0s
+agrees:  True
+
+----------------------------------------------------------------------
+[5/6] crash point: after_response_before_resolution
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 6
+  },
+  "config_digest": "a2c30c28cc4cbd7c212ff11278ebefc28d56cea15321e9eebb67efd16380c86a",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 6,
+  "expected_effect_executions_upper": 6,
+  "oracle_applied_rows": 6,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 6,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-after_response_before_resolution",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 40.0s
+agrees:  True
+
+----------------------------------------------------------------------
+[6/6] crash point: after_resolution_before_barrier
+----------------------------------------------------------------------
+{
+  "agrees": true,
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "FIRED_CONFIRMED": 6
+  },
+  "config_digest": "6cd96d55344969929114fad3c91563dd4e3dff712863e6fe76b2bc2ed8028951",
+  "disagreements": [],
+  "executions_planned": 6,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 6,
+  "expected_effect_executions_upper": 6,
+  "oracle_applied_rows": 6,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 6,
+  "oracle_unattributed_rows": 0,
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "smoke-after_resolution_before_barrier",
+  "undetected_duplicate_applications": 0
+}
+settled: True   wall: 11.1s
+agrees:  True
+
+======================================================================
+  PASS  before_intent_write                settled=True      3.0s
+  PASS  after_intent_before_barrier        settled=True     31.0s
+  PASS  after_barrier_before_dispatch      settled=True     35.0s
+  PASS  mid_dispatch                       settled=True     36.0s
+  PASS  after_response_before_resolution   settled=True     40.0s
+  PASS  after_resolution_before_barrier    settled=True     11.1s
+======================================================================
+D0(ii) PASS -- reconciliation agreed at all 6 crash points
+manifest: experiments/results/smoke/smoke-matrix.json

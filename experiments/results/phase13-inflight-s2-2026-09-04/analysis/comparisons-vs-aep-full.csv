@@ -1,0 +1,7 @@
+regime,metric,system,reference,system_successes,system_total,system_rate,reference_successes,reference_total,reference_rate,fisher_p_value,system_runs,reference_runs,fisher_unit,difference_rate,difference_ci_low,difference_ci_high,difference_confidence,difference_method,difference_strata,system_clusters,reference_clusters,equivalence_margin,equivalent_within_margin,equivalence_margin_preregistered
+redis-kill-inflight,undetected_duplicate_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,60,0.0,0,60,0.0,1.0,60,60,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-inflight,known_ambiguity_rate,B3_INTENT_NO_BARRIER,AEP_FULL,30,60,0.5,30,60,0.5,1.0,60,60,execution (cluster-unadjusted),0.0,0.0,0.0,0.9,stratified run-cluster percentile bootstrap,2,60,60,0.05,True,False
+redis-kill-inflight,lost_effect_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,60,0.0,0,60,0.0,1.0,60,60,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-inflight,unverified_failure_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,60,0.0,0,60,0.0,1.0,60,60,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-inflight,state_corruption_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,60,0.0,0,60,0.0,1.0,60,60,execution (cluster-unadjusted),,,,,,,,,,,
+redis-kill-inflight,recovery_success_rate,B3_INTENT_NO_BARRIER,AEP_FULL,0,0,0.0,0,0,0.0,1.0,60,60,execution (cluster-unadjusted),,,,,,,,,,,

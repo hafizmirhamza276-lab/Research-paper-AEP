@@ -1,0 +1,49 @@
+
+
+########## build ##########
+archiving 20 collection roots into /root/aep-raw-archive
+  matrix                                        432 runs    9410 files
+  fsync-always                                    6 runs     112 files
+  voided                                          1 runs      24 files
+  b2-2026-08-21                                  60 runs     920 files
+  b2-s1-2026-08-21                               60 runs     920 files
+  b2-s2-2026-08-21                               60 runs     920 files
+  b2-s3-2026-08-21                               60 runs     920 files
+  b2-paired-s1-2026-08-28                       120 runs    1819 files
+  b2-paired-v2-s1-2026-08-28                    120 runs    1821 files
+  b2-paired-v2-s2-2026-08-28                    120 runs    1827 files
+  b2-paired-v2-s3-2026-08-28                    120 runs    1827 files
+  b2-paired-v2-s4-2026-08-28                    120 runs    1827 files
+  b2-paired-v2-s2-aborted-2026-08-28             26 runs     406 files
+  b2-paired-v2-s2-operator-aborted-2026-08-28    16 runs     178 files
+  phase10-replication-ext4-2026-09-02            18 runs     448 files
+  phase10-replication-ext4-arbb30-2026-09-02     30 runs     735 files
+  phase10-replication-drvfs-2026-09-02           18 runs     451 files
+  phase10-replication-drvfs-arbb30-2026-09-02    30 runs     734 files
+  phase10-VOIDED-ext4-wrong-runtime              18 runs     446 files
+  phase10-VOIDED-ext4-arbb30-wrong-runtime       23 runs     554 files
+
+manifest entries : 26300
+payload bytes    : 492,905,568
+tar bytes        : 520,396,800
+tar.gz bytes     : 24,257,505
+tar.gz sha256    : fec959b5517eaeb1fd4bd9992472ce079206aea2fd374bd7e8a834ab2ac07353
+tar sha256       : 3aa90b215e838b41c02e47d38fd9ce474a3cb01c58d090659f2e7711ff6dbc94
+MANIFEST sha256  : 87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7
+exit=0
+
+
+########## output directory ##########
+total 536108
+drwxr-xr-x  2 root root      4096 Sep  3 10:15 .
+drwx------ 25 root root      4096 Sep  3 10:13 ..
+-rw-r--r--  1 root root     15052 Sep  3 10:14 ARCHIVE-METADATA.json
+-rw-r--r--  1 root root   4287997 Sep  3 10:15 MANIFEST.sha256
+-rw-r--r--  1 root root 520396800 Sep  3 10:15 aep-raw-evidence.tar
+-rw-r--r--  1 root root  24257505 Sep  3 10:15 aep-raw-evidence.tar.gz
+
+
+########## prove no raw run directory was modified ##########
+re-digested 26299 source files against /root/aep-raw-archive/MANIFEST.sha256
+UNCHANGED: every source file still digests to its manifest value.
+exit=0

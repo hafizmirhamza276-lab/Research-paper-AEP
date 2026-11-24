@@ -1,0 +1,23 @@
+{
+  "MANIFEST.sha256_matches": true,
+  "MANIFEST.sha256_sha256": "87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7",
+  "aep-raw-evidence.tar.gz_matches": true,
+  "aep-raw-evidence.tar.gz_sha256": "fec959b5517eaeb1fd4bd9992472ce079206aea2fd374bd7e8a834ab2ac07353",
+  "extracted_files": 26300,
+  "failures": [],
+  "manifest_checked": 26300,
+  "manifest_problems": 0,
+  "rederive_counts": {
+    "differs": 0,
+    "identical": 114,
+    "normalised": 8
+  },
+  "rederive_returncode": 1,
+  "rederive_tail": [
+    "  IDENTICAL                                                              per-execution.csv",
+    "",
+    "==============================================================================",
+    "IDENTICAL 114   IDENTICAL-after-normalisation 8   DIFFERS 0   NOT REGENERATED 8   DIFFERS-timestamped-PDF 0"
+  ],
+  "source": "/root/aep-raw-archive"
+}

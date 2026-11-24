@@ -1,0 +1,8 @@
+[
+  {
+    "name": "aep-redis",
+    "listen": "0.0.0.0:6382",
+    "upstream": "redis-phase2:6379",
+    "enabled": true
+  }
+]

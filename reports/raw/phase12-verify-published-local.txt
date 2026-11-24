@@ -1,0 +1,21 @@
+/mnt/d/personal/AEP/Research-paper-AEP/scripts/verify_published_archive.py:167: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extract(member, path=extract, set_attrs=False)
+=== 1. obtain ===
+  local: /root/aep-raw-archive
+
+=== 2. digests against what the repository expects ===
+  aep-raw-evidence.tar.gz    MATCH    fec959b5517eaeb1fd4bd9992472ce079206aea2fd374bd7e8a834ab2ac07353
+  MANIFEST.sha256            MATCH    87fa2d534d8751d1239bd31f858a916536c94e1549741d37704a1b083d03e2d7
+
+=== 3. extract and check every file against the manifest ===
+  extracted 26,300 files
+  26,300 files verified against the manifest, 0 problems
+
+=== 4. re-derive and byte-compare against the tracked products ===
+    IDENTICAL                                                              per-execution.csv
+  
+  ==============================================================================
+  IDENTICAL 114   IDENTICAL-after-normalisation 8   DIFFERS 0   NOT REGENERATED 8   DIFFERS-timestamped-PDF 0
+  compared 122 tracked analysis files
+
+VERIFIED: the archive at this source is byte-for-byte the one this repository describes, and the paper's analysis products follow from it.

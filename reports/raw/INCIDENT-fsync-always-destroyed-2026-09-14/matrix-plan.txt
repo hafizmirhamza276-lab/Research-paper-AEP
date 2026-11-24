@@ -1,0 +1,29 @@
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     False   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     30 (3 runs x 10 executions)
+  workers per run      2
+  cells (total)        1
+  cells (applicable)   1
+  cells (not applic.)  0
+  runs planned         3
+  estimated wall time  0.04 h (130.5 s)
+
+  by tier:
+    tier 3:    3 runs,  0.04 h   E2: crash-free and 30% cells -- the only cells RQ3 can use
+
+  regimes (a regime is a condition, not a dimension):
+    p0                     p(crash)=0.0  runs=3    shape=3 x 10
+      no crash (RQ3 overhead: the only cells overhead is computed from)
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    3     p0                   AEP_FULL                             none                               payments         CALLER_REFERENCE     3
+
+==============================================================================

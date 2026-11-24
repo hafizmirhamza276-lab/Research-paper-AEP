@@ -1,0 +1,309 @@
+
+
+########## candidate results trees on this host ##########
+--- searching /root for directories named 'results' (depth<=6) ---
+/root/aep-5b/repo/experiments/results
+/root/aep-phase8-bundle/results
+/root/aep-phase8/experiments/results
+/root/aep-stage3/experiments/results
+/root/aep/experiments/results
+--- searching /mnt/d/personal/AEP for directories named 'results' (depth<=6) ---
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results
+/mnt/d/personal/AEP/audit-clone/experiments/results
+
+
+########## every run-config.json on this host, grouped by its results root ##########
+      7 /mnt/d/personal/AEP/Research-paper-AEP/.scratch/reproduce/smoke
+      1 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results
+     60 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-2026-08-21
+     60 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s1-2026-08-21
+     60 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s2-2026-08-21
+     60 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s3-2026-08-21
+     84 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix
+     18 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02
+     30 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02
+     18 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-ext4-2026-09-02
+     30 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-ext4-arbb30-2026-09-02
+      6 /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/smoke
+      7 /root/aep-5b/repo/.scratch/reproduce/smoke
+     60 /root/aep-archive-verify/extract/b2-2026-08-21
+    120 /root/aep-archive-verify/extract/b2-paired-s1-2026-08-28
+    120 /root/aep-archive-verify/extract/b2-paired-v2-s1-2026-08-28
+    120 /root/aep-archive-verify/extract/b2-paired-v2-s2-2026-08-28
+     26 /root/aep-archive-verify/extract/b2-paired-v2-s2-aborted-2026-08-28
+     16 /root/aep-archive-verify/extract/b2-paired-v2-s2-operator-aborted-2026-08-28
+    120 /root/aep-archive-verify/extract/b2-paired-v2-s3-2026-08-28
+    120 /root/aep-archive-verify/extract/b2-paired-v2-s4-2026-08-28
+     60 /root/aep-archive-verify/extract/b2-s1-2026-08-21
+     60 /root/aep-archive-verify/extract/b2-s2-2026-08-21
+     60 /root/aep-archive-verify/extract/b2-s3-2026-08-21
+      6 /root/aep-archive-verify/extract/fsync-always
+    432 /root/aep-archive-verify/extract/matrix
+     23 /root/aep-archive-verify/extract/phase10-VOIDED-ext4-arbb30-wrong-runtime
+     18 /root/aep-archive-verify/extract/phase10-VOIDED-ext4-wrong-runtime
+     18 /root/aep-archive-verify/extract/phase10-replication-drvfs-2026-09-02
+     30 /root/aep-archive-verify/extract/phase10-replication-drvfs-arbb30-2026-09-02
+     18 /root/aep-archive-verify/extract/phase10-replication-ext4-2026-09-02
+     30 /root/aep-archive-verify/extract/phase10-replication-ext4-arbb30-2026-09-02
+      1 /root/aep-archive-verify/extract/voided
+     18 /root/aep-phase10/VOIDED/ext4-2026-09-02-VOID-wrong-runtime
+     23 /root/aep-phase10/VOIDED/ext4-2026-09-02-arbb30-VOID-wrong-runtime
+     18 /root/aep-phase10/ext4-2026-09-02
+     30 /root/aep-phase10/ext4-2026-09-02-arbb30
+    120 /root/aep-phase8/experiments/results/b2-paired-s1-2026-08-28
+    120 /root/aep-phase8/experiments/results/b2-paired-v2-s1-2026-08-28
+    120 /root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28
+     26 /root/aep-phase8/experiments/results/b2-paired-v2-s2-aborted-2026-08-28
+     16 /root/aep-phase8/experiments/results/b2-paired-v2-s2-operator-aborted-2026-08-28
+    120 /root/aep-phase8/experiments/results/b2-paired-v2-s3-2026-08-28
+    120 /root/aep-phase8/experiments/results/b2-paired-v2-s4-2026-08-28
+      6 /root/aep/experiments/results/fsync-always
+    432 /root/aep/experiments/results/matrix
+      6 /root/aep/experiments/results/matrix-smoke
+      6 /root/aep/experiments/results/smoke
+      1 /root/aep/experiments/results/voided
+     60 /root/phase82-verify/b2-s2
+
+
+########## results/voided anywhere ##########
+/root/aep-archive-verify/extract/voided
+/root/aep/experiments/results/voided
+
+
+########## s3 / s4 archives named in the Phase 10 enumeration ##########
+total 23216
+drwx------ 29 root root     4096 Sep  3 11:08 .
+drwxr-xr-x 22 root root     4096 Sep  3 11:08 ..
+drwxr-xr-x  2 root root     4096 Sep  3 10:52 .aep-ctime-probe
+-rw-r--r--  1 root root     3132 Aug  5 18:03 .bashrc
+drwx------  4 root root     4096 Aug  6 11:05 .cache
+drwxr-xr-x  5 root root     4096 Aug  6 11:05 .config
+drwxr-xr-x  4 root root     4096 Sep  2 14:51 .docker
+-rw-r--r--  1 root root      132 Sep  2 14:41 .gitconfig
+-rw-------  1 root root       20 Aug 13 12:02 .lesshst
+drwxr-xr-x  4 root root     4096 Aug  5 18:05 .local
+-rw-r--r--  1 root root        0 Sep  3 10:01 .motd_shown
+-rw-r--r--  1 root root      187 Aug  5 18:03 .profile
+drwx------  2 root root     4096 Feb 10  2026 .ssh
+-rw-r--r--  1 root root       26 Aug  5 18:03 .zshrc
+drwxrwxrwx 15 root root     4096 Aug  7 12:49 aep
+drwxr-xr-x  4 root root     4096 Aug 10 13:24 aep-5b
+drwxr-xr-x  4 root root     4096 Sep  3 10:18 aep-archive-verify
+drwxr-xr-x  2 root root     4096 Sep  3 10:47 aep-f3-84
+-rw-r--r--  1 root root     3387 Sep  3 10:47 aep-f3-84.log
+drwxr-xr-x  3 root root     4096 Aug  7 16:32 aep-g2
+drwxr-xr-x  5 root root     4096 Sep  2 16:30 aep-phase10
+drwxr-xr-x  2 root root     4096 Sep  2 14:51 aep-phase10-canary
+drwxr-xr-x 16 root root     4096 Aug 28 16:48 aep-phase8
+drwxr-xr-x  7 root root     4096 Aug 31 11:21 aep-phase8-bundle
+-rw-r--r--  1 root root   195684 Aug 31 11:23 aep-phase8-bundle.zip
+drwxr-xr-x  2 root root     4096 Sep  3 10:15 aep-raw-archive
+drwxr-xr-x  2 root root     4096 Sep  3 10:47 aep-regen-generated
+drwxr-xr-x 16 root root     4096 Aug 13 14:54 aep-stage3
+-rwxr-xr-x  1 root root      157 Aug 17 14:28 analyze_help.sh
+-rw-r--r--  1 root root     7406 Aug 13 12:20 baseline-pytest.txt
+drwxr-xr-x  2 root root     4096 Aug  7 15:45 bindprobe
+-rwxr-xr-x  1 root root     4591 Aug 13 15:56 cleanup_and_relaunch.sh
+-rw-r--r--  1 root root     1707 Sep  3 11:08 clock-load.py
+-rwxr-xr-x  1 root root     1957 Aug 17 16:39 commit_gates.sh
+-rwxr-xr-x  1 root root     1987 Aug 13 15:11 compare_voids.sh
+-rwxr-xr-x  1 root root     2906 Aug 17 16:41 do_commit.sh
+-rwxr-xr-x  1 root root      836 Aug 17 16:42 do_push.sh
+-rwxr-xr-x  1 root root     1184 Aug 17 14:30 extract_suspended.sh
+-rw-r--r--  1 root root    10852 Aug 13 12:45 final-pytest.txt
+-rwxr-xr-x  1 root root     2694 Aug 17 16:42 fix_gitignore_eol.py
+-rwxr-xr-x  1 root root     5189 Aug 13 15:09 force_infra_void.sh
+-rwxr-xr-x  1 root root     2286 Aug 17 16:36 freeze_and_compare.sh
+-rwxr-xr-x  1 root root      269 Aug  7 15:39 g3_launch.sh
+-rw-r--r--  1 root root   267052 Aug 13 12:20 junit-baseline.xml
+-rwxr-xr-x  1 root root     2253 Aug 13 15:20 launch_collection.sh
+-rwxr-xr-x  1 root root     1134 Aug 17 14:31 name_suspended.sh
+-rwxr-xr-x  1 root root     2646 Aug 17 16:40 patch_gitignore.py
+drwxr-xr-x  2 root root     4096 Aug 27 15:30 pb
+drwxr-xr-x  2 root root     4096 Aug 27 15:30 pb-ext4
+drwxr-xr-x  2 root root     4096 Aug 27 15:32 pb3
+drwxr-xr-x  2 root root     4096 Aug 27 15:34 pb4
+drwxr-xr-x  3 root root     4096 Sep  2 15:08 phase10
+-rw-r--r--  1 root root        0 Sep  3 11:08 phase11-clock-under-load.txt
+-rw-r--r--  1 root root        0 Sep  3 10:52 phase11-host.err
+-rw-r--r--  1 root root     5749 Sep  3 10:52 phase11-host.json
+drwxr-xr-x  2 root root     4096 Aug 28 19:24 phase8-driver
+drwxr-xr-x  2 root root     4096 Aug 27 15:19 phase8-gen
+drwxr-xr-x  3 root root     4096 Aug 27 16:01 phase82-verify
+-rwxr-xr-x  1 root root     1309 Aug 17 16:35 precommit_survey.sh
+-rwxr-xr-x  1 root root     4304 Aug 13 15:19 preflight_collection.sh
+-rwxr-xr-x  1 root root     2372 Aug 13 15:21 progress.sh
+-rwxr-xr-x  1 root root     1197 Aug 17 17:03 push_via_gcm.sh
+-rwxr-xr-x  1 root root  7076448 Aug  7 15:46 redis-cli
+-rwxr-xr-x  1 root root 15880528 Aug  7 15:46 redis-server
+-rwxr-xr-x  1 root root     2462 Aug 13 15:52 relaunch2.sh
+-rwxr-xr-x  1 root root     5220 Aug 13 15:49 relaunch_with_e5.sh
+-rwxr-xr-x  1 root root     1920 Aug 13 15:12 resume_after_void.sh
+-rwxr-xr-x  1 root root      576 Aug 17 14:29 run_analyze.sh
+-rw-r--r--  1 root root    10903 Aug 28 11:21 s1-run.log
+-rw-r--r--  1 root root      160 Aug 28 11:21 s1-session.log
+-rwxr-xr-x  1 root root     1699 Aug 17 16:37 stage_dataset.sh
+-rwxr-xr-x  1 root root     3450 Aug 17 14:01 state_check.sh
+-rwxr-xr-x  1 root root     1722 Aug 13 15:46 stop_collection.sh
+-rw-r--r--  1 root root      148 Aug 28 13:59 v2-234.log
+-rw-r--r--  1 root root     3750 Aug 28 14:15 v2-s2-run.log
+-rw-r--r--  1 root root    10912 Aug 28 13:42 v2s1-run.log
+-rw-r--r--  1 root root      218 Aug 28 13:42 v2s1.log
+-rwxr-xr-x  1 root root     3542 Aug 17 14:02 verify_complete.sh
+-rwxr-xr-x  1 root root      616 Aug 13 15:26 watch_collection.sh
+--- /root/aep ---
+total 784
+drwxrwxrwx 15 root root   4096 Aug  7 12:49 .
+drwx------ 29 root root   4096 Sep  3 11:08 ..
+drwxrwxrwx  4 root root   4096 Aug  5 12:12 .claude
+-rw-r--r--  1 root root  53248 Aug  6 14:15 .coverage
+drwxrwxrwx  3 root root   4096 Aug  5 15:14 .github
+-rwxrwxrwx  1 root root   2026 Aug  5 17:55 .gitignore
+drwxr-xr-x  3 root root   4096 Aug  6 14:13 .pytest_cache
+-rwxrwxrwx  1 root root      7 Aug  5 15:04 .python-version
+drwxr-xr-x  5 root root   4096 Aug  5 18:06 .venv
+-rwxrwxrwx  1 root root  18949 Aug  5 12:12 AEP_CLAUDE_CODE_BUILD_PROMPT.md
+-rwxrwxrwx  1 root root  29124 Aug  5 12:12 AEP_IMPLEMENTATION_BRIEF.md
+-rwxrwxrwx  1 root root  15453 Aug  6 12:04 CHANGELOG.md
+-rwxrwxrwx  1 root root   1272 Aug  5 15:18 CITATION.cff
+-rwxrwxrwx  1 root root   1067 Aug  5 15:17 LICENSE
+-rwxrwxrwx  1 root root  23503 Aug  6 12:06 PAPER_ROADMAP.md
+-rwxrwxrwx  1 root root   5298 Aug  5 12:12 README-AEP-PIPELINE.md
+-rwxrwxrwx  1 root root   4478 Aug  5 15:19 README.md
+drwxrwxrwx  4 root root   4096 Aug  5 14:45 aep_core
+drwxr-xr-x  2 root root   4096 Aug  5 18:06 aep_core.egg-info
+-rwxrwxrwx  1 root root   2127 Aug  5 17:00 compose.phase2.yml
+drwxrwxrwx  2 root root   4096 Aug  5 17:39 docs
+drwxrwxrwx  9 root root   4096 Aug  7 16:43 experiments
+-rwxrwxrwx  1 root root  17323 Aug  5 12:12 fixes_report.md
+-rw-r--r--  1 root root 241468 Aug  6 14:15 junit-linux.xml
+drwxr-xr-x  5 root root   4096 Aug 10 11:48 paper
+-rwxrwxrwx  1 root root 139986 Aug  5 12:12 phase2_implementation_report.md
+-rwxrwxrwx  1 root root   3006 Aug  5 18:04 pyproject.toml
+drwxrwxrwx  2 root root   4096 Aug  7 14:34 redis
+drwxrwxrwx  3 root root   4096 Aug  7 11:29 reports
+-rwxrwxrwx  1 root root  32232 Aug  5 12:12 research_analysis_report.md
+drwxrwxrwx  3 root root   4096 Aug  7 20:22 scripts
+-rwxrwxrwx  1 root root   7191 Aug  5 12:12 test_infra_fixes.md
+drwxrwxrwx  3 root root   4096 Aug  7 20:22 tests
+-rwxrwxrwx  1 root root  96895 Aug  5 18:04 uv.lock
+-rwxrwxrwx  1 root root   7039 Aug  5 12:12 verification_probes.md
+--- /root/aep-phase8 ---
+total 604
+drwxr-xr-x 16 root root   4096 Aug 28 16:48 .
+drwx------ 29 root root   4096 Sep  3 11:08 ..
+drwxr-xr-x  4 root root   4096 Aug 28 09:57 .claude
+drwxr-xr-x  8 root root   4096 Aug 31 11:52 .git
+-rw-r--r--  1 root root   1957 Aug 28 09:57 .gitattributes
+drwxr-xr-x  3 root root   4096 Aug 28 09:57 .github
+-rw-r--r--  1 root root  15377 Aug 28 16:48 .gitignore
+-rw-r--r--  1 root root      7 Aug 28 09:57 .python-version
+drwxr-xr-x  4 root root   4096 Aug 28 09:58 .venv
+-rw-r--r--  1 root root  18757 Aug 28 09:57 AEP_CLAUDE_CODE_BUILD_PROMPT.md
+-rw-r--r--  1 root root  28542 Aug 28 09:57 AEP_IMPLEMENTATION_BRIEF.md
+-rw-r--r--  1 root root  17668 Aug 28 09:57 ARTIFACT.md
+-rw-r--r--  1 root root  18301 Aug 28 09:57 CHANGELOG.md
+-rw-r--r--  1 root root   1840 Aug 28 09:57 CITATION.cff
+-rw-r--r--  1 root root  21646 Aug 28 09:57 CODEX_PROMPTS.md
+-rw-r--r--  1 root root   1067 Aug 28 09:57 LICENSE
+-rw-r--r--  1 root root  10663 Aug 28 09:57 Makefile
+-rw-r--r--  1 root root  35863 Aug 28 09:57 PAPER_ROADMAP.md
+-rw-r--r--  1 root root   5223 Aug 28 09:57 README-AEP-PIPELINE.md
+-rw-r--r--  1 root root   7502 Aug 28 09:57 README.md
+-rw-r--r--  1 root root  21646 Aug 28 09:57 WEEKEND_CODEX_PROMPTS.md
+drwxr-xr-x  4 root root   4096 Aug 28 09:58 aep_core
+drwxr-xr-x  2 root root   4096 Aug 28 09:58 aep_core.egg-info
+-rw-r--r--  1 root root   2074 Aug 28 09:57 compose.phase2.yml
+drwxr-xr-x  2 root root   4096 Aug 28 16:48 docs
+drwxr-xr-x  9 root root   4096 Aug 28 14:37 experiments
+-rw-r--r--  1 root root  17002 Aug 28 09:57 fixes_report.md
+drwxr-xr-x  5 root root   4096 Aug 28 09:57 paper
+-rw-r--r--  1 root root 137479 Aug 28 09:57 phase2_implementation_report.md
+drwxr-xr-x  2 root root   4096 Aug 28 09:57 prompts
+-rw-r--r--  1 root root   2923 Aug 28 09:57 pyproject.toml
+drwxr-xr-x  2 root root   4096 Aug 28 09:57 redis
+drwxr-xr-x  3 root root   4096 Aug 28 16:48 reports
+-rw-r--r--  1 root root  31918 Aug 28 09:57 research_analysis_report.md
+drwxr-xr-x  2 root root   4096 Aug 28 09:57 scripts
+-rw-r--r--  1 root root   7036 Aug 28 09:57 test_infra_fixes.md
+drwxr-xr-x  2 root root   4096 Aug 28 09:57 tests
+-rw-r--r--  1 root root  96895 Aug 28 09:57 uv.lock
+-rw-r--r--  1 root root   6952 Aug 28 09:57 verification_probes.md
+--- /root/aep-phase10 ---
+total 20
+drwxr-xr-x  5 root root 4096 Sep  2 16:30 .
+drwx------ 29 root root 4096 Sep  3 11:08 ..
+drwxr-xr-x  4 root root 4096 Sep  2 16:29 VOIDED
+drwxr-xr-x 21 root root 4096 Sep  2 17:22 ext4-2026-09-02
+drwxr-xr-x 33 root root 4096 Sep  2 17:22 ext4-2026-09-02-arbb30
+
+
+########## any tarball / archive already on this host ##########
+/root/aep/experiments/results/aep-matrix-results-2026-08-07.tar.gz
+/root/aep-phase8-bundle.zip
+/root/aep-raw-archive/aep-raw-evidence.tar.gz
+/root/aep-raw-archive/aep-raw-evidence.tar
+/mnt/d/personal/AEP/aep-raw-archive/aep-raw-evidence.tar.gz
+/mnt/d/personal/AEP/phase8-driver.zip
+/mnt/d/personal/AEP/phase8-raw-archive/b2-paired-v2-s3-2026-08-28.tar.gz
+/mnt/d/personal/AEP/phase8-raw-archive/b2-paired-v2-s4-2026-08-28.tar.gz
+/mnt/d/personal/AEP/stage0-staging/b2-2026-08-21.tar.gz
+/mnt/d/personal/AEP/stage0-staging/b2-s1-2026-08-21.tar.gz
+/mnt/d/personal/AEP/stage0-staging/b2-s2-2026-08-21.tar.gz
+/mnt/d/personal/AEP/stage0-staging/b2-s3-2026-08-21.tar.gz
+
+
+########## disk space ##########
+Filesystem     Type  Size  Used Avail Use% Mounted on
+/dev/sdd       ext4 1007G  6.4G  950G   1% /
+D:\            9p    391G   26G  366G   7% /mnt/d
+/dev/sdd       ext4 1007G  6.4G  950G   1% /var/lib/docker
+=== du / file count of every candidate raw-run tree ===
+/root/aep/experiments/results/matrix                                         262M    9410 files   432 rundirs
+/root/aep/experiments/results/fsync-always                                   3.2M     112 files     6 rundirs
+/root/aep/experiments/results/matrix-smoke                                   2.6M     121 files     6 rundirs
+/root/aep/experiments/results/smoke                                          2.0M     121 files     6 rundirs
+/root/aep/experiments/results/voided                                         348K      24 files     1 rundirs
+/root/aep-phase8/experiments/results                                         134M    9750 files   642 rundirs
+/root/aep-phase10/ext4-2026-09-02                                            7.3M     448 files    18 rundirs
+/root/aep-phase10/ext4-2026-09-02-arbb30                                      18M     735 files    30 rundirs
+/root/aep-phase10/VOIDED                                                      21M    1000 files    41 rundirs
+/root/phase82-verify/b2-s2                                                    12M     920 files    60 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results                   162M    7376 files   427 rundirs
+
+=== per-root breakdown inside the repo tree ===
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-2026-08-21/      12M     920 files    60 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-s1-2026-08-28/      84K      16 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s1-2026-08-28/      80K      17 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s2-2026-08-28/      88K      18 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s2-aborted-2026-08-28/      56K      16 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s3-2026-08-28/     104K      19 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-paired-v2-s4-2026-08-28/     104K      19 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s1-2026-08-21/      12M     920 files    60 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s2-2026-08-21/      12M     920 files    60 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s3-2026-08-21/      12M     920 files    60 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/fsync-always/      24K      11 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/matrix/            54M    1050 files    84 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/     7.3M     451 files    18 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/      17M     734 files    30 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-ext4-2026-09-02/     7.2M     449 files    18 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-ext4-arbb30-2026-09-02/      17M     736 files    30 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/selfcheck-c5/     284K      22 files     1 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/selfcheck/        1.1M       6 files     0 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/smoke/            1.9M     121 files     6 rundirs
+/mnt/d/personal/AEP/Research-paper-AEP/experiments/results/throughput/       9.2M       5 files     0 rundirs
+
+=== per-root breakdown inside /root/aep-phase8 ===
+/root/aep-phase8/experiments/results/b2-2026-08-21/                           52K       8 files     0 rundirs
+/root/aep-phase8/experiments/results/b2-paired-s1-2026-08-28/                 25M    1819 files   120 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s1-2026-08-28/              25M    1821 files   120 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28/              25M    1827 files   120 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s2-aborted-2026-08-28/     5.3M     406 files    26 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s2-operator-aborted-2026-08-28/     2.6M     178 files    16 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s3-2026-08-28/              25M    1827 files   120 rundirs
+/root/aep-phase8/experiments/results/b2-paired-v2-s4-2026-08-28/              25M    1827 files   120 rundirs
+/root/aep-phase8/experiments/results/b2-s1-2026-08-21/                        52K       8 files     0 rundirs
+/root/aep-phase8/experiments/results/b2-s2-2026-08-21/                        52K       8 files     0 rundirs
+/root/aep-phase8/experiments/results/b2-s3-2026-08-21/                        52K       8 files     0 rundirs
+/root/aep-phase8/experiments/results/fsync-always/                            28K       2 files     0 rundirs
+/root/aep-phase8/experiments/results/matrix/                                 1.2M       8 files     0 rundirs

@@ -1,0 +1,11 @@
+
+Amendment 3 §2 step 1 — the covariate's between-arm variation
+(AEP-full only; log scale; threshold |Δ median| < 0.02)
+
+session                                 n   Δ median log   |Δ| < 0.02    var ratio
+b2-paired-v2-s1-2026-08-28         30/30        0.012398          YES     0.005298
+b2-paired-v2-s2-2026-08-28         30/30       -0.085097           no     0.048743
+
+1 of 2 session(s) below the threshold. The registered rule is a MAJORITY of the k = 4 sessions, so this is provenance, not the adjudication -- that happens at 8.5 over all four.
+
+For scale: amendment 3 set 0.02 as approximately 2%, against the ~20% arm-correlated latency imbalance that amendment 1's interleaving removed by design. A Δ of 0.02 in log space is a ratio of about 1.0202, i.e. ~2.0% between the arms.

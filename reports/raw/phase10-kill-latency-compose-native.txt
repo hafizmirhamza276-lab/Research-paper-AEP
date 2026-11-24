@@ -1,0 +1,114 @@
+==============================================================================
+Phase 10: docker kill -s KILL latency, per runtime
+==============================================================================
+  image           redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+  trials          100 per runtime, round-robined
+  kernel          6.6.114.1-microsoft-standard-WSL2
+  runtime         aep-native -> /usr/bin/docker
+
+  [aep-native] target aep-phase2-redis72 (pre-existing, not created by this probe)
+  trial   0 [aep-native    ] command_ms=   322 counted=True
+  trial   1 [aep-native    ] command_ms=   294 counted=True
+  trial   2 [aep-native    ] command_ms=   344 counted=True
+  trial   3 [aep-native    ] command_ms=   300 counted=True
+  trial   4 [aep-native    ] command_ms=   352 counted=True
+  trial   5 [aep-native    ] command_ms=   334 counted=True
+  trial   6 [aep-native    ] command_ms=   356 counted=True
+  trial   7 [aep-native    ] command_ms=   319 counted=True
+  trial   8 [aep-native    ] command_ms=   269 counted=True
+  trial   9 [aep-native    ] command_ms=   319 counted=True
+  trial  10 [aep-native    ] command_ms=   328 counted=True
+  trial  11 [aep-native    ] command_ms=   301 counted=True
+  trial  12 [aep-native    ] command_ms=   310 counted=True
+  trial  13 [aep-native    ] command_ms=   329 counted=True
+  trial  14 [aep-native    ] command_ms=   294 counted=True
+  trial  15 [aep-native    ] command_ms=   297 counted=True
+  trial  16 [aep-native    ] command_ms=   301 counted=True
+  trial  17 [aep-native    ] command_ms=   317 counted=True
+  trial  18 [aep-native    ] command_ms=   269 counted=True
+  trial  19 [aep-native    ] command_ms=   316 counted=True
+  trial  20 [aep-native    ] command_ms=   301 counted=True
+  trial  21 [aep-native    ] command_ms=   397 counted=True
+  trial  22 [aep-native    ] command_ms=   386 counted=True
+  trial  23 [aep-native    ] command_ms=   344 counted=True
+  trial  24 [aep-native    ] command_ms=   335 counted=True
+  trial  25 [aep-native    ] command_ms=   286 counted=True
+  trial  26 [aep-native    ] command_ms=   337 counted=True
+  trial  27 [aep-native    ] command_ms=   272 counted=True
+  trial  28 [aep-native    ] command_ms=   335 counted=True
+  trial  29 [aep-native    ] command_ms=   354 counted=True
+  trial  30 [aep-native    ] command_ms=   336 counted=True
+  trial  31 [aep-native    ] command_ms=   374 counted=True
+  trial  32 [aep-native    ] command_ms=   264 counted=True
+  trial  33 [aep-native    ] command_ms=   327 counted=True
+  trial  34 [aep-native    ] command_ms=   316 counted=True
+  trial  35 [aep-native    ] command_ms=   265 counted=True
+  trial  36 [aep-native    ] command_ms=   300 counted=True
+  trial  37 [aep-native    ] command_ms=   352 counted=True
+  trial  38 [aep-native    ] command_ms=   319 counted=True
+  trial  39 [aep-native    ] command_ms=   322 counted=True
+  trial  40 [aep-native    ] command_ms=   344 counted=True
+  trial  41 [aep-native    ] command_ms=   314 counted=True
+  trial  42 [aep-native    ] command_ms=   298 counted=True
+  trial  43 [aep-native    ] command_ms=   361 counted=True
+  trial  44 [aep-native    ] command_ms=   311 counted=True
+  trial  45 [aep-native    ] command_ms=   293 counted=True
+  trial  46 [aep-native    ] command_ms=   297 counted=True
+  trial  47 [aep-native    ] command_ms=   289 counted=True
+  trial  48 [aep-native    ] command_ms=   315 counted=True
+  trial  49 [aep-native    ] command_ms=   299 counted=True
+  trial  50 [aep-native    ] command_ms=   306 counted=True
+  trial  51 [aep-native    ] command_ms=   347 counted=True
+  trial  52 [aep-native    ] command_ms=   304 counted=True
+  trial  53 [aep-native    ] command_ms=   334 counted=True
+  trial  54 [aep-native    ] command_ms=   375 counted=True
+  trial  55 [aep-native    ] command_ms=   337 counted=True
+  trial  56 [aep-native    ] command_ms=   309 counted=True
+  trial  57 [aep-native    ] command_ms=   332 counted=True
+  trial  58 [aep-native    ] command_ms=   273 counted=True
+  trial  59 [aep-native    ] command_ms=   277 counted=True
+  trial  60 [aep-native    ] command_ms=   329 counted=True
+  trial  61 [aep-native    ] command_ms=   301 counted=True
+  trial  62 [aep-native    ] command_ms=   297 counted=True
+  trial  63 [aep-native    ] command_ms=   339 counted=True
+  trial  64 [aep-native    ] command_ms=   351 counted=True
+  trial  65 [aep-native    ] command_ms=   307 counted=True
+  trial  66 [aep-native    ] command_ms=   351 counted=True
+  trial  67 [aep-native    ] command_ms=   292 counted=True
+  trial  68 [aep-native    ] command_ms=   296 counted=True
+  trial  69 [aep-native    ] command_ms=   325 counted=True
+  trial  70 [aep-native    ] command_ms=   332 counted=True
+  trial  71 [aep-native    ] command_ms=   315 counted=True
+  trial  72 [aep-native    ] command_ms=   343 counted=True
+  trial  73 [aep-native    ] command_ms=   318 counted=True
+  trial  74 [aep-native    ] command_ms=   310 counted=True
+  trial  75 [aep-native    ] command_ms=   314 counted=True
+  trial  76 [aep-native    ] command_ms=   335 counted=True
+  trial  77 [aep-native    ] command_ms=   362 counted=True
+  trial  78 [aep-native    ] command_ms=   311 counted=True
+  trial  79 [aep-native    ] command_ms=   323 counted=True
+  trial  80 [aep-native    ] command_ms=   315 counted=True
+  trial  81 [aep-native    ] command_ms=   353 counted=True
+  trial  82 [aep-native    ] command_ms=   336 counted=True
+  trial  83 [aep-native    ] command_ms=   335 counted=True
+  trial  84 [aep-native    ] command_ms=   293 counted=True
+  trial  85 [aep-native    ] command_ms=   331 counted=True
+  trial  86 [aep-native    ] command_ms=   334 counted=True
+  trial  87 [aep-native    ] command_ms=   345 counted=True
+  trial  88 [aep-native    ] command_ms=   296 counted=True
+  trial  89 [aep-native    ] command_ms=   317 counted=True
+  trial  90 [aep-native    ] command_ms=   350 counted=True
+  trial  91 [aep-native    ] command_ms=   291 counted=True
+  trial  92 [aep-native    ] command_ms=   311 counted=True
+  trial  93 [aep-native    ] command_ms=   323 counted=True
+  trial  94 [aep-native    ] command_ms=   345 counted=True
+  trial  95 [aep-native    ] command_ms=   296 counted=True
+  trial  96 [aep-native    ] command_ms=   327 counted=True
+  trial  97 [aep-native    ] command_ms=   315 counted=True
+  trial  98 [aep-native    ] command_ms=   269 counted=True
+  trial  99 [aep-native    ] command_ms=   290 counted=True
+
+--- summary ---
+  aep-native       n=100  min=264.0  median=317.0  p95=361.0  max=397.0  median 95% CI [312.5, 327.0]
+
+wrote reports/raw/phase10-kill-latency-compose-native.json

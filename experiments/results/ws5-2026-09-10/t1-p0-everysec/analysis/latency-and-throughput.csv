@@ -1,0 +1,8 @@
+system,runs,runs_with_usable_timing,runs_dropped_for_clock_suspension,runs_dropped_for_undeclared_suspend_policy,overhead_runs_crash_free,step_latency_ms_count,step_latency_ms_mean,step_latency_ms_median,step_latency_ms_p95,step_latency_ms_p99,step_latency_ms_min,step_latency_ms_max,recovery_latency_ms_count,recovery_latency_ms_mean,recovery_latency_ms_median,recovery_latency_ms_p95,recovery_latency_ms_p99,recovery_latency_ms_min,recovery_latency_ms_max,executions,recovery_service,run_wall_seconds,executions_per_second
+AEP_FULL,15,15,0,0,15,150,4336.770496613333,4014.744483,6858.1349,7091.480836,2708.984756,9001.82202,0,,,,,,,150,1,601.945,0.2492
+B0_NAIVE_RETRY,15,15,0,0,15,150,3189.6548515266663,2041.00232,7509.759772,12683.943235,2013.65123,15044.227437,0,,,,,,,150,0,415.627,0.3609
+B1_LEASE_ONLY,15,15,0,0,15,150,3309.9900740133335,2042.065151,7551.019742,12196.556702,2013.48001,15092.000006,0,,,,,,,150,0,412.524,0.3636
+B2_CAS_ONLY,15,15,0,0,15,150,2999.82598972,2043.661318,7148.472078,9105.06775,2017.582776,12049.889424,0,,,,,,,150,0,328.947,0.456
+B3_INTENT_NO_BARRIER,15,15,0,0,15,150,2814.1835107066668,2073.988845,5073.13532,6087.798184,2023.384169,6209.470992,0,,,,,,,150,1,576.086,0.2604
+B4B_DURABLE_WORKFLOW_AT_MOST_ONCE,15,15,0,0,15,150,4500.9922572,4015.064053,7092.629959,10405.456149,3283.584426,11548.284117,0,,,,,,,150,0,424.99,0.3529
+B4_DURABLE_WORKFLOW,15,15,0,0,15,150,4925.14343228,4015.152585,9074.05225,11077.409689,3208.920976,14180.730596,0,,,,,,,150,0,475.455,0.3155

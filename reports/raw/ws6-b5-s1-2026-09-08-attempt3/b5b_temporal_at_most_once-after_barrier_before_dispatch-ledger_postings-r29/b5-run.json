@@ -1,0 +1,19 @@
+{
+  "armed_point": "ACTIVITY_ENTERED_BEFORE_CALL",
+  "attribution_reason": "every applied row attributed to an execution",
+  "attribution_usable": true,
+  "crash_point": "after_barrier_before_dispatch",
+  "declared_ambiguous": 0,
+  "executions": 10,
+  "lost_effect_executions": 0,
+  "provider_seed": 20260937,
+  "reason": "fault delivered at 'ACTIVITY_ENTERED_BEFORE_CALL'; worker deaths=1, respawns=1",
+  "response_class": "NO_READBACK",
+  "run_id": "b5b_temporal_at_most_once-after_barrier_before_dispatch-ledger_postings-r29",
+  "seed": 20260937,
+  "start_to_close_ms": 4000,
+  "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "verdict": "COMPLETED"
+}

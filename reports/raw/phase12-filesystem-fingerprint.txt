@@ -1,0 +1,26 @@
+=== calibration: the two Phase 10 arms, whose filesystem is recorded ===
+arm                           runs     gaps       p01       p05       p10    median  per-run p05 (min..max)
+ext4 ext4-2026-09-02            18     4505      13.8      57.7      72.8    4919.3  20.7..99.1
+ext4 ext4-2026-09-02-arbb       30     7160      42.4      57.2      72.4    8813.0  41.5..110.2
+drvfs phase10-replication-      18     4374     102.5     214.0     285.7    4160.3  104.9..310.7
+drvfs phase10-replication-      30     7159     204.6     282.8     348.5   15461.0  215.5..401.2
+
+SEPARATED AT ROOT LEVEL: every ext4 root's pooled p05 is below 57.7 us and every drvfs root's is above 214.0 us. Threshold 135.8 us.
+  Run level does NOT separate: ext4 runs reach 110.2 us and drvfs runs start at 104.9 us. So this classifies a COLLECTION, never a run.
+
+=== classification ===
+root                                      runs      p01      p05    verdict       known  agrees?
+matrix (432, incl. the paper's kill cell)   432     16.1     38.8       ext4           -  
+b2-2026-08-21 (P9C s0)                      60    345.0    472.7      drvfs           -  
+b2-s1-2026-08-21 (P9C s1)                   60    270.8    397.2      drvfs           -  
+b2-s2-2026-08-21 (P9C s2)                   60    270.9    392.2      drvfs           -  
+b2-s3-2026-08-21 (P9C s3)                   60    278.8    386.5      drvfs           -  
+b2-paired-s1-2026-08-28                    120     59.5    109.8       ext4        ext4  YES
+b2-paired-v2-s1-2026-08-28                 120     54.4     90.3       ext4        ext4  YES
+b2-paired-v2-s2-2026-08-28                 120     51.3     94.0       ext4        ext4  YES
+b2-paired-v2-s3-2026-08-28                 120     54.0     94.5       ext4        ext4  YES
+b2-paired-v2-s4-2026-08-28                 120     47.2     78.8       ext4        ext4  YES
+fsync-always                                 6     46.3     54.0       ext4           -  
+
+Held-out validation: 5/5 roots whose filesystem IS recorded are classified correctly by a threshold calibrated only on the Phase 10 pair.
+exit=0

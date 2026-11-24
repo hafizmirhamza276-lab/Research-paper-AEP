@@ -1,0 +1,594 @@
+[
+    {
+        "Id": "1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3",
+        "Created": "2026-09-08T09:06:09.55885322Z",
+        "Path": "/etc/temporal/entrypoint.sh",
+        "Args": [
+            "autosetup"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 884,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-08T09:06:15.444818426Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-09-08T16:11:05.130587364+05:00",
+                        "End": "2026-09-08T16:11:05.276780317+05:00",
+                        "ExitCode": 0,
+                        "Output": "temporal.api.workflowservice.v1.WorkflowService: SERVING\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:15.314903763+05:00",
+                        "End": "2026-09-08T16:11:15.372246836+05:00",
+                        "ExitCode": 0,
+                        "Output": "temporal.api.workflowservice.v1.WorkflowService: SERVING\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:25.372967435+05:00",
+                        "End": "2026-09-08T16:11:25.421052688+05:00",
+                        "ExitCode": 0,
+                        "Output": "temporal.api.workflowservice.v1.WorkflowService: SERVING\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:35.422103485+05:00",
+                        "End": "2026-09-08T16:11:35.467617949+05:00",
+                        "ExitCode": 0,
+                        "Output": "temporal.api.workflowservice.v1.WorkflowService: SERVING\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:45.502350294+05:00",
+                        "End": "2026-09-08T16:11:45.547745652+05:00",
+                        "ExitCode": 0,
+                        "Output": "temporal.api.workflowservice.v1.WorkflowService: SERVING\n"
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:10e8c557ace5fa4aa99217637e7b9969316e89b929a3bfb117853a5417eef25c",
+        "ResolvConfPath": "/var/lib/docker/containers/1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3/hostname",
+        "HostsPath": "/var/lib/docker/containers/1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3/hosts",
+        "LogPath": "/var/lib/docker/containers/1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3/1b388cbe9e9d79da7083b61edb445b978426039d2a48aa626c2014e4e2defaf3-json.log",
+        "Name": "/aep-ws6-temporal",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "aep-ws6-b5_default",
+            "PortBindings": {
+                "7233/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "7233"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "1b388cbe9e9d",
+            "Domainname": "",
+            "User": "temporal",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "6933/tcp": {},
+                "6934/tcp": {},
+                "6935/tcp": {},
+                "6939/tcp": {},
+                "7233/tcp": {},
+                "7234/tcp": {},
+                "7235/tcp": {},
+                "7239/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "POSTGRES_USER=temporal",
+                "POSTGRES_PWD=temporal",
+                "POSTGRES_SEEDS=b5-postgres",
+                "ENABLE_ES=false",
+                "DB=postgres12",
+                "DB_PORT=5432",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "TEMPORAL_HOME=/etc/temporal",
+                "TEMPORAL_SHA=unknown",
+                "TCTL_SHA=unknown"
+            ],
+            "Cmd": [
+                "autosetup"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD",
+                    "tctl",
+                    "--address",
+                    "b5-temporal:7233",
+                    "cluster",
+                    "health"
+                ],
+                "Interval": 10000000000,
+                "Timeout": 10000000000,
+                "StartPeriod": 40000000000,
+                "Retries": 30
+            },
+            "Image": "temporalio/auto-setup:1.24.2@sha256:10e8c557ace5fa4aa99217637e7b9969316e89b929a3bfb117853a5417eef25c",
+            "Volumes": null,
+            "WorkingDir": "/etc/temporal",
+            "Entrypoint": [
+                "/etc/temporal/entrypoint.sh"
+            ],
+            "Labels": {
+                "com.docker.compose.config-hash": "ba871c19bc76d91d442aac79cc71257d1023abc0b7ccbb92709759513700b38e",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "b5-postgres:service_healthy:false",
+                "com.docker.compose.image": "sha256:1ac8202b1d9143028ef8bf57a93dc9bbc61742ddffc4ea193a77be689a84f8bc",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "aep-ws6-b5",
+                "com.docker.compose.project.config_files": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/baselines/b5_temporal/compose.temporal.yml",
+                "com.docker.compose.project.working_dir": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/baselines/b5_temporal",
+                "com.docker.compose.service": "b5-temporal",
+                "com.docker.compose.version": "5.5.0",
+                "org.opencontainers.image.created": "2024-07-15T20:22:05.047Z",
+                "org.opencontainers.image.description": "Workflow as Code (TM) to build and operate resilient applications",
+                "org.opencontainers.image.licenses": "MIT",
+                "org.opencontainers.image.revision": "ab20d7cf9464ad91813219fde0845a4698d51be1",
+                "org.opencontainers.image.source": "https://github.com/temporalio/docker-builds",
+                "org.opencontainers.image.title": "auto-setup",
+                "org.opencontainers.image.url": "https://github.com/temporalio/docker-builds",
+                "org.opencontainers.image.version": "1.15.8"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "9b5a2323b7a8ab45b687637e0f313a98d5d10e9ae4fb692cb6c16eb475a5f73a",
+            "SandboxKey": "/var/run/docker/netns/9b5a2323b7a8",
+            "Ports": {
+                "6933/tcp": null,
+                "6934/tcp": null,
+                "6935/tcp": null,
+                "6939/tcp": null,
+                "7233/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "7233"
+                    }
+                ],
+                "7234/tcp": null,
+                "7235/tcp": null,
+                "7239/tcp": null
+            },
+            "Networks": {
+                "aep-ws6-b5_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "aep-ws6-temporal",
+                        "b5-temporal"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "8b22c5f3bf1a94aa83c2d02c8a913a9d2d504d8b01149bec3418f57685459d62",
+                    "EndpointID": "5b486afa31b1b18b8e422f5218122e201152a8278cdb4a8bb4ca52ed5070851d",
+                    "Gateway": "172.18.0.1",
+                    "IPAddress": "172.18.0.3",
+                    "MacAddress": "56:cf:67:74:a5:68",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "aep-ws6-temporal",
+                        "b5-temporal",
+                        "1b388cbe9e9d"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:1ac8202b1d9143028ef8bf57a93dc9bbc61742ddffc4ea193a77be689a84f8bc",
+            "size": 4656,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    },
+    {
+        "Id": "0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e",
+        "Created": "2026-09-08T09:06:09.469745579Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "postgres"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 735,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-08T09:06:09.659645053Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-09-08T16:11:28.132638504+05:00",
+                        "End": "2026-09-08T16:11:28.185770553+05:00",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:33.186091676+05:00",
+                        "End": "2026-09-08T16:11:33.239016154+05:00",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:38.240457957+05:00",
+                        "End": "2026-09-08T16:11:38.285767207+05:00",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:43.320542863+05:00",
+                        "End": "2026-09-08T16:11:43.369086086+05:00",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2026-09-08T16:11:48.369961433+05:00",
+                        "End": "2026-09-08T16:11:48.413735935+05:00",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:d0f363f8366fbc3f52d172c6e76bc27151c3d643b870e1062b4e8bfe65baf609",
+        "ResolvConfPath": "/var/lib/docker/containers/0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e/hostname",
+        "HostsPath": "/var/lib/docker/containers/0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e/hosts",
+        "LogPath": "/var/lib/docker/containers/0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e/0e9c4e6a15996badfb26ac99ff572d50c4a189434d288c625e0aaea047d0e62e-json.log",
+        "Name": "/aep-ws6-postgres",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "aep-ws6-b5_default",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "Tmpfs": {
+                "/var/lib/postgresql/data": ""
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "0e9c4e6a1599",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "5432/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "POSTGRES_DB=temporal",
+                "POSTGRES_USER=temporal",
+                "POSTGRES_PASSWORD=temporal",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/postgresql/16/bin",
+                "GOSU_VERSION=1.17",
+                "LANG=en_US.utf8",
+                "PG_MAJOR=16",
+                "PG_VERSION=16.3-1.pgdg120+1",
+                "PGDATA=/var/lib/postgresql/data"
+            ],
+            "Cmd": [
+                "postgres"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "pg_isready -U temporal"
+                ],
+                "Interval": 5000000000,
+                "Timeout": 5000000000,
+                "Retries": 20
+            },
+            "Image": "postgres:16.3@sha256:d0f363f8366fbc3f52d172c6e76bc27151c3d643b870e1062b4e8bfe65baf609",
+            "Volumes": {
+                "/var/lib/postgresql/data": {}
+            },
+            "WorkingDir": "",
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "Labels": {
+                "com.docker.compose.config-hash": "ed3e72aca5f75acc2cb47d294b4005121e783daf643f2de702be0547a1098e9f",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "",
+                "com.docker.compose.image": "sha256:10a028bdde46f9ac6786a8609b16672a7d0d141d6cbe776f7fbad5e82f4fca3a",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "aep-ws6-b5",
+                "com.docker.compose.project.config_files": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/baselines/b5_temporal/compose.temporal.yml",
+                "com.docker.compose.project.working_dir": "/mnt/d/personal/AEP/Research-paper-AEP/experiments/baselines/b5_temporal",
+                "com.docker.compose.service": "b5-postgres",
+                "com.docker.compose.version": "5.5.0"
+            },
+            "StopSignal": "SIGINT"
+        },
+        "NetworkSettings": {
+            "SandboxID": "08dbbc60d18561d4444b807e3f50d4853cca44097b97e7886dd7ac3e04759b2d",
+            "SandboxKey": "/var/run/docker/netns/08dbbc60d185",
+            "Ports": {
+                "5432/tcp": null
+            },
+            "Networks": {
+                "aep-ws6-b5_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "aep-ws6-postgres",
+                        "b5-postgres"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "8b22c5f3bf1a94aa83c2d02c8a913a9d2d504d8b01149bec3418f57685459d62",
+                    "EndpointID": "11589e600eb809fa7f0432bb6caf574a7ad6753622ae8cd83f1a2cac9107fb8b",
+                    "Gateway": "172.18.0.1",
+                    "IPAddress": "172.18.0.2",
+                    "MacAddress": "fe:04:1d:42:df:95",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "aep-ws6-postgres",
+                        "b5-postgres",
+                        "0e9c4e6a1599"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:10a028bdde46f9ac6786a8609b16672a7d0d141d6cbe776f7fbad5e82f4fca3a",
+            "size": 3630,
+            "annotations": {
+                "com.docker.official-images.bashbrew.arch": "amd64",
+                "org.opencontainers.image.base.digest": "sha256:16112ae93b810eb1ec6d1db6e01835d2444c8ca99aa678e03dd104ea3ec68408",
+                "org.opencontainers.image.base.name": "debian:bookworm-slim",
+                "org.opencontainers.image.created": "2024-07-23T07:22:30Z",
+                "org.opencontainers.image.revision": "d08757ccb56ee047efd76c41dbc148e2e2c4f68f",
+                "org.opencontainers.image.source": "https://github.com/docker-library/postgres.git#d08757ccb56ee047efd76c41dbc148e2e2c4f68f:16/bookworm",
+                "org.opencontainers.image.url": "https://hub.docker.com/_/postgres",
+                "org.opencontainers.image.version": "16.3"
+            },
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

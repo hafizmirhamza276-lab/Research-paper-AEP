@@ -1,0 +1,19 @@
+=== git push (F0(i), standing rule 8) ===
+$ git log --oneline -2
+8446103 Phase 2B Session 3B: E1-E6 amendments, hard Redis kill, graded ambiguity
+8c3663f Phase 2B Session 3: report, clock-suspension detection, tier-1 matrix results
+
+$ git status --short   # after commit
+?? reports/raw/f0i-commit-and-ci.txt
+
+=== CI run for 8446103 ===
+run       31156350917
+head_sha  84461031b0cb403872e3fa60a88576fab7e9cb55
+status    completed
+conclusion success
+url       https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31156350917
+
+$ jobs
+  success    Citation ranges (docs/22)
+  success    WAITAOF durability (compose, phase2.conf)
+  success    Suite (py3.13, Redis from compose)

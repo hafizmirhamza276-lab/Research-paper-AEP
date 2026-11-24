@@ -1,0 +1,64 @@
+# MockLegacyAPI reference configuration (PAPER_ROADMAP.md section 3.1(1)).
+#
+# Every knob below is echoed verbatim into the first record of the run log and
+# into GET /v1/config, together with a digest over the whole document. A result
+# whose log does not carry that echo cannot be attributed to a configuration.
+#
+# Copy this file, change what the experiment needs, and pass it with
+#   python -m experiments.mock_api --config <path>
+
+config_version: "aep.mock-legacy-api.config/1"
+
+# Seeds the generator that draws every fault decision and delay. Two runs with
+# the same seed and the same document make the same decisions in the same
+# order.
+seed: 20260805
+
+# The ground-truth ledger. The run log is written alongside it as
+# <stem>.run.jsonl.
+ledger_path: "experiments/results/mock_api/ground_truth.sqlite3"
+
+# Inherited by every endpoint that does not override the individual key.
+defaults:
+  faults:
+    # constant | uniform (low, high) | exponential (mean). Seconds.
+    delay:
+      distribution: constant
+      seconds: 0.0
+    # Refuse with 503 *before* applying: a definitive no-effect failure.
+    server_error_probability: 0.0
+    # Apply, then never answer: the caller is left genuinely ambiguous.
+    timeout_probability: 0.0
+    # Apply the same request twice before answering, as a provider with an
+    # at-least-once internal retry does. The caller sees one response; the
+    # ledger records two applications sharing one fingerprint.
+    duplicate_response_probability: 0.0
+
+  # Deliberate stalls around the ledger's commit boundary, used only by the
+  # crash-safety test. Zero in every experimental configuration.
+  crash_simulation:
+    hold_in_transaction_seconds: 0.0
+    hold_after_commit_seconds: 0.0
+    progress_marker_path: null
+
+endpoints:
+  # `identity_fields` is the projection that defines when two requests are the
+  # same mutation (Definition 1 in experiments/mock_api/fingerprint.py). Fields
+  # outside it -- a memo, a notification flag -- do not change identity, so two
+  # requests differing only there are the same mutation with different bytes
+  # and the ledger reports them as a FINGERPRINT_CONFLICT rather than as an
+  # ordinary duplicate.
+  payments:
+    response_class: AUTHORITATIVE_READBACK
+    identity_fields: ["action", "amount_minor"]
+
+  # Can confirm that a mutation happened, never that it did not.
+  notifications:
+    response_class: POSITIVE_ONLY_READBACK
+    identity_fields: ["action", "amount_minor"]
+
+  # Offers no reconciliation at all: an ambiguous call here can only end in
+  # operator escalation.
+  ledger_postings:
+    response_class: NO_READBACK
+    identity_fields: ["action", "amount_minor"]

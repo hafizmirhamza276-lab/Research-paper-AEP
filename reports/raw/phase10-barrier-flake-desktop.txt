@@ -1,0 +1,49 @@
+Current context is now "aep-native"
+eping its volume) ===
+ Container aep-phase2-redis72 Removed 
+ Network aep-phase2_default Removing 
+ Network aep-phase2_default Removed 
+
+=== putting the Docker Desktop shim back on PATH ===
+docker now      : /usr/local/bin/docker
+client os/arch  : windows/amd64
+context         : desktop-linux
+server          : 29.4.3
+
+=== bringing the stack up on Docker Desktop ===
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-toxiproxy Healthy 
+redis backing   : volume /var/lib/docker/volumes/aep-phase2_redis-data/_data
+conf bind src   : D:\personal\AEP\Research-paper-AEP\redis\phase2.conf
+
+=== 20 iterations on Docker Desktop ===
+  iter  1 PASS
+  iter  2 PASS
+  iter  3 PASS
+  iter  4 PASS
+  iter  5 PASS
+  iter  6 PASS
+  iter  7 PASS
+  iter  8 PASS
+  iter  9 PASS
+  iter 10 PASS
+  iter 11 PASS
+  iter 12 PASS
+  iter 13 PASS
+  iter 14 PASS
+  iter 15 PASS
+  iter 16 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+  iter 17 PASS
+  iter 18 PASS
+  iter 19 PASS
+  iter 20 FAIL  WriteAheadWorkflowError: recovery durability barrier did not acknowledge the write
+
+RESULT docker-desktop: 2 failed / 20 iterations
+
+=== RESTORING the native engine ===
+docker now      : /usr/bin/docker
+context         : aep-native
+server          : 29.4.3
+redis backing   : volume /var/lib/docker/volumes/aep-phase2_redis-data/_data

@@ -1,0 +1,44 @@
+{
+  "schema": "aep.phase8.container-precondition/1",
+  "captured_at": "2026-08-28T18:07:19+05:00",
+  "expected_fixtures": [
+    "aep-phase2-redis72",
+    "aep-phase2-toxiproxy"
+  ],
+  "fixtures_missing": [],
+  "foreign_running_before": [],
+  "foreign_stopped": [],
+  "containers_before": [
+    {
+      "name": "aep-phase2-toxiproxy",
+      "state": "running",
+      "status": "Up 4 days (healthy)",
+      "image": "ghcr.io/shopify/toxiproxy:2.12.0"
+    },
+    {
+      "name": "aep-phase2-redis72",
+      "state": "running",
+      "status": "Up 32 seconds (healthy)",
+      "image": "redis:7.2.5-alpine"
+    }
+  ],
+  "containers_after": [
+    {
+      "name": "aep-phase2-toxiproxy",
+      "state": "running",
+      "status": "Up 4 days (healthy)",
+      "image": "ghcr.io/shopify/toxiproxy:2.12.0"
+    },
+    {
+      "name": "aep-phase2-redis72",
+      "state": "running",
+      "status": "Up 33 seconds (healthy)",
+      "image": "redis:7.2.5-alpine"
+    }
+  ],
+  "volume_count_before": 639,
+  "volume_count_after": 639,
+  "loadavg_before": "0.58 0.47 0.49 1/527 11174",
+  "loadavg_after": "0.58 0.47 0.49 1/518 11181",
+  "note": "Fixtures are declared by compose.phase2.yml and are part of the run; they are never cleaned, because recreating them per session would make session 1 differ from sessions 2-4 by construction. Foreign containers are recorded by name and stopped, not removed. container_state in run-config.json covers the AEP Redis container only, so foreign load reaches no other artefact in the run root."
+}

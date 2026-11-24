@@ -1,0 +1,39 @@
+{
+  "collection_caps_differ": false,
+  "in_force": {
+    "max_output_tokens": 1024,
+    "max_prompt_tokens": 2000,
+    "per_collection_calls": 30,
+    "per_collection_usd": 0.06,
+    "per_run_calls": 20
+  },
+  "per_call_ceiling_usd": 0.0016288,
+  "planner": {
+    "loop": "interactive",
+    "mode": "live"
+  },
+  "preregistered_ceiling": {
+    "max_output_tokens": 1024,
+    "max_prompt_tokens": 2000,
+    "per_collection_calls": 1000,
+    "per_collection_usd": 20.0,
+    "per_run_calls": 36
+  },
+  "price": {
+    "input_per_million": 0.2,
+    "output_per_million": 1.2
+  },
+  "price_source": {
+    "note": "Reasoning tokens bill as output. Quoted per 1M tokens: input 0.20 USD, output 1.20 USD.",
+    "retrieved": "2026-09-17",
+    "tier": "Azure OpenAI Global Standard, GPT-5.6 Luna, short context",
+    "url": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
+  },
+  "schema_version": "aep.planner.caps/1",
+  "source": "AEP_PLANNER_* environment at run time; resolved by experiments.harness.agent_loop.stage_caps, which refuses any value above the pre-registered ceiling",
+  "tightened": [
+    "per_collection_calls",
+    "per_collection_usd",
+    "per_run_calls"
+  ]
+}

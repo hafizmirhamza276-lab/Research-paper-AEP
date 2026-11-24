@@ -1,0 +1,12 @@
+{"calls": 1, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:0:1", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": 0.0016288}
+{"calls": 0, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:0:1:settle", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": -0.0014704}
+{"calls": 1, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:0:d1:1", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": 0.0016288}
+{"calls": 0, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:0:d1:1:settle", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": -0.0014206}
+{"calls": 1, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:1:1", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": 0.0016288}
+{"calls": 0, "key": "aep_full-mid_dispatch-notifications-ea8836a3-r0:0:1:1:settle", "run_id": "aep_full-mid_dispatch-notifications-ea8836a3-r0", "usd": -0.0013101999999999999}
+{"calls": 1, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:0:1", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": 0.0016288}
+{"calls": 0, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:0:1:settle", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": -0.0014689999999999998}
+{"calls": 1, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:0:d1:1", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": 0.0016288}
+{"calls": 0, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:0:d1:1:settle", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": -0.0014324}
+{"calls": 1, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:1:1", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": 0.0016288}
+{"calls": 0, "key": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0:0:1:1:settle", "run_id": "b0_naive_retry-mid_dispatch-notifications-54dae940-r0", "usd": -0.0013671999999999998}

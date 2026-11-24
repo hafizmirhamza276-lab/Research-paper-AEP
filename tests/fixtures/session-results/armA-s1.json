@@ -1,0 +1,2200 @@
+{
+ "ablation_csv": "regime,system,response_class,runs,executions,executions_with_an_applied_effect,applied_effects_total,declared_ambiguous,confirmed_not_applied,undetected_duplicates,lost_effects,canary_survived,canary_lost\nredis-kill-preack,AEP_FULL,AUTHORITATIVE_READBACK,30,30,0,0,0,30,0,0,30,0\nredis-kill-preack,AEP_FULL,NO_READBACK,30,30,1,1,30,0,0,0,30,0\nredis-kill-preack,AEP_FULL,POSITIVE_ONLY_READBACK,30,30,0,0,30,0,0,0,30,0\nredis-kill-preack,B3_INTENT_NO_BARRIER,AUTHORITATIVE_READBACK,30,30,29,29,0,1,0,0,30,0\nredis-kill-preack,B3_INTENT_NO_BARRIER,NO_READBACK,30,30,29,29,30,0,0,0,30,0\nredis-kill-preack,B3_INTENT_NO_BARRIER,POSITIVE_ONLY_READBACK,30,30,30,30,0,0,0,0,30,0\n",
+ "coverage": {
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 6,
+  "crash_free_runs": 0,
+  "crash_points": [
+   "none"
+  ],
+  "executions": 180,
+  "readback_keyings": [
+   "CALLER_REFERENCE"
+  ],
+  "regimes": [
+   "redis-kill-preack"
+  ],
+  "response_classes": [
+   "AUTHORITATIVE_READBACK",
+   "NO_READBACK",
+   "POSITIVE_ONLY_READBACK"
+  ],
+  "runs": 180,
+  "runs_dropped_for_clock_suspension": 0,
+  "runs_dropped_for_undeclared_suspend_policy": 0,
+  "runs_with_a_hard_redis_kill": 180,
+  "runs_with_usable_timing": 180,
+  "systems": [
+   "AEP_FULL",
+   "B3_INTENT_NO_BARRIER"
+  ],
+  "worst_suspension_seconds": 0.143
+ },
+ "progress": [
+  {
+   "started_at": 88289.727493822,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88343.768246368,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88475.669602014,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88518.831760439,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 88559.740444348,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 88666.666344207,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 88718.725328465,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88759.691930072,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88893.638765103,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 88938.587891641,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 88987.846374124,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89042.51111022,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89090.439552857,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89132.614632982,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89266.84195148,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89313.073040373,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89367.70181931,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89421.58723096,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89482.413249482,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89533.561393679,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89673.535097756,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89724.227749006,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89774.267084494,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89822.375925586,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 89886.257340893,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 89931.268962741,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90066.138548812,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90106.118809577,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90144.983329182,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90183.9953326,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90223.944954321,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90261.98295755,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90393.936108973,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90434.962725153,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90479.657725092,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90518.849479688,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90561.835663211,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90614.738975102,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90749.794253201,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90799.881828377,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90851.875446519,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90903.286190095,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 90949.644636393,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 90996.401557284,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91139.651495029,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91219.947754548,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91290.288918739,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91333.624574296,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91372.230567721,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91411.080793819,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91542.207471299,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91583.083320711,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91624.067848853,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91666.11493778,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91710.095686336,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91751.811488902,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91886.078787593,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 91928.911524114,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 91968.777113196,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92008.971651587,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92050.92104941,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92092.82982755,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92229.030039195,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92268.890785354,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92307.670413773,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92347.782055999,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92385.672829468,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92424.716344067,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92555.682856265,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92594.556964039,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92639.830444397,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92678.462836861,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92716.39190567,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92754.532327643,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92885.312676779,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 92922.390861258,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92959.38443595,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 92996.417478261,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93035.342046756,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93074.35764259,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93203.401804502,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93241.264198523,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93283.184018393,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93322.124271145,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93362.130299272,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93403.255718989,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93538.174912523,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93585.213562191,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93627.066808328,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93667.997940693,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93709.054089853,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93751.010632858,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93881.939267967,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 93920.857951044,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 93959.855437623,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94000.825066568,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94044.36311089,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94085.664189724,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94219.711590386,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94261.682457743,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94304.5801331,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94353.146334716,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94471.78797267,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94519.62553145,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94657.757812034,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94700.490208159,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94745.336445888,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94789.541821103,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 94831.512532175,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 94874.834369744,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95013.560884996,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95057.423205249,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95103.325279434,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95148.351435453,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95195.345828156,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95240.30933706,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95377.029969363,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95416.169762383,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95457.204662432,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95495.976144409,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95533.992258677,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95571.969616311,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95701.913454913,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95739.909857517,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95776.839637765,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95813.823570738,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 95849.70658495,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 95885.685148019,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96012.796372903,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96049.671697222,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96086.742423031,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96125.565491973,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96162.530654325,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96198.517460574,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96326.507598768,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96363.526600813,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96402.622294054,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96442.344601602,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96481.378021911,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96519.301100153,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96649.428183716,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96687.231914114,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96726.275567261,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96767.169118694,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 96806.200315066,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96847.118087027,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 96976.189989965,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97017.176257773,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97060.985072395,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97103.320761526,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97149.130122463,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97191.107660503,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97325.19635433,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97367.835354009,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97411.78944243,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97456.888292815,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97499.959295783,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97542.966798703,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97678.744194333,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97741.746032492,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97788.195755725,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97834.579585421,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 97878.646114787,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 97922.634478895,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98055.667417734,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98103.93016026,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98149.897875825,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98246.42859881,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98293.292660568,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98337.453503647,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98475.2631705,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98523.317065008,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98573.024197533,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98618.163601952,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98668.54899244,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98717.221522323,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98862.162183271,
+   "system": "AEP_FULL"
+  },
+  {
+   "started_at": 98916.392086935,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 98972.334556374,
+   "system": "B3_INTENT_NO_BARRIER"
+  },
+  {
+   "started_at": 99026.064817489,
+   "system": "B3_INTENT_NO_BARRIER"
+  }
+ ],
+ "runs": [
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788429963492
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430380166
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433713993
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434047289
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434378271
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434697520
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435026134
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435373692
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435708224
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436138915
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436496898
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436861830
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430752909
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437197149
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437512152
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437825397
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438145387
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438472119
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438815315
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439165906
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439545011
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439961238
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440338864
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431150363
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431550304
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431883985
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432233348
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432614305
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433033633
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-ledger_postings-45c69391-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433372644
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430004453
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430421320
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433756843
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434086660
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434416515
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434735859
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435067156
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435413229
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435750492
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436187662
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436542671
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436907540
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430794968
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437235150
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437548141
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437861428
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438182969
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438510784
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438856851
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439209071
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439588560
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440005667
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440390803
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431197247
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431593988
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431922153
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432277170
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432664197
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433072554
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-notifications-0c955d71-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433413497
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430137511
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430556894
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433890664
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434217375
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434546151
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434865292
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435205889
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435544377
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435883994
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436322592
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436679346
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437039987
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430929526
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437365017
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437675491
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437989448
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438312992
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438641225
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438991449
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439367846
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439726287
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440144559
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440536744
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431340855
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431727382
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432055114
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432414539
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432804801
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433204801
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "aep_full-none-payments-0f9134ce-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433550683
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430179457
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430601634
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433931045
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434259519
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434583796
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434905504
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435248277
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435583287
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435926188
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436364871
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436725194
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437079307
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430980319
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437402652
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437712614
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438026766
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438350428
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438683020
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439034862
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439408833
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439771129
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440192537
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440588550
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431389834
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431766331
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432097378
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432466684
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432911238
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433245396
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-ledger_postings-974fdafd-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433591031
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430237665
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430657251
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433970222
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434301413
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434621215
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434945276
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435289530
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435623005
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435967681
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436410228
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436769608
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437120547
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431036329
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437439606
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437749845
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438065841
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438393129
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438727279
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439078421
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439455148
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439855841
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440242237
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440645776
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431436848
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431805137
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432139923
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432517743
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432952815
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433287679
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-notifications-a632f952-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433630637
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r0",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430332027
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r1",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788430705022
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r10",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434008991
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r11",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434340242
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r12",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434658889
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r13",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788434983806
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r14",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435331525
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r15",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788435664110
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r16",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436058652
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r17",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436454719
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r18",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788436815277
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r19",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437159044
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r2",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431095484
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r20",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437476138
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r21",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788437788525
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r22",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438106508
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r23",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438431365
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r24",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788438772044
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r25",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439124290
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r26",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439501545
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r27",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788439916565
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r28",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440289368
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r29",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788440698150
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r3",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431489641
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r4",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788431843890
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r5",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432180972
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r6",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432567759
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r7",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788432994821
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r8",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433330241
+  },
+  {
+   "has_run_config": true,
+   "kill_paused_false": 0,
+   "kill_paused_true": 2,
+   "name": "b3_intent_no_barrier-none-payments-9414cf90-r9",
+   "redis_fault_mechanism": "pause-then-kill",
+   "runner_wall_ms": 1788433671387
+  }
+ ],
+ "source_root": "armA-s1-2026-09-03"
+}

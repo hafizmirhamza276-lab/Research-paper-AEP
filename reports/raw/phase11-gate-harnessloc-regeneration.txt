@@ -1,0 +1,39 @@
+wrote /root/aep-regen-generated/numbers.tex
+wrote /root/aep-regen-generated/table-ablation.tex
+wrote /root/aep-regen-generated/table-ambiguity-by-crashpoint.tex
+wrote /root/aep-regen-generated/table-deployment-choice.tex
+wrote /root/aep-regen-generated/table-latency.tex
+wrote /root/aep-regen-generated/table-outcomes.tex
+paper_tables exit=0
+
+=== files produced ===
+total 64
+drwxr-xr-x  2 root root  4096 Sep  3 10:47 .
+drwx------ 28 root root  4096 Sep  3 10:47 ..
+-rw-r--r--  1 root root 29534 Sep  3 10:47 numbers.tex
+-rw-r--r--  1 root root  1333 Sep  3 10:47 table-ablation.tex
+-rw-r--r--  1 root root  1381 Sep  3 10:47 table-ambiguity-by-crashpoint.tex
+-rw-r--r--  1 root root  2365 Sep  3 10:47 table-deployment-choice.tex
+-rw-r--r--  1 root root  1478 Sep  3 10:47 table-latency.tex
+-rw-r--r--  1 root root  5493 Sep  3 10:47 table-outcomes.tex
+
+=== COMPLETE diff, paper/generated/ -> fresh regeneration ===
+  DIFFERS   numbers.tex
+--- /dev/fd/63	2026-09-03 10:47:56.593270072 +0500
++++ /dev/fd/62	2026-09-03 10:47:56.593270072 +0500
+@@ -554,6 +554,6 @@
+ \newcommand{\CoreLoc}{6\,862}
+ 
+ % lines of Python under experiments/, excluding __pycache__
+-% 90 files; regenerated on every run of this script
+-\newcommand{\HarnessLoc}{23\,022}
++% 91 files; regenerated on every run of this script
++\newcommand{\HarnessLoc}{23\,243}
+ 
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== anything in paper/generated the regeneration did NOT produce ===

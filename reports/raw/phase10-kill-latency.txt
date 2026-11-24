@@ -1,0 +1,217 @@
+==============================================================================
+Phase 10: docker kill -s KILL latency, per runtime
+==============================================================================
+  image           redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+  trials          100 per runtime, round-robined
+  kernel          6.6.114.1-microsoft-standard-WSL2
+  runtime         docker-desktop -> /usr/local/bin/docker-desktop-shim
+  runtime         aep-native -> /usr/bin/docker
+
+  [docker-desktop] target aep-phase10-killtarget-docker-desktop ready
+  [aep-native] target aep-phase10-killtarget-aep-native ready
+  trial   0 [docker-desktop] command_ms=   485 counted=True
+  trial   0 [aep-native    ] command_ms=   202 counted=True
+  trial   1 [docker-desktop] command_ms=   407 counted=True
+  trial   1 [aep-native    ] command_ms=   223 counted=True
+  trial   2 [docker-desktop] command_ms=   395 counted=True
+  trial   2 [aep-native    ] command_ms=   242 counted=True
+  trial   3 [docker-desktop] command_ms=   421 counted=True
+  trial   3 [aep-native    ] command_ms=   218 counted=True
+  trial   4 [docker-desktop] command_ms=   441 counted=True
+  trial   4 [aep-native    ] command_ms=   255 counted=True
+  trial   5 [docker-desktop] command_ms=   388 counted=True
+  trial   5 [aep-native    ] command_ms=   216 counted=True
+  trial   6 [docker-desktop] command_ms=   431 counted=True
+  trial   6 [aep-native    ] command_ms=   261 counted=True
+  trial   7 [docker-desktop] command_ms=   398 counted=True
+  trial   7 [aep-native    ] command_ms=   194 counted=True
+  trial   8 [docker-desktop] command_ms=   414 counted=True
+  trial   8 [aep-native    ] command_ms=   229 counted=True
+  trial   9 [docker-desktop] command_ms=   378 counted=True
+  trial   9 [aep-native    ] command_ms=   179 counted=True
+  trial  10 [docker-desktop] command_ms=   446 counted=True
+  trial  10 [aep-native    ] command_ms=   257 counted=True
+  trial  11 [docker-desktop] command_ms=   423 counted=True
+  trial  11 [aep-native    ] command_ms=   204 counted=True
+  trial  12 [docker-desktop] command_ms=   416 counted=True
+  trial  12 [aep-native    ] command_ms=   234 counted=True
+  trial  13 [docker-desktop] command_ms=   388 counted=True
+  trial  13 [aep-native    ] command_ms=   217 counted=True
+  trial  14 [docker-desktop] command_ms=   423 counted=True
+  trial  14 [aep-native    ] command_ms=   231 counted=True
+  trial  15 [docker-desktop] command_ms=   418 counted=True
+  trial  15 [aep-native    ] command_ms=   193 counted=True
+  trial  16 [docker-desktop] command_ms=   449 counted=True
+  trial  16 [aep-native    ] command_ms=   212 counted=True
+  trial  17 [docker-desktop] command_ms=   442 counted=True
+  trial  17 [aep-native    ] command_ms=   236 counted=True
+  trial  18 [docker-desktop] command_ms=   492 counted=True
+  trial  18 [aep-native    ] command_ms=   237 counted=True
+  trial  19 [docker-desktop] command_ms=   514 counted=True
+  trial  19 [aep-native    ] command_ms=   234 counted=True
+  trial  20 [docker-desktop] command_ms=   388 counted=True
+  trial  20 [aep-native    ] command_ms=   230 counted=True
+  trial  21 [docker-desktop] command_ms=   419 counted=True
+  trial  21 [aep-native    ] command_ms=   219 counted=True
+  trial  22 [docker-desktop] command_ms=   442 counted=True
+  trial  22 [aep-native    ] command_ms=   196 counted=True
+  trial  23 [docker-desktop] command_ms=   409 counted=True
+  trial  23 [aep-native    ] command_ms=   265 counted=True
+  trial  24 [docker-desktop] command_ms=   412 counted=True
+  trial  24 [aep-native    ] command_ms=   236 counted=True
+  trial  25 [docker-desktop] command_ms=   427 counted=True
+  trial  25 [aep-native    ] command_ms=   212 counted=True
+  trial  26 [docker-desktop] command_ms=   406 counted=True
+  trial  26 [aep-native    ] command_ms=   218 counted=True
+  trial  27 [docker-desktop] command_ms=   398 counted=True
+  trial  27 [aep-native    ] command_ms=   220 counted=True
+  trial  28 [docker-desktop] command_ms=   444 counted=True
+  trial  28 [aep-native    ] command_ms=   222 counted=True
+  trial  29 [docker-desktop] command_ms=   402 counted=True
+  trial  29 [aep-native    ] command_ms=   225 counted=True
+  trial  30 [docker-desktop] command_ms=   378 counted=True
+  trial  30 [aep-native    ] command_ms=   214 counted=True
+  trial  31 [docker-desktop] command_ms=   460 counted=True
+  trial  31 [aep-native    ] command_ms=   226 counted=True
+  trial  32 [docker-desktop] command_ms=   403 counted=True
+  trial  32 [aep-native    ] command_ms=   207 counted=True
+  trial  33 [docker-desktop] command_ms=   388 counted=True
+  trial  33 [aep-native    ] command_ms=   217 counted=True
+  trial  34 [docker-desktop] command_ms=   437 counted=True
+  trial  34 [aep-native    ] command_ms=   216 counted=True
+  trial  35 [docker-desktop] command_ms=   416 counted=True
+  trial  35 [aep-native    ] command_ms=   256 counted=True
+  trial  36 [docker-desktop] command_ms=   422 counted=True
+  trial  36 [aep-native    ] command_ms=   217 counted=True
+  trial  37 [docker-desktop] command_ms=   398 counted=True
+  trial  37 [aep-native    ] command_ms=   226 counted=True
+  trial  38 [docker-desktop] command_ms=   398 counted=True
+  trial  38 [aep-native    ] command_ms=   239 counted=True
+  trial  39 [docker-desktop] command_ms=   458 counted=True
+  trial  39 [aep-native    ] command_ms=   243 counted=True
+  trial  40 [docker-desktop] command_ms=   430 counted=True
+  trial  40 [aep-native    ] command_ms=   257 counted=True
+  trial  41 [docker-desktop] command_ms=   441 counted=True
+  trial  41 [aep-native    ] command_ms=   204 counted=True
+  trial  42 [docker-desktop] command_ms=   396 counted=True
+  trial  42 [aep-native    ] command_ms=   226 counted=True
+  trial  43 [docker-desktop] command_ms=   425 counted=True
+  trial  43 [aep-native    ] command_ms=   222 counted=True
+  trial  44 [docker-desktop] command_ms=   383 counted=True
+  trial  44 [aep-native    ] command_ms=   214 counted=True
+  trial  45 [docker-desktop] command_ms=   460 counted=True
+  trial  45 [aep-native    ] command_ms=   221 counted=True
+  trial  46 [docker-desktop] command_ms=   411 counted=True
+  trial  46 [aep-native    ] command_ms=   235 counted=True
+  trial  47 [docker-desktop] command_ms=   419 counted=True
+  trial  47 [aep-native    ] command_ms=   209 counted=True
+  trial  48 [docker-desktop] command_ms=   397 counted=True
+  trial  48 [aep-native    ] command_ms=   228 counted=True
+  trial  49 [docker-desktop] command_ms=   443 counted=True
+  trial  49 [aep-native    ] command_ms=   287 counted=True
+  trial  50 [docker-desktop] command_ms=   389 counted=True
+  trial  50 [aep-native    ] command_ms=   229 counted=True
+  trial  51 [docker-desktop] command_ms=   431 counted=True
+  trial  51 [aep-native    ] command_ms=   249 counted=True
+  trial  52 [docker-desktop] command_ms=   445 counted=True
+  trial  52 [aep-native    ] command_ms=   235 counted=True
+  trial  53 [docker-desktop] command_ms=   418 counted=True
+  trial  53 [aep-native    ] command_ms=   225 counted=True
+  trial  54 [docker-desktop] command_ms=   417 counted=True
+  trial  54 [aep-native    ] command_ms=   208 counted=True
+  trial  55 [docker-desktop] command_ms=   411 counted=True
+  trial  55 [aep-native    ] command_ms=   234 counted=True
+  trial  56 [docker-desktop] command_ms=   440 counted=True
+  trial  56 [aep-native    ] command_ms=   243 counted=True
+  trial  57 [docker-desktop] command_ms=   443 counted=True
+  trial  57 [aep-native    ] command_ms=   240 counted=True
+  trial  58 [docker-desktop] command_ms=   416 counted=True
+  trial  58 [aep-native    ] command_ms=   233 counted=True
+  trial  59 [docker-desktop] command_ms=   443 counted=True
+  trial  59 [aep-native    ] command_ms=   216 counted=True
+  trial  60 [docker-desktop] command_ms=   458 counted=True
+  trial  60 [aep-native    ] command_ms=   189 counted=True
+  trial  61 [docker-desktop] command_ms=   467 counted=True
+  trial  61 [aep-native    ] command_ms=   213 counted=True
+  trial  62 [docker-desktop] command_ms=   413 counted=True
+  trial  62 [aep-native    ] command_ms=   222 counted=True
+  trial  63 [docker-desktop] command_ms=   464 counted=True
+  trial  63 [aep-native    ] command_ms=   236 counted=True
+  trial  64 [docker-desktop] command_ms=   421 counted=True
+  trial  64 [aep-native    ] command_ms=   231 counted=True
+  trial  65 [docker-desktop] command_ms=   437 counted=True
+  trial  65 [aep-native    ] command_ms=   199 counted=True
+  trial  66 [docker-desktop] command_ms=   487 counted=True
+  trial  66 [aep-native    ] command_ms=   208 counted=True
+  trial  67 [docker-desktop] command_ms=   434 counted=True
+  trial  67 [aep-native    ] command_ms=   245 counted=True
+  trial  68 [docker-desktop] command_ms=   393 counted=True
+  trial  68 [aep-native    ] command_ms=   244 counted=True
+  trial  69 [docker-desktop] command_ms=   473 counted=True
+  trial  69 [aep-native    ] command_ms=   253 counted=True
+  trial  70 [docker-desktop] command_ms=   442 counted=True
+  trial  70 [aep-native    ] command_ms=   239 counted=True
+  trial  71 [docker-desktop] command_ms=   425 counted=True
+  trial  71 [aep-native    ] command_ms=   212 counted=True
+  trial  72 [docker-desktop] command_ms=   423 counted=True
+  trial  72 [aep-native    ] command_ms=   215 counted=True
+  trial  73 [docker-desktop] command_ms=   428 counted=True
+  trial  73 [aep-native    ] command_ms=   207 counted=True
+  trial  74 [docker-desktop] command_ms=   424 counted=True
+  trial  74 [aep-native    ] command_ms=   247 counted=True
+  trial  75 [docker-desktop] command_ms=   445 counted=True
+  trial  75 [aep-native    ] command_ms=   228 counted=True
+  trial  76 [docker-desktop] command_ms=   415 counted=True
+  trial  76 [aep-native    ] command_ms=   218 counted=True
+  trial  77 [docker-desktop] command_ms=   431 counted=True
+  trial  77 [aep-native    ] command_ms=   246 counted=True
+  trial  78 [docker-desktop] command_ms=   438 counted=True
+  trial  78 [aep-native    ] command_ms=   227 counted=True
+  trial  79 [docker-desktop] command_ms=   443 counted=True
+  trial  79 [aep-native    ] command_ms=   219 counted=True
+  trial  80 [docker-desktop] command_ms=   388 counted=True
+  trial  80 [aep-native    ] command_ms=   262 counted=True
+  trial  81 [docker-desktop] command_ms=   493 counted=True
+  trial  81 [aep-native    ] command_ms=   220 counted=True
+  trial  82 [docker-desktop] command_ms=   390 counted=True
+  trial  82 [aep-native    ] command_ms=   230 counted=True
+  trial  83 [docker-desktop] command_ms=   448 counted=True
+  trial  83 [aep-native    ] command_ms=   240 counted=True
+  trial  84 [docker-desktop] command_ms=   379 counted=True
+  trial  84 [aep-native    ] command_ms=   217 counted=True
+  trial  85 [docker-desktop] command_ms=   434 counted=True
+  trial  85 [aep-native    ] command_ms=   232 counted=True
+  trial  86 [docker-desktop] command_ms=   414 counted=True
+  trial  86 [aep-native    ] command_ms=   223 counted=True
+  trial  87 [docker-desktop] command_ms=   470 counted=True
+  trial  87 [aep-native    ] command_ms=   204 counted=True
+  trial  88 [docker-desktop] command_ms=   393 counted=True
+  trial  88 [aep-native    ] command_ms=   234 counted=True
+  trial  89 [docker-desktop] command_ms=   424 counted=True
+  trial  89 [aep-native    ] command_ms=   203 counted=True
+  trial  90 [docker-desktop] command_ms=   431 counted=True
+  trial  90 [aep-native    ] command_ms=   219 counted=True
+  trial  91 [docker-desktop] command_ms=   414 counted=True
+  trial  91 [aep-native    ] command_ms=   212 counted=True
+  trial  92 [docker-desktop] command_ms=   469 counted=True
+  trial  92 [aep-native    ] command_ms=   226 counted=True
+  trial  93 [docker-desktop] command_ms=   443 counted=True
+  trial  93 [aep-native    ] command_ms=   223 counted=True
+  trial  94 [docker-desktop] command_ms=   399 counted=True
+  trial  94 [aep-native    ] command_ms=   237 counted=True
+  trial  95 [docker-desktop] command_ms=   474 counted=True
+  trial  95 [aep-native    ] command_ms=   212 counted=True
+  trial  96 [docker-desktop] command_ms=   397 counted=True
+  trial  96 [aep-native    ] command_ms=   198 counted=True
+  trial  97 [docker-desktop] command_ms=   399 counted=True
+  trial  97 [aep-native    ] command_ms=   238 counted=True
+  trial  98 [docker-desktop] command_ms=   435 counted=True
+  trial  98 [aep-native    ] command_ms=   220 counted=True
+  trial  99 [docker-desktop] command_ms=   493 counted=True
+  trial  99 [aep-native    ] command_ms=   219 counted=True
+
+--- summary ---
+  docker-desktop   n=100  min=378.0  median=423.0  p95=485.0  max=514.0  median 95% CI [418.0, 431.0]
+  aep-native       n=100  min=179.0  median=223.0  p95=257.0  max=287.0  median 95% CI [220.0, 229.0]
+
+wrote reports/raw/phase10-kill-latency.json

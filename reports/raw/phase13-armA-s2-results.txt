@@ -1,0 +1,45 @@
+
+
+########## did the mechanism fire, and was it recorded? ##########
+  runs: 180
+  environment.redis_fault_mechanism: {'pause-then-kill': 180}
+  kills with paused=true : 360
+  kills with paused=false: 0
+  runs with no kill event: 0
+
+
+########## E5 clock gate for this session ##########
+  runs 180 executions 180
+  dropped for clock suspension: 0
+  worst suspension seconds  : 0.14
+  all real SIGKILL          : True
+  regimes                   : ['redis-kill-preack']
+
+
+########## THE ESTIMAND -- unwanted applied effects, per capability class ##########
+regime,system,response_class,runs,executions,executions_with_an_applied_effect,applied_effects_total,declared_ambiguous,confirmed_not_applied,undetected_duplicates,lost_effects,canary_survived,canary_lost
+redis-kill-preack,AEP_FULL,AUTHORITATIVE_READBACK,30,30,0,0,0,30,0,0,30,0
+redis-kill-preack,AEP_FULL,NO_READBACK,30,30,0,0,30,0,0,0,30,0
+redis-kill-preack,AEP_FULL,POSITIVE_ONLY_READBACK,30,30,0,0,30,0,0,0,30,0
+redis-kill-preack,B3_INTENT_NO_BARRIER,AUTHORITATIVE_READBACK,30,30,29,29,0,1,0,0,30,0
+redis-kill-preack,B3_INTENT_NO_BARRIER,NO_READBACK,30,30,29,29,30,0,0,0,30,0
+redis-kill-preack,B3_INTENT_NO_BARRIER,POSITIVE_ONLY_READBACK,30,30,30,30,0,0,0,0,30,0
+
+
+########## interleaving actually realised (first 12 runs, by start time) ##########
+  A A A B B B A A A B B B A A A B B B A A A B B B A A A B B B A A A B B B A A A B
+  adjacent same-arm pairs: 120 of 179
+
+
+########## final per-run cost, full n ##########
+runs observed          : 180
+inter-run intervals (n): 179
+  min       35.3 s
+  median    36.5 s
+  mean      53.3 s
+  p95      129.3 s
+  max      137.5 s
+
+harness fitted estimate for this regime: 36.0 s/run
+observed / fitted                      : 1.01x
+implied REDIS_KILL_SECONDS if the rest of the model holds: 5.5 s (currently 5.0)

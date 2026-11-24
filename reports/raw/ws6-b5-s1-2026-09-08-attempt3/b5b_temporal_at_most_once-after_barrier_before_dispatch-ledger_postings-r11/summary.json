@@ -1,0 +1,40 @@
+{
+  "agrees": false,
+  "b5_verdict": "COMPLETED",
+  "caller_redispatch_duplicate_applications": 0,
+  "classifications": {
+    "activity_failed": 3,
+    "completed": 7
+  },
+  "config_digest": "49eb3731489516d457e5eda6b640b5b515b644a8c757f41811c6b33b5093b94e",
+  "declared_ambiguous_executions": 0,
+  "disagreements": [
+    {
+      "applied_effects": 0,
+      "classification": "completed",
+      "execution_id": "ea2d39e0-d046-4a51-85c2-16c2fe65f532",
+      "rule": "the system asserted the effect was applied and the ledger records none"
+    }
+  ],
+  "duplicate_prediction_applies": true,
+  "executions_planned": 10,
+  "expected_duplicate_groups": 0,
+  "expected_effect_executions_lower": 7,
+  "expected_effect_executions_upper": 10,
+  "lost_effect_executions": 2,
+  "oracle_applied_rows": 8,
+  "oracle_duplicate_groups": 0,
+  "oracle_effect_executions": 8,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 7,
+    "UNVERIFIED_FAILURE": 3
+  },
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b5b_temporal_at_most_once-after_barrier_before_dispatch-ledger_postings-r11",
+  "system": "B5B_TEMPORAL_AT_MOST_ONCE",
+  "undetected_duplicate_applications": 0,
+  "undetected_duplicate_executions": 0,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 3
+}

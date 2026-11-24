@@ -1,0 +1,23 @@
+{"event": "b5_worker_connected", "pid": 56789, "wall_ms": 1788877789402}
+{"event": "b5_worker_running", "pid": 56789, "wall_ms": 1788877790972}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877791011}
+{"event": "b5_point_reached", "fires": true, "pid": 56789, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788877791012}
+{"event": "b5_crash_firing", "pid": 56789, "point": "ACTIVITY_ENTERED_BEFORE_CALL", "wall_ms": 1788877791013}
+{"event": "b5_worker_connected", "pid": 56829, "wall_ms": 1788877794709}
+{"event": "b5_worker_running", "pid": 56829, "wall_ms": 1788877796305}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877805087}
+{"attempt": 1, "elapsed_ms": 2465.282, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877807554}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877807593}
+{"attempt": 1, "elapsed_ms": 2038.033, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877809633}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877809678}
+{"attempt": 1, "elapsed_ms": 2034.181, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877811713}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877811754}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877815791}
+{"attempt": 1, "elapsed_ms": 2044.343, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877817837}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877817880}
+{"attempt": 1, "elapsed_ms": 2036.883, "event": "b5_provider_returned", "status": 503, "wall_ms": 1788877819918}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877819964}
+{"attempt": 1, "elapsed_ms": 2047.721, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877822044}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877822087}
+{"attempt": 1, "elapsed_ms": 2046.796, "event": "b5_provider_returned", "status": 200, "wall_ms": 1788877824136}
+{"attempt": 1, "event": "b5_activity_started", "wall_ms": 1788877824175}

@@ -1,0 +1,185 @@
+=== is ctime usable on each filesystem? ===
+  /root/.aep-ctime-probe                                     ext4       usable=True
+  /mnt/d/personal/AEP/Research-paper-AEP/.scratch/.ctime-probe 9p         usable=True
+
+matrix
+    path now   /root/aep/experiments/results/matrix
+    mount now  ext4 on /dev/sdd at /
+    recorded   432 runs, 432 without an environment block
+    inode      mtime 2026-08-06T06:17:35Z .. 2026-08-10T06:41:41Z
+               ctime 2026-08-06T06:17:35Z .. 2026-08-10T06:41:41Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 15 distinct, e.g. /root/aep/.venv/lib/python3.13/site-packages/redis/_parsers/base.py
+    FILESYSTEM INFERRED   BACKING UNDETERMINED
+
+fsync-always
+    path now   /root/aep/experiments/results/fsync-always
+    mount now  ext4 on /dev/sdd at /
+    recorded   6 runs, 6 without an environment block
+    inode      mtime 2026-08-07T09:38:47Z .. 2026-08-07T11:08:53Z
+               ctime 2026-08-07T09:38:47Z .. 2026-08-07T11:08:53Z   written_in_place=True
+    FILESYSTEM INFERRED   BACKING UNDETERMINED
+
+voided
+    path now   /root/aep/experiments/results/voided
+    mount now  ext4 on /dev/sdd at /
+    recorded   1 runs, 1 without an environment block
+    inode      mtime 2026-08-07T12:42:03Z .. 2026-08-07T12:42:03Z
+               ctime 2026-08-07T12:42:03Z .. 2026-08-07T12:42:03Z   written_in_place=True
+    FILESYSTEM INFERRED   BACKING UNDETERMINED
+
+b2-2026-08-21
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-2026-08-21
+    mount now  9p on D:\134 at /mnt/d
+    recorded   60 runs, 60 without an environment block
+    inode      mtime 2026-08-21T15:11:43Z .. 2026-08-21T15:51:35Z
+               ctime 2026-09-01T06:46:54Z .. 2026-09-01T06:46:55Z   written_in_place=False
+    FILESYSTEM UNDETERMINED   BACKING UNDETERMINED
+
+b2-s1-2026-08-21
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s1-2026-08-21
+    mount now  9p on D:\134 at /mnt/d
+    recorded   60 runs, 60 without an environment block
+    inode      mtime 2026-08-21T16:17:13Z .. 2026-08-21T16:52:35Z
+               ctime 2026-09-01T06:46:55Z .. 2026-09-01T06:46:55Z   written_in_place=False
+    FILESYSTEM UNDETERMINED   BACKING UNDETERMINED
+
+b2-s2-2026-08-21
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s2-2026-08-21
+    mount now  9p on D:\134 at /mnt/d
+    recorded   60 runs, 60 without an environment block
+    inode      mtime 2026-08-21T16:55:54Z .. 2026-08-21T17:30:52Z
+               ctime 2026-09-01T06:46:55Z .. 2026-09-01T06:46:55Z   written_in_place=False
+    FILESYSTEM UNDETERMINED   BACKING UNDETERMINED
+
+b2-s3-2026-08-21
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/b2-s3-2026-08-21
+    mount now  9p on D:\134 at /mnt/d
+    recorded   60 runs, 60 without an environment block
+    inode      mtime 2026-08-21T17:33:06Z .. 2026-08-21T18:08:06Z
+               ctime 2026-09-01T06:46:55Z .. 2026-09-01T06:46:55Z   written_in_place=False
+    FILESYSTEM UNDETERMINED   BACKING UNDETERMINED
+
+b2-paired-s1-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-s1-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   120 runs, 0 without an environment block
+    inode      mtime 2026-08-28T04:59:19Z .. 2026-08-28T06:21:08Z
+               ctime 2026-08-28T04:59:19Z .. 2026-08-28T06:21:08Z   written_in_place=True
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s1-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s1-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   120 runs, 0 without an environment block
+    inode      mtime 2026-08-28T07:24:37Z .. 2026-08-28T08:42:19Z
+               ctime 2026-08-28T07:24:37Z .. 2026-08-28T08:42:19Z   written_in_place=True
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s2-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s2-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   120 runs, 0 without an environment block
+    inode      mtime 2026-08-28T09:46:03Z .. 2026-08-28T11:38:53Z
+               ctime 2026-08-28T09:46:03Z .. 2026-08-28T11:38:53Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 4 distinct, e.g. /root/aep-phase8/experiments/harness/faults.py
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s3-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s3-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   120 runs, 0 without an environment block
+    inode      mtime 2026-08-28T11:48:44Z .. 2026-08-28T13:06:35Z
+               ctime 2026-08-28T11:48:44Z .. 2026-08-28T13:06:35Z   written_in_place=True
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s4-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s4-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   120 runs, 0 without an environment block
+    inode      mtime 2026-08-28T13:07:23Z .. 2026-08-28T14:24:08Z
+               ctime 2026-08-28T13:07:23Z .. 2026-08-28T14:24:08Z   written_in_place=True
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s2-aborted-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s2-aborted-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   26 runs, 0 without an environment block
+    inode      mtime 2026-08-28T08:59:19Z .. 2026-08-28T09:15:10Z
+               ctime 2026-08-28T08:59:19Z .. 2026-08-28T09:15:10Z   written_in_place=True
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+b2-paired-v2-s2-operator-aborted-2026-08-28
+    path now   /root/aep-phase8/experiments/results/b2-paired-v2-s2-operator-aborted-2026-08-28
+    mount now  ext4 on /dev/sdd at /
+    recorded   16 runs, 0 without an environment block
+    inode      mtime 2026-08-28T09:41:00Z .. 2026-08-28T09:44:30Z
+               ctime 2026-08-28T09:41:00Z .. 2026-08-28T09:44:30Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 11 distinct, e.g. /root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-replication-ext4-2026-09-02
+    path now   /root/aep-phase10/ext4-2026-09-02
+    mount now  ext4 on /dev/sdd at /
+    recorded   18 runs, 0 without an environment block
+    inode      mtime 2026-09-02T11:30:25Z .. 2026-09-02T11:49:49Z
+               ctime 2026-09-02T11:30:25Z .. 2026-09-02T11:49:49Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 18 distinct, e.g. /root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0/summary.json
+    abs paths  matrix-plan.json: 1 distinct, e.g. /root/aep-phase10/ext4-2026-09-02
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-replication-ext4-arbb30-2026-09-02
+    path now   /root/aep-phase10/ext4-2026-09-02-arbb30
+    mount now  ext4 on /dev/sdd at /
+    recorded   30 runs, 0 without an environment block
+    inode      mtime 2026-09-02T11:50:49Z .. 2026-09-02T12:21:45Z
+               ctime 2026-09-02T11:50:49Z .. 2026-09-02T12:21:45Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 30 distinct, e.g. /root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json
+    abs paths  matrix-plan.json: 1 distinct, e.g. /root/aep-phase10/ext4-2026-09-02-arbb30
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-replication-drvfs-2026-09-02
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02
+    mount now  9p on D:\134 at /mnt/d
+    recorded   18 runs, 0 without an environment block
+    inode      mtime 2026-09-02T12:23:52Z .. 2026-09-02T12:38:27Z
+               ctime 2026-09-02T12:23:52Z .. 2026-09-02T12:38:27Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 6 distinct, e.g. /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02/aep_full-after_barrier_before_d
+    abs paths  matrix-plan.json: 1 distinct, e.g. /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-2026-09-02
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-replication-drvfs-arbb30-2026-09-02
+    path now   /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02
+    mount now  9p on D:\134 at /mnt/d
+    recorded   30 runs, 0 without an environment block
+    inode      mtime 2026-09-02T12:39:40Z .. 2026-09-02T13:10:44Z
+               ctime 2026-09-02T12:39:40Z .. 2026-09-02T13:10:44Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 1 distinct, e.g. /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/aep_full-after_resolutio
+    abs paths  matrix-plan.json: 1 distinct, e.g. /mnt/d/personal/AEP/Research-paper-AEP/experiments/results/phase10-replication-drvfs-arbb30-2026-09-02
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-VOIDED-ext4-wrong-runtime
+    path now   /root/aep-phase10/VOIDED/ext4-2026-09-02-VOID-wrong-runtime
+    mount now  ext4 on /dev/sdd at /
+    recorded   18 runs, 0 without an environment block
+    inode      mtime 2026-09-02T10:42:57Z .. 2026-09-02T10:57:37Z
+               ctime 2026-09-02T10:42:57Z .. 2026-09-02T10:57:37Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 18 distinct, e.g. /root/aep-phase10/ext4-2026-09-02/aep_full-after_barrier_before_dispatch-ledger_postings-b890c47d-r0/summary.json
+    abs paths  matrix-plan.json: 1 distinct, e.g. /root/aep-phase10/ext4-2026-09-02
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+phase10-VOIDED-ext4-arbb30-wrong-runtime
+    path now   /root/aep-phase10/VOIDED/ext4-2026-09-02-arbb30-VOID-wrong-runtime
+    mount now  ext4 on /dev/sdd at /
+    recorded   23 runs, 0 without an environment block
+    inode      mtime 2026-09-02T10:58:33Z .. 2026-09-02T11:24:45Z
+               ctime 2026-09-02T10:58:33Z .. 2026-09-02T11:24:45Z   written_in_place=True
+    abs paths  matrix-progress.jsonl: 22 distinct, e.g. /root/aep-phase10/ext4-2026-09-02-arbb30/aep_full-after_resolution_before_barrier-ledger_postings-318d0a3a-r0/summary.json
+    abs paths  matrix-plan.json: 1 distinct, e.g. /root/aep-phase10/ext4-2026-09-02-arbb30
+    FILESYSTEM DETERMINED   BACKING DETERMINED
+
+=== summary ===
+  redis_storage_backing:DETERMINED           13
+  redis_storage_backing:UNDETERMINED         7
+  results_root_filesystem:DETERMINED         13
+  results_root_filesystem:INFERRED           3
+  results_root_filesystem:UNDETERMINED       4

@@ -1,0 +1,45 @@
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 126,
+  "crash_free_runs": 21,
+  "crash_points": [
+    "after_barrier_before_dispatch",
+    "after_intent_before_barrier",
+    "after_resolution_before_barrier",
+    "after_response_before_resolution",
+    "before_intent_write",
+    "mid_dispatch",
+    "none"
+  ],
+  "executions": 3780,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "(session-3)",
+    "p0",
+    "redis-kill-preack"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK",
+    "NO_READBACK",
+    "POSITIVE_ONLY_READBACK"
+  ],
+  "runs": 432,
+  "runs_dropped_for_clock_suspension": 7,
+  "runs_dropped_for_undeclared_suspend_policy": 249,
+  "runs_with_a_hard_redis_kill": 60,
+  "runs_with_usable_timing": 176,
+  "systems": [
+    "AEP_FULL",
+    "B0_NAIVE_RETRY",
+    "B1_LEASE_ONLY",
+    "B2_CAS_ONLY",
+    "B3_INTENT_NO_BARRIER",
+    "B4B_DURABLE_WORKFLOW_AT_MOST_ONCE",
+    "B4_DURABLE_WORKFLOW"
+  ],
+  "worst_suspension_seconds": 65559.272
+}

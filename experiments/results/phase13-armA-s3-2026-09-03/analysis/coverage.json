@@ -1,0 +1,32 @@
+{
+  "all_runs_used_real_sigkill": true,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260806,
+  "cells": 6,
+  "crash_free_runs": 0,
+  "crash_points": [
+    "none"
+  ],
+  "executions": 179,
+  "readback_keyings": [
+    "CALLER_REFERENCE"
+  ],
+  "regimes": [
+    "redis-kill-preack"
+  ],
+  "response_classes": [
+    "AUTHORITATIVE_READBACK",
+    "NO_READBACK",
+    "POSITIVE_ONLY_READBACK"
+  ],
+  "runs": 179,
+  "runs_dropped_for_clock_suspension": 0,
+  "runs_dropped_for_undeclared_suspend_policy": 0,
+  "runs_with_a_hard_redis_kill": 179,
+  "runs_with_usable_timing": 179,
+  "systems": [
+    "AEP_FULL",
+    "B3_INTENT_NO_BARRIER"
+  ],
+  "worst_suspension_seconds": 0.173
+}

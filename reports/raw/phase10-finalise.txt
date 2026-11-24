@@ -1,0 +1,27 @@
+
+==============================================================================
+PRIMARY: known_ambiguity_rate on after_resolution_before_barrier, powered cell
+==============================================================================
+  frozen        10/30 = 0.3333 over 3 run(s)
+  ext4          10/30 = 0.3333 over 3 run(s)
+                difference +0.0000 95% CI [-0.4000, +0.4000] half-width 0.4000
+                VERDICT: INCONCLUSIVE -- UNDERPOWERED
+  drvfs         10/30 = 0.3333 over 3 run(s)
+                difference +0.0000 95% CI [-0.4000, +0.4000] half-width 0.4000
+                VERDICT: INCONCLUSIVE -- UNDERPOWERED
+
+==============================================================================
+PRIMARY: known_ambiguity_rate on after_resolution_before_barrier, powered cell
+==============================================================================
+  frozen        10/30 = 0.3333 over 3 run(s)
+  ext4          58/300 = 0.1933 over 30 run(s)
+                difference -0.1400 95% CI [-0.3967, +0.1833] half-width 0.2900
+                VERDICT: INCONCLUSIVE -- UNDERPOWERED
+exit=0
+
+
+########## run counts ##########
+  experiments/results/phase10-replication-drvfs-2026-09-02/ 18 run dirs
+  experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/ 30 run dirs
+  experiments/results/phase10-replication-ext4-2026-09-02/ 18 run dirs
+  experiments/results/phase10-replication-ext4-arbb30-2026-09-02/ 30 run dirs

@@ -1,0 +1,168 @@
+checking the extraction against MANIFEST.sha256
+  26300 files verified, 0 problems
+
+=== matrix (seed 20260806, resamples 10000) ===
+  IDENTICAL (producer: rebuild_comparisons.py)                           comparisons-vs-aep-full.csv
+  IDENTICAL (normalised: regime-label)                                   coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL (normalised: regime-label)                                   per-cell-metrics.csv
+  IDENTICAL (normalised: added-columns, regime-label)                    per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+
+=== fsync-always (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL (normalised: added-columns)                                  per-execution.csv
+
+=== b2-2026-08-21 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL (normalised: added-columns)                                  per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+
+=== b2-s1-2026-08-21 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL (normalised: added-columns)                                  per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+
+=== b2-s2-2026-08-21 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL (normalised: added-columns)                                  per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+
+=== b2-s3-2026-08-21 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL (normalised: added-columns)                                  per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+
+=== b2-paired-s1-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== b2-paired-v2-s1-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== b2-paired-v2-s2-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  NOT REGENERATED (analyze.py does not write it)                         container-precondition.json
+  IDENTICAL                                                              coverage.json
+  NOT REGENERATED (analyze.py does not write it)                         fault-injection-census.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== b2-paired-v2-s3-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  NOT REGENERATED (analyze.py does not write it)                         container-precondition.json
+  IDENTICAL                                                              coverage.json
+  NOT REGENERATED (analyze.py does not write it)                         fault-injection-census.json
+  NOT REGENERATED (analyze.py does not write it)                         foreign-load-sample.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== b2-paired-v2-s4-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  NOT REGENERATED (analyze.py does not write it)                         container-precondition.json
+  IDENTICAL                                                              coverage.json
+  NOT REGENERATED (analyze.py does not write it)                         fault-injection-census.json
+  NOT REGENERATED (analyze.py does not write it)                         foreign-load-sample.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== b2-paired-v2-s2-aborted-2026-08-28 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              comparisons-vs-aep-full.csv
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              latency-and-throughput.csv
+  IDENTICAL                                                              metric-known-ambiguity-rate.csv
+  IDENTICAL                                                              metric-lost-effect-rate.csv
+  IDENTICAL                                                              metric-recovery-success-rate.csv
+  IDENTICAL                                                              metric-state-corruption-rate.csv
+  IDENTICAL                                                              metric-undetected-duplicate-rate.csv
+  IDENTICAL                                                              metric-unverified-failure-rate.csv
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+  IDENTICAL                                                              redis-kill-ablation.csv
+  IDENTICAL                                                              table-1.csv
+
+=== phase10-replication-ext4-2026-09-02 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+
+=== phase10-replication-ext4-arbb30-2026-09-02 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+
+=== phase10-replication-drvfs-2026-09-02 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+
+=== phase10-replication-drvfs-arbb30-2026-09-02 (seed 20260806, resamples 10000) ===
+  IDENTICAL                                                              coverage.json
+  IDENTICAL                                                              per-cell-metrics.csv
+  IDENTICAL                                                              per-execution.csv
+
+==============================================================================
+IDENTICAL 114   IDENTICAL-after-normalisation 8   DIFFERS 0   NOT REGENERATED 8   DIFFERS-timestamped-PDF 0
+exit=1

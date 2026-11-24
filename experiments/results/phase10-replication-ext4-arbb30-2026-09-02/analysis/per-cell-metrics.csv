@@ -1,0 +1,7 @@
+metric,regime,system,crash_point,response_class,readback_keying,successes,total,rate,runs,ci_low,ci_high,resamples,bootstrap_seed,clusters,observations
+undetected_duplicate_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+known_ambiguity_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,58,300,0.19333333333333333,30,0.14666666666666667,0.24333333333333335,10000,20260806,30,300
+lost_effect_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+unverified_failure_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+state_corruption_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,0,300,0.0,30,0.0,0.0,10000,20260806,30,300
+recovery_success_rate,crashed,AEP_FULL,after_resolution_before_barrier,NO_READBACK,CALLER_REFERENCE,295,295,1.0,30,1.0,1.0,10000,20260806,30,295

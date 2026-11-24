@@ -1,0 +1,150 @@
+{
+  "by_filesystem": {
+    "drvfs": [
+      20,
+      12,
+      4,
+      7
+    ],
+    "ext4": [
+      10,
+      13,
+      18,
+      18,
+      10,
+      12
+    ]
+  },
+  "sessions": [
+    {
+      "aep_applied": "10/30",
+      "aep_runs": "30",
+      "append_p05_us": 38.8,
+      "b3_applied": "28/30",
+      "confidence": "INFERRED (traceback + ctime + fingerprint 38.8us)",
+      "filesystem": "ext4",
+      "kill_latency_ms": null,
+      "session": "matrix (the paper's kill cell)"
+    },
+    {
+      "aep_applied": "20/30",
+      "aep_runs": "30",
+      "append_p05_us": 472.7,
+      "b3_applied": "28/30",
+      "confidence": "INFERRED (fingerprint 472.7us)",
+      "filesystem": "drvfs",
+      "kill_latency_ms": null,
+      "session": "b2-2026-08-21 (P9C s0)"
+    },
+    {
+      "aep_applied": "12/30",
+      "aep_runs": "30",
+      "append_p05_us": 397.2,
+      "b3_applied": "28/30",
+      "confidence": "INFERRED (fingerprint 397.2us)",
+      "filesystem": "drvfs",
+      "kill_latency_ms": null,
+      "session": "b2-s1-2026-08-21 (P9C s1)"
+    },
+    {
+      "aep_applied": "4/30",
+      "aep_runs": "30",
+      "append_p05_us": 392.2,
+      "b3_applied": "28/30",
+      "confidence": "INFERRED (fingerprint 392.2us)",
+      "filesystem": "drvfs",
+      "kill_latency_ms": null,
+      "session": "b2-s2-2026-08-21 (P9C s2)"
+    },
+    {
+      "aep_applied": "7/30",
+      "aep_runs": "30",
+      "append_p05_us": 386.5,
+      "b3_applied": "28/30",
+      "confidence": "INFERRED (fingerprint 386.5us)",
+      "filesystem": "drvfs",
+      "kill_latency_ms": null,
+      "session": "b2-s3-2026-08-21 (P9C s3)"
+    },
+    {
+      "aep_applied": "13/30",
+      "aep_runs": "30",
+      "append_p05_us": 109.8,
+      "b3_applied": "28/30",
+      "confidence": "DETERMINED (recorded environment block)",
+      "filesystem": "ext4",
+      "kill_latency_ms": {
+        "max": 7159.0,
+        "median": 1138.8,
+        "min": 749.2,
+        "n": 120,
+        "p95": 3587.1
+      },
+      "session": "b2-paired-s1-2026-08-28 (P8.4 v1)"
+    },
+    {
+      "aep_applied": "18/30",
+      "aep_runs": "30",
+      "append_p05_us": 90.3,
+      "b3_applied": "28/30",
+      "confidence": "DETERMINED (recorded environment block)",
+      "filesystem": "ext4",
+      "kill_latency_ms": {
+        "max": 4028.8,
+        "median": 1046.7,
+        "min": 837.9,
+        "n": 120,
+        "p95": 1500.8
+      },
+      "session": "b2-paired-v2-s1-2026-08-28 (P8.4)"
+    },
+    {
+      "aep_applied": "18/30",
+      "aep_runs": "30",
+      "append_p05_us": 94.0,
+      "b3_applied": "28/30",
+      "confidence": "DETERMINED (recorded environment block)",
+      "filesystem": "ext4",
+      "kill_latency_ms": {
+        "max": 5647.6,
+        "median": 1096.4,
+        "min": 737.5,
+        "n": 120,
+        "p95": 2039.9
+      },
+      "session": "b2-paired-v2-s2-2026-08-28 (P8.4)"
+    },
+    {
+      "aep_applied": "10/30",
+      "aep_runs": "30",
+      "append_p05_us": 94.5,
+      "b3_applied": "28/30",
+      "confidence": "DETERMINED (recorded environment block)",
+      "filesystem": "ext4",
+      "kill_latency_ms": {
+        "max": 3275.1,
+        "median": 1053.5,
+        "min": 844.6,
+        "n": 120,
+        "p95": 1406.5
+      },
+      "session": "b2-paired-v2-s3-2026-08-28 (P8.4)"
+    },
+    {
+      "aep_applied": "12/30",
+      "aep_runs": "30",
+      "append_p05_us": 78.8,
+      "b3_applied": "28/30",
+      "confidence": "DETERMINED (recorded environment block)",
+      "filesystem": "ext4",
+      "kill_latency_ms": {
+        "max": 8229.4,
+        "median": 976.8,
+        "min": 731.7,
+        "n": 120,
+        "p95": 1482.0
+      },
+      "session": "b2-paired-v2-s4-2026-08-28 (P8.4)"
+    }
+  ]
+}

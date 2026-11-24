@@ -1,0 +1,64 @@
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+........................................................................ [ 21%]
+........................................................................ [ 26%]
+........................................................................ [ 30%]
+........................................................................ [ 34%]
+........................................................................ [ 39%]
+........................................................................ [ 43%]
+........................................................................ [ 47%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 95%]
+.......................................................................  [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /root/aep/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_after_commit_keeps_both_and_tells_the_caller_nothing
+  /root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/threading.py:593: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x761fe30176a0>
+    self._cond = Condition(Lock())
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_after_commit_keeps_both_and_tells_the_caller_nothing
+  /root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/threading.py:593: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x761fe03f54e0>
+    self._cond = Condition(Lock())
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.0-final-0 ________________
+
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+aep_core/__init__.py                      0      0   100%
+aep_core/core/__init__.py                 0      0   100%
+aep_core/core/connector_contract.py      72      1    99%   154
+aep_core/core/durability.py             158      1    99%   243
+aep_core/core/exceptions.py               8      0   100%
+aep_core/core/intent_recovery.py        246     29    88%   114, 136, 144, 156, 189-191, 217, 230, 253, 286, 288, 318-320, 323-324, 333-338, 376, 387, 397, 402, 405, 410, 493, 506
+aep_core/core/intent_workflow.py        259     23    91%   255, 259, 263, 297-298, 318-324, 334, 340, 357, 383, 508-525, 539, 552, 606-607
+aep_core/core/intents.py                383     47    88%   170, 173-174, 249, 255, 261, 264-265, 273-274, 276, 285, 292, 295-296, 316, 319, 322, 333, 335, 350, 355, 358, 362, 685, 693, 699, 716, 747, 786, 920, 1022-1025, 1033, 1037, 1043, 1073, 1105, 1118, 1140-1141, 1150, 1178, 1207-1208
+aep_core/core/locks.py                  110      4    96%   382-393
+aep_core/core/request_binding.py        788     78    90%   225, 272, 302, 304-305, 385, 390, 396, 401, 404-405, 407, 427, 442-445, 459, 466, 475, 488, 497, 525, 544, 549, 553, 567, 589, 596, 608, 662, 667-672, 681, 697, 699, 708, 713, 716, 727, 743, 759, 762, 766, 769, 773, 817, 900, 907, 925, 927, 929, 935, 937, 951, 960-961, 964, 967-968, 980, 1053, 1094, 1103, 1125, 1218-1219, 1324, 1387, 1389, 1391, 1449, 1459, 1461, 1479
+aep_core/core/request_vault.py          251     22    91%   207, 211, 213, 216, 229, 231, 233, 236, 253, 274, 356, 367, 376, 378, 380, 383, 415, 426-427, 432, 437, 445
+aep_core/core/state_codec.py             61      3    95%   85, 135-136
+aep_core/core/storage.py                181     15    92%   491, 497, 515-516, 553, 605-614, 730, 809-810, 823-831
+aep_core/core/validation.py              11      0   100%
+-------------------------------------------------------------------
+TOTAL                                  2528    223    91%
+Required test coverage of 90% reached. Total coverage: 91.18%
+1655 passed, 3 warnings in 72.69s (0:01:12)

@@ -1,0 +1,342 @@
+\section{The AEP Protocol}
+\label{sec:protocol}
+
+\subsection{Ordering}
+
+The runner's sequence, with the property each step exists to serve:
+
+\begin{enumerate}
+\item Acquire the lease with jittered retry.
+\item Require that execution state already exists.
+\item Prepare, vault and read back the request \emph{before any intent
+      exists}, so that the intent, once written, names a request that is
+      already durable.
+\item Write the intent \textsc{none}$\rightarrow$\textsc{about-to-fire} by
+      fenced CAS, \textbf{and} run the durability barrier on the \emph{same
+      pinned connection}.
+\item Convert the barrier's acknowledgment into a Redis-visible dispatch
+      authorization.
+\item Run the atomic pre-dispatch preflight, which re-checks that
+      authorization.
+\item Mint a single-use dispatch capability.
+\item Only then call the connector.
+\end{enumerate}
+
+Two of these steps can refuse, and both refusals happen before any
+provider bytes exist, so both may soundly record a confirmed failure. If the
+barrier fails at step~4, the runner makes one fenced attempt to record
+\textsc{failed-confirmed} with evidence \texttt{LOCAL\_NO\_DISPATCH}. If the
+preflight rejects at step~6 (a lost lease, a moved version, an absent
+authorization), the runner does the same, with a reason naming the preflight
+rather than the barrier, provided it still owns the lease. Either way, if
+ownership has already been lost the runner records nothing and leaves the
+intent for recovery. Together these are the paths that produce the measured
+result of \cref{sec:eval-prevention}. The outcome classifier keys on the
+resulting status rather than on which of the two refused, so they are counted
+alike.
+
+\subsection{P1: Fenced state}
+\label{sec:p1}
+
+\begin{property}[Fenced state]
+No committed state write can be superseded and then resurrected by a stale
+writer. Every write to the state key is admitted only if, in one atomic Lua
+invocation, (a)~the caller's ownership token equals the live value of the lock
+key, and (b)~the stored version equals the caller's expected version and the
+candidate's version equals expected${}+1$.
+\end{property}
+
+Both conjuncts are necessary and the failure of either is a known
+pattern. Version-only CAS admits a writer that lost its lease but holds the
+current version; token-only checking admits a writer rebasing on a stale
+read. The pairing is the fencing-token argument made against lease-only
+locking~\cite{kleppmann2016locking}, with the token check and the write placed
+inside one script so they cannot interleave. The same script additionally
+freezes, inside the atomic region, the execution identity, the schema version,
+every envelope field outside a declared mutable set, every other ledger entry,
+and the intent's immutable fields. Transitions are append-only with a prefix
+check, and ledger entries can never be deleted.
+
+\paragraph{Declared residuals} A plain \texttt{SET} from any client with socket
+access is unconstrained (there is no ACL). Expiry, not deletion, ends the
+guarantee: after the retention floor elapses the record is gone and any writer
+may create version~1 again. An AOF rewind can also un-fence, and that is
+confirmed by a probe rather than argued. P1 is a statement about one monotonic
+Redis timeline, and lock keys are by design not barriered, so a lease
+whose release was lost can reappear alongside a rewound version and a
+previously fenced writer then satisfies both conjuncts. There is no local fix;
+the fix is consensus, which is a non-claim (\cref{tab:nonclaims}).
+
+\subsection{P2: Detectable ambiguity}
+\label{sec:p2}
+
+\begin{property}[Detectable ambiguity]
+If a \emph{durable} \textsc{about-to-fire} intent exists, then under F1--F5 it
+eventually reaches exactly one \emph{terminal automated} state
+(\textsc{fired-confirmed}, \textsc{failed-confirmed} or
+\textsc{permanently-ambiguous}) and no automated transition moves it
+afterwards; it is never silently re-dispatched and never silently dropped.
+This holds provided the recovery loop runs, survives its own pass, can
+eventually obtain the lease, and is not made eligible before the dispatch
+window closes.
+\end{property}
+
+\emph{Terminal automated} is exact rather than cautious. The only edges out of
+\textsc{permanently-ambiguous} are the two operator transitions of
+\cref{sec:p3}, so an intent that has been escalated can still be resolved
+later by a person who holds the lease and the exact version and asserts
+something the protocol cannot check.
+
+The design question P2 raises is what makes ``barrier before dispatch'' more
+than a convention. In this protocol it is a checked precondition, in four
+links:
+
+\begin{enumerate}
+\item Through the supported API, the barrier issues a \texttt{DurabilityAck}
+      only when \texttt{WAITAOF} returned at least one local fsync.
+\item Ordinary callers cannot construct, subclass or copy
+      \texttt{DurabilityAck}; the in-process registry detects reuse and binds
+      the guard to \texttt{execution:intent:prepared\_version}, so a guard for
+      one attempt cannot authorize another through the supported path.
+\item Authorizing dispatch \emph{consumes} the ack, then runs a script that
+      re-checks lease, version, status and binding digest and writes an
+      authorization key.
+\item The preflight script requires that exact value; an absent authorization
+      defaults to a value that cannot match, so it fails closed.
+\end{enumerate}
+
+\paragraph{The irreducible gap, stated} Redis exposes no way for a Lua script
+to verify that a previous \texttt{WAITAOF} succeeded. A complete in-store proof
+is therefore impossible. Under trusted-code assumptions, an authorization
+records that the supported path received and consumed its ordinary barrier
+guard; it is not an independent proof that Redis fsynced. The HMAC and registry
+are mutation/reuse checks, not a cryptographic security boundary. Python
+underscore naming and closure placement do not prevent arbitrary same-process
+code from calling the module-internal issuer without running the barrier. A
+principal with direct Redis access can also write the authorization key, and a
+caller inside the process can compose the binding service with a connector
+directly, bypassing the runner. A stronger attacker model requires a separately
+enforced process or service boundary, which this implementation does not have.
+
+\paragraph{A fifth link, and it is a clock} The four links above run from the
+barrier to the dispatch. They are silent about the other end, and P2 needs it:
+recovery must not classify an intent whose worker may still be about to
+transmit. Nothing structural prevents that, because both principals are acting
+on the same fenced state and a lease can expire at any moment. What prevents it
+is a delay. An intent becomes eligible for recovery only after
+$T_{\text{client}} + B + T_{\text{settle}}$ has elapsed since it was prepared,
+which is sized to cover the whole dispatch window. Remove that delay and the
+protocol loses an effect: recovery reads back \emph{not applied}, truthfully,
+because the request has not been sent yet, and records a confirmed failure that
+the dispatch then contradicts. \Cref{sec:modelchecking} produces this in ten
+steps. The delay is therefore a precondition of P2's soundness rather than a
+courtesy about late responses. It is also a real-time argument, which is why
+the residual named in \cref{sec:model-clocks} is the gap it cannot close.
+
+\paragraph{Recovery classification} For an eligible intent, under a freshly
+acquired lease and after re-validating status and version, the mapping from
+observation to outcome is total (\cref{tab:classification}). Recovery has no
+reference to the mutation call at all and can only read back. The
+transition table has no edge back to \textsc{about-to-fire}, checked in Python
+and re-checked inside the atomic script.
+
+\begin{table}[t]
+\centering
+\caption{Recovery classification. The two rows in bold are where declared
+ambiguity is produced by design rather than by failure, and they are what
+\cref{sec:eval-rq1} measures.}
+\label{tab:classification}
+\small
+\begin{tabular}{@{}p{0.50\columnwidth}p{0.40\columnwidth}@{}}
+\toprule
+Observation & Outcome \\
+\midrule
+capability undeclared / unrecognized & \textbf{ambiguous}, no query \\
+\textsc{no-readback}                 & \textbf{ambiguous}, no query \\
+applied (either querying class)      & confirmed \\
+not-applied $+$ \textsc{authoritative} & refuted \\
+not-applied $+$ \textsc{positive-only} & \textbf{ambiguous} (named violation) \\
+conflict                             & \textbf{ambiguous} \\
+unknown, budget remaining            & stay unresolved, backoff \\
+unknown, budget exhausted            & \textbf{ambiguous} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{False-positive ambiguity is the price, and it is the right
+direction} A crash after a durable intent but before transmission yields
+an intent that recovery must treat as ambiguous even though no effect
+exists. This inflates the declared-ambiguity rate; it can never inflate the
+undetected-duplicate rate. \Cref{sec:eval-rq1} shows this asymmetry directly in
+the data: ambiguity is at its maximum at the two crash points where no effect
+can exist.
+
+\subsection{P3: Fail-closed liveness bound}
+\label{sec:p3}
+
+\begin{property}[Fail-closed bound]
+Automated reconciliation of one intent terminates within a configurable attempt
+budget and duration budget, after which the intent is placed in a terminal
+automated state and the execution is withdrawn from normal scheduling.
+\end{property}
+
+Defaults are 8 attempts and 24 hours, with full-jitter backoff. Attempt
+counting is monotone and re-checked inside the atomic script: an
+unresolved-to-unresolved edge must increment the counter by exactly one. On
+exhaustion the intent becomes \textsc{permanently-ambiguous}, the execution is
+paused, no new intent may be created for it, and the only exit is an operator
+transition that itself requires the lease and the exact version.
+
+\paragraph{Declared residuals} The bound is consulted only on the
+\emph{unknown} branch. Every other observation resolves immediately, so this
+is not a gap in practice, but it is not a global watchdog either. Lease
+contention does not consume budget. There is no escalation \emph{mechanism}:
+``ejects to operator escalation'' means reaching a terminal state and pausing,
+and nothing alerts. Escalated records also expire: a retention floor of 31
+days is enforced for any ledger containing an unresolved or ambiguous record,
+but a floor is not permanence, so after it elapses the escalation evidence is
+deleted without an operator having acted. Both residuals are confirmed by
+executable probes in the artifact, not asserted.
+
+\subsection{The state machine}
+
+\Cref{fig:statemachine} is the transition set exported from the implementation,
+not a drawing of it, so the presence or absence of an edge is a fact about the
+code. Three states are terminal for automated reconciliation:
+\textsc{fired-confirmed}, \textsc{failed-confirmed} and
+\textsc{permanently-ambiguous}, which is the declared-ambiguity corner. Nothing
+returns to \textsc{about-to-fire}: once an intent leaves the dispatch window it
+cannot re-enter it, and that absence is P2's ``never silently re-dispatched''.
+The dashed edges are the operator transitions of \cref{sec:p3}, and they are the
+only way out of that corner.
+
+\begin{figure}[t]
+\centering
+\input{figures/state-machine}
+\caption{The intent state machine, generated from the transition table in
+the implementation. Solid edges are automated; the dashed edges
+from \textsc{permanently-ambiguous} are the operator-only transitions. Every
+state with a thick border is terminal for automated reconciliation. There is no
+edge
+back into \textsc{about-to-fire}. That absence is what ``never silently
+re-dispatched'' means, and it is enforced inside the atomic script rather than
+by the caller.}
+\label{fig:statemachine}
+\end{figure}
+
+\subsection{Model checking}
+\label{sec:modelchecking}
+
+We specify the protocol in TLA+ and check it with TLC. The specification is
+transcribed from the implementation, meaning the Lua guards, the exhaustive
+transition table, the creation fence and the recovery classification, and not
+from this section. A gate re-derives the transition table and
+the status alphabet from the source and fails if the two disagree, because a
+model checker asked about the wrong state machine does not complain: it reports
+success.
+
+The endpoint is modeled as \cref{sec:model-endpoint} describes it, and this is
+the modeling decision the result rests on. It is never given an intent
+identifier, so it cannot deduplicate and a second dispatch yields a second
+effect; whether an effect is applied is chosen adversarially rather than
+derived from anything the caller did; and ambiguous evidence is reachable on
+every path, so no caller can ever separate \emph{no effect} from \emph{effect,
+answer lost}. A god-view variable records what really happened at the endpoint,
+and no protocol action may read it, which is enforced textually across the
+specification's protocol definitions, because a guard that could see it would
+verify a protocol strictly stronger than the implementation while every
+property still came back green.
+
+\emph{Checked:} P1 as version monotonicity and the absence of status
+regression; P2 as legal-edges-only, no re-entry into \textsc{about-to-fire}, at
+most one unresolved intent, and eventual resolution under fairness; P3 as the
+bounded attempt budget; and the trilemma as two invariants: no undetected
+duplicate, and no lost effect. Declared ambiguity is not a violation, and that
+asymmetry is \cref{sec:trilemma} stated formally.
+
+\begin{table}[t]
+\centering
+\caption{Seven of the nine configurations that must fail. Each removes one
+stated assumption; \emph{steps} is the length of the counterexample TLC
+returns. Two further configurations, not shown, are non-vacuity witnesses:
+\textsc{p2}'s liveness property is an implication, and they establish that its
+antecedent is reachable rather than letting it pass while meaning nothing.}
+\label{tab:modelchecking}
+\small
+\begin{tabular}{@{}p{0.44\columnwidth}p{0.34\columnwidth}r@{}}
+\toprule
+Assumption removed & Property that breaks & Steps \\
+\midrule
+% Steps are COUNTEREXAMPLE LENGTHS -- the number of States in the trace TLC
+% prints -- at the committed bounds; one row per failing file in
+% formal/configs/. Not the DEPTH column scripts/run_tlc.sh prints, which is the
+% search depth reached and is a larger number: aof-rewind returns a 4-state
+% counterexample at search depth 5, with 24 states left on the queue. Lengths
+% are used rather than state counts because a failing run stops at its first
+% counterexample, so its state count reflects the search order and is not
+% reproducible.
+A single Redis timeline   & P1 monotonicity      & 4 \\  % aof-rewind.cfg
+A truthful \texttt{fsync} & no lost effect       & 8 \\  % write-loss.cfg
+The barrier, plus a restart & no lost effect     & 8 \\  % b3-no-barrier-restart.cfg
+A truthful endpoint       & no lost effect       & 9 \\  % untruthful-endpoint.cfg
+\quad\emph{same, duplicate horn} & no undetected duplicate & 16 \\ % untruthful-endpoint-duplicate.cfg
+The reconciliation delay  & no lost effect       & 10 \\ % no-reconcile-delay.cfg
+Operator authentication   & no lost effect       & 12 \\ % operator.cfg
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Not checked, and the exclusions are the interesting half.} Every
+cryptographic construction (the request binding, the vault, the digest) is
+out of the model rather than modeled badly, because an uninterpreted function
+standing in for a hash proves nothing about the real one and assuming it
+unforgeable would assume exactly what is in question. The in-process
+acknowledgment chain of the four links above is \emph{assumed}, not checked:
+what the model checks is the part that is atomic and Redis-visible, the
+authorization key and the preflight that requires it. Real time is not
+modeled. Where that cuts in the protocol's favor it is neutralized, since a
+lease may expire at any instant, which is more adversarial than the budget;
+where it cuts against, it is the reconciliation delay named above. Liveness is
+checked within the version bound, so it establishes that nothing gets stuck for
+a reason internal to the protocol, not termination in an unbounded run.
+
+\paragraph{Nine configurations exist to fail} Six configurations check that the
+properties hold. The other nine each remove one stated assumption and must
+produce the declared counterexample; a configuration that passes when it should
+fail turns the build red, which is what keeps this from being a check that
+cannot fail. \Cref{tab:modelchecking} is where the section's content actually
+is. Two rows are worth reading twice. The AOF-rewind
+residual of \cref{sec:p1}, previously argued and then confirmed by a probe,
+falls out in four steps once the single-timeline assumption is dropped. The
+truthful-\texttt{fsync} row is the write-loss result of
+\cref{sec:eval-durability} in the model: the barrier is issued, it reports
+success, the write is discarded, and an effect ends up with no record at all.
+
+\paragraph{The barrier is a query about durability, not a guarantee} The
+ablated barrier of B3 returns success without asking anything. The real barrier
+under write loss returns success because the server answers that it fsynced.
+These are the same state in the model, and the specification expresses them with
+one expression, which is the sharpest available statement of what the mechanism
+is worth: \textbf{the barrier is not a durability guarantee but a question about
+durability, and it inherits the truthfulness of whatever answers it}. The two
+are not quite the same system. The ablated barrier cannot report failure,
+where the real one still fails when the server does not answer, so write loss
+removes the barrier's ability to inform while leaving its ability to fail.
+
+\paragraph{What this establishes, and what it does not} TLC explored every
+reachable state under these bounds and found no violation. That is a fact about
+a specification of a few hundred lines, and four things bound what it transfers.
+The model is \emph{not} the implementation: nothing connects them but a hand
+transcription and one gate over the transition table and status alphabet, so
+refinement is neither proven nor claimed, and a defect in the Lua's JSON
+handling or arithmetic is invisible here. Redis is \emph{assumed}: script
+atomicity, expiry and \texttt{WAITAOF} semantics are premises, and
+\cref{sec:eval-durability} is the standing demonstration that one of them can be
+false in a way nothing detects. The scope is \emph{small}: two workers, two
+intents, five versions, one step, so a defect requiring a third worker or a
+second step would not appear. And the properties listed above as not checked
+remain unchecked, most of the implementation's security argument among them.
+What model checking changes is narrower than it looks and still worth having:
+the composition of the fences, the state machine and the classification table
+was previously an argument over code paths and is now a checked one, together
+with the price of each assumption it rests on in \cref{tab:modelchecking}.

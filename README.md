@@ -1,0 +1,208 @@
+# Agent Execution Protocol (AEP)
+
+The research artifact for *AEP: Declared Ambiguity for Non-Idempotent APIs Without Idempotency Keys* — a protocol,
+five baseline designs it is measured against, a fault-injection harness,
+tracked derived results from a 432-run evaluation, and the manuscript generated
+from them. The raw run archive is **two parts, built and verified, with a
+Zenodo record reserved under DOI `10.5281/zenodo.22766567`**.
+
+> **The DOI does not resolve yet.** It is *reserved*, not registered: the
+> identifier is fixed, the record is still a draft, and the files are not
+> uploaded. Clicking it today will not work. It begins resolving when the
+> record is published, which `docs/29` is the checklist for.
+
+| part | run dirs | files | manifest digest |
+|---|---|---|---|
+| 2026-09-03 | 1 458 | 26 300 | `87fa2d53…` |
+| extension, 2026-09-15 | 1 332 | 18 494 | `54d1ab0f…` |
+| **total** | **2 790** | **44 794** | |
+
+The extension covers the three collection trees the first archive did not
+reach — WS-4's write-loss cell, WS-6's Temporal baseline and the phase-13
+replication sessions — each of which backs a number in the manuscript. The
+two manifests share no path and the first is unmodified. `ARTIFACT.md`
+§5 records exactly what is pending and `docs/29-archive-deposit.md` is the
+checklist that closes it.
+
+**Where the raw actually is, until the record is published.** Until then the
+raw runs exist only on the measurement host — **two copies of each
+archive, on two filesystems, both on one machine** — and this repository
+cannot hand you a resolvable link. It can at least name them:
+
+| copy | path | holds |
+|---|---|---|
+| the archive | `/root/aep-raw-archive/` | `aep-raw-evidence.tar`, `.tar.gz`, `MANIFEST.sha256`, `ARCHIVE-METADATA.json` |
+| a second copy | `/mnt/d/personal/AEP/aep-raw-archive/` | the same, without the uncompressed `.tar` |
+| the collection trees | `/root/aep`, `/root/aep-phase8`, `/root/aep-phase10` | the roots the archive was built from; `ARCHIVE-METADATA.json` names each one's `source_path` |
+
+This paragraph exists because on 2026-09-14 a script deleted a results
+directory and the deletion was written up as unrecoverable — for several
+hours, and in a committed file — while two verified copies sat on the same
+host. `ARTIFACT.md` §5 had named them the whole time and nobody read it.
+**An archive the repository describes but never locates protects the data and
+not the reader.** `docs/25` R16, R14 instance 9, and
+`reports/incident-fsync-always-raw-destroyed-2026-09-14.md`.
+
+**Start at [`ARTIFACT.md`](ARTIFACT.md)** if you are here to check a number in
+the paper. It maps every quantitative claim to the command that reproduces it.
+
+```sh
+make reproduce-figures   # the paper's tables, regenerated from the frozen CSVs and diffed
+make reproduce-smoke     # one cell per system, end to end, under real SIGKILL
+```
+
+`make reproduce-figures` covers the generated tables, the macros and the
+state-machine figure, all of which regenerate from tracked inputs. The paper's
+**two analysis figures** are not among them: they need the raw run directories,
+which are not tracked (`.gitignore`: never a run directory, never a ledger,
+never a log). Without the full results archive the target reports them
+`SKIPPED` and says so — it does not pass over them silently.
+
+## The problem
+
+An autonomous agent calls a legacy API that is non-idempotent, accepts no
+idempotency key, and cannot be asked afterwards whether the mutation was
+applied. The agent crashes around the call. Retrying risks a second real-world
+effect nobody observes; not retrying risks an effect that exists and that no
+record accounts for.
+
+AEP's position is that this is a three-way trade rather than an engineering
+defect, and that a system's obligation is to make the third corner reachable:
+convert silent failure into **declared, durable, bounded ambiguity** an operator
+can act on.
+
+## Honest guarantee
+
+> **Corruption and contention are detectable, and the system fails closed.**
+
+This is the only guarantee this implementation delivers on a single Redis
+instance. It does **not** claim absolute atomicity, split-brain impossibility,
+exactly-once external calls, or HA/consensus. The full list of non-claims, each
+with the reason it is out of scope, is in `docs/22-formal-model.md` §4.
+
+## Three hard invariants
+
+1. **Timeout Invariant** — `T_client <= T_lock - Buffer`, Buffer >= 15s.
+2. **CAS Fencing Invariant** — state updates only via monotonic-integer CAS;
+   never raw `SET`. The random lock token proves *ownership*; the monotonic
+   integer is the fencing token.
+3. **Fail-Closed Invariant** — on corruption, ambiguity, or a safety-cap hit:
+   stop, fence, escalate. Never guess.
+
+## What the evaluation found
+
+Two claims the write-ahead pattern is usually sold as one, separated by
+ablation:
+
+* **Detection** — no undetected duplicate and no lost effect, with a residual of
+  declared ambiguity set by what the endpoint can be asked — is produced by the
+  pre-dispatch record plus a transition rule that prohibits re-entry into
+  dispatch. In the crashed regime, removing the durability barrier produces no
+  observed difference in those two metrics over 540 executions per arm; the
+  ambiguity difference is assessed separately with a run-cluster interval.
+* **Prevention** is what the barrier contributes, and it is a different quantity
+  against a different fault. In one no-readback capability class at one
+  pre-acknowledgement Redis-kill point, the barrier withholds 18 real
+  non-idempotent effects that the ablation commits (30 runs per system on one
+  host).
+
+The barrier's *durability* claim needs a fault that loses the page cache. A
+process kill loses nothing — `appendfsync everysec` defers the `fsync(2)`, not
+the `write(2)` — so it was tested by making the block device stop accepting
+writes instead.
+
+## Layout
+
+| Path | What it is |
+|---|---|
+| `aep_core/core/storage.py` | Atomic CAS state persistence via Lua, schema migration, quarantine on corruption |
+| `aep_core/core/locks.py` | Distributed lease lock: acquire/release/renew plus a capped auto-renewing context manager |
+| `aep_core/core/intents.py` | Write-ahead intent ledger and its transition table |
+| `aep_core/core/durability.py` | WAITAOF barrier and its trusted-process, single-use, scope-bound in-process dispatch guard |
+| `aep_core/core/intent_workflow.py` | The runner: one external mutation per invocation, gated on the barrier ack |
+| `aep_core/core/intent_recovery.py` | Crash-recovery resolver; classifies effects as CONFIRMED / REFUTED / PERMANENTLY_AMBIGUOUS |
+| `aep_core/core/request_binding.py`, `request_vault.py` | Canonical request binding and the authenticated request vault |
+| `experiments/baselines/` | B0–B4b, and `B4_SEMANTICS.md` on what B4 shares with a real durable-execution engine |
+| `experiments/harness/`, `experiments/run_matrix.py` | Fault injection, the six crash points, the matrix orchestrator |
+| `experiments/analyze.py` | Runs → metrics, intervals, figures |
+| `experiments/results/` | Tracked derived analysis products from the frozen evaluation; the raw run archive is assembled and verified, and its deposit is pending (see `ARTIFACT.md` §5 and `docs/29-archive-deposit.md`) |
+| `paper/` | The manuscript. `paper/generated/` is machine-written and must never be hand-edited |
+| `scripts/` | The generators and the CI gates |
+| `docs/22-formal-model.md` | System model, failure model, properties P1–P3, declared residual windows, non-claims |
+| `reports/` | The session-by-session record, including what was wrong and when |
+
+The package was named `src` before v0.2.0. Reports under `reports/` and
+`docs/07`–`docs/21` cite the old paths deliberately: they record a tree that
+existed at the time.
+
+## Reproduce the verified run
+
+Requires Docker and [uv](https://docs.astral.sh/uv/). Everything is pinned:
+CPython 3.13.0 (`.python-version`), the dependency set (`uv.lock`), and the
+Redis image by digest (`compose.phase2.yml`).
+
+```sh
+uv sync --frozen --extra dev --extra cov --extra experiments --extra analysis --extra b5
+docker compose -f compose.phase2.yml up -d --wait
+
+export REDIS_URL=redis://127.0.0.1:6381/15
+export AEP_PHASE2_REDIS_INTEGRATION=1
+
+# Assert the live Redis really provides phase2.conf semantics and WAITAOF.
+uv run --frozen python scripts/verify_redis_semantics.py --url "$REDIS_URL"
+
+uv run --frozen pytest -q -ra --strict-markers \
+    --cov=aep_core --cov-report=term-missing --cov-fail-under=90
+```
+
+Expected: **1734 passed, 0 skipped**, coverage **91.18%** on `aep_core`.
+
+Validate the formal model's citations:
+
+```sh
+uv run --frozen python scripts/validate_citations.py
+```
+
+Expected: **371 citations, 0 invalid**.
+
+## Test-instance safety
+
+Test cleanup is destructive. It never calls `FLUSHALL` — it `UNLINK`s only
+`aep:*` keys — but namespace scoping alone is not a sufficient guard, because
+`aep:*` is the namespace AEP uses *in production*. Cleanup therefore also
+requires the instance to advertise `aep:test-instance-marker`, which is
+auto-created only on an allowed, completely empty database. Mark a throwaway
+instance explicitly with:
+
+```sh
+redis-cli -n 15 SET aep:test-instance-marker 1
+```
+
+The same guard stops the evaluation harness, which additionally kills processes
+holding leases on the instance. `make reproduce-smoke` sets the marker on the
+container it provisions and destroys, never on whatever `REDIS_URL` names.
+
+## CI
+
+`.github/workflows/ci.yml` runs the suite against real Redis 7.2 (never
+fakeredis) and enforces five gates: zero skipped tests, zero xpassed tests,
+≥ 90% coverage on `aep_core`, range-valid citations in
+`docs/22-formal-model.md`, and — since the analysis products the paper is
+computed from became tracked — the manuscript's numbers against the frozen CSVs.
+Each gate is itself tested (`tests/test_ci_gates.py`,
+`tests/test_citation_validator.py`, `tests/test_paper_tables.py`,
+`tests/test_artifact_reproducibility.py`), because a gate that cannot fail is
+decoration.
+
+## Author
+
+Hamza Khan — ORCID [`0009-0005-9380-2188`](https://orcid.org/0009-0005-9380-2188).
+
+The anonymous build (`bash scripts/build_paper.sh --anonymous`) suppresses the
+name, the e-mail, the ORCID, the repository URL and the DOI, because a Zenodo
+record names its depositor and an ORCID identifies a person as surely as a name
+does. That suppression is asserted by a test, not assumed.
+
+## License
+
+MIT — see `LICENSE`. Citation metadata is in `CITATION.cff`.

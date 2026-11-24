@@ -1,0 +1,123 @@
+\section{Motivating Traces}
+\label{sec:motivating}
+
+None of the four traces below is hypothetical. Each is a run of our harness
+(\cref{sec:evaluation}), replayed from its event log and cross-checked against
+the mock provider's ground-truth ledger, an independently written record of
+every mutation the provider actually applied. In each, the
+workload is the same: acquire work, call one non-idempotent endpoint, record
+the outcome. It is a scripted caller, not an agent. The traces show what
+the endpoint does to a caller that crashes, which is the property an agent
+deployment would inherit.
+
+\subsection{Trace 1: the duplicate nobody sees (B0, naive retry)}
+
+A worker sends the mutation. The provider applies it. The worker is
+\texttt{SIGKILL}ed after the response is on the wire but before the outcome is
+recorded (crash point \texttt{after\_response\_before\_resolution}). A
+supervisor observes an execution with no terminal record and runs the step
+again. The provider applies the mutation a second time.
+
+The ground-truth ledger now holds two applied mutations for one logical
+step. The system's own records hold one successful execution. Nothing in the
+system is in a state that a monitor could alert on: there is no error, no
+retry counter above its threshold, and no ambiguous record. The execution is
+green.
+
+This is not a strawman configuration. It is what a retry-on-timeout loop does,
+and it is the behavior we measure for B0. Across the crashed cells B0 ends
+this way in \BaselineDupLow{}--\BaselineDupHigh{} of executions depending on
+the endpoint, and so do B1 and B2 (\cref{tab:outcomes}).
+% \BaselineDupLow / \BaselineDupHigh: generated/numbers.tex, the min and max
+% undetected-duplicate rate over {B0,B1,B2} x three response classes,
+% crashed regime.
+
+\subsection{Trace 2: a lease and a fenced write do not help}
+
+We run the same crash against B1 (a real Redis lease) and B2 (a lease plus an
+exact expected-version compare-and-swap on the state document). Both are the
+patterns an experienced engineer reaches for, and both are doing their job: no
+stale writer corrupts the state document, and no two workers hold the lock at
+once.
+
+Neither prevents the second effect, because the mechanisms that protect the
+database do not protect the world. The lease governs who may write state, and
+the CAS governs which version of state may be replaced; the external call is
+neither. When the supervisor re-runs the step it holds a valid, freshly
+acquired lease, and the correctly versioned record it writes is a record of a
+duplicate. \Cref{sec:evaluation} shows B1 and B2 duplicating at substantially
+the same rate as B0.
+
+\subsection{Trace 3: a durable log is necessary and not sufficient (B4)}
+
+B4 is an event-sourced durable-execution engine of the kind these systems are
+built on: an append-only history in Redis, each append acknowledged durable
+with the same \texttt{WAITAOF} barrier AEP uses, replay after a crash,
+and completed activities memoized so they are not re-run. It is not ablated on
+durability, and its history is on disk before the call.
+
+It duplicates anyway. The history records that the activity was scheduled. It
+does not record whether the provider applied the effect, and cannot, because
+that fact was never available to the engine. On replay the engine sees a
+scheduled activity with no completion and schedules it again, following the
+vendor's documented default, under which Activity Maximum Attempts is
+unlimited~\cite{temporal-retry}.
+
+The mitigation the vendor recommends is to make the activity
+idempotent~\cite{temporal-activity-definition}. That is exactly the
+precondition this paper's premise removes.
+
+\subsection{Trace 3b: the at-most-once configuration loses the effect}
+
+Setting Maximum Attempts to 1 is documented and standard: ``Setting the value
+to 1 means a single execution attempt and no retries''~\cite{temporal-retry}.
+We run it as B4b. It cannot produce a caller-caused duplicate, and it does not.
+
+What it produces instead is the other silent failure. Where the provider
+applied the mutation before the worker died, B4b's history records an activity
+that timed out, the workflow fails, and the effect exists while the records
+deny it. That record is an ordinary failure and not a declared
+ambiguity. B4b has no outcome class in which the engine can say that it does
+not know, so nothing escalates and no operator is told that a
+real-world effect may be unaccounted for.
+
+\subsection{What the traces establish}
+
+\begin{table}[t]
+\centering
+\caption{The trilemma, as the systems under comparison instantiate it. A
+durable write-ahead record is necessary (Traces 1, 2) and not sufficient
+(Trace 3); what distinguishes AEP is an outcome class in which it can decline
+to decide. B3, which is AEP with the durability barrier removed and nothing
+else, reaches the same corner wherever the record survives, so the barrier is
+not what buys declared ambiguity (\cref{sec:eval-detection} measures the
+ablation), and \cref{sec:eval-prevention} isolates what it does buy.}
+\label{tab:trilemma}
+\small
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xccc@{}}
+\toprule
+ & \shortstack{\emph{undetected}\\\emph{duplicate}}
+ & \shortstack{\emph{lost}\\\emph{effect}}
+ & \shortstack{\emph{declared}\\\emph{ambiguity}} \\
+\midrule
+B0 naive retry            & \textbf{yes} & --- & no \\
+B1 lease-only             & \textbf{yes} & --- & no \\
+B2 CAS-only               & \textbf{yes} & --- & no \\
+B4 durable, max attempts $\infty$  & \textbf{yes} & --- & no \\
+B4b durable, max attempts $=1$     & no & \textbf{yes} & no \\
+\midrule
+B3 AEP minus the barrier  & no & no & \shortstack{\textbf{yes,}\\\textbf{bounded}} \\
+AEP-full                  & no & no & \shortstack{\textbf{yes,}\\\textbf{bounded}} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\Cref{tab:trilemma} is the shape of the argument. At-most-once dispatch is
+available off the shelf: B4b buys it with one configuration setting, and so
+does AEP's ablation B3. What is not available off the shelf is knowing which
+of duplicate-or-loss occurred. The fact a system would need for that, whether
+the provider applied the effect, is not in any log it can write and cannot be
+put there by any amount of logging. It has to be obtained from the endpoint,
+and \cref{sec:eval-rq1} shows the price of that: the achievable outcome is
+bounded by what the endpoint can be asked.

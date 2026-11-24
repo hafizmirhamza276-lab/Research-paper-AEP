@@ -1,0 +1,95 @@
+
+
+########## docker context and stack ##########
+aep-native
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-toxiproxy Healthy 
+ Container aep-phase2-redis72 Healthy 
+up exit=0
+/aep-phase2-redis72 running 2026-09-03T05:52:25.922056735Z
+
+
+########## measurement host gate ##########
+verify_measurement_host exit=0
+gates passed: True
+failures: []
+
+
+########## verify_redis_semantics ##########
+  verified appendfsync=everysec
+  verified aof-use-rdb-preamble=yes
+  verified aof_enabled=1
+  verified waitaof=present
+OK: live Redis matches phase2.conf semantics
+exit=0
+
+
+########## sync the full extra set (make reproduce-figures leaves pytest uninstalled) ##########
+ + pygments==2.20.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + pytest-cov==7.1.0
+ + sortedcontainers==2.4.0
+exit=0
+
+
+########## full suite ##########
+  /mnt/d/personal/AEP/Research-paper-AEP/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_a_kill_before_commit_leaves_no_effect_and_no_record
+  /root/.local/share/uv/python/cpython-3.13.0-linux-x86_64-gnu/lib/python3.13/threading.py:291: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7aa180a20a90>
+    if hasattr(lock, '_release_save'):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+experiments/mock_api/tests/test_service_crash_safety.py::test_the_ledger_survives_a_kill_with_earlier_mutations_intact
+  <frozen abc>:123: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7aa180b04d60>
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.0-final-0 ________________
+
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+aep_core/__init__.py                      0      0   100%
+aep_core/core/__init__.py                 0      0   100%
+aep_core/core/connector_contract.py      72      1    99%   154
+aep_core/core/durability.py             158      1    99%   255
+aep_core/core/exceptions.py               8      0   100%
+aep_core/core/intent_recovery.py        246     29    88%   114, 136, 144, 156, 189-191, 217, 230, 253, 286, 288, 318-320, 323-324, 333-338, 376, 387, 397, 402, 405, 410, 493, 506
+aep_core/core/intent_workflow.py        259     23    91%   255, 259, 263, 297-298, 318-324, 334, 340, 357, 383, 508-525, 539, 552, 606-607
+aep_core/core/intents.py                383     47    88%   170, 173-174, 249, 255, 261, 264-265, 273-274, 276, 285, 292, 295-296, 316, 319, 322, 333, 335, 350, 355, 358, 362, 685, 693, 699, 716, 747, 786, 920, 1022-1025, 1033, 1037, 1043, 1073, 1105, 1119, 1141-1142, 1151, 1179, 1208-1209
+aep_core/core/locks.py                  110      4    96%   382-393
+aep_core/core/request_binding.py        788     78    90%   225, 272, 302, 304-305, 385, 390, 396, 401, 404-405, 407, 427, 442-445, 459, 466, 475, 488, 497, 525, 544, 549, 553, 567, 589, 596, 608, 662, 667-672, 681, 697, 699, 708, 713, 716, 727, 743, 759, 762, 766, 769, 773, 817, 900, 907, 925, 927, 929, 935, 937, 951, 960-961, 964, 967-968, 980, 1053, 1094, 1103, 1125, 1218-1219, 1324, 1387, 1389, 1391, 1449, 1459, 1461, 1479
+aep_core/core/request_vault.py          251     22    91%   207, 211, 213, 216, 229, 231, 233, 236, 253, 274, 356, 367, 376, 378, 380, 383, 415, 426-427, 432, 437, 445
+aep_core/core/state_codec.py             61      3    95%   85, 135-136
+aep_core/core/storage.py                181     15    92%   491, 497, 515-516, 553, 605-614, 730, 809-810, 823-831
+aep_core/core/validation.py              11      0   100%
+-------------------------------------------------------------------
+TOTAL                                  2528    223    91%
+Required test coverage of 90% reached. Total coverage: 91.18%
+=========================== short test summary info ============================
+FAILED tests/test_paper_tables.py::test_the_cross_fault_comparison_is_against_the_process_kill_probe
+1 failed, 1793 passed, 3 warnings in 265.56s (0:04:25)
+exit=1
+
+
+########## check_pytest_gates ##########
+usage: check_pytest_gates.py [-h] --junit JUNIT --output OUTPUT
+                             [--minimum-tests MINIMUM_TESTS]
+check_pytest_gates.py: error: the following arguments are required: --junit, --output
+exit=2
+
+
+########## validate_citations ##########
+docs/22-formal-model.md: 371 citations (240 explicit, 131 continuation)
+OK: 371 citations, 0 invalid
+exit=0

@@ -1,0 +1,7 @@
+{
+  "customSubDomainName": "kps-rnd-foundry",
+  "endpoint": "https://kps-rnd-foundry.cognitiveservices.azure.com/",
+  "kind": "AIServices",
+  "location": "eastus2",
+  "sku": "S0"
+}

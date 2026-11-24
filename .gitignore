@@ -1,0 +1,711 @@
+# --- Python bytecode / cache --------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Distribution / packaging -------------------------------------------------
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+*.egg
+MANIFEST
+pip-wheel-metadata/
+share/python-wheels/
+
+# --- Editable install metadata (created by `pip install -e .`) ----------------
+*.egg-info/
+aep_core.egg-info/
+
+# --- Test / coverage runners --------------------------------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache
+coverage.xml
+*.cover
+.hypothesis/
+# JUnit XML and the tee'd pytest output the gate script reads. Both are
+# produced by every local run of the CI sequence; neither is source.
+junit*.xml
+pytest-*.txt
+
+# --- Type checkers / linters --------------------------------------------------
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# --- Virtual environments -----------------------------------------------------
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --- IDE / editor -------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Claude Code user-local settings (do NOT push) ----------------------------
+.claude/settings.local.json
+
+# --- Agent tooling session logs (activity trace, not repository content) ------
+.ai/
+
+# --- Experiment output --------------------------------------------------------
+# Ground-truth ledgers and run logs are results, not source. They are published
+# with a paper release, not committed on every run.
+experiments/results/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.run.jsonl
+
+# --- Logs / runtime junk ------------------------------------------------------
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- OS junk ------------------------------------------------------------------
+desktop.ini
+
+# LaTeX build products. The .tex sources and the generated tables are tracked;
+# the artifacts of compiling them are not.
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+# The build-provenance stamp (B21 item 3). RULED 2026-09-15, phase 38: all
+# FOUR stamps are TRACKED, and this rule is the correction of an asymmetry
+# phase 34 found -- three tracked, this one ignored, on a reason that does
+# not survive reading the file.
+#
+# The old reason said it 'describes one machine's last build, not the
+# repository's state'. It does not: the payload is
+# {sources: {relpath: sha256}, version} -- no absolute path, no hostname. It
+# records source-to-artifact correspondence, which IS repository state, and
+# tracking it is what lets a CLONE check that the shipped PDFs were built
+# from the shipped sources. Untracked, that check fails in every clone with
+# 'no stamp'.
+#
+# One entry blocked this: paper/.ai/track.md, a gitignored session log that
+# a clone does not have, which made every tracked stamp read STALE there.
+# paper_provenance.NON_SOURCE_DIRS now excludes it.
+#
+# It sits in the same directory as the artifacts whose staleness caused the
+# problem, which invites cleaning it up as an instance of that problem. It is
+# not one, and the distinction is the whole point: THE OLD ARTIFACTS WERE
+# SILENT WHEN WRONG; THE STAMP FAILS THE GATE WHEN WRONG. Deleting it does not
+# restore the old behaviour -- it makes the gate refuse until the next build,
+# which is the safe direction. See B21 item 3 and B40.
+!paper/.build-provenance.json
+paper/*.out
+paper/*.pdf
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+
+# Session scratch: staging for scripts copied into the WSL measurement tree.
+.scratch/
+
+# --- The inputs scripts/check_paper_numbers.py opens --------------------------
+# `experiments/results/` above stays ignored: raw run directories are the
+# evaluation and are published as an archive, not committed. But the gate that
+# proves the manuscript still matches its results cannot run in CI unless the
+# files it *reads* are in the checkout, and a gate that only ever runs on the
+# author's laptop is not a gate. So exactly those inputs are re-included here,
+# by name, at their frozen content -- analysis products only, never a run
+# directory, never a sqlite ledger, never a log.
+#
+# Git will not re-include a file whose parent directory is excluded, so each
+# level is re-opened and then re-closed with a `*` before the next one. Adding
+# a file to this list means committing a result: verify it against
+# experiments/results/matrix/SHA256SUMS first.
+!experiments/results/
+experiments/results/*
+!experiments/results/g2-flakey-write-loss.json
+!experiments/results/g2-flakey-write-loss-rep2.json
+!experiments/results/g2-flakey-write-loss-rep3.json
+
+!experiments/results/matrix/
+experiments/results/matrix/*
+!experiments/results/matrix/MANIFEST.csv
+!experiments/results/matrix/SHA256SUMS
+!experiments/results/matrix/analysis/
+experiments/results/matrix/analysis/*
+!experiments/results/matrix/analysis/comparisons-vs-aep-full.csv
+!experiments/results/matrix/analysis/coverage.json
+!experiments/results/matrix/analysis/latency-and-throughput.csv
+!experiments/results/matrix/analysis/per-cell-metrics.csv
+!experiments/results/matrix/analysis/per-execution.csv
+!experiments/results/matrix/analysis/redis-kill-ablation.csv
+
+# Phase 53: after_barrier_before_dispatch re-collected with SIGKILL_IMMEDIATE.
+# Same rule as every other root -- the 1,052 raw run files stay out and are
+# carried by the external archive; only the derived analysis products, the
+# plan and the progress log are tracked. table-1.csv is deliberately NOT
+# tracked: it pools regimes and is banned as a source (main.tex header).
+!experiments/results/abd-immediate-2026-09-24/
+experiments/results/abd-immediate-2026-09-24/*
+!experiments/results/abd-immediate-2026-09-24/matrix-plan.json
+!experiments/results/abd-immediate-2026-09-24/matrix-plan.txt
+!experiments/results/abd-immediate-2026-09-24/matrix-progress.jsonl
+!experiments/results/abd-immediate-2026-09-24/analysis/
+experiments/results/abd-immediate-2026-09-24/analysis/*
+!experiments/results/abd-immediate-2026-09-24/analysis/comparisons-vs-aep-full.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/coverage.json
+!experiments/results/abd-immediate-2026-09-24/analysis/latency-and-throughput.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/per-cell-metrics.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/per-execution.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-lost-effect-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-recovery-success-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-state-corruption-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/abd-immediate-2026-09-24/analysis/metric-unverified-failure-rate.csv
+
+!experiments/results/fsync-always/
+experiments/results/fsync-always/*
+!experiments/results/fsync-always/analysis/
+experiments/results/fsync-always/analysis/*
+!experiments/results/fsync-always/analysis/latency-and-throughput.csv
+!experiments/results/fsync-always/analysis/per-execution.csv
+# The raw runs under this root were destroyed on 2026-09-14 (docs/25 R16).
+# This marker says so from inside the directory, so track it.
+!experiments/results/fsync-always/RAW-RUNS-DESTROYED.md
+
+# --- Phase 9's replication of the redis-kill-preack cell (Phase 8.0) ----------
+# Five sessions of the same cell disagree: AEP-full recorded 10, 20, 12, 4 and
+# 7 applied effects out of 30 under an identical configuration
+# (reports/phase-report-9c-result-2026-08-21.md). Four of those five sessions
+# live in these roots, and until now they were untracked -- so the evidence for
+# 9C's central finding, and for the kill-latency mechanism that explains it,
+# existed on one host and nowhere else. That is a data-loss risk, not a
+# bookkeeping gap, which is why these are tracked ahead of any new collection.
+#
+# The frozen `matrix/` tree is NOT touched by this: these are separate results
+# roots and the paper's headline row still comes from the 2026-08-07 cell. They
+# are kept separate deliberately -- see reports/plan-phase-8-b2.md section 4.
+#
+# Same rule as above: analysis products and the manifest only, never a run
+# directory, never a sqlite ledger, never a log. Verify against each root's own
+# SHA256SUMS before adding anything here.
+!experiments/results/b2-2026-08-21/
+experiments/results/b2-2026-08-21/*
+!experiments/results/b2-2026-08-21/MANIFEST.csv
+!experiments/results/b2-2026-08-21/SHA256SUMS
+!experiments/results/b2-2026-08-21/analysis/
+experiments/results/b2-2026-08-21/analysis/*
+!experiments/results/b2-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-2026-08-21/analysis/coverage.json
+!experiments/results/b2-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s1-2026-08-21/
+experiments/results/b2-s1-2026-08-21/*
+!experiments/results/b2-s1-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s1-2026-08-21/SHA256SUMS
+!experiments/results/b2-s1-2026-08-21/analysis/
+experiments/results/b2-s1-2026-08-21/analysis/*
+!experiments/results/b2-s1-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s1-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s1-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s1-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s1-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s1-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s2-2026-08-21/
+experiments/results/b2-s2-2026-08-21/*
+!experiments/results/b2-s2-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s2-2026-08-21/SHA256SUMS
+!experiments/results/b2-s2-2026-08-21/analysis/
+experiments/results/b2-s2-2026-08-21/analysis/*
+!experiments/results/b2-s2-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s2-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s2-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s2-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s2-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s2-2026-08-21/analysis/redis-kill-ablation.csv
+
+!experiments/results/b2-s3-2026-08-21/
+experiments/results/b2-s3-2026-08-21/*
+!experiments/results/b2-s3-2026-08-21/MANIFEST.csv
+!experiments/results/b2-s3-2026-08-21/SHA256SUMS
+!experiments/results/b2-s3-2026-08-21/analysis/
+experiments/results/b2-s3-2026-08-21/analysis/*
+!experiments/results/b2-s3-2026-08-21/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-s3-2026-08-21/analysis/coverage.json
+!experiments/results/b2-s3-2026-08-21/analysis/latency-and-throughput.csv
+!experiments/results/b2-s3-2026-08-21/analysis/per-cell-metrics.csv
+!experiments/results/b2-s3-2026-08-21/analysis/per-execution.csv
+!experiments/results/b2-s3-2026-08-21/analysis/redis-kill-ablation.csv
+
+# Phase 8.4 session 1, collected on ext4. Unlike the four roots above this one
+# also tracks MANIFEST.md, because SHA256SUMS covers it: tracking every file the
+# manifest lists is what lets `sha256sum -c` succeed in a fresh clone rather
+# than report the rest missing.
+!experiments/results/b2-paired-s1-2026-08-28/
+experiments/results/b2-paired-s1-2026-08-28/*
+!experiments/results/b2-paired-s1-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-s1-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-s1-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-s1-2026-08-28/analysis/
+experiments/results/b2-paired-s1-2026-08-28/analysis/*
+!experiments/results/b2-paired-s1-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-s1-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-s1-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4, amended design (run-level interleaved). Unlike the four 2026-08-21 roots this one
+# also tracks MANIFEST.md, because SHA256SUMS covers it: tracking every file the
+# manifest lists is what lets `sha256sum -c` succeed in a fresh clone rather
+# than report the rest missing.
+!experiments/results/b2-paired-v2-s1-2026-08-28/
+experiments/results/b2-paired-v2-s1-2026-08-28/*
+!experiments/results/b2-paired-v2-s1-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s1-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s1-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s1-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4, the ABORTED first session-2 attempt: 25 of 120 runs, ended by the WSL distro stopping. Retained, frozen and tracked; NOT part of the k=4 set. See reports/phase-report-8-4-session-2-aborted-2026-08-28.md.
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/
+experiments/results/b2-paired-v2-s2-aborted-2026-08-28/*
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s2-aborted-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4 session 2 of the k=4 set, amended interleaved design, collected on ext4. Also tracks container-precondition.json and fault-injection-census.json, both under analysis/ so SHA256SUMS covers them.
+!experiments/results/b2-paired-v2-s2-2026-08-28/
+experiments/results/b2-paired-v2-s2-2026-08-28/*
+!experiments/results/b2-paired-v2-s2-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s2-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s2-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/container-precondition.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/fault-injection-census.json
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s2-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4 session 3 of the k=4 set, amended interleaved design, collected on ext4. Adds foreign-load-sample.json, the mid-collection additive observation, alongside container-precondition.json and fault-injection-census.json -- all under analysis/ so SHA256SUMS covers them. Every path below is derived from this root's SHA256SUMS, not from listing analysis/: the freeze decides what is tracked. The root also holds gates.json, matrix-plan.json, matrix-plan.txt, matrix-progress.jsonl and top-level copies of three analysis products, none of which SHA256SUMS names; they stay untracked and travel in the off-host raw archive instead.
+!experiments/results/b2-paired-v2-s3-2026-08-28/
+experiments/results/b2-paired-v2-s3-2026-08-28/*
+!experiments/results/b2-paired-v2-s3-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s3-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s3-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/container-precondition.json
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/fault-injection-census.json
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/foreign-load-sample.json
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s3-2026-08-28/analysis/table-1.csv
+
+# Phase 8.4 session 4 of the k=4 set, the last of the pre-registered set. Same instrumentation as session 3. Paths derived from this root's SHA256SUMS.
+!experiments/results/b2-paired-v2-s4-2026-08-28/
+experiments/results/b2-paired-v2-s4-2026-08-28/*
+!experiments/results/b2-paired-v2-s4-2026-08-28/MANIFEST.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/MANIFEST.md
+!experiments/results/b2-paired-v2-s4-2026-08-28/SHA256SUMS
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/
+experiments/results/b2-paired-v2-s4-2026-08-28/analysis/*
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/comparisons-vs-aep-full.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/container-precondition.json
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/coverage.json
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/fault-injection-census.json
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/foreign-load-sample.json
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/latency-and-throughput.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-known-ambiguity-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-lost-effect-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-recovery-success-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-state-corruption-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-undetected-duplicate-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/metric-unverified-failure-rate.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/per-cell-metrics.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/per-execution.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/redis-kill-ablation.csv
+!experiments/results/b2-paired-v2-s4-2026-08-28/analysis/table-1.csv
+
+# --- Phase 10's runtime-confound replication (WS-0) ---------------------------
+# Two arms of the frozen `matrix` cell -- AEP-full x NO_READBACK x session-3 --
+# re-collected under a NATIVE Docker Engine inside the WSL2 distro rather than
+# Docker Desktop. The ext4 arm was collected outside the repository tree, on the
+# distro's own disk, because the tree is on 9p/drvfs and the frozen cell it
+# replicates was collected on ext4; the drvfs arm was collected in place. Both
+# are here so the filesystem is separated from the runtime instead of
+# confounded with it.
+#
+# Pre-registered in reports/phase-report-10-prediction-2026-09-02.md, committed
+# and pushed at 9b1848b (10:34:00Z) before the first run existed (11:30:32Z).
+#
+# Same rule as every root above: analysis products and the collection's own
+# provenance stamp only -- never a run directory, never a sqlite ledger, never
+# a log. COLLECTION-PROVENANCE.json is included because it is what records that
+# the ext4 arm's collection path and its committed path differ, which nothing
+# else in the tree states.
+!experiments/results/phase10-replication-ext4-2026-09-02/
+experiments/results/phase10-replication-ext4-2026-09-02/*
+!experiments/results/phase10-replication-ext4-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/
+experiments/results/phase10-replication-ext4-2026-09-02/analysis/*
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-ext4-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/
+experiments/results/phase10-replication-ext4-arbb30-2026-09-02/*
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/
+experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/*
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-drvfs-2026-09-02/
+experiments/results/phase10-replication-drvfs-2026-09-02/*
+!experiments/results/phase10-replication-drvfs-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/
+experiments/results/phase10-replication-drvfs-2026-09-02/analysis/*
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-drvfs-2026-09-02/analysis/per-execution.csv
+
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/
+experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/*
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/COLLECTION-PROVENANCE.json
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/
+experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/*
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/coverage.json
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-cell-metrics.csv
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/analysis/per-execution.csv
+
+# Phase 13 (WS-3 and step 4). Arm A is the controlled-fault collection that
+# sec:eval-prevention now leads with; the in-flight sessions are the M9 cell.
+# Same rule as every block above: the derived analysis products are tracked
+# because the manuscript's macros are generated from them, and the raw run
+# directories are not -- they are ~150 MB and belong in the archive.
+
+!experiments/results/phase13-armA-s1-2026-09-03/
+experiments/results/phase13-armA-s1-2026-09-03/*
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/
+experiments/results/phase13-armA-s1-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s1-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-armA-s2-2026-09-03/
+experiments/results/phase13-armA-s2-2026-09-03/*
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/
+experiments/results/phase13-armA-s2-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s2-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-armA-s3-2026-09-03/
+experiments/results/phase13-armA-s3-2026-09-03/*
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/
+experiments/results/phase13-armA-s3-2026-09-03/analysis/*
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/coverage.json
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/latency-and-throughput.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/per-cell-metrics.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/per-execution.csv
+!experiments/results/phase13-armA-s3-2026-09-03/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-inflight-s1-2026-09-04/
+experiments/results/phase13-inflight-s1-2026-09-04/*
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/
+experiments/results/phase13-inflight-s1-2026-09-04/analysis/*
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/coverage.json
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/latency-and-throughput.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/per-cell-metrics.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/per-execution.csv
+!experiments/results/phase13-inflight-s1-2026-09-04/analysis/redis-kill-ablation.csv
+
+!experiments/results/phase13-inflight-s2-2026-09-04/
+experiments/results/phase13-inflight-s2-2026-09-04/*
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/
+experiments/results/phase13-inflight-s2-2026-09-04/analysis/*
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/comparisons-vs-aep-full.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/coverage.json
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/latency-and-throughput.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-cell-metrics.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/per-execution.csv
+!experiments/results/phase13-inflight-s2-2026-09-04/analysis/redis-kill-ablation.csv
+
+# --- TLA+ / TLC (WS-7) --------------------------------------------------------
+# TLC writes a fingerprint/state working directory next to the module on every
+# run.  scripts/run_tlc.sh passes -cleanup, which removes it on a clean exit;
+# a run that is killed or times out leaves one behind, and it is hundreds of
+# megabytes of binary that means nothing outside the run that produced it.
+formal/states/
+formal/*.old
+
+# --- WS-5 tiers 1 and 2, collected 10-11 September (612 runs) ----------------
+# Same rule as every other collection: the manifest and the digests, never a
+# run directory, never a sqlite ledger, never a log. The raw tree is 331 MB and
+# stays on the measurement host; SHA256SUMS is what lets the later analysis
+# pass prove it analysed what was collected.
+!experiments/results/ws5-2026-09-10/
+experiments/results/ws5-2026-09-10/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/
+experiments/results/ws5-2026-09-10/t1-p0-everysec/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t1-incomplete/
+experiments/results/ws5-2026-09-10/t1-incomplete/*
+!experiments/results/ws5-2026-09-10/t1-incomplete/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t1-incomplete/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-p30/
+experiments/results/ws5-2026-09-10/t2-p30/*
+!experiments/results/ws5-2026-09-10/t2-p30/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t2-p30/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t2-p30/SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-keying/
+experiments/results/ws5-2026-09-10/t2-keying/*
+!experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.md
+!experiments/results/ws5-2026-09-10/t2-keying/MANIFEST.csv
+!experiments/results/ws5-2026-09-10/t2-keying/SHA256SUMS
+
+# --- Stage 3's 432-run replication, recovered from the office branch --------
+# Same rule as every other collection: manifests, digests and the analysis
+# outputs, never a run directory, never a sqlite ledger, never a log. The
+# branch carried exactly that shape already, so nothing is excluded here that
+# was on it -- the un-ignores below name every file it had.
+!experiments/results/stage3-replication-2026-08-13/
+experiments/results/stage3-replication-2026-08-13/*
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.md
+!experiments/results/stage3-replication-2026-08-13/MANIFEST.csv
+!experiments/results/stage3-replication-2026-08-13/SHA256SUMS
+!experiments/results/stage3-replication-2026-08-13/matrix-plan.json
+!experiments/results/stage3-replication-2026-08-13/matrix-progress.jsonl
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5.json
+!experiments/results/stage3-replication-2026-08-13/operator-declaration-e5-correction.json
+!experiments/results/stage3-replication-2026-08-13/analysis/
+experiments/results/stage3-replication-2026-08-13/analysis/*
+!experiments/results/stage3-replication-2026-08-13/analysis/*.csv
+!experiments/results/stage3-replication-2026-08-13/analysis/*.json
+!experiments/results/stage3-replication-2026-08-13/analysis/*.pdf
+
+# --- Two untracked strays, dispositions recorded rather than guessed --------
+#
+# /main.bbl -- a 12-byte root-level file containing only 'SCRATCHWINS'. A
+# root-level main.bbl is not part of any build: the manuscript's is
+# paper/main.bbl, and build_paper.sh stages its own. The sentinel is NOT the
+# one tests/test_build_paper_safety.py writes (that one reads
+# 'last-known-good bibliography'), so its origin is NOT established and it is
+# ignored rather than deleted.
+/main.bbl
+#
+# phase8-driver/.build_keep.sh -- GENERATED, not authored. 
+# phase8-driver/verify_f0_in_pdf.sh line 26 writes it by sed-transforming
+# scripts/build_paper.sh to disable the cleanup trap, so it is a derived
+# artifact that regenerates on demand and goes stale the moment
+# build_paper.sh changes -- which it has, repeatedly. Ignored, not committed.
+phase8-driver/.build_keep.sh
+
+# --- WS-5 analysis outputs (phase 17) ---------------------------------------
+# Same six names the matrix and every phase13 session track. NOT table-1.csv:
+# check_paper_numbers bans it as a source for rates, and tracking a banned
+# table invites reading from it. Not the metric-*.csv slices either -- they are
+# views of per-cell-metrics.csv, which is tracked whole -- and not the figures,
+# which `make reproduce-figures` regenerates.
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/
+experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/*
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/
+experiments/results/ws5-2026-09-10/t1-incomplete/analysis/*
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t1-incomplete/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/
+experiments/results/ws5-2026-09-10/t2-p30/analysis/*
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t2-p30/analysis/redis-kill-ablation.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/
+experiments/results/ws5-2026-09-10/t2-keying/analysis/*
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/comparisons-vs-aep-full.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/coverage.json
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/latency-and-throughput.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/per-cell-metrics.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/per-execution.csv
+!experiments/results/ws5-2026-09-10/t2-keying/analysis/redis-kill-ablation.csv
+
+# --- WS-5 raw-tree digests (phase 18) ----------------------------------------
+# RAW-SHA256SUMS covers every file in every run directory, which SHA256SUMS
+# does not -- that file holds the two manifests only, and 729fbfa's claim that
+# it proves what was analysed is corrected in
+# reports/correction-729fbfa-sha256sums-scope-2026-09-14.md. The digest itself
+# is tracked; the 331 MB it covers stays on the measurement host.
+!experiments/results/ws5-2026-09-10/t1-p0-everysec/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t1-incomplete/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-p30/RAW-SHA256SUMS
+!experiments/results/ws5-2026-09-10/t2-keying/RAW-SHA256SUMS
+
+# Phase 20 step 3: the pre-WS-5 roots, which were unmonitored precisely
+# because they were 'already frozen'. Frozen is not a property that
+# protects anything -- docs/25 R16. Each file states, inside itself, the
+# date it binds from and that it cannot bind any pass that ran earlier.
+#
+# Not here: experiments/results/smoke, whose root `make reproduce-smoke`
+# rewrites on every invocation -- a tracked digest over it would fail
+# --check during ordinary use, and a gate that cries wolf gets ignored.
+# Not here either: the sixteen analysis-only roots, which have no run
+# directories; the tool now REFUSES those rather than writing a digest of
+# the empty string that reads as coverage.
+!experiments/results/b2-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s1-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s2-2026-08-21/RAW-SHA256SUMS
+!experiments/results/b2-s3-2026-08-21/RAW-SHA256SUMS
+!experiments/results/matrix/RAW-SHA256SUMS
+!experiments/results/phase10-replication-drvfs-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-drvfs-arbb30-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-ext4-2026-09-02/RAW-SHA256SUMS
+!experiments/results/phase10-replication-ext4-arbb30-2026-09-02/RAW-SHA256SUMS
+
+# WS-5.1, the `always` arm (phase 21, 45 runs). The first collection whose
+# RAW-SHA256SUMS was taken minutes after the last run rather than later, so
+# it has no temporal gap -- see docs/25 R16 and the phase 20 report for what
+# that gap cost. Never a run directory, never a ledger, never a log.
+!experiments/results/fsync-always-2026-09-14/
+experiments/results/fsync-always-2026-09-14/*
+!experiments/results/fsync-always-2026-09-14/MANIFEST.md
+!experiments/results/fsync-always-2026-09-14/MANIFEST.csv
+!experiments/results/fsync-always-2026-09-14/SHA256SUMS
+!experiments/results/fsync-always-2026-09-14/RAW-SHA256SUMS
+!experiments/results/fsync-always-2026-09-14/analysis/
+experiments/results/fsync-always-2026-09-14/analysis/*
+!experiments/results/fsync-always-2026-09-14/analysis/comparisons-vs-aep-full.csv
+!experiments/results/fsync-always-2026-09-14/analysis/coverage.json
+!experiments/results/fsync-always-2026-09-14/analysis/latency-and-throughput.csv
+!experiments/results/fsync-always-2026-09-14/analysis/per-cell-metrics.csv
+!experiments/results/fsync-always-2026-09-14/analysis/per-execution.csv
+
+# Phase 23: the class sweep's four sessions are cell-major and pre-date
+# 5b601d0's run-level interleaving. That is permanent now, so it is
+# recorded beside the data rather than only in a report (docs/25 R16's
+# neighbourhood: a fact only a report carries is a fact nobody meets).
+!experiments/results/b2-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s1-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s2-2026-08-21/COLLECTION-NOTE.md
+!experiments/results/b2-s3-2026-08-21/COLLECTION-NOTE.md
+
+# Session transcripts the assistant writes at the repository root, named
+# <date>-<time>-<first-words-of-the-prompt>.txt. They are a tool artefact, not
+# authored work and not evidence: the record of what was decided lives in
+# reports/ and prompts/, which are tracked. Ignored rather than deleted --
+# phase 34 classifies, it does not remove (docs/36 section 2.5).
+[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-*.txt
+
+# Delivery archives, rebuilt on demand from paper-overleaf/ and paper/.
+# Not tracked: they are a packaging of files that are already tracked, and
+# aep-for-supervisor.zip additionally bundles QA records that belong in
+# reports/ rather than in a second copy under a different name.
+/aep-overleaf.zip
+/aep-for-supervisor.zip

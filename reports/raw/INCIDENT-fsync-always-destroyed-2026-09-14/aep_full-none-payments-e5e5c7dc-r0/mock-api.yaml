@@ -1,0 +1,28 @@
+config_version: aep.mock-legacy-api.config/1
+defaults:
+  faults:
+    delay:
+      distribution: constant
+      seconds: 2.0
+    duplicate_response_probability: 0.0
+    server_error_probability: 0.05
+    timeout_probability: 0.15
+endpoints:
+  ledger_postings:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: NO_READBACK
+  notifications:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: POSITIVE_ONLY_READBACK
+  payments:
+    identity_fields:
+    - action
+    - amount_minor
+    response_class: AUTHORITATIVE_READBACK
+ledger_path: experiments/results/fsync-always/aep_full-none-payments-e5e5c7dc-r0/ground_truth.sqlite3
+readback_keying: CALLER_REFERENCE
+seed: 107492820

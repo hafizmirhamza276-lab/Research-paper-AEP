@@ -1,0 +1,22 @@
+=== DOI resolution: the discriminating check ===
+
+Every DOI claimed in paper/refs.bib, resolved through doi.org with
+Accept: application/x-bibtex. The last line is the DOI that was written
+from memory for Helland ACM Queue and does NOT exist -- included as the
+positive control that shows the check discriminates.
+
+DOI                                HTTP
+---------------------------------- ----
+10.1145/74850.74870                200
+10.1145/38713.38742                200
+10.1145/128765.128770              200
+10.1145/319566.319567              200
+10.1145/3149.214121                200
+10.1145/226643.226647              200
+10.1145/2160718.2160734            200
+10.1145/3485510                    200
+10.1145/3477132.3483541            200
+10.1145/2181796.2187821            200
+10.48550/arXiv.2403.16971          200
+10.48550/arXiv.2603.20625          200
+10.1145/2181796.2229155            404   <-- DOES NOT EXIST (written from memory)

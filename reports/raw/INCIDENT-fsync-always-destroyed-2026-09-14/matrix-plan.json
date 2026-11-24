@@ -1,0 +1,131 @@
+{
+  "by_tier": {
+    "3": {
+      "estimated_seconds": 130.5,
+      "runs": 3
+    }
+  },
+  "cells": [
+    {
+      "applicable": true,
+      "crash_point": "none",
+      "endpoint": "payments",
+      "key": "AEP_FULL|none|payments|CALLER_REFERENCE|p0",
+      "readback_keying": "CALLER_REFERENCE",
+      "reason": null,
+      "regime": {
+        "crash_points": null,
+        "crash_probability": 0.0,
+        "endpoints": null,
+        "executions_per_run": null,
+        "iterates_crash_points": false,
+        "keyings": [
+          "CALLER_REFERENCE"
+        ],
+        "label": "no crash (RQ3 overhead: the only cells overhead is computed from)",
+        "name": "p0",
+        "redis_kill_delay_ms": 0,
+        "redis_kill_executions": 0,
+        "redis_kill_point": null,
+        "runs_per_cell": null,
+        "systems": null,
+        "workers": null
+      },
+      "response_class": "AUTHORITATIVE_READBACK",
+      "slug": "aep_full-none-payments-e5e5c7dc",
+      "system": "AEP_FULL",
+      "tier": 3
+    }
+  ],
+  "cells_applicable": 1,
+  "cells_not_applicable": 0,
+  "cells_total": 1,
+  "estimate_model": {
+    "per_execution_seconds": 3.2,
+    "provider_start_seconds": 2.5,
+    "settle_seconds_with_recovery": 25.0,
+    "settle_seconds_without_recovery": 1.0,
+    "source": "measured from the D0(ii) smoke matrix (six runs, 6 executions each) and the Session 2 self-validation"
+  },
+  "estimated_hours": 0.04,
+  "estimated_seconds": 130.5,
+  "executions_per_run": 10,
+  "has_sigkill": true,
+  "matrix_seed": 20260806,
+  "matrix_version": "aep.matrix/1",
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.13.0",
+  "redis_url": "redis://127.0.0.1:6383/15",
+  "repetitions_per_cell": 30,
+  "results_root": "experiments/results/fsync-always",
+  "runs": [
+    {
+      "cell_key": "AEP_FULL|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "aep_full-none-payments-e5e5c7dc",
+      "crash_point": "none",
+      "crash_probability": 0.0,
+      "endpoint": "payments",
+      "estimated_seconds": 43.5,
+      "executions_per_run": 10,
+      "readback_keying": "CALLER_REFERENCE",
+      "redis_kill_delay_ms": 0,
+      "redis_kill_executions": 0,
+      "redis_kill_point": null,
+      "regime": "p0",
+      "repetition": 0,
+      "response_class": "AUTHORITATIVE_READBACK",
+      "run_id": "aep_full-none-payments-e5e5c7dc-r0",
+      "seed": 107492820,
+      "system": "AEP_FULL",
+      "tier": 3,
+      "workers": 2
+    },
+    {
+      "cell_key": "AEP_FULL|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "aep_full-none-payments-e5e5c7dc",
+      "crash_point": "none",
+      "crash_probability": 0.0,
+      "endpoint": "payments",
+      "estimated_seconds": 43.5,
+      "executions_per_run": 10,
+      "readback_keying": "CALLER_REFERENCE",
+      "redis_kill_delay_ms": 0,
+      "redis_kill_executions": 0,
+      "redis_kill_point": null,
+      "regime": "p0",
+      "repetition": 1,
+      "response_class": "AUTHORITATIVE_READBACK",
+      "run_id": "aep_full-none-payments-e5e5c7dc-r1",
+      "seed": 1124011646,
+      "system": "AEP_FULL",
+      "tier": 3,
+      "workers": 2
+    },
+    {
+      "cell_key": "AEP_FULL|none|payments|CALLER_REFERENCE|p0",
+      "cell_slug": "aep_full-none-payments-e5e5c7dc",
+      "crash_point": "none",
+      "crash_probability": 0.0,
+      "endpoint": "payments",
+      "estimated_seconds": 43.5,
+      "executions_per_run": 10,
+      "readback_keying": "CALLER_REFERENCE",
+      "redis_kill_delay_ms": 0,
+      "redis_kill_executions": 0,
+      "redis_kill_point": null,
+      "regime": "p0",
+      "repetition": 2,
+      "response_class": "AUTHORITATIVE_READBACK",
+      "run_id": "aep_full-none-payments-e5e5c7dc-r2",
+      "seed": 830175505,
+      "system": "AEP_FULL",
+      "tier": 3,
+      "workers": 2
+    }
+  ],
+  "runs_per_cell": 3,
+  "runs_total": 3,
+  "suspend_disabled_declared": false,
+  "template": "experiments/configs/matrix.yaml",
+  "workers": 2
+}

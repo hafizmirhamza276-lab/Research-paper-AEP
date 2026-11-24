@@ -1,0 +1,120 @@
+COMMIT 4e2d6b7130e8b9627f9f82e527118aae83e5c199  2026-09-03T11:33:45+05:00
+working tree: 0 tracked modifications
+
+
+########## uv sync ##########
+Checked 43 packages in 268ms
+exit=0
+
+
+########## stack + redis semantics ##########
+up exit=0
+  verified waitaof=present
+OK: live Redis matches phase2.conf semantics
+exit=0
+
+
+########## full suite, with junit so check_pytest_gates can be run properly ##########
+aep_core/core/request_vault.py          251     22    91%   207, 211, 213, 216, 229, 231, 233, 236, 253, 274, 356, 367, 376, 378, 380, 383, 415, 426-427, 432, 437, 445
+aep_core/core/state_codec.py             61      3    95%   85, 135-136
+aep_core/core/storage.py                181     15    92%   491, 497, 515-516, 553, 605-614, 730, 809-810, 823-831
+aep_core/core/validation.py              11      0   100%
+-------------------------------------------------------------------
+TOTAL                                  2528    223    91%
+Required test coverage of 90% reached. Total coverage: 91.18%
+1795 passed, 3 warnings in 258.40s (0:04:18)
+exit=0
+TOTAL                                  2528    223    91%
+
+
+########## check_pytest_gates (0 skipped, 0 xpassed, minimum test count) ##########
+OK: 1795 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed
+exit=0
+
+
+########## validate_citations ##########
+docs/22-formal-model.md: 371 citations (240 explicit, 131 continuation)
+OK: 371 citations, 0 invalid
+exit=0
+
+
+########## make reproduce-figures ##########
+=== byte-comparing against paper/generated/ ===
+  IDENTICAL numbers.tex
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== the state-machine figure against the implementation ===
+OK: paper/figures/state-machine.tex matches aep_core.core.intents
+
+=== the two analysis figures ===
+  DIFFERS   figure-1-undetected-vs-ambiguity.pdf: 11726 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+  DIFFERS   figure-2-duplicates-by-crash-point.pdf: 12551 bytes differ, and not only in the timestamp.
+            A plotted value moved. This is a finding, not a build error.
+
+reproduce-figures: 2 generated file(s) DIFFER from what is committed.
+That is a finding about the repository, not a build error to paper over.
+make: *** [Makefile:168: reproduce-figures] Error 1
+exit=2
+
+
+########## scripts/build_paper.sh -- B6 says this cannot succeed on this host; check ##########
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  appendfsync=always analysis is present
+  PASS  G2 write-loss results is present
+  PASS  paper_tables.py runs
+  PASS  numbers.tex matches the CSVs
+  PASS  table-ablation.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-deployment-choice.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  PASS  bibliography has entries
+  PASS  no empty bibliography entries
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+18 passed, 0 failed
+
+build clean (main); verified artifacts promoted atomically.
+exit=0
+
+
+########## check_paper_numbers ##########
+flakey results /mnt/d/personal/AEP/Research-paper-AEP/experiments/results
+
+  PASS  per-cell-metrics.csv is keyed by regime
+  PASS  appendfsync=always analysis is present
+  PASS  G2 write-loss results is present
+  PASS  paper_tables.py runs
+  PASS  numbers.tex matches the CSVs
+  PASS  table-ablation.tex matches the CSVs
+  PASS  table-ambiguity-by-crashpoint.tex matches the CSVs
+  PASS  table-deployment-choice.tex matches the CSVs
+  PASS  table-latency.tex matches the CSVs
+  PASS  table-outcomes.tex matches the CSVs
+  PASS  no generated table draws from the banned pooled table
+  PASS  generated tables declare their sources
+  PASS  every generated number is used in the manuscript
+  PASS  state-machine figure matches the transition table
+  PASS  build artifacts match current sources
+  PASS  bibliography has entries
+  PASS  no empty bibliography entries
+  PASS  bibtex reported no parse errors
+  PASS  no undefined references or citations
+  NOTE  0 \todoitem marker(s): 
+
+----------------------------------------------------------------------
+19 passed, 0 failed
+exit=0

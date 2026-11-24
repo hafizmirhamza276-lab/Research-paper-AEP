@@ -1,0 +1,20 @@
+==============================================================================
+1. comparisons-vs-aep-full.csv
+==============================================================================
+rebuild_comparisons over the ARCHIVE-derived analysis: exit 0
+  tracked  12207 bytes
+  rebuilt  12207 bytes
+  byte-identical: True
+
+==============================================================================
+2. per-execution.csv
+==============================================================================
+  tracked header (17 cols): ['run_id', 'regime', 'system', 'crash_point', 'endpoint', 'response_class', 'readback_keying', 'execution_id', 'outcome_class', 'status', 'applied_effects', 'crashed', 'dispatch_attempts', 'step_latency_ms', 'recovery_latency_ms', 'undetected_duplicate', 'lost_effect']
+  derived header (19 cols): ['run_id', 'regime', 'system', 'crash_point', 'endpoint', 'response_class', 'readback_keying', 'execution_id', 'outcome_class', 'status', 'applied_effects', 'crashed', 'dispatch_attempts', 'step_latency_ms', 'recovery_latency_ms', 'undetected_duplicate', 'lost_effect', 'redis_kill_latency_ms', 'durability_ack_observed']
+  rows: tracked 3780  derived 3780
+  shared columns: 17
+  keys only in tracked: 0
+  keys only in derived: 0
+  columns that differ on at least one row:
+    (none -- every shared column agrees on every row)
+exit=0

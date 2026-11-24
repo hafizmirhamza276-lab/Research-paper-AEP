@@ -1,0 +1,511 @@
+name: CI
+
+# Artifact-evaluation CI for AEP (PAPER_ROADMAP.md section 2, Phase 2A).
+#
+# The design constraint driving this file: **a green build must mean the suite
+# ran**. The repository's audit history contains a green build whose green came
+# from tests that never executed ("36 skipped = green"). Every gate below
+# exists to make that specific outcome impossible, and each gate is itself
+# tested in tests/test_ci_gates.py and tests/test_citation_validator.py.
+#
+# Gates:
+#   (i)   zero skipped tests            -- scripts/check_pytest_gates.py
+#   (ii)  zero xpassed tests            -- scripts/check_pytest_gates.py + xfail_strict
+#   (iii) coverage >= 90% on aep_core   -- pytest-cov --cov-fail-under
+#   (iv)  docs/22 citations in range    -- scripts/validate_citations.py
+#
+# Redis is never faked here. Both test jobs start Redis from
+# compose.phase2.yml -- the same definition developers run locally -- and then
+# assert, before running anything, that the live server really provides
+# redis/phase2.conf semantics and really implements WAITAOF
+# (scripts/verify_redis_semantics.py, deliberately without --apply: a server
+# that needs settings applied at runtime is a broken compose file, not a
+# fixable one).
+#
+# Nothing is deselected. An earlier revision took Redis for the main job from
+# a GitHub `services:` container, which starts before checkout and so can
+# neither mount redis/phase2.conf nor survive `docker restart` with AOF
+# intact; that forced the crash-recovery test to be deselected by name.
+# Deselection was the only construct here capable of turning a gate green
+# without the work being done (docs/23-ci-hardening-report.md G1), so it is
+# gone, and tests/test_artifact_reproducibility.py fails the suite if it
+# returns.
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The exact image the verified runs used. Pinned by digest, not tag: a tag
+  # can be re-pointed, and "Redis 7.2 with AOF" is load-bearing for every
+  # durability claim in docs/22-formal-model.md.
+  REDIS_IMAGE: redis:7.2.5-alpine@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+  # Guards against a collapsed collection reading as success. Raise this when
+  # the suite grows; never lower it without saying why.
+  # 1223 (Phase 2A) -> 1387 with the Phase 2B Session 1 harness tests
+  #                 -> 1565 with the Session 2 crash injector and runner
+  #                 -> 1624 with the Session 3 baselines, statistics and analysis.
+  #                 -> 1700 with Phase 4B's write-loss probe and the
+  #                    manuscript number-generator tests (1721 collected).
+  MINIMUM_TESTS: "1700"
+  # TLC, pinned by release and verified by digest for the same reason the Redis
+  # image is: "the model checker" is load-bearing for every claim in section
+  # IV-D, and a re-pointed release asset would change what those claims mean.
+  TLA_VERSION: "1.7.4"
+  TLA_SHA256: "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+
+jobs:
+  # =========================================================================
+  # Gate (iv). No services, so it reports fast and independently of Redis.
+  # =========================================================================
+  citations:
+    name: Citation ranges (docs/22)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Validate docs/22-formal-model.md citations
+        run: uv run --frozen python scripts/validate_citations.py
+
+      # WS-8 task 8.4. Offline, so it is deterministic and needs no network:
+      # it checks that every refs.bib entry carries a route to its source (DOI,
+      # stable URL, or DBLP key) and fails on any that does not. It does NOT
+      # check that a reference says what it is cited for -- nothing automatic
+      # can -- which is why the WS-8 reports record verification separately.
+      - name: Every reference carries a route to its source
+        run: uv run --frozen python scripts/verify_refs.py --offline
+
+  # =========================================================================
+  # WS-10 task 10.1. Rule 5 -- a cell's pre-registration is committed before
+  # its data -- across the WHOLE history, not cell by cell in a report.
+  #
+  # fetch-depth: 0 is load-bearing. The audit reads commit dates and tests
+  # ancestry with merge-base; a shallow clone has neither, and the check
+  # would pass by not being able to look. That is the failure mode docs/25
+  # R14 has recorded ten times, so the depth is set here deliberately and
+  # this comment is why.
+  # =========================================================================
+  # =========================================================================
+  # A commit must not flip a file's line endings wholesale.
+  #
+  # b379809 rewrote docs/33-agent-workload.md from CRLF to LF while changing
+  # two status lines. The real diff is 44 insertions and 7 deletions; it
+  # reads as 885/833, so `git log` on that file shows a whole-document
+  # rewrite at the commit that corrected two lines. Two earlier instances
+  # were caught by hand before committing; this one was not.
+  #
+  # fetch-depth: 0 is load-bearing for the same reason it is on
+  # prereg-order -- the check compares each pushed commit against its
+  # parent, and a shallow clone has no parent to compare against. It would
+  # pass by not being able to look, which is docs/25 R14.
+  # =========================================================================
+  line-endings:
+    name: Line endings (no wholesale flips)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: No commit in this push flipped a file's endings
+        run: |
+          set -o pipefail
+          # Every commit new in this push, oldest first. On a first push to
+          # a branch, before is all zeroes and there is no range to walk.
+          BEFORE='${{ github.event.before }}'
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            RANGE='HEAD~1..HEAD'
+          else
+            RANGE="$BEFORE..HEAD"
+          fi
+          echo "range: $RANGE"
+          failed=0
+          for c in $(git rev-list --reverse "$RANGE"); do
+            echo "--- $c $(git log -1 --format=%s $c)"
+            python3 scripts/check_line_endings.py --commit "$c" || failed=1
+          done
+          exit $failed
+
+  prereg-order:
+    name: Pre-registration order (rule 5)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prediction and prompt precede their data, by date and ancestry
+        run: python3 scripts/check_prereg_order.py
+
+  # =========================================================================
+  # WS-7 task 7.2. Model-check formal/AEP.tla in every configuration.
+  #
+  # THE POINT OF THIS JOB IS THE NINE CONFIGURATIONS THAT MUST FAIL. Six of
+  # the fifteen check that the properties hold; the other nine each remove one
+  # stated assumption -- the single Redis timeline, a truthful fsync, the
+  # barrier, a truthful endpoint, the reconciliation delay, operator
+  # authentication -- and must produce the declared counterexample. Two more
+  # are non-vacuity witnesses for the liveness property, which is an
+  # implication and would otherwise pass while meaning nothing.
+  #
+  # A job that only checked the six passing configurations would be the shape
+  # this repository keeps finding and removing: a gate that cannot fail. So
+  # scripts/run_tlc.sh reads the expectation from each config's own first line
+  # and exits non-zero if a configuration passes when it should fail, or fails
+  # for a property other than the one it declares. Both branches are exercised
+  # in tests/test_run_tlc_expectations.py.
+  #
+  # RUNTIME, MEASURED: all 15 configurations at the committed bounds (2
+  # workers, 5 versions) take 137s on a 4-worker TLC, plus ~30s for the JRE
+  # and the jar. That is cheap enough that no subset is needed -- CI runs the
+  # same bounds the repository ships, so there is no CI-only model.
+  #
+  # docs/26:212 suggests bounding at "2 workers, 3 versions". Three versions
+  # is too shallow and this job does not use it: at MaxVersion=3 the `operator`
+  # configuration cannot reach PERMANENTLY_AMBIGUOUS, so its counterexample
+  # becomes unreachable and it PASSES -- silently converting one of the nine
+  # into a check that cannot fail. run_tlc.sh reports that as UNEXPECTED,
+  # which is how it was found. formal/README.md section 4.3 has the numbers.
+  #
+  # NOT run here, by hand before submission (formal/README.md section 4.3):
+  # the scale probes -- MaxVersion=6 across all 15 (242s) and a third worker
+  # (188s for `base` alone; the full sweep exceeds ten minutes). Small-scope
+  # bounds are the model's main limitation, so those probes are worth running
+  # deliberately and not worth paying for on every push.
+  # =========================================================================
+  model-check:
+    name: TLA+ model checking (formal/AEP.tla)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Install a JRE
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Fetch tla2tools.jar
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tla"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/tla/tla2tools.jar" \
+            "https://github.com/tlaplus/tlaplus/releases/download/v${TLA_VERSION}/tla2tools.jar"
+          echo "${TLA_SHA256}  $RUNNER_TEMP/tla/tla2tools.jar" | sha256sum -c -
+
+      # The specification transcribes the transition table and the status
+      # alphabet from aep_core/core/intents.py. This gate re-derives both from
+      # the code and fails if the model has drifted -- which matters more than
+      # usual here, because a model checker asked about the wrong state machine
+      # does not complain, it reports success. --check-oracle additionally
+      # asserts that no protocol action reads the god-view variable.
+      - name: Gate -- the specification still matches the implementation
+        run: uv run --frozen python scripts/check_tla_transitions.py --all
+
+      - name: Model-check all 15 configurations, each against its expectation
+        env:
+          TLA_TOOLS: ${{ runner.temp }}/tla/tla2tools.jar
+          # Local disk. TLC's fingerprint files under -metadir dominate the
+          # runtime if they land on a slow mount.
+          TLC_LOGDIR: ${{ runner.temp }}/tlc-logs
+          TLC_TIMEOUT: "900"
+        run: bash scripts/run_tlc.sh
+
+      - name: Upload TLC logs and counterexample traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tlc-logs
+          # The counterexample traces live in these logs, and they are the
+          # point: a run that goes red should hand the reader the nine traces,
+          # not just the verdict.
+          path: ${{ runner.temp }}/tlc-logs/*.log
+          retention-days: 14
+
+  # =========================================================================
+  # Main suite. Redis 7.2 from compose.phase2.yml, so redis/phase2.conf is
+  # mounted rather than re-applied, and so `docker restart` brings the server
+  # back with AOF on and the appendonly data intact -- which is what lets the
+  # crash-recovery test run here instead of being deselected.
+  # =========================================================================
+  test:
+    name: Suite (py${{ matrix.python-version }}, Redis from compose)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6381/15
+      AEP_PHASE2_REDIS_INTEGRATION: "1"
+      # tests/test_phase2_waitaof_integration.py restarts this container by
+      # name. It must be the container_name in compose.phase2.yml.
+      AEP_PHASE2_REDIS_CONTAINER: aep-phase2-redis72
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        # `experiments` is required: pytest collects experiments/ (testpaths in
+        # pyproject.toml), and those tests import fastapi/httpx/pyyaml. Without
+        # it the harness tests fail to import -- which is a collection error,
+        # not a skip, but the suite would still stop describing what it claims.
+        # `analysis` likewise: experiments/analyze.py imports matplotlib, and
+        # its tests are collected by the same invocation.
+        run: >-
+          uv sync --frozen --extra dev --extra cov --extra experiments
+          --extra analysis --extra b5
+
+      - name: Start Redis 7.2 from compose.phase2.yml
+        run: |
+          docker compose -f compose.phase2.yml up -d --wait
+          docker compose -f compose.phase2.yml ps
+
+      - name: Record the exact environment under test
+        run: |
+          echo "--- interpreter ---"
+          uv run --frozen python -VV
+          echo "--- resolved dependency set ---"
+          uv pip freeze
+          echo "--- redis image ---"
+          docker image inspect "${REDIS_IMAGE}" --format '{{index .RepoDigests 0}}' || true
+
+      - name: Verify redis/phase2.conf semantics
+        # No --apply. This server was started from the config file, so if the
+        # settings are not already correct that is a defect in the compose
+        # definition and the job must fail rather than repair it in place.
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Run the suite
+        run: |
+          set -o pipefail
+          uv run --frozen pytest \
+            -q -ra --strict-markers \
+            --junitxml=junit.xml \
+            --cov=aep_core \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=90 \
+            2>&1 | tee pytest-output.txt
+
+      - name: Gate -- zero skipped, zero xpassed, suite actually ran
+        if: always()
+        run: |
+          uv run --frozen python scripts/check_pytest_gates.py \
+            --junit junit.xml \
+            --output pytest-output.txt \
+            --minimum-tests "${MINIMUM_TESTS}"
+
+      - name: Confirm AOF survived the restart test
+        # The suite restarted this container. If it came back without AOF the
+        # durability evidence collected after that point would be worthless.
+        if: always()
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.phase2.yml down -v
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-py${{ matrix.python-version }}
+          path: |
+            junit.xml
+            coverage.xml
+            pytest-output.txt
+          if-no-files-found: warn
+
+  # =========================================================================
+  # The durability suite in isolation, on its own fresh Redis.
+  #
+  # This job no longer exists to hold a test the main job cannot run -- the
+  # main job runs the whole suite now. It exists because running the WAITAOF
+  # file alone, against a server nothing else has touched, is a different
+  # experiment: it proves the durability tests do not depend on state left
+  # behind by the 1200 tests that precede them in the full run, and it fails
+  # loudly if they do.
+  # =========================================================================
+  waitaof-durability:
+    name: WAITAOF durability (compose, phase2.conf)
+    runs-on: ubuntu-24.04
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6381/15
+      AEP_PHASE2_REDIS_INTEGRATION: "1"
+      AEP_PHASE2_REDIS_CONTAINER: aep-phase2-redis72
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        run: uv sync --frozen --extra dev --extra cov
+
+      - name: Start Redis 7.2 from compose.phase2.yml
+        run: |
+          docker compose -f compose.phase2.yml up -d --wait
+          docker compose -f compose.phase2.yml ps
+
+      - name: Verify redis/phase2.conf semantics
+        # No --apply: this Redis was started from the config file, so if the
+        # settings are not already correct that is a real defect in the
+        # compose definition and the job should fail.
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Run the WAITAOF integration suite
+        run: |
+          set -o pipefail
+          uv run --frozen pytest \
+            -q -ra --strict-markers \
+            tests/test_phase2_waitaof_integration.py \
+            --junitxml=junit-waitaof.xml \
+            2>&1 | tee pytest-waitaof.txt
+
+      - name: Gate -- zero skipped, zero xpassed
+        if: always()
+        run: |
+          uv run --frozen python scripts/check_pytest_gates.py \
+            --junit junit-waitaof.xml \
+            --output pytest-waitaof.txt \
+            --minimum-tests 1
+
+      - name: Confirm AOF survived the restart test
+        if: always()
+        run: |
+          uv run --frozen python scripts/verify_redis_semantics.py \
+            --url "${REDIS_URL}"
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.phase2.yml down -v
+
+      - name: Upload WAITAOF reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-waitaof
+          path: |
+            junit-waitaof.xml
+            pytest-waitaof.txt
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Gate (v). The manuscript against the results it claims to report.
+  #
+  # scripts/check_paper_numbers.py re-derives every generated table and scalar
+  # from the frozen CSVs and diffs them against what is committed, so a number
+  # cannot quietly survive a change to the CSV under it. Until Phase P it had
+  # never run anywhere but the author's machine: experiments/results/ is
+  # ignored by design, so a checkout did not contain the CSVs the gate reads.
+  # Phase 5A recorded that as the one checklist item it could not discharge
+  # (reports/phase-report-5a-2026-08-10.md section D item 5). The gate's inputs
+  # are now tracked by name -- see the tail of .gitignore -- and this job is
+  # the other half: it makes the gate's verdict a property of the repository
+  # rather than of one laptop.
+  #
+  # Two of the gate's inputs are not tracked and must not be: main.bbl and
+  # main.log are LaTeX build products (.gitignore:98,100). They are *derived*
+  # from tracked sources, so this job builds the manuscript first rather than
+  # committing them. That is also what makes the two checks reading them --
+  # "no empty bibliography entries" and "no undefined references" -- mean
+  # anything here: they inspect a bibliography and a log this job just
+  # produced, not ones an author uploaded.
+  #
+  # No Redis and no services: this job reads CSVs and runs pdflatex.
+  # =========================================================================
+  paper-numbers:
+    name: Numbers gate (manuscript vs frozen CSVs)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync locked environment
+        # The state-machine check imports the implementation, so the project
+        # itself has to be installed. No extras: the gate reads CSVs and
+        # regenerates .tex, and pulls in nothing else.
+        run: uv sync --frozen
+
+      - name: Install TeX Live
+        # Exactly the set that builds this manuscript, verified against the
+        # measurement host: IEEEtran lives in texlive-publishers, cleveref and
+        # multirow in texlive-latex-extra, tikz/pgf in texlive-pictures.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-base \
+            texlive-bibtex-extra \
+            texlive-binaries \
+            texlive-fonts-recommended \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-latex-recommended \
+            texlive-pictures \
+            texlive-publishers
+
+      - name: Build the manuscript
+        # The committed build recipe, not a re-spelling of it here. It fails
+        # on a blank bibliography and on undefined references, both of which
+        # LaTeX itself reports as warnings while exiting 0.
+        run: bash scripts/build_paper.sh
+
+      - name: Gate -- the manuscript's numbers against the frozen CSVs
+        # build_paper.sh ends by running this too. It is repeated as its own
+        # step so the verdict is a named, separately-reported result rather
+        # than the tail of a build log -- and so that a later edit to the
+        # build script cannot quietly remove the check.
+        run: uv run --frozen python scripts/check_paper_numbers.py
+
+      - name: Upload the built PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manuscript
+          path: paper/main.pdf
+          if-no-files-found: warn

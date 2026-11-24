@@ -1,0 +1,511 @@
+{
+  "backing_megabytes": 256,
+  "dm_table_drop": "0 524288 flakey /dev/loop0 0 0 1 1 drop_writes",
+  "dm_table_pass": "0 524288 flakey /dev/loop0 0 1 0",
+  "kernel": "6.6.114.1-microsoft-standard-WSL2",
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "redis_version": "Redis server v=7.2.5 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=5259b0772c1000e1",
+  "selftest": {
+    "after_the_cut_fsync_error": null,
+    "after_the_cut_survived": false,
+    "before_the_cut_survived": true,
+    "table_drop": "0 524288 flakey /dev/loop0 0 0 1 1 drop_writes",
+    "table_pass": "0 524288 flakey /dev/loop0 0 1 0",
+    "valid": true
+  },
+  "summary": {
+    "acknowledged_survived": 30,
+    "barrier_ms_max": 694.4091379991733,
+    "barrier_ms_min": 465.6889179968857,
+    "counted": 30,
+    "trials": 30,
+    "unacknowledged_loss_rate": 1.0,
+    "unacknowledged_lost": 30,
+    "unacknowledged_survived": 0,
+    "void": 0,
+    "write_to_drop_ms_max": 42.63575799996033,
+    "write_to_drop_ms_min": 15.558742001303472
+  },
+  "trials": [
+    {
+      "acknowledged_survived": true,
+      "align_ms": 695.0862590019824,
+      "barrier_ms": 694.4091379991733,
+      "error": null,
+      "index": 0,
+      "kill_ms": 1.4654120022896677,
+      "readiness_ms": 58.68864800140727,
+      "restart_ms": 130.0936499974341,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 17.921140002727043
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 666.7255000065779,
+      "barrier_ms": 666.0267830011435,
+      "error": null,
+      "index": 1,
+      "kill_ms": 1.4680210006190464,
+      "readiness_ms": 58.55401400185656,
+      "restart_ms": 165.12312299892073,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 23.648437003430445
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 591.6449100041064,
+      "barrier_ms": 591.1817109954427,
+      "error": null,
+      "index": 2,
+      "kill_ms": 1.3461039998219348,
+      "readiness_ms": 60.53121100558201,
+      "restart_ms": 138.41138299903832,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 21.091809998324607
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 565.5075580070843,
+      "barrier_ms": 564.8740230026306,
+      "error": null,
+      "index": 3,
+      "kill_ms": 4.0624850007588975,
+      "readiness_ms": 59.40922800073167,
+      "restart_ms": 132.01230199774727,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 28.045910003129393
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 661.9859189959243,
+      "barrier_ms": 661.5333020017715,
+      "error": null,
+      "index": 4,
+      "kill_ms": 1.3394490015343763,
+      "readiness_ms": 61.689973997999914,
+      "restart_ms": 142.1395659999689,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 29.436751996399835
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 466.3478500006022,
+      "barrier_ms": 465.6889179968857,
+      "error": null,
+      "index": 5,
+      "kill_ms": 3.6361840029712766,
+      "readiness_ms": 59.74726400017971,
+      "restart_ms": 133.6443420004798,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 21.89635200193152
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 658.6621839960571,
+      "barrier_ms": 658.0159340010141,
+      "error": null,
+      "index": 6,
+      "kill_ms": 1.4128390030236915,
+      "readiness_ms": 61.15355899964925,
+      "restart_ms": 129.64306300273165,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 17.654228999163024
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 661.0673399991356,
+      "barrier_ms": 660.5506780033465,
+      "error": null,
+      "index": 7,
+      "kill_ms": 1.2787870000465773,
+      "readiness_ms": 58.508483998593874,
+      "restart_ms": 123.80121200112626,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 24.89434400195023
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 568.4972279996146,
+      "barrier_ms": 567.9193149990169,
+      "error": null,
+      "index": 8,
+      "kill_ms": 1.2395270023262128,
+      "readiness_ms": 58.898395000142045,
+      "restart_ms": 123.136827001872,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 36.79550500237383
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 661.7131919992971,
+      "barrier_ms": 661.1838250028086,
+      "error": null,
+      "index": 9,
+      "kill_ms": 1.3444730066112243,
+      "readiness_ms": 60.08945499343099,
+      "restart_ms": 124.72489499486983,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 19.61245199345285
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 663.0109150064527,
+      "barrier_ms": 662.3018040045281,
+      "error": null,
+      "index": 10,
+      "kill_ms": 1.4768460023333319,
+      "readiness_ms": 60.38989099761238,
+      "restart_ms": 126.84243200055789,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 23.270347999641672
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 660.6104359962046,
+      "barrier_ms": 660.1809920030064,
+      "error": null,
+      "index": 11,
+      "kill_ms": 1.3505430033546872,
+      "readiness_ms": 58.64884600305231,
+      "restart_ms": 111.02805600239662,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 27.407864996348508
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 660.5933949977043,
+      "barrier_ms": 659.9749849992804,
+      "error": null,
+      "index": 12,
+      "kill_ms": 1.2641320063266903,
+      "readiness_ms": 60.198428996955045,
+      "restart_ms": 131.2282920043799,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 15.558742001303472
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 658.9860829990357,
+      "barrier_ms": 658.3430399987265,
+      "error": null,
+      "index": 13,
+      "kill_ms": 1.4067469965084456,
+      "readiness_ms": 59.782941003504675,
+      "restart_ms": 131.004013994243,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 16.643527000269387
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 683.7381000004825,
+      "barrier_ms": 683.2253389948164,
+      "error": null,
+      "index": 14,
+      "kill_ms": 1.3924750019214116,
+      "readiness_ms": 60.5459360012901,
+      "restart_ms": 132.5186429967289,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 24.753558995143976
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 672.5884019979276,
+      "barrier_ms": 672.1728749980684,
+      "error": null,
+      "index": 15,
+      "kill_ms": 7.976276996487286,
+      "readiness_ms": 59.3598000050406,
+      "restart_ms": 123.69339899305487,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 18.180842998845037
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 559.5186010032194,
+      "barrier_ms": 558.8305080018472,
+      "error": null,
+      "index": 16,
+      "kill_ms": 1.540531993668992,
+      "readiness_ms": 64.05611100490205,
+      "restart_ms": 130.53632700029993,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 22.676125998259522
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 667.301943001803,
+      "barrier_ms": 666.6885329977958,
+      "error": null,
+      "index": 17,
+      "kill_ms": 1.432536999345757,
+      "readiness_ms": 60.29651499557076,
+      "restart_ms": 139.44492599694058,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 25.143054001091514
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 557.1529369990458,
+      "barrier_ms": 556.45846400148,
+      "error": null,
+      "index": 18,
+      "kill_ms": 1.372375998471398,
+      "readiness_ms": 60.840965998067986,
+      "restart_ms": 126.63689500186592,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 19.419341995671857
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 672.6859909977065,
+      "barrier_ms": 672.1780660009244,
+      "error": null,
+      "index": 19,
+      "kill_ms": 16.198500998143572,
+      "readiness_ms": 59.85736000002362,
+      "restart_ms": 122.92470399552258,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 20.26325299812015
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 662.1373989983113,
+      "barrier_ms": 661.6589760014904,
+      "error": null,
+      "index": 20,
+      "kill_ms": 1.9211210019420832,
+      "readiness_ms": 61.365273999399506,
+      "restart_ms": 130.52283500292106,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 22.255384996242356
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 664.979487999517,
+      "barrier_ms": 664.4610090006609,
+      "error": null,
+      "index": 21,
+      "kill_ms": 1.379533001454547,
+      "readiness_ms": 59.90544099768158,
+      "restart_ms": 126.81072700070217,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 17.96630900207674
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 662.2821479977574,
+      "barrier_ms": 661.7556769997464,
+      "error": null,
+      "index": 22,
+      "kill_ms": 3.5212079965276644,
+      "readiness_ms": 59.496191002835985,
+      "restart_ms": 156.84233900537947,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 22.11510200140765
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 570.4068650011322,
+      "barrier_ms": 569.6992250013864,
+      "error": null,
+      "index": 23,
+      "kill_ms": 1.3310080030350946,
+      "readiness_ms": 60.374699998646975,
+      "restart_ms": 139.0444079952431,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 42.63575799996033
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 563.2378160007647,
+      "barrier_ms": 562.7183620017604,
+      "error": null,
+      "index": 24,
+      "kill_ms": 1.3951140062999912,
+      "readiness_ms": 62.03625300258864,
+      "restart_ms": 129.51347199850716,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 21.660612997948192
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 668.9092670058017,
+      "barrier_ms": 668.3813729978283,
+      "error": null,
+      "index": 25,
+      "kill_ms": 1.4275339999585412,
+      "readiness_ms": 59.79409800056601,
+      "restart_ms": 125.42079400009243,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 15.802431000338402
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 665.6615110041457,
+      "barrier_ms": 665.2372649987228,
+      "error": null,
+      "index": 26,
+      "kill_ms": 1.4928140008123592,
+      "readiness_ms": 57.87304700061213,
+      "restart_ms": 128.95557999581797,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 24.075531000562478
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 673.4777669989853,
+      "barrier_ms": 672.9507299969555,
+      "error": null,
+      "index": 27,
+      "kill_ms": 3.451845004747156,
+      "readiness_ms": 60.45251800242113,
+      "restart_ms": 155.20138199644862,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 32.11941500194371
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 582.0129479980096,
+      "barrier_ms": 581.402302996139,
+      "error": null,
+      "index": 28,
+      "kill_ms": 3.6193720006849617,
+      "readiness_ms": 61.609969001438,
+      "restart_ms": 133.27295499766478,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 25.779878000321332
+    },
+    {
+      "acknowledged_survived": true,
+      "align_ms": 665.2460249970318,
+      "barrier_ms": 664.6919350023381,
+      "error": null,
+      "index": 29,
+      "kill_ms": 1.3535269972635433,
+      "readiness_ms": 62.11428499955218,
+      "restart_ms": 126.56047000200488,
+      "unacknowledged_survived": false,
+      "waitaof_ack": [
+        1,
+        0
+      ],
+      "write_to_drop_ms": 17.460322997067124
+    }
+  ]
+}

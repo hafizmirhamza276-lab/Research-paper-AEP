@@ -1,0 +1,1117 @@
+# The Zenodo deposit: state, ordering against phase 53, pre-publication checks, and the steps only the author can take — 2026-09-24
+
+> ## UPDATE, later the same day — what is now ready
+>
+> Everything below still holds. Since it was written, the author decided to
+> include all five macro-supplying roots and the phase-40 roots, and to build a
+> **third part** rather than rebuild. That work is done. §§10–13 at the end of
+> this file are the current state; read those first if you are about to deposit.
+>
+> **One finding changed a decision.** The phase-40 deployment root carries a
+> third party's corporate e-mail address, is already public in git history, and
+> has been withheld from the part. It needs your decision:
+> `reports/disclosure-phase40-deployment-email-2026-09-24.md`.
+>
+> **Still blocking:** phase 53. It was at 42 of 45 runs when this was written.
+
+**Nothing was published, no upload was started, and no archive was rebuilt.**
+Both archive roots were read and hashed; neither was modified. No `paper/` file
+was edited, no PDF built, no full suite run.
+
+**Repository state:** `cb3cad8`, working tree clean.
+
+**Why now.** TSE is single-anonymous
+(`reports/tse-venue-2026-09-24.md`), so a Zenodo record naming its depositor no
+longer breaks anything. Publishing closes the audit's blocker B3 and
+`reports/claims-to-review.md` entry 3.
+
+---
+
+## 0. The finding that changes the plan
+
+**The deposit as prepared does not cover the paper.** Five tracked collection
+roots that supply **18 manuscript macros** are in neither archive, and
+`docs/29-archive-deposit.md` §3's ready-to-paste description **claims two of
+them are**. Publishing it as written would put a false statement of contents on
+an immutable record.
+
+This is independent of phase 53 and would have been true yesterday. §2 has the
+detail. **The deposit is not ready to publish today for a reason that has
+nothing to do with the new collection**, and the phase-53 question in §3 then
+settles the ordering.
+
+---
+
+## 1. What exists, and whether it still verifies
+
+### The two parts, on disk
+
+| | WSL | Windows (checked here) |
+|---|---|---|
+| 2026-09-03 | `/root/aep-raw-archive/` | `D:\personal\AEP\aep-raw-archive\` |
+| 2026-09-15 | `/root/aep-raw-archive-ext/` | `D:\personal\AEP\aep-raw-archive-ext\` |
+
+**One record, two archives, six files**, per `docs/29` §0.
+
+### Sizes and digests — all six match `docs/29` §1 exactly
+
+Recomputed here with `sha256sum` against the Windows copies:
+
+| deposited as | bytes | sha256 | matches §1 |
+|---|---|---|---|
+| `MANIFEST-2026-09-03.sha256` | 4 287 997 | `87fa2d53…3e2d7` | **yes** |
+| `ARCHIVE-METADATA-2026-09-03.json` | 15 052 | `cf75e723…220e5` | **yes** |
+| `aep-raw-evidence-2026-09-03.tar.gz` | 24 257 505 | `fec959b5…7353` | **yes** |
+| `MANIFEST-2026-09-15.sha256` | 3 027 470 | `54d1ab0f…3cd5` | **yes** |
+| `ARCHIVE-METADATA-2026-09-15.json` | 8 650 | `91fbd343…486a2` | **yes** |
+| `aep-raw-evidence-2026-09-15.tar.gz` | 17 563 367 | `6ef11d7c…eebf1` | **yes** |
+
+**The archives are byte-identical to what was verified on 2026-09-16.** Nothing
+has drifted. Uncompressed they stream to 492 905 568 and 355 492 262 bytes,
+matching the description's figures.
+
+### Are the manifests current against the data as it stands today?
+
+**Against their own contents: yes** — each manifest is internally consistent and
+its digest is unchanged, so `sha256sum -c` will pass.
+
+**Against the repository as it stands today: no.** The manifests were frozen at
+`repository_head` `c194dc7` (2026-09-03) and `eef35f8` (2026-09-15). Eleven
+tracked collection roots have appeared or been left out since. §2.
+
+### The DOI, and what is uploaded
+
+| | |
+|---|---|
+| reserved DOI | `10.5281/zenodo.22766567` |
+| state | `RESERVED` — a draft record holds it; `paper/main.tex:126` is `\archivedoistate{RESERVED}` |
+| files uploaded | **none.** `ARTIFACT.md` §5: *"the record is a draft and the files are not uploaded, so the DOI does not resolve yet"* |
+| what resolving requires | publishing the draft |
+
+**Do not create a new record.** The identifier is already written into
+`paper/main.tex:125`, the built PDFs, `README.md`, `ARTIFACT.md`, `CITATION.cff`
+and `docs/36`. A new record mints a different DOI and orphans all of them
+(`docs/29` §0, "Ruin #1").
+
+---
+
+## 2. The coverage gap — five roots, 18 macros, and a false description
+
+### Which tracked roots are in which archive
+
+Computed by comparing `check_prereg_order.discover()` — every tracked collection
+root, 35 of them — against the top-level directory names inside each manifest.
+
+**In neither archive (11):**
+
+| root | manuscript macros | disposition |
+|---|---|---|
+| **`experiments/results/ws5-2026-09-10/t1-p0-everysec`** | **9** | **must be deposited** |
+| **`experiments/results/fsync-always-2026-09-14`** | **5** | **must be deposited** |
+| **`experiments/results/ws5-2026-09-10/t2-p30`** | **3** | **must be deposited** |
+| **`experiments/results/ws5-2026-09-10/t2-keying`** | **1** | **must be deposited** |
+| `experiments/results/ws5-2026-09-10/t1-incomplete` | 0 | deposit — it is the incomplete sibling of a cell that is cited, and a discarded collection is evidence about the instrument |
+| `experiments/results/stage3-replication-2026-08-13` | 0 | author's call; predates rule 5 and no number derives from it |
+| `reports/raw/INCIDENT-fsync-always-destroyed-2026-09-14` | 0 | recommend **excluding**, declared by name — it is quarantined debris, not a collection |
+| `reports/raw/phase40-deployment-2026-09-18` | 0 | §4.3 |
+| `reports/raw/phase40-stage-10-interactive-2026-09-21` | 0 | §4.3 |
+| `reports/raw/phase40-stage-30-2026-09-21` | 0 | §4.3 |
+| `reports/raw/phase40-stage-100-2026-09-22` | 0 | §4.3 |
+
+### The 18 macros
+
+`paper/generated/numbers.tex`, attributed by walking each macro's provenance
+comment block:
+
+**From `ws5-2026-09-10/t1-p0-everysec` (9)** — `\BarrierCostFifteen`,
+`\BarrierCostFifteenLow`, `\BarrierCostFifteenHigh`,
+`\ProtocolMinusBarrierFifteen{,Low,High}`,
+`\ProtocolMinusBarrierLowerMode{,Low,High}`.
+
+**From `fsync-always-2026-09-14` (5)** — `\BarrierCostAlwaysFortyFive{,Low,High}`,
+`\AepAlwaysFortyFiveMedian`, `\BthreeAlwaysFortyFiveMedian`.
+
+**From `ws5-2026-09-10/t2-p30` (3)** — `\PthirtyComparisons`, `\PthirtyRuns`,
+`\PthirtyExecutions`. **From `t2-keying` (1)** — `\KeyingAmbiguityOracle`.
+
+`\BarrierCostFifteen` = 1 939.7 ms is **RQ3's headline**, the 15-run barrier
+cost the external audit recomputed and matched. Its raw runs exist in exactly
+one place: this host's working tree, untracked (11 337 files on disk, 36
+tracked) and unarchived.
+
+### The description is wrong about this
+
+`docs/29` §3's paste-ready HTML, the block that becomes the published record's
+description, says of the 2026-09-15 extension:
+
+> *"the trees the first archive did not reach — **the WS-5 deployment sweep
+> behind Section VI's fsync-policy and payload-size results**, the real-Temporal
+> (B5) baseline sessions …, the WS-4 block-level write-loss cell and its voided
+> arm, and **the 45-run appendfsync=always extension**."*
+
+The extension actually contains eleven roots: `ws4-writeloss` ×2, `ws6-b5` ×3,
+`phase13-armA` ×4 and `phase13-inflight` ×2. **No WS-5. No
+`fsync-always-2026-09-14`.** Two of the four things that sentence names are not
+there.
+
+**A Zenodo record cannot be edited after publication.** Pasting that description
+publishes a false statement of contents under a DOI the paper cites.
+
+### Why the gap was not caught
+
+`scripts/verify_published_archive.py` checks that the record carries all six
+files, that nine digests match, that every file verifies against its own
+manifest, and that run-directory counts agree. **It has no notion of whether the
+archive covers the roots the paper cites** — it verifies the deposit against
+itself, not against the manuscript. Both archives pass it today and the gap
+survives.
+
+`ARCHIVE-METADATA-2026-09-15.json`'s `excluded` list is a verbatim copy of the
+2026-09-03 one and names nothing about WS-5 or the 45-run always arm. So they
+were not excluded with a reason — **they were missed.**
+
+---
+
+## 3. Phase 53, and the ordering — stated plainly
+
+### The collection is running now
+
+`experiments/results/abd-immediate-2026-09-24/` — **25 of 45 run directories**
+at 12:03, started 10:46, estimated 1.74 h by the planner. Untracked so far.
+**This session did not touch it.**
+
+### Must the deposit include the phase-53 collection? — **Yes**
+
+`prompts/phase-53-abd-immediate-2026-09-24.md` §5 is explicit that the cell
+produces manuscript content:
+
+> *"**This cell is reported separately, as its own session**, with its own
+> macros, its own n, and its date. … The manuscript states that the cell was
+> re-collected, why, and that the two are not pooled."*
+
+New macros in the manuscript mean new numbers a reviewer must be able to check.
+If the deposit is the evidence behind every quantitative claim — which is what
+its description says it is — then it must carry the runs behind those macros.
+
+The same pre-registration also changes **existing** numbers: §5.1 rules that the
+pooled baseline rates are computed *the exclusion way*, which moves
+`\BaselineDupLow`/`\BaselineDupHigh` from 0.77–0.83 to 0.74–0.78 and every
+baseline cell of Table 7 (`reports/audit-response-2026-09-23.md` §1.6). Those
+recomputations are over the **existing** matrix, which is already deposited — so
+that half does not add a deposit requirement. The new macros do.
+
+### Would publishing before it lands make the archive incomplete? — **Yes, twice over**
+
+1. **Against phase 53**, for the reason above: the paper would cite macros whose
+   raw runs are not in the record it points at.
+2. **Against the paper as it already stands**, for the reason in §2: 18 macros
+   already have no raw evidence in the deposit, including RQ3's headline.
+
+Point 2 is the one that matters most, because it is true *now* and would have
+been true if this had been published last week.
+
+### The correct order
+
+**Collect → analyse → freeze → re-manifest → deposit → publish → flip the state.**
+
+| # | step | who | blocking on |
+|---|---|---|---|
+| 1 | Let phase 53 finish and be analysed, reported and committed | the other session | in progress, ~25/45 |
+| 2 | Decide the disposition of each of the 11 uncovered roots (§2 table) | **author** | step 1 |
+| 3 | Build a **third archive part** covering the uncovered roots + phase 53 | script | steps 1–2 |
+| 4 | Verify the new part end-to-end, locally | script | step 3 |
+| 5 | Re-scan the new part (§4) | script | step 3 |
+| 6 | Rewrite `docs/29` §1's digest table and §3's description for **nine** files | — | step 4 |
+| 7 | Rehearse on sandbox.zenodo.org | **author** | step 6 |
+| 8 | Upload into the existing draft and publish | **author only** | step 7 |
+| 9 | Flip `\archivedoistate` and the seven non-LaTeX sites; rebuild; tag | — | step 8 |
+
+**A third part rather than rebuilding both.** The two existing archives are
+verified, digest-stable, and already described in `CITATION.cff`, `ARTIFACT.md`
+and `README.md` by digest. Rebuilding changes those digests and invalidates
+every one of those statements. Adding a third part changes nothing that already
+exists. The cost is that the record goes from six files to **nine**, and three
+places need a third entry:
+
+- `scripts/verify_published_archive.py` — the `ARCHIVES` tuple and the
+  required-files check (`:88`, `:177`);
+- `docs/29` §1's table and §3's description;
+- `CITATION.cff` and `ARTIFACT.md`, which name the parts by digest.
+
+**Do not publish a two-part record now and add a third part as a new version
+later.** Zenodo versioning mints a new version DOI; `paper/main.tex` carries the
+version DOI of *this* draft, so the paper would cite a record that is missing a
+third of its evidence, with the complete one at a different identifier.
+
+---
+
+## 4. Pre-publication checks, and their results
+
+All scans ran over the **packed parts**, streamed through `tarfile` member by
+member, reporting which files matched and never the matched value.
+
+### 4.1 Credentials and key material
+
+| category | 2026-09-03 | 2026-09-15 | verdict |
+|---|---|---|---|
+| `AZURE_OPENAI_API_KEY` (the var name) | 0 | 0 | **clean** |
+| `"api-key"` request header | 0 | 0 | **clean** |
+| `Ocp-Apim-Subscription-Key` | 0 | 0 | **clean** |
+| `Bearer <token>` | 0 | 0 | **clean** |
+| OpenAI-style `sk-…` | 0 | 0 | **clean** |
+| PEM private-key block | 0 | 0 | **clean** |
+| AWS access key id | 0 | 0 | **clean** |
+| Azure 84-char key shape | 0 | 0 | **clean** |
+| `password`/`passwd`/`secret` assignment | 0 | **5** | resolved below |
+| 32-hex value | **8** | **940** | resolved below |
+
+**The Azure key is not in either archive, and could not be.** Two independent
+reasons:
+
+1. **No phase-40 artifact is in either archive at all** — `phase40`,
+   `planner-transcript`, `planner-cumulative` and `gpt-5.6-luna` all return
+   **0 matches in both parts**. The Azure client is only ever invoked by the
+   phase-40 planner path.
+2. **The client is built so the key cannot reach a file.**
+   `experiments/harness/azure_client.py:24-27`: *"The key is never written
+   anywhere. It is read from the environment into one local, sent in one header,
+   and never placed on the call object, in the transcript, in an exception, or
+   in a log line. `__repr__` is overridden because a traceback prints arguments,
+   and a traceback is a file."* The single read is `api_key()` at `:209-214`,
+   which returns it and stores it nowhere.
+
+> **One scope limit, stated rather than glossed.** I did not read `D:\personal\AEP\.env`
+> and so did not perform a *literal* match of the key's value against the
+> archives — the tool sandbox declined access to the credential file, and I did
+> not work around it. What is reported above is a search for the key's **shape**,
+> its **environment-variable name**, its **request header**, and for any
+> phase-40 artifact that could carry it. If you want the literal check, run it
+> yourself; it is one command and it never prints the key:
+>
+> ```sh
+> set -a; . /mnt/d/personal/AEP/.env; set +a
+> for a in /root/aep-raw-archive /root/aep-raw-archive-ext; do
+>   printf '%s: ' "$a"
+>   tar -xzOf "$a/aep-raw-evidence.tar.gz" \
+>     | grep -c -a -F "$AZURE_OPENAI_API_KEY"
+> done   # expect 0 and 0
+> ```
+
+### 4.2 The non-zero categories, each identified
+
+**(a) `password`/`secret` assignments — 5 matches, 5 files, extension only.**
+
+- `compose.temporal.yml` ×3, in `ws6-b5-s1-2026-09-08-{VOIDED-attempt1,attempt2,attempt3}`
+- `observers/containers.json` ×2, the `docker inspect` output echoing the same
+
+The literal, confirmed against the repository's own tracked copy at
+`experiments/baselines/b5_temporal/compose.temporal.yml:34,61`:
+
+```yaml
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_PWD: temporal
+```
+
+**That is the Temporal development stack's published default**, for a Postgres
+container that existed only for the duration of the B5 runs and no longer
+exists. It is not a credential to anything reachable. **Disposition: publish as
+is, and say so** — the compose file is part of how the Temporal baseline was
+configured, and removing it would invalidate the manifest and hide a
+configuration a reader needs. Recommended: one clause in the record description.
+
+**(b) 32-hex values — 8 in the first part, 940 in the extension. All three
+sources identified; none is a secret.**
+
+| where | count | what it is |
+|---|---|---|
+| `phase10-replication-drvfs{,-arbb30}-2026-09-02/COLLECTION-PROVENANCE.json` | 8 | Fields literally named `token` and `seen`, values `aep-host-verify-<fs>-<32hex>`. Generated at `scripts/verify_measurement_host.py:160` as `f"aep-host-verify-{name}-{uuid.uuid4().hex}"` — a random nonce written to a canary file to prove a filesystem write landed where it was supposed to. **The field name is why the pattern fired.** |
+| `ws6-b5-s1-*/observers/temporal.log` | 928 | Temporal server task-queue identities, `"wf-task-queue-name":"<pid>@KP248-<32hex>"`. Server-generated per-worker identity. Carries the hostname `KP248`, already disclosed |
+| `ws6-b5-s1-*/measurement-host.txt` | 12 | The same host-verify nonces |
+
+### 4.3 Identity material — deliberate, not accidental
+
+| category | 2026-09-03 | 2026-09-15 | disposition |
+|---|---|---|---|
+| email addresses | 0 | 0 | none present |
+| GitHub handle `hafizmirhamza276` | 0 | 0 | none present |
+| ORCID `0009-0005-9380-2188` | 0 | 0 | none present |
+| `C:\Users\…` paths | 0 | 0 | none present |
+| `AzureAD+…` account strings | 0 | 0 | none present |
+| hostname `KP248` | 17 | 935 | **deliberate**, disclosed in `docs/29` §3 |
+| `/root/aep…` paths | 869 | 9 853 | **deliberate and load-bearing** |
+| `/mnt/d/personal/AEP…` paths | 797 | 14 884 | **deliberate and load-bearing** |
+
+**There is no personal identifier in either archive.** A machine name and a
+directory layout are present, and `docs/29` §3's description already states why
+they are retained: *"they are the evidence from which the collection path of the
+frozen evaluation was reconstructed, and removing them would invalidate the
+manifests."* Under single-anonymous review this is no longer even a tension —
+the submitted paper names the author on page 1.
+
+**This also extends `docs/29` §0c's caveat.** That section recorded that the
+extension *"has not been through this scan"* and asked for one before uploading.
+**It has now been scanned, and it is clean on every credential and identity
+category.** The two categories that fired are identified above.
+
+### 4.4 Phase 40, and what the closure governs
+
+**The closure restricts the manuscript, not the archive.** Read directly:
+
+- `prompts/phase-40-closure-2026-09-22.md` §9, *What is preserved, and where*,
+  names `reports/raw/phase40-*/` as **committed text evidence** and
+  `AEP/stub-results/phase40-*/` as the full live collections. Preservation is
+  the disposition, not suppression.
+- §8's disposition, quoted in the closure: *"**Both failures are reportable
+  results.** Neither is a reason to leave the experiment out of the record."*
+- The forbidden form is a **manuscript sentence**.
+  `reports/phase-report-40-closure-2026-09-22.md` §3 row 4: *"An artifact
+  pointer — a sentence in §IX directing readers to `reports/raw/phase40-*` —
+  **FORBIDDEN as a manuscript sentence, and unnecessary** … because the evidence
+  is already public without it."*
+
+So **nothing forbids the archive from containing phase-40 data**, and the
+closure's own logic — the evidence is already public in the repository — argues
+mildly for including it.
+
+**Two things to weigh, and this is the author's call:**
+
+1. **A Zenodo description is not manuscript text**, so listing a phase-40 root
+   in the record's contents does not violate the closure. But the description is
+   a public document attached to the paper's DOI, and a reader who sees
+   *"phase40-stage-100"* listed will go looking. The closure's reasoning is that
+   the experiment's record belongs in `reports/`, which it does; the question is
+   whether the deposit is also "the record".
+2. **What would be deposited is not the live collection.** `reports/raw/phase40-*`
+   is the committed *text evidence* — 2, 28, 28 and 55 files. The full live
+   collections are at `AEP/stub-results/phase40-*`, outside the repository. If
+   phase-40 material is deposited at all, decide which of the two, because they
+   are different artifacts and only one has ever been committed.
+
+**Recommendation:** deposit `reports/raw/phase40-*` with the rest, because the
+deposit's stated purpose is the raw evidence behind the repository and these are
+tracked repository contents; and say nothing about phase 40 in the manuscript,
+which is what the closure actually requires. **But this is a judgement the
+closure leaves open, and it should be made explicitly rather than by whoever
+runs the archive script.**
+
+---
+
+## 5. The steps only you can perform
+
+Everything below needs a browser, a Zenodo login, or a decision. Nothing in this
+list can be scripted from here.
+
+| # | step | why only you |
+|---|---|---|
+| **A** | **Decide the disposition of the 11 uncovered roots** (§2 table), in particular whether `stage3-replication-2026-08-13`, the `INCIDENT-` debris and the four `phase40-*` roots go in | It is a judgement about what the evidence record is, and §4.4 is deliberately left open |
+| **B** | **Decide part-3-versus-rebuild** — the recommendation is a third part (§3), but it costs three files and a third `ARCHIVES` entry | Changes what is published under a DOI the paper cites |
+| **C** | **Rehearse on https://sandbox.zenodo.org** — create a record, upload all nine files, paste the description, publish, then run `verify_published_archive.py --doi <sandbox-id>` and confirm it also **fails** when you delete one file | Requires a Zenodo account; `docs/29` §2. This is the only exercise of the fetch-by-DOI path, which has never run |
+| **D** | **Open the existing draft holding `10.5281/zenodo.22766567` and upload into it** | Requires login. **Do not create a new record** — `docs/29` §0 "Ruin #1" |
+| **E** | **Paste the corrected description** — `docs/29` §3's block with §2's false sentence fixed and the third part added | The correction is mine to draft, the publication is yours |
+| **F** | **Press Publish** | Irreversible. A published Zenodo file cannot be replaced or withdrawn |
+| **G** | **Confirm the version DOI did not change** after publishing | `docs/29` §4 — if it changed, something created a new record and every downstream step is wrong |
+
+Steps that do **not** need you, once A and B are decided: building the third
+part, re-verifying, re-scanning, rewriting `docs/29`, updating
+`verify_published_archive.py`, flipping the state and rebuilding.
+
+---
+
+## 6. What changes in the manuscript once the DOI resolves
+
+### The macro
+
+`paper/main.tex:126`:
+
+```latex
+\newcommand{\archivedoi}{10.5281/zenodo.22766567}   % leave alone
+\newcommand{\archivedoistate}{RESERVED}             % -> PUBLISHED
+```
+
+`RESERVED` selects the branch at `main.tex:238`. Anything that is neither
+`PENDING` nor `RESERVED` selects the resolving branch; `PUBLISHED` is the
+conventional value.
+
+### The sentence
+
+Section 8, Artifact Availability. **Before**, as it renders today:
+
+> "those are carried by a separate archive, prepared and verified, with the
+> Zenodo record reserved under DOI 10.5281/zenodo.22766567; the identifier is
+> fixed and begins resolving when the record is published."
+
+**After**:
+
+> "those are carried by a separate archive, deposited at
+> https://doi.org/10.5281/zenodo.22766567."
+
+`docs/29` §5 records a dry run confirming **exactly one sentence changes**, and
+that `main-anon.pdf` is byte-identical in text before and after because the
+anonymous branch never reads `\archivedoi`. **That dry run was done at 23 pages
+and the body is now 24**, so the page count should be re-checked on the rebuild
+rather than assumed.
+
+### Does `claims-to-review` entry 3 then close with no text change? — **Yes**
+
+Entry 3 was reopened because `paper/sections/08-threats.tex:223-227` says the
+voided run *"is in the **published** archive under `voided/`"* while
+`\archivedoistate` is `RESERVED`.
+
+Two things make it close cleanly:
+
+1. **The archive genuinely contains it.** `voided/` is a top-level root of the
+   2026-09-03 part, 24 files, confirmed in that manifest here — the half the
+   2026-09-23 closure verified correctly.
+2. **Publication makes "published" true**, and the sentence is in
+   `08-threats.tex`, which contains no DOI and no `\archivedoistate`
+   conditional. Nothing in it needs editing.
+
+**So entry 3 closes as RESOLVED with no manuscript text changed, the moment the
+record is published** — which is the outcome the reopening recommended over
+rewording. The only edit anywhere is `\archivedoistate` in `main.tex`, and that
+is Section 8's sentence, not Section 9's.
+
+### The seven other sites
+
+`docs/29` §5 lists them with line numbers: `README.md:8` and `:10-13`,
+`ARTIFACT.md:348-356`, `CITATION.cff:2`, `:24-27` and `:33-42`,
+`paper/arxiv-metadata.md:32-35`, `:38-45` and `:203-207`,
+`docs/36-repository-inventory-2026-09-15.md:189`, and `docs/29` itself.
+
+**One addition to that list from this session.**
+`paper/arxiv-metadata.md:83-88` justifies withholding the DOI from the anonymous
+build on the ground that *"a Zenodo record names its depositor, so citing it
+under double-anonymous review defeats the anonymisation."* Under single-anonymous
+review that rationale does not hold
+(`reports/single-anonymous-implications-2026-09-24.md` §4a). The mechanism can
+stay — it costs nothing — but the stated reason should be corrected rather than
+left as a premise the project has since refuted.
+
+---
+
+## 7. Summary
+
+| question | answer |
+|---|---|
+| Do the archives still verify? | **Yes.** All six digests match `docs/29` §1 exactly; nothing has drifted since 2026-09-16 |
+| Are the manifests current against today's data? | **No.** Frozen at `c194dc7` / `eef35f8`; 11 tracked roots are in neither |
+| Is the deposit publishable today? | **No** — and not because of phase 53. 18 macros, including RQ3's headline `\BarrierCostFifteen`, have no raw evidence in it, and `docs/29` §3's description claims two of the missing roots are present |
+| Must the deposit include phase 53? | **Yes.** Its pre-registration §5 commits the manuscript to new macros with their own n |
+| Would publishing early make the archive incomplete? | **Yes, twice**: against phase 53, and already against the paper as it stands |
+| Correct order? | Collect → analyse → freeze → **re-manifest as a third part** → verify → re-scan → deposit → publish → flip the state |
+| Credentials in the archive? | **None found.** No Azure key name, header, or shape; no phase-40 artifact at all. The 5 `password` hits are `POSTGRES_PASSWORD: temporal`, the Temporal dev default; the 948 32-hex values are `uuid4` canary nonces and Temporal task-queue identities |
+| Identity material? | No email, no GitHub handle, no ORCID, no `C:\Users`. Hostname and WSL paths present, deliberate, already disclosed |
+| Phase 40 in the archive? | The closure governs the **manuscript**, not the archive, and names `reports/raw/phase40-*` as preserved evidence. Including it is permitted; the decision is yours |
+| Does entry 3 close with no text change? | **Yes**, the moment the record is published |
+
+**Nothing was published, uploaded, rebuilt or edited by this session.**
+
+---
+
+# UPDATE — the third part is built, verified and scanned
+
+Written later on 2026-09-24, after decisions A (include the five
+macro-supplying roots and the phase-40 roots) and B (third part, do not
+rebuild). **Nothing was published and no upload was started.**
+
+## 10. The third part, as built
+
+**Location:** `D:\personal\AEP\aep-raw-archive-p3\` (WSL:
+`/mnt/d/personal/AEP/aep-raw-archive-p3`), beside the other two. Built under
+WSL with `python3 scripts/build_raw_archive.py --part3`, on the same host and
+kernel as the earlier parts (`KP248`, `6.6.114.1-microsoft-standard-WSL2`), so
+the metadata is comparable.
+
+| | |
+|---|---|
+| roots | **8** |
+| files in manifest | **12 147** |
+| run directories | **665** (665 by `-r<N>` name, 665 by `run-config.json` — the two agree, unlike both earlier parts) |
+| payload uncompressed | **356 739 129 bytes** |
+| `aep-raw-evidence.tar` | 371 609 600 bytes, sha256 `62b72a5128e3a010…` |
+| `aep-raw-evidence.tar.gz` | **18 984 605 bytes**, sha256 `d3bfadb7f1c21319…` |
+| `MANIFEST.sha256` | 2 031 625 bytes, sha256 `a743f7ab1b92b0b1…` |
+| `ARCHIVE-METADATA.json` | 11 985 bytes, sha256 `24ec54ae6c67446b…` |
+
+| root | runs | files | why |
+|---|---|---|---|
+| `ws5-2026-09-10-t1-p0-everysec` | 105 | 1 475 | **9 macros**, incl. `\BarrierCostFifteen` |
+| `ws5-2026-09-10-t2-p30` | 315 | 5 280 | **3 macros**, the 30% regime |
+| `ws5-2026-09-10-t2-keying` | 180 | 4 329 | **1 macro**, the keying sensitivity |
+| `ws5-2026-09-10-t1-incomplete` | 12 | 246 | no macro; the discarded sibling, kept as instrument evidence |
+| `fsync-always-2026-09-14` | 45 | 695 | **5 macros**, the 45-run `always` arm |
+| `phase40-stage-10-interactive-2026-09-21` | 2 | 33 | phase-40 committed text evidence |
+| `phase40-stage-30-2026-09-21` | 2 | 33 | phase-40 committed text evidence |
+| `phase40-stage-100-2026-09-22` | 4 | 55 | phase-40, the stage that failed and closed the workstream |
+
+**Eight roots, not nine.** `phase40-deployment-2026-09-18` was withheld — §13.
+
+**The deposit is now nine files, not six.** Deposited names follow the existing
+date-suffix convention: `aep-raw-evidence-2026-09-24.tar.gz`,
+`MANIFEST-2026-09-24.sha256`, `ARCHIVE-METADATA-2026-09-24.json`. Total upload
+**61 MB**.
+
+## 11. The cause is fixed, not just this instance
+
+**The defect.** `build()` read the module-global `EXCLUDED` and wrote it into
+every part's metadata. So the 2026-09-15 extension published the 2026-09-03
+exclusion list and declared nothing about its own coverage. Five roots were
+missed while the metadata looked complete.
+
+1. **`build()` now takes `excluded` and `phase` as parameters.** Each part
+   declares its own omissions. The new part's list names the five roots the
+   extension missed — as an exclusion of its own, so the record corrects itself
+   rather than pretending the gap never existed — plus the incident debris,
+   `stage3-replication-2026-08-13`, phase 53, and the withheld deployment root.
+2. **`scripts/check_archive_covers_macros.py`** (new). Derives the required
+   roots **from `numbers.tex`'s provenance comments**, not by hand, and fails
+   if any root a macro rests on is in no part. It also fails on a bare source
+   filename it cannot attribute rather than defaulting — defaulting bare names
+   to the matrix is the same shape of mistake, and it would have reported the
+   Temporal baseline as covered without looking at its root.
+3. **`--with-phase53` refuses** below 45 runs. A manifest built over a
+   collection still being written does not reproduce.
+
+**The known-positive** (`--selftest`), a synthetic `numbers.tex` with one
+archived root and one invented one:
+
+```
+  orphan root detected                    : PASS
+  archived root NOT falsely reported      : PASS
+  message: a-root-that-was-never-archived-2026-01-01: supplies 1 macro(s) and is
+           in NO archive part -- OrphanMacro.
+selftest: 2 of 2
+```
+
+**And the real-world positive.** Against the two parts as they stood yesterday
+it reproduces the defect exactly — 4 failing roots, 18 macros, naming
+`\BarrierCostFifteen` first. With the third part present:
+
+```
+12 roots supply 150 macro attributions; 40 top-level names across 3 archive part(s)
+every macro's evidence is obtainable: deposited, or tracked.
+```
+
+## 12. The rehearsal
+
+**I ran the whole local half, including every failure mode. I could not run the
+sandbox:** creating a `sandbox.zenodo.org` record needs an account and a
+browser, and this session makes no live calls. **The fetch-by-DOI path remains
+untested** and is still yours.
+
+| # | what | result |
+|---|---|---|
+| **R1** | Verifier given only parts 1 and 2 | **FAILS, exit 1.** *"missing archive(s) ['2026-09-24']. The deposit is three archives"* |
+| **R2** | Part 3 present, its `tar.gz` deleted | **FAILS, exit 1.** *"…/aep-raw-evidence.tar.gz is missing"* — after parts 1 and 2 verify clean, so it is the missing file and not an early abort |
+| **R3** | One byte flipped at offset 5 000 000 of part 3's `tar.gz` | **FAILS, exit 1.** Digest mismatch, `file count 3129 != 12147`, `9019 manifest problems`. The metadata and manifest still MATCH — the corruption is caught by the payload digest, which is the check that has to work |
+| **R4** | All three parts, intact | **PASSES, exit 0.** 26 300 / 18 494 / **12 147** files verified, 0 problems; run directories 1 458 / 1 332 / **665**, each as expected |
+
+R1's message is the one corrected from "two archives" to "three". R3 is the
+"a gate that has never been seen to fail has not been tested" exercise
+`docs/29` §2 asks for, run against the local path instead of the sandbox.
+
+## 13. The one finding that needs you before anything else
+
+`reports/raw/phase40-deployment-2026-09-18/deployment-show.json` carries
+`createdBy` and `lastModifiedBy` naming **a third party's corporate e-mail
+address**. Committed in `08f6e4d`, **already on `origin/main`** — a public
+repository — since 2026-09-18.
+
+I excluded that root and rebuilt. **This contradicts decision A**, which was to
+include all four phase-40 roots; I judged the instruction was given without
+knowledge of the address, and that publishing another person's personal data
+under a DOI is not reversible. The other three phase-40 roots are in and scan
+clean.
+
+Full finding and options:
+`reports/disclosure-phase40-deployment-email-2026-09-24.md`.
+
+## 14. Scans of the new part
+
+Streamed member by member; filenames reported, values never.
+
+| category | result |
+|---|---|
+| `AZURE_OPENAI_API_KEY`, `api-key`, `Ocp-Apim`, Bearer, `sk-`, PEM, AWS, 84-char shape | **0, all clean** |
+| `password`/`secret` assignment | **0** — the Temporal compose files are not in this part |
+| 32-hex values | **0** |
+| e-mail addresses | **2** → §13. **Root withheld; 0 in the part as built** |
+| GitHub handle, ORCID, `C:\Users`, `AzureAD` | **0, all clean** |
+| hostname `KP248` | 1, in `ARCHIVE-METADATA.json` (build-host field) |
+| `/root/aep` | 7, in `ARCHIVE-METADATA.json` (inherited exclusion list) |
+| `/mnt/d/personal/AEP` | 13 792 across 10 basenames — deliberate and disclosed, as in both earlier parts |
+| `gpt-5.6-luna` | 96, in `planner-transcript.jsonl` — the planner deployment alias, already public in `prompts/` |
+
+## 15. What is ready, and what still waits
+
+**Ready, needs nothing:** the third part (built, digest-stable, verified by R4,
+scanned); `verify_published_archive.py` with its third `ARCHIVES` entry and
+corrected wording; `check_archive_covers_macros.py`, passing, with a
+known-positive; `docs/29` §3's corrected description; `build_raw_archive.py`
+with the shared-exclusion-list defect fixed.
+
+**Waiting on phase 53** — 42 of 45 runs at the time of writing:
+
+1. the collection finishes and is analysed, reported and committed;
+2. `python3 scripts/build_raw_archive.py --part3 --with-phase53`, which
+   **rebuilds the part and changes its three digests**;
+3. update the `ARCHIVES` entry's four digests, `files`, `run_dirs`, `roots`;
+4. re-run `check_archive_covers_macros.py` — phase 53's new macros will name a
+   root and the check will require it;
+5. re-run the scans over the rebuilt part;
+6. re-run R4.
+
+Steps 2–6 are about forty minutes and need no decision.
+
+**Waiting on you:** §13, and whether `stage3-replication-2026-08-13` goes in.
+My recommendation, since you asked for one rather than an assumption: **leave
+it out.** It predates rule 5, no macro derives from it
+(`check_archive_covers_macros.py` confirms zero provenance comments name it),
+its design is recorded in phase reports rather than a pre-registration, and it
+is already declared by name in the part's exclusion list with that reason.
+Including it would add a collection nothing cites to a record whose description
+has just been corrected for claiming contents it did not have. If you disagree
+it is one line in `PART3_ROOTS` and a rebuild.
+
+## 16. The description: what it claimed, and what it says now
+
+**Was** (`docs/29` §3, one `<p>` of the paste-ready HTML):
+
+> **2026-09-15:** the trees the first archive did not reach — **the WS-5
+> deployment sweep behind Section VI's fsync-policy and payload-size results**,
+> the real-Temporal (B5) baseline sessions including one voided attempt and one
+> superseded attempt, the WS-4 block-level write-loss cell and its voided arm,
+> and **the 45-run appendfsync=always extension**.
+
+Two of the four things it named were **not in that archive**, and one of them —
+the WS-5 sweep — is where RQ3's headline comes from.
+
+**Now:** three paragraphs, one per part, each stating that part's actual roots,
+plus a fourth headed *"A correction, stated rather than quietly fixed"*
+recording what the description used to claim, that it was wrong, how many
+macros were affected, why it happened, and what now prevents it. It also
+distinguishes the six-run `fsync-always` from the 45-run
+`fsync-always-2026-09-14`, which the old text ran together.
+
+## 17. The sequence you perform, in order
+
+Everything before step 5 is reversible. **Step 6 is not.**
+
+| # | step | reversible? |
+|---|---|---|
+| **0** | Decide §13 (the e-mail) and `stage3-replication` | — |
+| **1** | Wait for phase 53; let the other session analyse, report and commit it | — |
+| **2** | Rebuild with `--with-phase53`; update digests; re-run the coverage check, the scans and R4 | reversible |
+| **3** | Update `docs/29` §1's digest table to nine files | reversible |
+| **4** | **Rehearse on https://sandbox.zenodo.org** — create a record, upload all nine, paste §3's description, publish, run `verify_published_archive.py --doi <sandbox-id>`, then delete one file from the sandbox record and confirm it exits non-zero. **This is the only exercise of the fetch-by-DOI path, which has never run.** Then delete the sandbox draft | reversible |
+| **5** | Open the **existing draft** holding `10.5281/zenodo.22766567` and upload the nine files. **Do not create a new record** — `docs/29` §0, Ruin #1 | reversible until you publish |
+| **6** | **Press Publish** | **IRREVERSIBLE. A published Zenodo file cannot be replaced or withdrawn** |
+| **7** | Confirm the version DOI did not change (`docs/29` §4) | — |
+| **8** | Run `verify_published_archive.py --doi 10.5281/zenodo.22766567` against the real record | — |
+| **9** | Flip `\archivedoistate` RESERVED → PUBLISHED, update the seven other sites, rebuild all four documents, tag | reversible |
+
+At step 9, `claims-to-review` entry 3 closes as RESOLVED **with no manuscript
+text changed** — §6 above.
+
+---
+
+# UPDATE 2 — the rebuild is still not safe, and here is the checklist
+
+Written 2026-09-24 after phase 53 landed. **Still nothing published, and the
+part has deliberately NOT been rebuilt.**
+
+## 18. Why not yet
+
+Phase 53 finished — 45/45 runs, collected, analysed, reported
+(`reports/phase-report-53-abd-immediate-2026-09-24.md`), and the four documents
+rebuilt. **The prediction was REFUTED.**
+
+But its numbers are not in the manuscript yet. `paper/generated/numbers.tex`
+names `abd-immediate` **zero** times, and `scripts/paper_tables.py` is
+uncommitted in the other session's working tree, carrying the `\Abd*` macros
+and the B2 pooled-rate exclusion. Rebuilding the archive part now would freeze
+a manifest against a manuscript that is about to change — the same class of
+mistake as building a part over a collection still being written, which
+`--with-phase53` already refuses.
+
+**Nothing of mine touched `scripts/paper_tables.py`.**
+
+## 19. The pre-rebuild checklist
+
+Run in order. **Every one must hold**; the first that does not is the reason to
+wait. Each line is a command and the answer it must give.
+
+### A. The collection is complete and committed
+
+```sh
+# A1  45 runs, no more and no fewer
+find experiments/results/abd-immediate-2026-09-24 -name run-config.json | wc -l
+#    -> 45
+
+# A2  it is committed, not just on disk
+git ls-files experiments/results/abd-immediate-2026-09-24 | wc -l
+#    -> non-zero
+
+# A3  the pre-registration still precedes the data, by date AND ancestry
+python scripts/check_prereg_order.py; echo $?
+#    -> 0
+```
+
+### B. The other session's work has landed
+
+```sh
+# B1  paper_tables.py is committed -- nothing of the macro work is uncommitted
+git status --porcelain scripts/paper_tables.py
+#    -> empty
+
+# B2  the phase-53 macros exist in the generated file
+grep -c 'newcommand{\?.Abd' paper/generated/numbers.tex
+#    -> 11   (AbdRuns, AbdExecutions, AbdCells, AbdDate,
+#             AbdZeroDispatchApplied, AbdBfourbApplied, AbdBfourbDispatch,
+#             AbdBzeroDupNoReadback, AbdBfourDupNoReadback, AbdBfourDupAuth,
+#             and one more)
+#
+#    NOTE the optional brace. The generator emits BOTH `\newcommand\AbdRuns`
+#    and `\newcommand{\Abd...}`, so a pattern anchored on the brace reports 0
+#    while eleven macros are sitting there. Verified against the real file
+#    after they landed.
+
+# B3  the new root is named in the provenance comments -- this is what makes
+#     the coverage check require it
+grep -c 'abd-immediate-2026-09-24' paper/generated/numbers.tex
+#    -> non-zero
+
+# B4  the B2 exclusion has moved the pooled baseline rates off 0.77/0.83
+grep -A2 'BaselineDupLow}' paper/generated/numbers.tex | head -3
+#    -> 0.74 (and BaselineDupHigh -> 0.78), per the recomputation in
+#       reports/audit-response-2026-09-23.md §1.6. If they are still
+#       0.77/0.83 the exclusion has not been applied and B3 will not hold.
+
+# B5  the generated file matches its generator
+python scripts/check_paper_numbers.py; echo $?
+#    -> 0   (or 39 passed / 2 failed if IEEEtran.cls is absent -- the two
+#            failures are "main.bbl/main.log exists", an environment
+#            difference, not a defect; see the external audit §1.1)
+```
+
+### C. The coverage check now DEMANDS the root — the rebuild's own trigger
+
+```sh
+# C1  this must now FAIL, naming abd-immediate-2026-09-24
+python scripts/check_archive_covers_macros.py; echo $?
+#    -> 1, with
+#       "abd-immediate-2026-09-24: supplies N macro(s) and is in NO archive part"
+```
+
+**C1 failing is the signal.** Before B2/B3 it passes, because nothing cites the
+root and there is nothing to cover. After them it fails, because the manuscript
+now rests on evidence no part carries. **If C1 still passes after B2 and B3
+hold, stop** — either the provenance comments do not name the root by a string
+this check recognises, or the macros are not attributed to it, and rebuilding
+would deposit against a coverage claim that was never tested.
+
+### D. Then, and only then, rebuild
+
+```sh
+# D1  refuses below 45 runs, by construction
+python3 scripts/build_raw_archive.py --part3 --with-phase53 \
+  --output /mnt/d/personal/AEP/aep-raw-archive-p3 \
+  --json /mnt/d/personal/AEP/aep-raw-archive-p3/BUILD-REPORT.json
+#    -> 9 roots, ~12 800 files. Record the three new digests.
+
+# D2  put the new digests into the ARCHIVES entry
+#     scripts/verify_published_archive.py, label "2026-09-24":
+#     manifest_sha256, tar_sha256, tar_gz_sha256, metadata_sha256,
+#     files, run_dirs, roots=9
+
+# D3  the contents test must be updated deliberately, not silently
+python -m pytest tests/test_published_archive_verifier.py -q
+#    -> passes only after EXPECTED_DEPOSIT is reviewed; the digests are not
+#       in that table, but roots/files are in the ARCHIVES entry it guards
+
+# D4  coverage now passes
+python scripts/check_archive_covers_macros.py; echo $?
+#    -> 0
+
+# D5  the part is clean, with the categories added 2026-09-24
+python scripts/scan_archive_for_leakage.py --selftest; echo $?
+#    -> 0, "selftest: 9 of 9"
+python scripts/scan_archive_for_leakage.py \
+  --archive /mnt/d/personal/AEP/aep-raw-archive-p3/aep-raw-evidence.tar.gz
+#    -> third_party_email, azure_principal, corporate_domain,
+#       azure_resource_path, phone_number ALL zero
+
+# D6  R4 again, all three parts
+python3 scripts/verify_published_archive.py \
+  --local .../aep-raw-archive --local .../aep-raw-archive-ext \
+  --local .../aep-raw-archive-p3 --skip-rederive
+#    -> exit 0, "VERIFIED: every archive at this source is byte-for-byte..."
+
+# D7  docs/29 §1's digest table and §3's description updated for nine files
+```
+
+### E. The two things a checklist cannot check
+
+- **`stage3-replication-2026-08-13` stays out** — decided; already declared by
+  name in the part's exclusion list with its reason.
+- **`reports/raw/phase40-deployment-2026-09-18` stays out** — decided, and it
+  stays out even though the working tree is now redacted
+  (`reports/disclosure-phase40-deployment-email-2026-09-24.md` §3.3).
+
+## 20. What now stands between you and publishing
+
+| # | blocker | whose | status |
+|---|---|---|---|
+| 1 | `\Abd*` macros and the B2 exclusion in `numbers.tex` | the other session | **DONE** — landed in `0f46ff5` while §19 was being written. See §21 |
+| 2 | Part 3 rebuilt with phase 53, §19 D1–D7 | mine, once 1 lands | ~40 min, no decisions |
+| 3 | **Sandbox rehearsal** — the fetch-by-DOI path has never run | **you** | needs an account and a browser |
+| 4 | Upload into the existing draft and Publish | **you** | **step 4 is irreversible** |
+
+Everything else is done: the part builds and verifies, the coverage check and
+its known-positive are in, the leakage scan has the third-party categories and
+its own known-positive, `docs/29` §3 states what the parts actually contain,
+and the two suite defects are fixed.
+
+---
+
+## 21. The checklist fired, within the hour
+
+`0f46ff5` *"generator: exclude the mis-mapped cell from every pooled baseline
+rate"* landed while §19 was being written, and every precondition it names is
+now green:
+
+| check | expected | actual |
+|---|---|---|
+| A1 runs | 45 | **45** |
+| A2 committed | non-zero | **committed** (`800d37f`) |
+| A3 prereg order | exit 0 | **exit 0** |
+| B1 `paper_tables.py` clean | empty | **committed** in `0f46ff5` |
+| B2 `\Abd*` macros | 11 | **11** |
+| B3 root named in provenance | non-zero | **11** |
+| B4 pooled rates moved | 0.74 / 0.78 | **`\BaselineDupLow` 0.74, `\BaselineDupHigh` 0.78** |
+| **C1 coverage check FAILS** | exit 1, naming the root | **exit 1** — *"abd-immediate-2026-09-24: supplies 10 macro(s) and is in NO archive part"* |
+
+**C1 is the point.** The check went from passing to failing the moment the
+manuscript started resting on a collection no archive part carries — which is
+the condition that was invisible for nine days when the same thing happened to
+the five WS-5 and `fsync-always` roots. It named the root, listed the macros,
+and did it without anyone remembering to look.
+
+**The rebuild was NOT performed**, per instruction. §19 D1–D7 is what remains,
+and it is now unblocked.
+
+---
+
+# UPDATE 3 — part 3 is rebuilt and the deposit is ready to publish
+
+Written 2026-09-25. **Nothing was published and no upload was started.**
+Author decision: rebuild now, `numbers.tex` is settled.
+
+## 22. The §19 checklist, run immediately before the rebuild
+
+Not trusted from an earlier green — re-run at `b71ad7a` in the minutes before
+the build:
+
+| check | expected | actual |
+|---|---|---|
+| A1 runs with a `run-config.json` | 45 | **45** |
+| A2 committed | non-zero | **14 files** |
+| A3 `check_prereg_order.py` | exit 0 | **0** |
+| B1 `paper_tables.py` clean | empty | **empty** |
+| B2 `\Abd*` macros | 11 | **11** |
+| B3 root named in provenance | non-zero | **11** |
+| B4 pooled rates | 0.74 / 0.78 | **0.74 / 0.78** |
+| B5 `check_paper_numbers.py` | exit 0 | **0** |
+| **C1 coverage check FAILS** | exit 1, naming the root | **exit 1** — *"abd-immediate-2026-09-24: supplies 10 macro(s) and is in NO archive part"* |
+
+Also confirmed the manuscript is settled: the last `paper/` change was
+`82247f9`, five commits back.
+
+## 23. The rebuilt part
+
+| | before | **after** |
+|---|---|---|
+| roots | 8 | **10** |
+| files in manifest | 12 147 | **13 485** |
+| run directories | 665 | **729** (729 by `-r<N>`, 729 by `run-config.json` — the two agree) |
+| payload uncompressed | 356 739 129 | **385 567 093 bytes** |
+| `aep-raw-evidence.tar` | — | 402 688 000 bytes, sha256 `75077ebdaa48c208…` |
+| **`aep-raw-evidence.tar.gz`** | 18 984 605 | **20 557 415 bytes**, sha256 `752de049bce5627e…` |
+| `MANIFEST.sha256` | — | 2 280 002 bytes, sha256 `88fa47ed05d73883…` |
+| `ARCHIVE-METADATA.json` | — | 13 911 bytes, sha256 `f1dde7da5ee2dcec…` |
+
+**Two roots added:**
+
+| root | runs | files | why |
+|---|---|---|---|
+| `abd-immediate-2026-09-24` | 45 | 1 052 | Phase 53. Supplies ten macros; the reason C1 was failing |
+| `b2-s4-2026-09-14-ABORTED-order-mismatch` | 19 | 286 | Retention kept it, archiving had missed it. In neither git nor any part until now |
+
+**Total upload: 69 MB across nine files.**
+
+## 24. Every verification, re-run after the rebuild
+
+| check | result |
+|---|---|
+| **`check_archive_covers_macros.py`** | **exit 0** — *"every macro's evidence is obtainable: deposited, or tracked"*; 13 roots, 156 attributions, 42 top-level names across 3 parts |
+| `scan_archive_for_leakage.py` over the new part, 17 categories | **`No blocking category present.`** All six credential/personal-data categories **0**; the five 2026-09-24 additions **0** |
+| independent pattern scan, 20 patterns | **0** on every credential and identity pattern |
+| non-zero categories | only the disclosed ones, 1 distinct value each: `KP248`, `D:\134`, `6.6.114.1` (the kernel version), plus the `/root/` and `/mnt/d/` layout paths |
+| **R1** only parts 1+2 | **FAILS exit 1** — *"missing archive(s) ['2026-09-24']"* |
+| **R2** part 3's `tar.gz` deleted | **FAILS exit 1** — *"is missing"* |
+| **R3** one byte flipped at offset 6 000 000 | **FAILS exit 1** — digest mismatch, `file count 3921 != 13485`, `9565 manifest problems` |
+| **R4** all three parts intact | **PASSES exit 0** — 26 300 / 18 494 / **13 485** files, 0 problems; *"VERIFIED: every archive at this source is byte-for-byte the one this repository describes"* |
+
+## 25. `docs/29` corrected for three parts
+
+§0's shape block now says **three archives, nine files** and lists all nine;
+Ruin #2 now says all three are required and tells you to run the coverage check
+before uploading; §0c's caveat that the extension had never been scanned is
+**gone**, replaced by the results for all three; §1 is the nine-file digest
+table; and §3's contents paragraph names phase 53, the aborted session, and the
+one root deliberately withheld with the reason.
+
+## 26. THE PUBLICATION SEQUENCE
+
+Steps marked **YOURS** need a browser, a Zenodo login or a decision. **Step 6 is
+irreversible.**
+
+### Step 0 — a last look. 2 minutes, not yours.
+
+```sh
+python scripts/check_archive_covers_macros.py     # expect exit 0
+python scripts/check_prereg_order.py              # expect exit 0
+python3 scripts/verify_published_archive.py \
+  --local <D>/aep-raw-archive \
+  --local <D>/aep-raw-archive-ext \
+  --local <D>/aep-raw-archive-p3 --skip-rederive  # expect VERIFIED
+```
+
+All three were green at `b71ad7a`. Re-run if anything has changed since.
+
+### Step 1 — YOURS. Rehearse on the sandbox. Reversible.
+
+**This is the only exercise of the fetch-by-DOI path, which has never run.**
+
+1. Go to **https://sandbox.zenodo.org** and create a record. This is the one
+   place in the whole procedure where you create anything.
+2. Upload all **nine** files, from `docs/29` §1's table.
+3. Paste the metadata from **`docs/29` §3** — upload type `Dataset`; the title;
+   author `Khan, Hamza` with ORCID `0009-0005-9380-2188`; the description HTML
+   block; version `1.0.0`; language `eng`; the ten keywords; licence
+   `MIT License`; access `Open Access`; and the one related identifier — the
+   GitHub URL, relation *is supplement to*, resource type *Software*.
+4. **Publish it on the sandbox** so it gets a resolvable sandbox DOI.
+5. Check the seven things in `docs/29` §2: nine files with §1's sizes; the
+   description renders as headings and a table, not raw HTML; all three manifest
+   digests appear and are copyable; the date-suffix paragraph is present; the
+   related identifier is a link; the licence shows MIT; the author name renders
+   as you want it cited.
+6. Run the verifier against the sandbox DOI:
+
+   ```sh
+   python3 scripts/verify_published_archive.py \
+     --doi 10.5281/zenodo.<sandbox-id> --json /tmp/sandbox.json
+   ```
+
+7. **Then delete one file from the sandbox record and re-run it.** It must exit
+   non-zero with *"the record … is missing 1 of 9 required files"*. A gate that
+   has never been seen to fail has not been tested.
+8. Delete the sandbox draft.
+
+### Step 2 — not yours. Nothing. Everything else was done.
+
+### Step 3 — YOURS. Open the existing draft. Reversible.
+
+Go to **https://zenodo.org/deposit** and open the draft holding
+**`10.5281/zenodo.22766567`** → Edit.
+
+> **Do not create a new record.** That identifier is already in
+> `paper/main.tex:125`, all four built PDFs, `README.md`, `ARTIFACT.md`,
+> `CITATION.cff` and `docs/36`. A new record mints a *different* DOI and orphans
+> every one of them. `docs/29` §0, Ruin #1.
+
+### Step 4 — YOURS. Upload the nine files. Reversible until you publish.
+
+From `D:\personal\AEP\`:
+
+| from | upload as |
+|---|---|
+| `aep-raw-archive\MANIFEST.sha256` | `MANIFEST-2026-09-03.sha256` |
+| `aep-raw-archive\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-03.json` |
+| `aep-raw-archive\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-03.tar.gz` |
+| `aep-raw-archive-ext\MANIFEST.sha256` | `MANIFEST-2026-09-15.sha256` |
+| `aep-raw-archive-ext\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-15.json` |
+| `aep-raw-archive-ext\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-15.tar.gz` |
+| `aep-raw-archive-p3\MANIFEST.sha256` | `MANIFEST-2026-09-24.sha256` |
+| `aep-raw-archive-p3\ARCHIVE-METADATA.json` | `ARCHIVE-METADATA-2026-09-24.json` |
+| `aep-raw-archive-p3\aep-raw-evidence.tar.gz` | `aep-raw-evidence-2026-09-24.tar.gz` |
+
+**Rename on upload — the date suffix is required**, because one record cannot
+hold three files called `aep-raw-evidence.tar.gz`. Renaming changes no bytes, so
+every digest in `docs/29` §1 is equally a digest of the local file and of the
+deposited one.
+
+**Do not select the whole folder.** `aep-raw-archive\` also contains two loose
+run directories (`ws6-b5-s1-2026-09-08\`, `…-attempt3\`) that are already inside
+the tarballs. Select the three files by name in each folder.
+
+Upload the small files first, so a reader sees the map before the territory.
+
+### Step 5 — YOURS. Paste the description. Reversible.
+
+The whole HTML block from **`docs/29` §3**, which now states what the three parts
+actually contain. Copy it; do not retype it.
+
+### Step 6 — YOURS. PUBLISH. **THIS IS IRREVERSIBLE.**
+
+A published Zenodo file cannot be replaced or withdrawn. New versions can be
+added; this one cannot be taken back. Everything before this point is cheap.
+
+### Step 7 — YOURS. Confirm the version DOI did not change.
+
+Zenodo shows two DOIs: a **version** DOI for this exact deposit, and a
+**concept** DOI that always resolves to the newest. `10.5281/zenodo.22766567` is
+the version DOI of this draft and **must be unchanged after publishing.**
+
+> **If it changed, stop.** Something created a new record, and step 9 onward is
+> wrong until that is resolved.
+
+Record the concept DOI in `docs/36` for completeness; the manuscript does not
+cite it.
+
+### Step 8 — not yours. The verifier, against the real record.
+
+```sh
+python3 scripts/verify_published_archive.py \
+  --doi 10.5281/zenodo.22766567 \
+  --json reports/raw/verify-published-archive.json
+```
+
+It resolves the DOI, refuses a record missing any of the nine files, downloads
+**from Zenodo rather than from disk**, checks twelve digests, extracts 26 300 /
+18 494 / 13 485 files and verifies each against its own manifest, counts run
+directories both ways, and re-derives the analysis products for the 2026-09-03
+part. Anything other than `VERIFIED` is a finding to report, **not** to
+re-upload over.
+
+### Step 9 — not yours. Flip the state. Reversible.
+
+`paper/main.tex:126`: `\archivedoistate{RESERVED}` → `PUBLISHED`. Leave
+`\archivedoi` alone. **Exactly one manuscript sentence changes**, Section 8's,
+from *"the Zenodo record reserved under DOI … begins resolving when the record
+is published"* to *"deposited at https://doi.org/10.5281/zenodo.22766567."*
+
+Then the seven non-LaTeX sites in `docs/29` §5 — `README.md`, `ARTIFACT.md`,
+`CITATION.cff` (three places), `paper/arxiv-metadata.md` (three places) and
+`docs/36` — rebuild all four documents supplementaries-first, and tag.
+
+**And `claims-to-review.md` entry 3 closes as RESOLVED with no manuscript text
+changed at all**, because `voided/` genuinely is in the 2026-09-03 part and the
+only thing that was false was the word *published*.
+
+### What is no longer a blocker
+
+`check_archive_covers_macros.py` was the last non-author blocker and it now
+exits 0. **Everything between here and a resolving DOI is steps 1 and 3–7 — all
+yours.**

@@ -1,0 +1,6 @@
+-------------------------------------------------------------------
+TOTAL                                  2528    223    91%
+Required test coverage of 90% reached. Total coverage: 91.18%
+1801 passed, 3 warnings in 282.48s (0:04:42)
+pytest exit=
+OK: 1801 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed

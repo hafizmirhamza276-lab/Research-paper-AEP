@@ -1,0 +1,30 @@
+==============================================================================
+AEP evaluation matrix plan (aep.matrix/1)
+==============================================================================
+  platform             Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+  python               3.13.0
+  real SIGKILL         True
+  suspend disabled     True   (E5: absolute timing is excluded from every run without this)
+  matrix seed          20260806
+  repetitions/cell     6 (2 runs x 3 executions)
+  workers per run      1
+  cells (total)        7
+  cells (applicable)   7
+  cells (not applic.)  0
+  runs planned         4
+  estimated wall time  0.03 h (124.4 s)
+
+  by tier:
+    tier 1:    4 runs,  0.03 h   E3: POSITIVE_ONLY_READBACK and NO_READBACK -- where the known-ambiguity claim lives, and had no evidence at all
+
+  regimes (a regime is a condition, not a dimension):
+    (session-3)            p(crash)=1.0  runs=4    shape=2 x 3
+      every execution crashed, no infrastructure fault
+
+  cell list:
+
+    tier  regime               system                               crash point                        endpoint         keying               runs
+    1     (session-3)          AEP_FULL                             mid_dispatch                       notifications    CALLER_REFERENCE     2
+    1     (session-3)          B0_NAIVE_RETRY                       mid_dispatch                       notifications    CALLER_REFERENCE     2
+
+==============================================================================

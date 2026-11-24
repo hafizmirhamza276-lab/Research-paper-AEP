@@ -1,0 +1,117 @@
+=== G0: adjudication of the 34 skipped tests ===
+
+--- Rule 8 start-check ---
+$ git status -sb
+## main...origin/main
+?? .scratch/
+?? reports/raw/g0-skip-adjudication.txt
+
+$ git rev-list --left-right --count origin/main...HEAD
+0	0
+
+$ git log --oneline -3
+d4f5c1f Phase 4 Session 1: rule 8 discharged -- pushed, CI green
+c5592b9 Phase 4 Session 1: the report
+118731c Phase 4: matrix closeout -- complete E3 comparison, fsync curve, frozen results
+
+--- CI on the session tip (d4f5c1f), run 31169005422 ---
+Suite (py3.13, Redis from compose)  -> success
+WAITAOF durability (compose)        -> success
+Citation ranges (docs/22)           -> success
+
+Gate step output, main job (job 92836315490, step 9):
+  OK: 1697 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed
+Gate step output, WAITAOF job (job 92836315462, step 8):
+  OK: 4 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed
+
+--- The 34 skips: where they come from ---
+$ uv run --frozen python -m pytest <the 7 guarded files> -q -ra   # no CI env vars
+SKIPPED [1] tests\test_recovery_durability_barrier.py:155: set AEP_PHASE2_REDIS_INTEGRATION=1 and REDIS_URL to the dedicated Redis 7.2+ AOF DB 15
+SKIPPED [1] tests\test_recovery_durability_barrier.py:203: set AEP_PHASE2_REDIS_INTEGRATION=1 and REDIS_URL to the dedicated Redis 7.2+ AOF DB 15
+19 passed, 34 skipped in 0.71s
+
+$ REDIS_URL=redis://127.0.0.1:6381/15 AEP_PHASE2_REDIS_INTEGRATION=1 \
+  AEP_PHASE2_REDIS_CONTAINER=aep-phase2-redis72 pytest <same 7 files> -q -ra
+.....................................................                    [100%]
+53 passed in 61.17s (0:01:01)
+
+--- Negative control: does the gate actually bite? ---
+$ python scripts/check_pytest_gates.py --junit <the 34-skip JUnit> --output <its capture> --minimum-tests 1
+GATE FAILED: 34 test(s) were SKIPPED. In CI every precondition is provisioned, so a skip is an unmet environment assumption, not a legitimate outcome. Re-run with -ra to see which, and either fix the environment or delete the test.
+exit=1
+
+$ python scripts/check_pytest_gates.py --junit <the provisioned JUnit> --output <its capture> --minimum-tests 1
+OK: 53 tests, 0 skipped, 0 failed, 0 errors, 0 xpassed
+exit=0
+
+--- The 34, enumerated (all pass in CI-Linux and in local-Windows-provisioned) ---
+ 1  experiments.baselines.tests.test_b3_no_barrier::test_confirm_durable_issues_no_waitaof
+      guard: fakeredis cannot prove WAITAOF
+ 2  experiments.baselines.tests.test_b3_no_barrier::test_the_real_barrier_does_issue_waitaof
+      guard: fakeredis cannot prove WAITAOF
+ 3  experiments.baselines.tests.test_b3_no_barrier::test_validate_startup_is_not_ablated
+      guard: fakeredis cannot prove WAITAOF
+ 4  experiments.harness.tests.test_composition::test_the_runner_validates_with_no_test_authorisation
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+ 5  experiments.harness.tests.test_composition::test_the_connector_declares_a_contract_capability
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+ 6  experiments.harness.tests.test_composition::test_a_crash_injector_does_not_change_the_mode
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+ 7  experiments.harness.tests.test_composition::test_the_composition_dispatches_a_real_mutation
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+ 8  experiments.harness.tests.test_composition::test_the_recovery_service_is_built_for_the_same_connector_name
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+ 9  experiments.harness.tests.test_composition::test_cleanup_removes_only_the_keys_this_run_created
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+10  experiments.harness.tests.test_composition::test_no_harness_module_names_a_test_authorisation
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+11  experiments.harness.tests.test_composition::test_no_harness_module_reaches_the_oracle_routes
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+12  experiments.harness.tests.test_faults::test_the_declared_proxy_exists_and_points_at_redis
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+13  experiments.harness.tests.test_faults::test_redis_is_reachable_through_the_proxy
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+14  experiments.harness.tests.test_faults::test_a_partition_black_holes_traffic_and_healing_restores_it
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+15  experiments.harness.tests.test_faults::test_healing_an_unpartitioned_proxy_is_not_an_error
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+16  experiments.harness.tests.test_faults::test_an_undeclared_proxy_is_refused_rather_than_created
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+17  experiments.harness.tests.test_faults::test_a_restart_replays_the_appendonly_file
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+18  experiments.harness.tests.test_faults::test_the_restart_record_is_json_ready_for_the_run_log
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+19  experiments.mock_api.tests.test_evaluation_dispatch::test_the_runner_carries_no_test_authorisation
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+20  experiments.mock_api.tests.test_evaluation_dispatch::test_the_connector_declares_a_contract_capability
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+21  experiments.mock_api.tests.test_evaluation_dispatch::test_evaluation_mode_dispatches_a_real_mutation_to_the_mock_api
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+22  experiments.mock_api.tests.test_evaluation_dispatch::test_one_execution_produces_exactly_one_applied_mutation
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+23  experiments.mock_api.tests.test_evaluation_dispatch::test_the_applied_mutation_reads_back_as_applied
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+24  experiments.mock_api.tests.test_evaluation_dispatch::test_a_mutation_that_was_never_dispatched_reads_back_as_not_applied
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+25  experiments.mock_api.tests.test_evaluation_dispatch::test_the_mock_api_never_saw_protected_material_it_should_not_have
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+26  tests.test_evaluation_composition::test_evaluation_mode_startup_passes_without_any_test_flag
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+27  tests.test_phase2_waitaof_integration::test_cas_and_waitaof_are_ordered_on_the_same_pinned_connection
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+28  tests.test_phase2_waitaof_integration::test_acknowledged_real_waitaof_barrier_permits_dispatch
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+29  tests.test_phase2_waitaof_integration::test_waitaof_command_failure_prevents_all_provider_calls
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+30  tests.test_phase2_waitaof_integration::test_intent_and_resolution_survive_controlled_redis_restart
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+31  tests.test_recovery_durability_barrier::test_recovery_resolves_an_orphan_with_the_production_barrier
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+32  tests.test_recovery_durability_barrier::test_the_barrier_is_validated_once_not_per_resolution
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+33  tests.test_recovery_durability_barrier::test_a_barrier_that_fails_validation_stops_the_resolution
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+34  tests.test_recovery_durability_barrier::test_a_barrier_without_a_startup_contract_still_works
+      guard: AEP_PHASE2_REDIS_INTEGRATION / REDIS_URL unset
+
+TOTAL: 34

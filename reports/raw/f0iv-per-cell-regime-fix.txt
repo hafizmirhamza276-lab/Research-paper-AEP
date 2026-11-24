@@ -1,0 +1,19 @@
+=== The per-cell regime defect: failing, then passing ===
+
+Defect: experiments/analyze.py build_per_cell() grouped by
+  (system, crash_point, response_class, readback_keying)
+with no regime. Session 3B banned Table 1 for pooling regimes and directed
+readers to per-cell-metrics.csv -- which could pool them too: p0 and
+redis-kill-preack both report crash_point='none'.
+
+$ pytest experiments/tests/test_per_cell_regimes.py -q   # pre-fix (regime removed from key)
+5 failed in 0.19s
+FAILED test_the_two_crash_free_regimes_do_not_merge_into_one_cell
+FAILED test_session_threes_regime_is_labelled_rather_than_left_blank
+FAILED test_regime_is_the_first_column_and_names_match_the_attributes
+FAILED test_every_per_cell_row_carries_the_regime
+FAILED test_the_per_execution_file_carries_the_regime_too
+
+$ pytest experiments/tests/test_per_cell_regimes.py -q   # post-fix
+.....                                                                    [100%]
+5 passed in 0.04s

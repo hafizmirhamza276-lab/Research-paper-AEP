@@ -1,0 +1,31 @@
+=== is .build-provenance.json tracked or ignored? ===
+.gitignore:111:paper/.build-provenance.json	paper/.build-provenance.json
+  not tracked
+
+=== assembling the documented ARCHIVE: 432 raw runs + the TRACKED analysis ===
+  run dirs: 433
+  analysis: the repository's tracked copy (15 files)
+  (the raw tree's own analysis/ still holds the pre-rebuild_comparisons
+   file -- Phase 11 finding F2 -- so the tracked one is substituted)
+
+=== byte-comparing against paper/generated/ ===
+  IDENTICAL numbers.tex
+  IDENTICAL table-ablation.tex
+  IDENTICAL table-ambiguity-by-crashpoint.tex
+  IDENTICAL table-deployment-choice.tex
+  IDENTICAL table-latency.tex
+  IDENTICAL table-outcomes.tex
+
+=== the state-machine figure against the implementation ===
+OK: paper/figures/state-machine.tex matches aep_core.core.intents
+
+=== the two analysis figures ===
+  IDENTICAL figure-1-undetected-vs-ambiguity.pdf (apart from 9 bytes of PDF CreationDate)
+  IDENTICAL figure-2-duplicates-by-crash-point.pdf (apart from 9 bytes of PDF CreationDate)
+
+reproduce-figures: VERDICT -- every committed table and macro file is
+byte-identical to a fresh regeneration from the frozen CSVs, the
+state-machine figure matches the implementation, and any analysis figure
+compared above matched outside its PDF timestamp. Anything reported as
+SKIPPED was not checked.
+exit=0

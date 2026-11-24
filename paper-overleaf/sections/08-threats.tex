@@ -1,0 +1,410 @@
+\section{Threats to Validity}
+\label{sec:threats}
+
+% Organised as construct / internal / external / conclusion validity, one threat
+% stated once. Material enumerated rather than argued -- the coverage gaps of the
+% fault-injection matrix, and the measurement incidents found during collection
+% -- is in the supplementary material, pointed to from the subsection it belongs
+% to. check_paper_numbers.py scans paper/supplementary.tex as well as
+% main.tex and sections/*.tex, so a macro that moved with that material is still
+% checked for use.
+
+\subsection{Construct validity}
+
+\paragraph{The barrier's durability benefit is measured on an emulated fault,
+not a real power cut} \Cref{sec:eval-durability} injects the fault class
+\texttt{WAITAOF} defends against, loss of the page cache, with a
+\texttt{dm-flakey} target in \texttt{drop\_writes} mode, and the result is
+unambiguous ($\FlakeyAckSurvived{}$ acknowledged records survive,
+$\FlakeyUnackLost{}$ unacknowledged ones do not). What remains is that
+\texttt{drop\_writes} is an \emph{emulation}: faithful where it matters
+(writes after a chosen instant never reach the platter, everything
+\texttt{fsync}-ed before it does) and unfaithful in that real power loss can
+tear a sector, can lose writes a device claimed to have committed to its own
+cache, and does not stop at a chosen boundary. Those differences make real
+hardware worse, so the direction holds and the precision does not: on a device
+with a lying write cache \texttt{fsync} does not mean what the barrier assumes,
+a property AEP inherits from every system that trusts it. The probe also
+phase-aligns to a just-completed fsync, so $\FlakeyUnackLost{}$ is the rate for
+a worst-placed cut rather than a uniform one.
+
+\paragraph{The write-loss result is a refutation, and it is reported as one}
+\Cref{sec:eval-writeloss-cell} runs both arms under the write-loss fault and
+refutes what we registered: neither arm withheld, because \texttt{WAITAOF}
+returned success after the device had stopped accepting writes. The threat that
+remains here is the one that result creates rather than settles: the
+durability guarantee is bounded to storage that reports its own failures, and
+this paper contains no evidence about storage that does not. The finding, its
+counts and its bounds are in \cref{sec:eval-writeloss-cell} and are not repeated
+here.
+
+\paragraph{The write-loss probe runs several layers above hardware, and does not
+need to be closer} The \texttt{dm-flakey} target sits on a loop device backed by
+a file on the WSL2 root filesystem, itself a virtual disk on the host. The
+layering is irrelevant to the claim, because \texttt{dm-flakey} \emph{is} the
+boundary under test: the experiment asks whether a \texttt{WAITAOF}
+acknowledgment corresponds to bytes that have crossed a chosen point in the
+storage path before that point stops accepting writes, and everything below the
+target is on the far side of it in both arms equally. What the layering
+\emph{would} threaten is a claim about absolute fsync latency on real hardware,
+which we do not make from this probe, since the barrier's cost comes from
+the deployment table in the supplementary material; or a claim that a
+real power cut cannot do worse,
+which we explicitly do not make above.
+
+\paragraph{No process-level fault can exercise the barrier's durability at all}
+Stated separately because a reader is most likely to have assumed the other way.
+\texttt{appendfsync everysec} defers the \texttt{fsync(2)} and not the
+\texttt{write(2)}, so a \texttt{SIGKILL} of Redis loses nothing that
+\texttt{appendonly yes} was not already keeping ($\ProcessKillUnackLost{}$, and
+$n{=}\KillCanaryN{}$ canaries in the ablation cells). \textbf{Under a process
+fault the barrier's contribution is prevention (\cref{sec:eval-prevention},
+$p=\UnwantedP{}$, replicated at
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented)
+and not durability}, and any reading of the barrier as protecting the record
+from a crashed Redis process is wrong.
+
+\paragraph{The barrier is evaluated under crash faults only} Every prevention
+measurement here delivers an F3 crash-stop of the state store, a class in which
+the arms are separated by a \emph{timing} difference and nothing else: AEP-full
+has one extra Redis-dependent step, and the fault must land in a window B3 has
+already left. That window can be narrowed and measured
+(\cref{sec:eval-prevention}) but not closed: a fault that guarantees
+\texttt{WAITAOF} cannot return also blocks the two Redis calls B3 makes after
+the same checkpoint. The arm that would separate them by construction,
+disabling the fsync at the checkpoint alone, was designed and not run: it is
+a configuration change rather than a fault, it instantiates a failure class the
+model does not contain, and the controlled fault had already reduced the
+between-session spread to \ArmASpreadMax{} count per class. So the prevention
+guarantee is evaluated where durability is \emph{raced for} and lost, not where
+it is \emph{unavailable}; the latter is untested.
+
+\paragraph{The mock provider's realism} The endpoint is a purpose-built service
+with a transactionally written ground-truth ledger, run at the delay, timeout
+and error rates \cref{sec:eval-setup} states. It is realistic in the dimension
+the experiment turns on (its reconciliation capability, the independent
+variable of \cref{tab:outcomes}) and unrealistic in most others: no
+authentication, no rate limits, no partial writes, no schema evolution, one
+mutation shape. A real legacy endpoint may also \emph{misdeclare} its
+capability, which the protocol cannot detect (\cref{sec:model-endpoint}); we
+validate the capability's shape, never its truthfulness.
+
+\paragraph{The dispatch guard assumes trusted same-process code} The guard
+prevents accidental or ordinary control-flow bypass through the supported
+dispatch API, and its registry detects copying, reuse and scope mismatch. It is
+not a cryptographic capability: Python's underscore naming,
+object-construction checks and closure placement are not security boundaries,
+and code running in the same interpreter can reach module internals or bypass
+the API altogether. The implementation therefore enforces a protocol invariant
+only under a trusted-code assumption; a hostile-extension threat model would
+require a separately enforced process or service boundary.
+
+\paragraph{B4 is not Temporal} B4 shares exactly one mechanism with a production
+durable-execution engine: durable history, replay, and at-least-once activity
+re-execution. It does not model heartbeating, backoff timing, task queues,
+versioning, or determinism checking. Its re-execution policy is the vendor's
+documented default and is quoted as such~\cite{temporal-retry}, but the decision
+is our code. No claim about Temporal's throughput, latency, maturity or
+correctness as a product is made or supported anywhere in this paper. B4 and B4b
+\emph{bracket} the configuration space rather than survey it: a deployment could
+set Maximum Attempts to 3, add a heartbeat, or make the activity idempotent.
+The first two land between our two points on the same duplicate/loss trade, and
+the third leaves the problem this paper is about.
+
+\paragraph{B4 is our model of a durable-execution engine, and no rate here is
+the engine's} \Cref{sec:eval-rq1} reports the production engine run against the
+same endpoint in both configurations B4 and B4b instantiate, together with the
+four things that bound it. The threat this leaves is narrow: every B4 and B4b
+rate in this paper is our implementation's, and no rate here should be read as
+any engine's. We registered that obligation before collecting the engine data
+rather than after seeing it. We do not compare the engine's rates against B4's,
+for the reason \cref{sec:eval-rq1} gives.
+
+\paragraph{Declared ambiguity is not evaluated as an operational outcome} The
+paper measures how often AEP declares ambiguity and shows that it never
+substitutes a silent failure for it. It does \emph{not} show that declaring is
+better in practice; that would require an operator study, and we have run none.
+The argument that a declared incident beats an undiscovered one is a normative
+claim about failure handling, not a result of this evaluation. Relatedly, the
+artifact has no escalation \emph{mechanism} (\cref{tab:nonclaims}): reaching the
+terminal state pauses the execution and alerts nobody.
+
+\paragraph{Test counts are not protocol assurance} The suite's size is evidence
+about the artifact's hygiene, not about the protocol's behavior under faults.
+The evidence for the latter is the fault-injection matrix.
+
+\subsection{Internal validity}
+
+\paragraph{The decomposition narrows our own novelty claim}
+\Cref{sec:eval-detection} attributes the detection guarantee to the pre-dispatch
+record and the transition table's missing re-entry edge, not to the barrier
+machinery of contribution C2. The two claims therefore rest on different
+evidence. Detection rests on write-ahead logging plus a state-machine property
+that is a few lines of Lua, measured across the whole matrix. Prevention rests
+on the barrier, and is evaluated at one crash point on one host, a narrower
+scope. Within it the effect replicated across \ReplicationSessions{}
+further sessions at
+[\ReplicationPreventedLow{},\,\ReplicationPreventedHigh{}] effects prevented,
+the only session-clustered interval in this paper that excludes zero. The
+composition being novel was never the argument (\cref{sec:related}); what is new
+is the semantics, and the ablation says which half delivers which under the
+faults it covers.
+
+The cell is no longer one collection under one injector.
+\Cref{sec:eval-prevention} leads with a \emph{controlled} fault (the
+container frozen before it is killed, landing in \ControlledLanding{}\,ms
+against \UncontrolledLanding{}\,ms) over \ArmASessions{} sessions and all
+\ArmAClasses{} capability classes. AEP-full's unwanted-applied rate is
+\ArmAAepRate{} against B3's \ArmABthreeRate{}, with a between-session spread of
+\ArmASpreadMax{} count per class: a measured quantity with a stated spread
+rather than one draw from a distribution we could only name. \textbf{It is
+bounded by measurement rather than by prediction, and that cost us a
+pre-registration.} We registered [\ArmABoundLow{},\,\ArmABoundHigh{}] before
+collecting, derived from the injector's landing latency as a fraction of the
+\texttt{WAITAOF} window, and the observed \ArmAAepRate{} fell \emph{below} it.
+Both of the model's premises fail on measurement: \ModelAcksPastLanding{} of
+\ModelAckN{} uncontrolled runs acknowledged after that landing had supposedly
+passed and the same injector call runs \ModelInSituRatio{}$\times$ the bench
+figure in situ, and the wait is not uniform: \ModelEmpiricalWindow{} of waits
+fall under \ControlledLanding{}\,ms where uniformity assigns
+\ModelUniformWindow{}. Take the measured rate and its spread, not the bound.
+
+\textbf{The residual is real and irreducible under this fault class.} AEP-full
+still applied \ArmAAepApplied{} effects in \ArmAAepN{} executions, and no
+crash-class fault can drive that to zero, for the reason given under construct
+validity. The uncontrolled cell agrees in direction and its magnitude still
+moves: \ReplicationSessions{} collections ranged
+\ReplicationAepMin{}--\ReplicationAepMax{} applied effects out of
+\AepKillRuns{}. Attributing that movement to kill latency did not succeed at
+this design's precision: \KillLatencyPerSession{}\,ms per session, mean
+\KillLatencyMean{}\,ms, 95\% interval
+[\KillLatencyLow{},\,\KillLatencyHigh{}], a half-width
+\KillLatencyPrecisionRatio{} times that mean, containing zero because the
+sessions disagree. \UnwantedPrevented{} is one draw from that distribution;
+\ArmAAepRate{} is not.
+
+\paragraph{The detection finding has no referent outside this artifact} The
+decomposition above is established by an ablation, AEP-full against itself
+with the barrier removed, and an ablation is internal by construction. That
+is the right instrument for \emph{attributing} an effect to a mechanism, but it
+cannot corroborate the resulting claim from outside. Nothing external to this
+artifact establishes that a pre-dispatch record without an fsync barrier
+suffices for detection: the proposition is supported by two systems we wrote,
+measured by a harness we wrote, against a provider we wrote. The oracle's
+independence (below) addresses whether we counted correctly, not whether the
+finding generalizes beyond our implementation of the pattern. That is the
+structural cost of the instrument, and it applies to the claim this paper
+most depends on.
+
+\paragraph{The matrix found defects in our own measurement, including one that
+would have inflated counts} Three are on the record: a resume defect that
+merged stale event shards into a re-attempted run's log, double-counting
+executions; a supervisor that abandoned its lease instead of waiting, alongside
+non-idempotent execution-state seeding, both flattering a \emph{baseline} and
+so biasing against our own hypothesis; and a destructive integration suite run
+beside a live collection, which replaced the matrix's Redis underneath it. All
+three are fixed and the affected runs re-collected; none of the discarded runs
+contributes a number here. The runner now refuses to start beside a host-level
+fault injector and records the server's \texttt{run\_id} with every run, and
+the supplementary material gives each incident in full. A fault-injection
+harness is a stronger verification tool than a unit suite, which cuts both
+ways: there may be defects it has not found.
+
+\paragraph{Ambiguity is counted from the oracle, not from self-report} A system
+that declared ambiguity liberally could otherwise score well by saying ``I do
+not know'' about everything. Duplicates and lost effects are counted by
+comparing the provider's independently written ledger against the system's
+records; the analysis is prevented by a parsed source gate from reading live
+protocol state.
+
+\paragraph{The oracle is independent, not infallible} The provider ledger is
+written outside the systems under test, and every completed run is reconciled
+against it, but the provider and ledger share one implementation and one host.
+One voided run demonstrates that this oracle can fail: its event log and ledger
+disagreed while sibling and repeated runs agreed. The repository retains the
+aggregate record of that exclusion, and the voided run's raw directory (its
+event log, its ledger and a \texttt{README} giving the reason) is in the
+published archive under \texttt{voided/}, so the disagreement can be read
+rather than taken on trust. A second provider
+% The run is archive root 'voided' of the 2026-09-03 archive (manifest
+% 87fa2d53...): 1 run directory, 24 files, at
+% voided/b4b_durable_workflow_at_most_once-before_intent_write-
+% notifications-6451e4c7-r1.attempt-1/ alongside voided/README.md.
+% Verified 2026-09-16 against ARCHIVE-METADATA.json and MANIFEST.sha256;
+% docs/29 3 lists it in the record's description. The previous wording
+% -- 'must be included in the external archive before submission' -- was a
+% note to the authors that had been true when written and was published.
+implementation or an external observer would reduce this common-mode doubt;
+neither is present.
+
+\paragraph{One author implemented every system under comparison} B0--B2 are
+small enough to inspect, each carries a machine-readable descriptor that tests
+check against its implementation, and B4's re-execution policy is defended
+against the vendor's own documentation in the artifact. That is mitigation, not
+elimination: a baseline written by the people proposing the alternative is a
+structural conflict, and the artifact is released partly so the baselines can be
+re-implemented by someone else.
+
+\subsection{External validity}
+
+\paragraph{Single node, single trust domain} One Redis instance, no replica, no
+consensus. \Cref{tab:nonclaims} lists what this forecloses. One residual
+interacts with the results: an AOF rewind can un-fence a lease, since lock keys
+are by design not barriered, and the fix is HA rather than anything local.
+
+\paragraph{Concurrency coverage is narrow} The harness exercises crash and
+takeover with two workers, so stale-owner and successor paths are covered, but
+it does not sustain live contention among many workers for the same execution or
+endpoint resource. The evaluation therefore supports fencing and recovery under
+the measured takeover schedule, not a scalability or fairness claim for
+high-contention deployments. Concurrent-claim rejection is exercised by the test
+suite; the fault-injection matrix supplies no contention-regime evidence for P1.
+
+\paragraph{Platform, and a development/measurement split} All measurements were
+collected on Ubuntu inside WSL2 on Windows~11, with Docker Desktop port
+forwarding in the path, on mains power with sleep and hibernation disabled.
+Development and part of the test suite run on the Windows host; \emph{every}
+number in \cref{sec:evaluation} comes from the Linux tree against real Redis.
+The locally runnable Windows suite and the artifact's Linux suite are checked
+separately, while the Linux evidence is the one the measurements rest on.
+Absolute latency and throughput are platform-bound; only comparisons
+\emph{between} systems sharing this platform are meaningful, which is why
+\cref{tab:latency} is presented as increments over a common floor.
+
+We treat this as a limitation rather than a defect to be fixed before
+publication, and the specific thing it costs is worth naming. Every absolute
+median here carries an unmeasured platform term, and the way to measure it is
+not to re-collect the evaluation on bare metal but to re-collect \emph{one frozen
+cell} there and compare: the crash-free \texttt{everysec} cell of AEP-full and
+B3 is thirty runs and about an hour, it is the cell both barrier figures come
+from, and its archive manifest makes the comparison exact rather than
+approximate. Until that exists, a reader should treat the increments as this
+platform's and the ordering as the claim.
+
+\paragraph{The motivating traces come from our own harness} \Cref{sec:motivating}
+reproduces failures in baselines we implemented, not in deployed systems. It
+establishes that the failure modes are reachable under the stated fault model;
+it is not evidence about their frequency in production deployments, and we have
+none. A field study of how often such systems meet non-idempotent endpoints
+without idempotency keys would strengthen the motivation considerably.
+
+\paragraph{Coverage of the matrix is partial, and the gaps are named} The full
+plan is 1\,068 runs; we collected \RunsCollected{}, comprising
+\ExecutionsCollected{} executions over \CellsCollected{} cells, chosen to answer
+the research questions rather than to fill the grid.
+% source: experiments/results/matrix/MANIFEST.md, which lists the run count
+% for every cell, and analysis/coverage.json.
+The supplementary material enumerates six named gaps: five since closed and
+recorded there with what closing them changed, and one still open, a run that
+did not complete.
+% closures verified 2026-09-16 against the tracked collections:
+% experiments/results/ws5-2026-09-10/t2-p30/analysis/coverage.json (regime p30)
+% and .../t2-keying/analysis/coverage.json (readback_keyings
+% [ORACLE_FINGERPRINT]). The one still open is the interrupted directory
+% counted in experiments/results/matrix/MANIFEST.md.
+Two qualifications from that enumeration bear on the main results
+and are stated here rather than only there: every collection in this paper comes
+from \emph{one host}, so the prevention effect's dependence on host timing is
+measured \emph{on} that host rather than established \emph{across} hosts; and
+completing a previously partial cell changed its value materially, so a partial
+cell should be read as unrepresentative rather than merely imprecise. A rate we
+did not measure is absent from the tables rather than interpolated, and the
+manifest shipped with the results states the run count for every cell.
+
+\paragraph{One endpoint for the cost measurement} RQ3's cells were collected
+against a single endpoint. Overhead should not depend on an endpoint's
+reconciliation capability in a crash-free run, since no read-back occurs, but
+that is an argument and not a measurement.
+
+\subsection{Conclusion validity}
+
+\paragraph{What fifteen runs per arm settled, and what they did not} The
+timing cells were re-collected at fifteen crash-free runs per arm under both
+fsync policies, and the two questions they were meant to separate came apart.
+The barrier's cost under \texttt{everysec} is now pinned:
+\BarrierCostFifteen{}\,ms,
+[\BarrierCostFifteenLow{}, \BarrierCostFifteenHigh{}]. The protocol's cost
+apart from the barrier is not, under either pre-registered reading of B3's
+bimodal arm, and both intervals contain zero (\cref{sec:eval-rq3}). That is a
+statement about resolution and not about the effect: a residual of a few tens of
+milliseconds on a two-second call is below what fifteen runs of this workload
+can separate from nothing, and more runs would narrow it rather than move it. A
+deployment that needs a latency budget should measure its own. The four medians
+in the supplementary's deployment table are the earlier three-run cells and
+are shown as the
+deployment points they were collected to compare, not as the source of the
+costs quoted above.
+
+\paragraph{A failure to reject is not a null result here, and under the sign
+test that is a theorem} Two comparisons in this paper fail to exclude zero for
+reasons of precision rather than of effect: the kill-latency attribution above,
+whose half-width is wider than the mean it brackets, and the capability-class
+sweep reported in the supplementary material, where the applied-effect column
+moved, contradicting our own registered prediction, while the
+session-clustered interval still contains zero because the sessions disagree
+with one another.
+
+For both, the weaker reading is not available. Each rests on four paired
+sessions, and with $n$ paired sessions the smallest attainable two-sided
+sign-test $p$-value is $2/2^{n}$, which at $n=4$ is
+$\SignFloorFour{}$. \textbf{Under the sign test, no effect size however large
+could have produced a rejection at $\alpha=0.05$ from these designs.} Six
+sessions is the smallest at which that test becomes capable of rejecting at all
+($2/2^{6} = \SignFloorSix{}$).
+
+\textbf{That is a statement about the sign test and not about four-session
+designs.} The same design rejects under the $t$-analysis we report elsewhere:
+the prevention replication is four paired sessions and its interval excludes
+zero (\cref{sec:eval-prevention}). So the asymmetry a reader may notice is
+real, and the reason is the quantity rather than the arithmetic. We use the
+$t$-interval wherever the session differences are the measurement, which is all
+three of these comparisons, and we quote the sign-test floor only to say what a
+rank test could have detected at this $n$. Read that way, all three are
+reported on one standard: an interval, and its width beside its mean. Neither
+of the two should be read as evidence that the effect is absent, and neither is
+offered as one.
+
+We stopped at four sessions by choice rather than for want of machine
+time, and the class sweep is reported as a bound rather than as a test.
+A further session was collected far enough to establish that it could
+not be pooled with the first four: the original sessions run one arm to
+completion and then the other, while the harness now alternates the arms
+run by run, a change made because the block order makes arm and drift
+collinear and therefore not separable by any number of sessions. Adding
+interleaved sessions to blocked ones would put two designs inside one
+paired test. Each session directory carries a note recording its order and
+what that confounds.
+
+\paragraph{One results directory was destroyed during tooling work and
+recovered from the archive} The raw runs behind the \texttt{appendfsync
+always} cell were deleted from a working checkout by a collection script
+whose clean path defaulted to on, and were restored from the verified
+evidence archive, whose manifest covers them by name and digest; the
+derived results are unchanged and remain recomputable from raw.
+% The archive's MANIFEST.sha256 digest is recorded in ARTIFACT.md 5; the
+% recovery verified 112 of 112 files against it with zero mismatches.
+
+\paragraph{Timing hygiene, and what it cost us} The host's modern-standby
+setting suspended it mid-run during earlier collection, silently inflating
+wall-clock durations. We now require both a pre-run declaration that the host
+cannot suspend and a per-run wall-versus-monotonic check. The gate is strict
+enough that \emph{no} run collected before it existed contributes a timing
+number, and it costs us coverage: recovery-latency distributions are not
+reported (the supplementary material, \emph{RQ4: recovery}) because the
+gated crashed runs are too few, and
+we prefer the gap to ungated numbers.
+
+\subsection{Where the protocol should not be used}
+
+If the endpoint accepts an idempotency key, or can be enrolled in a
+transaction, or the effect can be made idempotent, then a durable-execution
+engine gives a strictly stronger guarantee at lower cost and AEP is the wrong
+tool. Its cost is real: two fsync barriers, which under \texttt{appendfsync
+everysec} dominate the protocol's latency. We do not put a factor on that
+dominance: the denominator is the protocol's cost apart from the barrier, and
+at fifteen runs per arm that quantity is
+[\ProtocolMinusBarrierFifteenLow{}, \ProtocolMinusBarrierFifteenHigh{}]\,ms,
+an interval containing zero (\cref{sec:eval-rq3}). A ratio whose denominator
+is not distinguishable from zero is not a measurement. AEP is for the case where the precondition those systems
+require cannot be obtained, and its value is a declared residual rather than a
+better guarantee.

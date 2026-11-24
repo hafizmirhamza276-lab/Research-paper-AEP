@@ -1,0 +1,37 @@
+=== does statx report a birth time on each filesystem? ===
+--- /root/.aep-btime-probe/a ---
+Modify: 2026-09-03 10:53:08.760411449 +0500
+Change: 2026-09-03 10:53:08.760411449 +0500
+ Birth: 2026-09-03 10:53:08.760411449 +0500
+--- .scratch/.btime-probe/a ---
+Modify: 2026-09-03 10:53:08.771998400 +0500
+Change: 2026-09-03 10:53:08.771998400 +0500
+ Birth: -
+
+=== birth vs modify time of the four b2-*-2026-08-21 roots ===
+--- b2-2026-08-21  first run dir: aep_full-none-ledger_postings-8530cc0f-r0 ---
+Modify: 2026-08-21 20:11:43.230782900 +0500
+Change: 2026-09-01 11:46:54.995826700 +0500
+ Birth: -
+--- b2-s1-2026-08-21  first run dir: aep_full-none-ledger_postings-8530cc0f-r0 ---
+Modify: 2026-08-21 21:17:13.544229500 +0500
+Change: 2026-09-01 11:46:55.176179200 +0500
+ Birth: -
+--- b2-s2-2026-08-21  first run dir: aep_full-none-ledger_postings-8530cc0f-r0 ---
+Modify: 2026-08-21 21:55:54.905247100 +0500
+Change: 2026-09-01 11:46:55.311442200 +0500
+ Birth: -
+--- b2-s3-2026-08-21  first run dir: aep_full-none-ledger_postings-8530cc0f-r0 ---
+Modify: 2026-08-21 22:33:06.293573100 +0500
+Change: 2026-09-01 11:46:55.458703900 +0500
+ Birth: -
+
+=== for contrast: a root proved written in place on drvfs (Phase 10 drvfs arm) ===
+Modify: 2026-09-02 17:23:52.313335400 +0500
+Change: 2026-09-02 17:23:52.313335400 +0500
+ Birth: -
+
+=== and one on ext4 (the frozen matrix) ===
+Modify: 2026-08-06 15:14:57.845608029 +0500
+Change: 2026-08-06 15:14:57.845608029 +0500
+ Birth: 2026-08-06 15:14:57.845608029 +0500

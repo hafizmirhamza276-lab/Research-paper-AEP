@@ -1,0 +1,38 @@
+{
+  "agrees": false,
+  "b5_verdict": "COMPLETED",
+  "caller_redispatch_duplicate_applications": 3,
+  "classifications": {
+    "completed": 10
+  },
+  "config_digest": "18b4de4368cb1c75a90f7817c3c6a8eb2141b14b00ed7f1cdc6864d0aee63a79",
+  "declared_ambiguous_executions": 0,
+  "disagreements": [
+    {
+      "applied_effects": 0,
+      "classification": "completed",
+      "execution_id": "625ea85f-f06d-48fa-8098-1c8599cd7b4e",
+      "rule": "the system asserted the effect was applied and the ledger records none"
+    }
+  ],
+  "duplicate_prediction_applies": false,
+  "executions_planned": 10,
+  "expected_duplicate_groups": -1,
+  "expected_effect_executions_lower": 10,
+  "expected_effect_executions_upper": 10,
+  "lost_effect_executions": 0,
+  "oracle_applied_rows": 12,
+  "oracle_duplicate_groups": 2,
+  "oracle_effect_executions": 9,
+  "oracle_unattributed_rows": 0,
+  "outcome_classes": {
+    "CONFIRMED_APPLIED": 10
+  },
+  "provider_internal_duplicate_applications": 0,
+  "run_id": "b5_temporal-after_barrier_before_dispatch-payments-r11",
+  "system": "B5_TEMPORAL",
+  "undetected_duplicate_applications": 3,
+  "undetected_duplicate_executions": 2,
+  "unreadable_executions": 0,
+  "unverified_failure_executions": 0
+}

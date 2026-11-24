@@ -1,0 +1,29 @@
+
+
+########## session 3 -> /root/aep-phase13/armA-s3-2026-09-03 ##########
+mechanism: pause-then-kill
+suspend declared: 1
+
+
+########## stack up, and PROVE it is the native daemon serving 6381 ##########
+aep-native
+ Container aep-phase2-redis72 Running 
+ Container aep-phase2-toxiproxy Running 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-redis72 Healthy 
+ Container aep-phase2-redis72 Waiting 
+ Container aep-phase2-toxiproxy Waiting 
+ Container aep-phase2-toxiproxy Healthy 
+ Container aep-phase2-redis72 Healthy 
+status=running paused=false started=2026-09-03T15:55:12.155458102Z
+run_id on port      : run_id:27b1ba77d02b18853e6f7e971ee0ee67be3811e7
+run_id in container : run_id:27b1ba77d02b18853e6f7e971ee0ee67be3811e7
+
+
+########## measurement host gate ##########
+verify_measurement_host exit=0
+gates passed: True failures: []
+clock wall-monotonic: -4e-06 within tolerance: True
+
+
+########## collect ##########

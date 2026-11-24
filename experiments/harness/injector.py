@@ -1,0 +1,533 @@
+"""Environment-variable-selected process crash injection.
+
+PAPER_ROADMAP.md section 3.1(2): *"Workers are separate OS processes killed
+with SIGKILL at the chosen point (env-var controlled)."*
+
+Three properties, in the order they matter.
+
+**The kill is a kill.** :func:`hard_kill_self` sends ``SIGKILL`` to the calling
+process. No ``finally`` runs, no buffer is flushed, no lease is released, no
+connection is closed -- which is the entire point, because everything the
+protocol claims about crash recovery is a claim about what Redis contains when
+a worker stops existing without cooperating. On Windows, where ``SIGKILL`` does
+not exist, ``os.kill`` with any other signal calls ``TerminateProcess``, which
+is equally uncatchable and equally unable to run cleanup. It is *not* the same
+system call, and :data:`HAS_SIGKILL` records which path a run used so a report
+can say so.
+
+**Disabled means absent.** :meth:`ProcessCrashInjector.from_environment`
+returns ``None`` when no crash point is selected, and ``None`` is what
+``WriteAheadRunner`` receives. The disabled path through ``aep_core`` is
+therefore ``if self.crash_injector is not None:`` -- one attribute load and one
+identity comparison per checkpoint, no allocation, no I/O. There is no
+"disabled injector" object that could grow behaviour later.
+
+**A typo is a failure, not a quiet no-op.** An unrecognised crash-point name
+raises at process start. The alternative -- treating it as "no crash" -- would
+produce a full, slow, entirely uninformative run whose own log claimed a crash
+point was selected.
+
+**Deferred kills.** Five of the roadmap's six crash points are positions the
+workflow executes, so the kill happens at the checkpoint. ``mid_dispatch``
+names an instant inside a socket wait, which the workflow never executes; the
+injector therefore *arms* a watchdog thread at the last pre-transmission
+checkpoint and returns, so the request really is sent, and the watchdog
+delivers the kill while the connector is blocked on the response. Whether the
+provider had already applied the mutation is then read from the ground-truth
+ledger rather than assumed.
+"""
+
+from __future__ import annotations
+
+import os
+import signal
+import threading
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Mapping
+
+from experiments.harness.crash_points import (
+    DEFERRED_CRASH_POINTS,
+    ROADMAP_CRASH_POINTS,
+    CrashPoint,
+    resolve_crash_point,
+    roadmap_name_for,
+)
+
+#: True where a real ``SIGKILL`` exists. Recorded into every run log: the
+#: artifact's crash-fidelity claim rests on the POSIX path, and a run collected
+#: on Windows used ``TerminateProcess`` instead.
+HAS_SIGKILL = hasattr(signal, "SIGKILL")
+
+#: Environment variables. Read once, at worker start.
+CRASH_POINT_VARIABLE = "AEP_HARNESS_CRASH_POINT"
+CRASH_STYLE_VARIABLE = "AEP_HARNESS_CRASH_STYLE"
+CRASH_DELAY_VARIABLE = "AEP_HARNESS_CRASH_DELAY_MS"
+CRASH_EXECUTIONS_VARIABLE = "AEP_HARNESS_CRASH_EXECUTIONS"
+
+#: Exit status a SIGKILLed process is reported with, for logs on platforms
+#: that cannot deliver the real signal.
+KILL_EXIT_STATUS = 137
+
+
+def hard_kill_self(point: CrashPoint) -> None:  # pragma: no cover - kills us
+    """Stop this process now, with no opportunity to clean up.
+
+    Not covered by the in-process suite by construction: a test that executed
+    this line would have no test process left to record the result. It is
+    covered instead by ``test_injector.py``'s child-process tests, which assert
+    the corpse's exit status.
+    """
+    if HAS_SIGKILL:
+        os.kill(os.getpid(), signal.SIGKILL)
+    else:
+        # Windows: os.kill with anything other than CTRL_C_EVENT /
+        # CTRL_BREAK_EVENT calls TerminateProcess.
+        os.kill(os.getpid(), signal.SIGTERM)
+    # Unreachable on both paths; present so a platform that somehow returns
+    # cannot continue executing protocol code after a "crash".
+    os._exit(KILL_EXIT_STATUS)
+
+
+class CrashStyle(str, Enum):
+    """How the kill is delivered relative to the checkpoint."""
+
+    #: Delivered at the checkpoint. The checkpoint never returns.
+    SIGKILL_IMMEDIATE = "SIGKILL_IMMEDIATE"
+    #: Armed at the checkpoint, delivered by a watchdog thread afterwards, so
+    #: the death lands inside the operation the checkpoint precedes.
+    SIGKILL_DEFERRED = "SIGKILL_DEFERRED"
+
+
+@dataclass(frozen=True)
+class CrashPlan:
+    """What this process will do, decided before it does any protocol work."""
+
+    #: A member of *some* declared crash-point vocabulary. ``aep_core``'s for
+    #: AEP-full and B3; ``experiments.baselines.crash_points``' for the four
+    #: baselines, which have their own instruction boundaries because they do
+    #: not have AEP's. The injector compares members by identity and never by
+    #: name, so mixing the two vocabularies is impossible rather than merely
+    #: discouraged.
+    point: Enum
+    style: CrashStyle = CrashStyle.SIGKILL_IMMEDIATE
+    #: Only meaningful for ``SIGKILL_DEFERRED``.
+    deferred_delay_seconds: float = 0.4
+    #: ``None`` means every execution is eligible. A set scopes the crash to
+    #: named executions, so one run can contain crashed and control executions.
+    executions: frozenset[str] | None = None
+    #: The roadmap's name for this position, when the caller selected one. A
+    #: baseline's vocabulary has no reverse lookup into the roadmap -- several
+    #: roadmap names can share one baseline position -- so the name is carried
+    #: rather than derived, and every record says which cell it belongs to.
+    roadmap_name: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.point, Enum):
+            raise TypeError("crash plan requires a declared crash-point member")
+        if self.deferred_delay_seconds < 0:
+            raise ValueError("deferred_delay_seconds cannot be negative")
+        if (
+            self.style is CrashStyle.SIGKILL_IMMEDIATE
+            and self.point in DEFERRED_CRASH_POINTS
+        ):
+            # Allowed, but it is a different experiment: an immediate kill at
+            # the pre-transmission checkpoint proves the mutation was *not*
+            # dispatched, which is `after_barrier_before_dispatch`, not
+            # `mid_dispatch`. Callers must say so explicitly.
+            pass
+
+    @property
+    def roadmap_crash_point(self) -> str | None:
+        if self.roadmap_name is not None:
+            return self.roadmap_name
+        return roadmap_name_for(self.point) if isinstance(self.point, CrashPoint) else None
+
+    def echo(self) -> dict[str, Any]:
+        return {
+            "crash_point": self.point.value,
+            "roadmap_crash_point": self.roadmap_crash_point,
+            "style": self.style.value,
+            "deferred_delay_seconds": self.deferred_delay_seconds,
+            "scoped_executions": (
+                sorted(self.executions) if self.executions is not None else None
+            ),
+            "has_sigkill": HAS_SIGKILL,
+        }
+
+
+def _no_emit(event: str, **fields: Any) -> None:
+    """Default sink. A crash with no record is a crash nobody can count."""
+
+
+@dataclass
+class ProcessCrashInjector:
+    """Implements ``aep_core``'s ``CrashInjectorProtocol`` by dying.
+
+    ``emit`` is called *before* the kill and must have flushed to disk by the
+    time it returns; ``experiments/harness/events.py`` flushes every record for
+    exactly this reason. A SIGKILL loses process buffers, not the kernel's, so
+    a flushed write survives -- see the report's discussion of why ``fsync`` is
+    not required for this failure model.
+    """
+
+    plan: CrashPlan
+    emit: Callable[..., None] = _no_emit
+    killer: Callable[[CrashPoint], None] = hard_kill_self
+    _fired: bool = field(default=False, init=False)
+    _execution_id: str | None = field(default=None, init=False)
+    _watchdog: threading.Thread | None = field(default=None, init=False)
+
+    # -- selection ---------------------------------------------------------
+
+    @classmethod
+    def from_environment(
+        cls,
+        *,
+        environ: Mapping[str, str] | None = None,
+        emit: Callable[..., None] = _no_emit,
+        killer: Callable[[CrashPoint], None] = hard_kill_self,
+        resolver: Callable[[str | None], Any] = resolve_crash_point,
+        deferred_points: frozenset = DEFERRED_CRASH_POINTS,
+    ) -> "ProcessCrashInjector | None":
+        """Build an injector, or return ``None`` if none was selected.
+
+        ``resolver`` and ``deferred_points`` default to ``aep_core``'s
+        vocabulary and are overridden by a worker running one of the section
+        3.3 baselines, whose instruction boundaries are its own. Passing them
+        in rather than reading a system name here keeps this module ignorant
+        of which systems exist, which is what stops the injector from becoming
+        the place new systems have to be registered.
+        """
+        source = os.environ if environ is None else environ
+        point = resolver(source.get(CRASH_POINT_VARIABLE))
+        if point is None:
+            return None
+
+        declared_style = source.get(CRASH_STYLE_VARIABLE)
+        if declared_style:
+            style = CrashStyle(declared_style)
+        elif point in deferred_points:
+            style = CrashStyle.SIGKILL_DEFERRED
+        else:
+            style = CrashStyle.SIGKILL_IMMEDIATE
+
+        raw_delay = source.get(CRASH_DELAY_VARIABLE)
+        delay = float(raw_delay) / 1000.0 if raw_delay else 0.4
+        if delay < 0:
+            raise ValueError(
+                f"{CRASH_DELAY_VARIABLE} must not be negative, got {raw_delay!r}"
+            )
+
+        raw_executions = source.get(CRASH_EXECUTIONS_VARIABLE)
+        executions = (
+            frozenset(part for part in raw_executions.split(",") if part)
+            if raw_executions
+            else None
+        )
+
+        declared_name = source.get(CRASH_POINT_VARIABLE)
+        return cls(
+            plan=CrashPlan(
+                point=point,
+                style=style,
+                deferred_delay_seconds=delay,
+                executions=executions,
+                roadmap_name=(
+                    declared_name
+                    if declared_name in ROADMAP_CRASH_POINTS
+                    else None
+                ),
+            ),
+            emit=emit,
+            killer=killer,
+        )
+
+    # -- the protocol-facing surface --------------------------------------
+
+    def enter_execution(self, execution_id: str) -> None:
+        """Tell the injector which execution the next checkpoints belong to."""
+        self._execution_id = execution_id
+
+    @property
+    def armed_for_current_execution(self) -> bool:
+        if self.plan.executions is None:
+            return True
+        return self._execution_id in self.plan.executions
+
+    async def checkpoint(self, point: Any) -> None:
+        """Called by ``aep_core`` at every named instruction boundary."""
+        if self._fired or point is not self.plan.point:
+            return
+        if not self.armed_for_current_execution:
+            return
+
+        self._fired = True
+        if self.plan.style is CrashStyle.SIGKILL_IMMEDIATE:
+            self.emit(
+                "crash_injected",
+                crash_point=self.plan.point.value,
+                roadmap_crash_point=self.plan.roadmap_crash_point,
+                style=self.plan.style.value,
+                execution_id=self._execution_id,
+                has_sigkill=HAS_SIGKILL,
+            )
+            self.killer(self.plan.point)
+            return
+
+        self.emit(
+            "crash_armed",
+            crash_point=self.plan.point.value,
+            roadmap_crash_point=self.plan.roadmap_crash_point,
+            style=self.plan.style.value,
+            deferred_delay_seconds=self.plan.deferred_delay_seconds,
+            execution_id=self._execution_id,
+            has_sigkill=HAS_SIGKILL,
+        )
+        self._start_watchdog()
+
+    # -- deferred delivery -------------------------------------------------
+
+    def _start_watchdog(self) -> None:
+        execution_id = self._execution_id
+        delay = self.plan.deferred_delay_seconds
+
+        def deliver() -> None:
+            # A plain sleep, in a thread of its own: the event loop this
+            # process is running is the thing being interrupted, so the timer
+            # must not live on it.
+            threading.Event().wait(delay)
+            self.emit(
+                "crash_injected",
+                crash_point=self.plan.point.value,
+                roadmap_crash_point=self.plan.roadmap_crash_point,
+                style=self.plan.style.value,
+                execution_id=execution_id,
+                deferred_delay_seconds=delay,
+                has_sigkill=HAS_SIGKILL,
+            )
+            self.killer(self.plan.point)
+
+        # Not a daemon: on the fake-killer path used by tests the process must
+        # not exit while the watchdog is still pending, or the test would
+        # observe neither outcome.
+        watchdog = threading.Thread(
+            target=deliver, name="aep-harness-crash-watchdog", daemon=False
+        )
+        self._watchdog = watchdog
+        watchdog.start()
+
+    def join_watchdog(self, timeout: float | None = None) -> None:
+        """Wait for a deferred kill to be delivered. Tests only."""
+        if self._watchdog is not None:
+            self._watchdog.join(timeout)
+
+
+@dataclass
+class DurabilityAckObserver:
+    """Record that the durability acknowledgement was issued. Inject nothing.
+
+    Phase 8.2. The protocol's central fail-closed invariant is *an effect only
+    ever reached the provider if a durable acknowledgement had been issued
+    first* -- and until now no run artifact could witness it. Phase 8.1.0
+    established that four independent ways: no stream carried an ack event,
+    ``dispatch_attempts`` was 0 in all 240 runs examined, ``failure_class`` was
+    identical across every outcome, and ``applied`` comes from the provider's
+    own ledger, which cannot see worker-side authorization.
+
+    Nothing new had to be built to fix that. ``WriteAheadRunner`` already awaits
+    ``_checkpoint("AFTER_DURABLE_ABOUT_TO_FIRE_BEFORE_PREFLIGHT")`` immediately
+    after the acknowledgement is issued and the dispatch authorization
+    recorded, and before preflight -- and that call is delegated straight to
+    whichever injector the harness installed, which then discarded it. **This
+    class is the observer that stops discarding it**, so the invariant becomes
+    checkable without touching ``aep_core`` (audit finding S4-A).
+
+    **One-directional.** Reaching this checkpoint does not mean an effect was
+    applied: the kill can land after the acknowledgement and before
+    transmission, which is exactly the window ``after_barrier_before_dispatch``
+    names. Only ``applied implies acknowledged`` is testable from this record.
+
+    **Confirmatory, not exploratory.** ``_checkpoint`` is awaited on the
+    protocol path, so *dispatched implies traversed* holds by construction, and
+    ``DispatchAuthorizationError`` already enforces the invariant in code. Zero
+    exceptions is therefore near-certain and mostly exercises this observer's
+    own fidelity. It is recorded so the claim rests on evidence rather than on
+    reading the source, and any report using it has to say so.
+
+    **Cost, measured rather than argued.** ``EventLog.emit`` serialises and
+    flushes, which is a real syscall: 5.4 us median on ext4 and 229.7 us on
+    drvfs (2 000 iterations, Phase 8.1). Against a ``docker kill`` race whose
+    discriminating difference is 194 ms, that is 0.003% and 0.12%
+    respectively. It sits on the protocol path and it is negligible there --
+    but it is not free, which is why collection runs on ext4.
+    """
+
+    emit: Any
+    point_name: str = "AFTER_DURABLE_ABOUT_TO_FIRE_BEFORE_PREFLIGHT"
+    _execution_id: str | None = None
+
+    def enter_execution(self, execution_id: str) -> None:
+        self._execution_id = execution_id
+
+    async def checkpoint(self, point: Any) -> None:
+        name = getattr(point, "name", None)
+        if name != self.point_name:
+            return
+        self.emit(
+            "durability_ack_observed",
+            execution_id=self._execution_id,
+            checkpoint=name,
+        )
+
+
+@dataclass
+class TransmissionObserver:
+    """Mark the instant provider bytes leave. Change nothing else.
+
+    Phase 13's prerequisite. WS-3 needs to know how long **each arm** is exposed
+    after a fault is armed, because the two exposures are what the experiment
+    contrasts: AEP-full has one extra Redis-dependent step, ``WAITAOF``, that B3
+    does not, and the fault has to land in a window B3 has already left and
+    AEP-full is still inside. Without a record of when B3 left it, the arming
+    delay can only be argued for, and Phase 13 exists to stop arguing about
+    timings and measure them.
+
+    **What the event marks, precisely.** ``provider_request_transmitted`` is
+    emitted on entry to :meth:`MockLegacyApiConnector.mutate`. That call is the
+    instruction *immediately after*
+    ``_checkpoint("AFTER_PREFLIGHT_BEFORE_REQUEST_TRANSMISSION")``
+    (``aep_core/core/intent_workflow.py:579``) and *before* the exact request
+    bytes are constructed, let alone sent. `intent_workflow.py:574-578` states
+    the same boundary from the other side: a process cut before that line has
+    provably not dispatched, and one after it may have. So the event is the last
+    observable point at which no provider byte can have left, not an
+    approximation of it.
+
+    ``provider_response_received`` closes the interval, so the transmission
+    itself is measurable rather than inferred from the two ends of a run.
+
+    **It changes no protocol behaviour.** Every attribute other than ``mutate``
+    is delegated untouched by ``__getattr__``; ``mutate`` returns exactly what
+    the wrapped connector returned and re-raises exactly what it raised, with no
+    ``except`` clause that could convert an exception into a different one. The
+    workflow classifies connector exceptions as ambiguous
+    (``intent_workflow.py:616-624``), so swallowing or retyping one here would
+    silently change an outcome class; it does neither.
+
+    **It is attached only where a fault injector already exists**, for the
+    reason :class:`DurabilityAckObserver` gives at ``worker.py:140-152`` and for
+    one more. ``EventLog.emit`` serialises and flushes -- a real syscall, 5.4 us
+    median on ext4 -- and it would sit on the dispatch path of the crash-free
+    ``p0`` cells, which are the only cells RQ3's cost numbers may use. Adding a
+    syscall there would change those cells' conditions relative to every
+    crash-free run already collected. Fault-bearing cells already carry the
+    observer machinery, so nothing about their comparability moves.
+
+    **The recovery service's connector is deliberately not wrapped.** Recovery
+    runs in another process with its own connector (``recovery.py:58``); the
+    window this measures is the worker's, and instrumenting recovery would add
+    events that no analysis here reads.
+    """
+
+    connector: Any
+    emit: Any
+    #: How many times ``mutate`` has been entered. Amendment 9 §2 needs the
+    #: transmission boundary as a value a caller can read, not only as a line
+    #: in the event log: reading it back from ``events.jsonl`` would breach
+    #: amendment 4 §3, which keeps the oracle's record on the oracle's side of
+    #: the wall. A counter on the passthrough is in-process state, and the
+    #: event the counter accompanies is the one ``docs/31`` already defines.
+    #:
+    #: Not a behaviour change. ``docs/31`` §2's six properties are unaffected:
+    #: every other attribute is still delegated, the return value is still the
+    #: connector's, and exceptions are still re-raised as themselves.
+    transmissions: int = 0
+
+    def __getattr__(self, name: str) -> Any:
+        # Delegation, so read-back, aclose and anything added later reach the
+        # real connector without this class having to know they exist.
+        return getattr(self.connector, name)
+
+    async def mutate(self, **kwargs: Any) -> Any:
+        dispatch = kwargs.get("dispatch")
+        # Incremented BEFORE the event and before the call, so the boundary the
+        # counter marks is the same instruction boundary the event marks: the
+        # last point at which no provider byte can have left.
+        self.transmissions += 1
+        binding = getattr(dispatch, "binding", None)
+        self.emit(
+            "provider_request_transmitted",
+            execution_id=getattr(binding, "execution_id", None),
+            intent_id=getattr(binding, "intent_id", None),
+            step_id=getattr(binding, "step_id", None),
+        )
+        started = time.monotonic_ns()
+        try:
+            response = await self.connector.mutate(**kwargs)
+        except BaseException as error:
+            # Recorded and re-raised unchanged. BaseException because the
+            # simulated process death the crash injector raises derives from it
+            # and must not be caught here -- only witnessed.
+            self.emit(
+                "provider_request_failed",
+                execution_id=getattr(binding, "execution_id", None),
+                error=type(error).__name__,
+                elapsed_ns=time.monotonic_ns() - started,
+            )
+            raise
+        self.emit(
+            "provider_response_received",
+            execution_id=getattr(binding, "execution_id", None),
+            elapsed_ns=time.monotonic_ns() - started,
+        )
+        return response
+
+
+@dataclass
+class CompositeInjector:
+    """Fan one protocol's checkpoints out to several independent injectors.
+
+    Amendment E1 introduces a second thing that can happen at a named
+    instruction boundary -- a hard Redis kill -- and a run may want it beside a
+    worker crash or instead of one. ``WriteAheadRunner`` takes exactly one
+    injector, so the composition happens here rather than by teaching either
+    injector about the other.
+
+    Order is the order given, and it is load-bearing: a synchronous worker kill
+    never returns, so an injector that must act at the same checkpoint has to
+    be listed before it. The runner lists the Redis kill first for that reason.
+    """
+
+    injectors: tuple[Any, ...]
+
+    def __post_init__(self) -> None:
+        if not self.injectors:
+            raise ValueError(
+                "a composite of no injectors is not the same thing as no "
+                "injector; the disabled path is `crash_injector is None`"
+            )
+
+    def enter_execution(self, execution_id: str) -> None:
+        for injector in self.injectors:
+            injector.enter_execution(execution_id)
+
+    async def checkpoint(self, point: Any) -> None:
+        for injector in self.injectors:
+            await injector.checkpoint(point)
+
+    @property
+    def plan(self):
+        """The plans, so ``worker_started`` can echo whichever exist."""
+        return [injector.plan.echo() for injector in self.injectors]
+
+
+def compose_injectors(*injectors: Any) -> Any:
+    """The one injector a runner should pass, given zero or more of them."""
+    present = tuple(injector for injector in injectors if injector is not None)
+    if not present:
+        return None
+    if len(present) == 1:
+        return present[0]
+    return CompositeInjector(present)

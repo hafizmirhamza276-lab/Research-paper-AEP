@@ -1,0 +1,29 @@
+# Entry-gate configuration: every one of the six roadmap crash points, once.
+#
+# Amendment D0(ii). reports/phase-report-2b-session2-2026-08-05.md F6 says the
+# harness has been run at exactly one crash point, once; five sixths of the
+# crash matrix is therefore untested code, and a defect discovered during the
+# 30-repetition matrix costs a matrix. This configuration exists to find such a
+# defect for the price of six short runs.
+#
+# The 2 s response delay is deliberate and is the same one the Session 2
+# self-validation used: it is the window `mid_dispatch` is delivered inside, so
+# a worker killed 400 ms after transmission is provably killed while the
+# request is in flight. Whether the provider had already applied the mutation
+# by then is read from this ledger afterwards, never assumed.
+config_version: aep.mock-legacy-api.config/1
+seed: 20260805
+ledger_path: experiments/results/smoke/ground_truth.sqlite3
+readback_keying: CALLER_REFERENCE
+defaults:
+  faults:
+    delay:
+      distribution: constant
+      seconds: 2.0
+    timeout_probability: 0.0
+    server_error_probability: 0.0
+    duplicate_response_probability: 0.0
+endpoints:
+  payments:
+    response_class: AUTHORITATIVE_READBACK
+    identity_fields: ["action", "amount_minor"]

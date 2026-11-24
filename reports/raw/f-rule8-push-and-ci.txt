@@ -1,0 +1,25 @@
+=== Rule 8 discharged: push + green CI on the session tip ===
+
+$ git push
+   6cd6815..c5592b9  main -> main
+
+$ git status -sb
+## main...origin/main
+
+$ git log --oneline -4
+c5592b9 Phase 4 Session 1: the report
+118731c Phase 4: matrix closeout -- complete E3 comparison, fsync curve, frozen results
+f3808d4 Phase 4: fix two figure-computation defects, add figures to the paper
+6cd6815 Phase 4: manuscript draft, generated tables, and the numbers-drift gate
+
+=== CI run for c5592b9 ===
+run        31168669788
+head_sha   c5592b974efba5cdd1654349ababfc59471203e9
+status     completed
+conclusion success
+url        https://github.com/hafizmirhamza276-lab/Research-paper-AEP/actions/runs/31168669788
+
+$ jobs
+  success    Citation ranges (docs/22)
+  success    WAITAOF durability (compose, phase2.conf)
+  success    Suite (py3.13, Redis from compose)

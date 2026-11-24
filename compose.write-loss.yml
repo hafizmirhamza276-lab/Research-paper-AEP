@@ -1,0 +1,23 @@
+# WS-4 / backlog B1 only: put Redis's data directory on the dm-flakey device.
+#
+# Layered on top of compose.phase2.yml, never instead of it:
+#
+#   docker compose -f compose.phase2.yml -f compose.write-loss.yml up -d --wait
+#
+# `redis/phase2.conf` sets `dir /data` and is NOT modified. The base file mounts
+# the named volume `redis-data` there; this override rebinds the same target to
+# the provisioned flakey path, so Redis's own configuration is untouched and only
+# what sits behind `/data` differs. Every other regime uses the base file alone
+# and keeps `redis-data` exactly as it was.
+#
+# **The `:?` is the refusal.** Compose substitutes an empty string for an unset
+# variable and carries on, which would silently bind-mount the wrong thing --
+# and under write loss a device that cannot drop writes produces a clean AEP-full
+# result for the wrong reason, which is the failure `docs/24` B1 exists to
+# prevent. `${VAR:?message}` makes compose exit non-zero instead. It is set by
+# `scripts/up_write_loss.py`, which refuses earlier and with a better message.
+services:
+  redis-phase2:
+    volumes:
+      - ./redis/phase2.conf:/usr/local/etc/redis/redis.conf:ro
+      - ${AEP_WS4_REDIS_DIR:?set by scripts/up_write_loss.py from the provisioned dm-flakey device; refusing to start Redis on the ordinary volume under the write-loss regime}:/data
